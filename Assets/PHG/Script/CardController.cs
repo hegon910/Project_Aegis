@@ -46,8 +46,8 @@ namespace PHG
             rectTransform.anchoredPosition = new Vector2(localPoint.x, initialPosition.y - dropAmount);
 
             // 텍스트 변경 로직 (이전과 동일)
-            if (distanceMoved > 200) { choiceText.text = "Confirm"; }
-            else if (distanceMoved < -200) { choiceText.text = "Reject"; }
+            if (distanceMoved > 200) { choiceText.text = "수락한다."; }
+            else if (distanceMoved < -200) { choiceText.text = "거절한다."; }
             else { choiceText.text = ""; }
         }
 
