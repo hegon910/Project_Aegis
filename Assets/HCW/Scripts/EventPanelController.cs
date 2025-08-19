@@ -31,7 +31,7 @@ public class EventPanelController : MonoBehaviour
         characterImage.sprite = currentEventData.characterSprite;
         characterNameText.text = currentEventData.characterName;
         dialogueText.text = currentEventData.dialogue;
-        leftChoiceText.text = currentEventData.leftChoiceText;
-        rightChoiceText.text = currentEventData.rightChoiceText;
+        leftChoiceText.text = currentEventData.leftChoice.choiceText;
+        rightChoiceText.text = currentEventData.rightChoice.choiceText;
     }
 }

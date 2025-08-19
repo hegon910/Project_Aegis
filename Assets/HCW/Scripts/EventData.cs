@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
+// 파라미터 종류
 public enum ParameterType
 {
     정치력,
@@ -11,7 +12,7 @@ public enum ParameterType
     카르마
 }
 
-// 파라미터 변화량을 조절하는 클래스
+// 파라미터 변화량을 저장하는 클래스
 [System.Serializable]
 public class ParameterChange
 {
@@ -21,27 +22,48 @@ public class ParameterChange
     public int valueChange;
 }
 
+// 선택지의 성공 또는 실패 결과를 저장하는 클래스
+[System.Serializable]
+public class ChoiceOutcome
+{
+    [Tooltip("결과 텍스트")]
+    public string outcomeText;
+    [Tooltip("파라미터 변화 목록")]
+    public List<ParameterChange> parameterChanges = new List<ParameterChange>();
+}
+
+// 하나의 선택지 정보를 모두 담는 클래스
+[System.Serializable]
+public class EventChoice
+{
+    [Tooltip("선택지 텍스트")]
+    public string choiceText;
+    [Tooltip("성공 조건")]
+    public string successCondition;
+    [Tooltip("실패 조건")]
+    public string failCondition;
+
+    [Tooltip("성공 시 결과")]
+    public ChoiceOutcome successOutcome;
+    [Tooltip("실패 시 결과")]
+    public ChoiceOutcome failOutcome;
+}
+
+
+// 최종 이벤트 데이터를 담는 스크립터블 오브젝트
 [CreateAssetMenu(fileName = "New Event", menuName = "Aegis/Event Data")]
 public class EventData : ScriptableObject
 {
     [Header("이벤트 기본 정보")]
     public string eventName;
     public string characterName;
-    public Sprite characterSprite; // 캐릭터 스프라이트
+    public Sprite characterSprite;
 
     [TextArea(3, 10)]
     [Tooltip("이벤트 상황에 표시될 메인 대화 내용")]
     public string dialogue;
 
-    [Header("선택지 텍스트")]
-    [Tooltip("왼쪽을 선택했을 때 표시될 선택지")]
-    public string leftChoiceText;
-    [Tooltip("오른을 선택했을 때 표시될 선택지")]
-    public string rightChoiceText;
-
-    [Header("선택지별 효과")]
-    [Tooltip("왼쪽 선택으로 변경될 파라미터")]
-    public List<ParameterChange> leftChoiceEffects;
-    [Tooltip("오른쪽 선택으로 변경될 파라미터")]
-    public List<ParameterChange> rightChoiceEffects;
+    [Header("선택지")]
+    public EventChoice leftChoice;
+    public EventChoice rightChoice;
 }
