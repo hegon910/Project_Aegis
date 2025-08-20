@@ -5,11 +5,9 @@ using TMPro;
 public class EventPanelController : MonoBehaviour
 {
     [Header("UI 참조")]
-    [SerializeField] private Image characterImage;
-    [SerializeField] private TextMeshProUGUI characterNameText;
+    [SerializeField] private Image eventImage;
     [SerializeField] private TextMeshProUGUI dialogueText;
-    [SerializeField] private TextMeshProUGUI leftChoiceText;
-    [SerializeField] private TextMeshProUGUI rightChoiceText;
+    [SerializeField] private TextMeshProUGUI choiceText;
 
     private EventData currentEventData;
 
@@ -28,10 +26,13 @@ public class EventPanelController : MonoBehaviour
         gameObject.SetActive(true);
 
         // UI 요소에 데이터 할당
-        characterImage.sprite = currentEventData.characterSprite;
-        characterNameText.text = currentEventData.characterName;
+        eventImage.sprite = currentEventData.eventSprite;
         dialogueText.text = currentEventData.dialogue;
-        leftChoiceText.text = currentEventData.leftChoice.choiceText;
-        rightChoiceText.text = currentEventData.rightChoice.choiceText;
+
+        // 드래그 시작 전에는 선택지 텍스트를 비워둡니다.
+        if (choiceText != null)
+        {
+            choiceText.text = string.Empty;
+        }
     }
 }

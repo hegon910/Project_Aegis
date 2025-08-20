@@ -47,7 +47,6 @@ public class DataManager : MonoBehaviour
         EventData eventData = ScriptableObject.CreateInstance<EventData>();
 
         // 기본 정보
-        eventData.eventName = $"이벤트 : {id}"; // CSV에 이벤트 이름이 없어 ID로 임시 생성
         eventData.dialogue = stringData.eventText;
 
         // 왼쪽 선택지 정보

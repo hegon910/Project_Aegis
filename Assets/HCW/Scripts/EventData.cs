@@ -55,9 +55,7 @@ public class EventChoice
 public class EventData : ScriptableObject
 {
     [Header("이벤트 기본 정보")]
-    public string eventName;
-    public string characterName;
-    public Sprite characterSprite;
+    public Sprite eventSprite;
 
     [TextArea(3, 10)]
     [Tooltip("이벤트 상황에 표시될 메인 대화 내용")]
