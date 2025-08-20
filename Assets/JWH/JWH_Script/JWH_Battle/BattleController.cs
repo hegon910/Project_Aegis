@@ -2,7 +2,33 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BattleControl : MonoBehaviour
+public enum BattleAction { None, Attack, Defend }
+
+public class BattleController : MonoBehaviour
 {
-    //공격, 방어, 이동, 스킬
+    [SerializeField] BattleMover mover;
+
+    const int ATTACK = 4;  // 앞으로 4칸
+    const int DEFEND = 1;  // 뒤로 1칸
+
+    void Awake()
+    {
+        if (!mover) mover = GetComponent<BattleMover>();
+    }
+
+    public void DoAction(BattleAction action)
+    {
+        if (mover == null || mover.IsMoving) return;
+
+        switch (action)
+        {
+            case BattleAction.Attack:
+                mover.TryMoveBy(ATTACK);
+                break;
+
+            case BattleAction.Defend:
+                mover.TryMoveBy(-DEFEND);
+                break;
+        }
+    }
 }
