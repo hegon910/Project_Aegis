@@ -1,4 +1,4 @@
 ID,left_success_delta_politics,left_success_delta_military,left_success_delta_supplies,left_success_delta_leadership,left_success_delta_war,left_success_delta_karma,left_fail_delta_politics,left_fail_delta_military,left_fail_delta_supplies,left_fail_delta_leadership,left_fail_delta_war,left_fail_delta_karma,left_success_threshold,left_fail_threshold,right_success_delta_politics,right_success_delta_military,right_success_delta_supplies,right_success_delta_leadership,right_success_delta_war,right_success_delta_karma,right_fail_delta_politics,right_fail_delta_military,right_fail_delta_supplies,right_fail_delta_leadership,right_fail_delta_war,right_fail_delta_karma,right_success_threshold,right_fail_threshold
-1,5,10,20,5,0,10,-15,-20,-10,-10,0,-10,"""supplies,>70""","""supplies,<30""",10,5,-15,10,5,-5,-10,-5,-15,-10,-5,0,"""supplies,>60""","""supplies,<20"""
-2,20,15,-10,10,5,0,-5,5,0,0,-5,5,"""military,>60""","""military,<30""",5,-20,5,0,-10,0,-10,10,5,-5,0,-5,"""politics,>70""","""politics,<20"""
-3,10,-15,0,20,0,10,-15,10,0,-15,0,-5,"""politics,>50""","""politics,<30""",-5,5,0,-5,5,0,10,-5,0,-10,-5,10,"""leadership,>80""","""leadership,<40"""
+1,5,10,20,5,0,10,-15,-20,-10,-10,0,-10,"supplies,>70","supplies,<30",10,5,-15,10,5,-5,-10,-5,-15,-10,-5,0,"supplies,>60","supplies,<20"
+2,20,15,-10,10,5,0,-5,5,0,0,-5,5,"military,>60","military,<30",5,-20,5,0,-10,0,-10,10,5,-5,0,-5,"politics,>70","politics,<20"
+3,10,-15,0,20,0,10,-15,10,0,-15,0,-5,"politics,>50","politics,<30",-5,5,0,-5,5,0,10,-5,0,-10,-5,10,"leadership,>80","leadership,<40"
