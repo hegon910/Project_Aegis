@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
@@ -40,17 +40,17 @@ public class DataManager : MonoBehaviour
 
         if (stringData == null || rewardData == null)
         {
-            Debug.LogError($"Event data with ID {id} not found.");
+            Debug.LogError($"이벤트 데이터를 찾을수없습니다 : {id}");
             return null;
         }
 
         EventData eventData = ScriptableObject.CreateInstance<EventData>();
 
-        // 1. 기본 정보 매핑
-        eventData.eventName = $"Event_{id}"; // 주석: CSV에 이벤트 이름이 없어 ID로 임시 생성
+        // 기본 정보
+        eventData.eventName = $"이벤트 : {id}"; // CSV에 이벤트 이름이 없어 ID로 임시 생성
         eventData.dialogue = stringData.eventText;
 
-        // 2. 왼쪽 선택지 정보 매핑
+        // 왼쪽 선택지 정보
         eventData.leftChoice = new EventChoice
         {
             choiceText = stringData.leftChoiceText,
@@ -76,7 +76,7 @@ public class DataManager : MonoBehaviour
         if (rewardData.left_fail_delta_war != 0) eventData.leftChoice.failOutcome.parameterChanges.Add(new ParameterChange { parameterType = ParameterType.전세, valueChange = rewardData.left_fail_delta_war });
         if (rewardData.left_fail_delta_karma != 0) eventData.leftChoice.failOutcome.parameterChanges.Add(new ParameterChange { parameterType = ParameterType.카르마, valueChange = rewardData.left_fail_delta_karma });
 
-        // 3. 오른쪽 선택지 정보 매핑
+        // 오른쪽 선택지 정보 매핑
         eventData.rightChoice = new EventChoice
         {
             choiceText = stringData.rightChoiceText,
