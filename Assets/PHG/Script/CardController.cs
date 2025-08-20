@@ -16,6 +16,8 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     private string leftChoiceTextString;
     private string rightChoiceTextString;
 
+    private bool isPreviewing = false;
+    private bool wasRightPreview = false;
     void Awake()
     {
         rectTransform = GetComponent<RectTransform>();
@@ -30,6 +32,7 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
     public void OnBeginDrag(PointerEventData eventData) { }
 
+
     public void OnDrag(PointerEventData eventData)
     {
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
@@ -42,7 +45,11 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         rectTransform.anchoredPosition = new Vector2(localPoint.x, initialPosition.y);
         rectTransform.localEulerAngles = new Vector3(0, 0, -distanceMoved * 0.1f);
 
-        float threshold = 50f, maxSwipe = 300f;
+        // ★★★ 수정된 부분: 두 기능을 모두 합쳤습니다. ★★★
+        float threshold = 50f;
+
+        // 1. (복구된 기능) 선택지 텍스트 표시
+        float maxSwipe = 300f;
         if (distanceMoved > threshold)
         {
             choiceText.text = rightChoiceTextString;
@@ -57,6 +64,34 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         {
             choiceText.text = "";
         }
+
+        // 2. (유지된 기능) 토글 미리보기
+        if (distanceMoved > threshold) // 오른쪽으로 기울였을 때
+        {
+            if (!isPreviewing || !wasRightPreview)
+            {
+                flowSimulator.PreviewAffectedParameters(true);
+                isPreviewing = true;
+                wasRightPreview = true;
+            }
+        }
+        else if (distanceMoved < -threshold) // 왼쪽으로 기울였을 때
+        {
+            if (!isPreviewing || wasRightPreview)
+            {
+                flowSimulator.PreviewAffectedParameters(false);
+                isPreviewing = true;
+                wasRightPreview = false;
+            }
+        }
+        else // 중앙 근처로 돌아왔을 때
+        {
+            if (isPreviewing)
+            {
+                flowSimulator.ClearParameterPreview();
+                isPreviewing = false;
+            }
+        }
     }
 
     public void OnEndDrag(PointerEventData eventData)
@@ -65,11 +100,18 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
         if (Mathf.Abs(distanceMoved) > 250f)
         {
+            // 이 부분이 이제 정상적으로 호출됩니다.
             flowSimulator.HandleChoice(distanceMoved > 0);
             AnimateCardOffscreen();
         }
         else
         {
+            // 드래그가 충분하지 않을 때만 제자리로 돌아옵니다.
+            if (isPreviewing)
+            {
+                flowSimulator.ClearParameterPreview();
+                isPreviewing = false;
+            }
             rectTransform.DOAnchorPos(initialPosition, 0.3f).SetEase(Ease.OutBack);
             rectTransform.DORotate(Vector3.zero, 0.3f).SetEase(Ease.OutBack);
             choiceText.text = "";

@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 public class UIFlowSimulator : MonoBehaviour
 {
@@ -8,6 +9,7 @@ public class UIFlowSimulator : MonoBehaviour
     [SerializeField] private UIPanelController uiPanelController;
     [SerializeField] private SituationCardController situationCardController;
     [SerializeField] private CardController cardController;
+    [SerializeField] private ParameterUIController parameterUIController;
 
     [Header("디버깅 모드")]
     [SerializeField] private bool forceDebugMode = false;
@@ -28,6 +30,12 @@ public class UIFlowSimulator : MonoBehaviour
 
     private void LoadEvent(int id)
     {
+        if (parameterUIController != null)
+        {
+            parameterUIController.ClearAllToggles();
+        }
+
+
         currentLiveEventData = null;
         currentDebugEventData = null;
 
@@ -129,6 +137,54 @@ public class UIFlowSimulator : MonoBehaviour
         eventId++;
         LoadEvent(eventId);
     }
+
+    /// <summary>
+    /// (핵심 기능) 카드 드래그 시, 변경될 파라미터 토글을 미리 보여줍니다.
+    /// </summary>
+    public void PreviewAffectedParameters(bool isRightChoice)
+    {
+        EventChoice choice = null;
+        if (currentLiveEventData != null)
+        {
+            choice = isRightChoice ? currentLiveEventData.rightChoice : currentLiveEventData.leftChoice;
+        }
+        else if (currentDebugEventData != null)
+        {
+            choice = isRightChoice ? currentDebugEventData.rightChoice : currentDebugEventData.leftChoice;
+        }
+
+        if (choice == null) return;
+
+        // 성공/실패 결과에 포함된 모든 파라미터를 중복 없이 합칩니다.
+        var affectedTypes = new HashSet<ParameterType>();
+        foreach (var change in choice.successOutcome.parameterChanges)
+        {
+            if (change.valueChange != 0) affectedTypes.Add(change.parameterType);
+        }
+        foreach (var change in choice.failOutcome.parameterChanges)
+        {
+            if (change.valueChange != 0) affectedTypes.Add(change.parameterType);
+        }
+
+        var previewChanges = affectedTypes.Select(type => new ParameterChange { parameterType = type, valueChange = 1 }).ToList();
+
+        if (parameterUIController != null)
+        {
+            parameterUIController.UpdateAffectedToggles(previewChanges);
+        }
+    }
+
+    /// <summary>
+    /// (핵심 기능) 카드 드래그를 멈추면 미리보기 토글을 모두 끕니다.
+    /// </summary>
+    public void ClearParameterPreview()
+    {
+        if (parameterUIController != null)
+        {
+            parameterUIController.ClearAllToggles();
+        }
+    }
+
 
     private bool CheckCondition(string condition)
     {

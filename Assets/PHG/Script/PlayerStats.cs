@@ -1,10 +1,15 @@
 using UnityEngine;
 using System.Collections.Generic;
-
+using System;
 // namespace PHG 삭제
 public class PlayerStats : MonoBehaviour
 {
+
     public static PlayerStats Instance { get; private set; }
+
+    // 능력치 변경 이벤트를 선언합니다.
+    // <어떤 능력치가, 몇 만큼 변해서, 현재 몇이 되었는지>를 알려줍니다.
+    public static event Action<ParameterType, int, int> OnStatChanged;
 
     private Dictionary<ParameterType, int> stats = new Dictionary<ParameterType, int>();
 
@@ -45,6 +50,9 @@ public class PlayerStats : MonoBehaviour
             {
                 stats[change.parameterType] += change.valueChange;
                 Debug.Log($"<color=cyan>스탯 변경: {change.parameterType}이(가) {change.valueChange}만큼 변경되어 현재 {stats[change.parameterType]}입니다.</color>");
+
+                // 능력치 변경 이벤트를 방송합니다.
+                OnStatChanged?.Invoke(change.parameterType, change.valueChange, stats[change.parameterType]);
             }
         }
     }

@@ -25,33 +25,33 @@ MonoBehaviour:
         \uAC70\uB9AC\uBA70 \uB3C4\uB9DD\uAC04\uB2E4."
       parameterChanges:
       - parameterType: 0
-        valueChange: 5
+        valueChange: 0
       - parameterType: 1
-        valueChange: 3
+        valueChange: 10
       - parameterType: 2
-        valueChange: 4
+        valueChange: 10
       - parameterType: 3
-        valueChange: -2
+        valueChange: -10
       - parameterType: 4
-        valueChange: 1
+        valueChange: 0
       - parameterType: 5
-        valueChange: -1
+        valueChange: 20
     failOutcome:
       outcomeText: "<color=red>\uC2E4\uD328 </color>\\n\uAC00\uBC29\uC18D\uC5D0 \uD3ED\uD0C4\uC774
         \uD3ED\uBC1C\uD558\uC5EC \uBCD1\uB825\uC5D0 \uC190\uC2E4\uC744 \uC785\uC5C8\uB2E4."
       parameterChanges:
       - parameterType: 0
-        valueChange: -1
+        valueChange: 0
       - parameterType: 1
-        valueChange: -2
+        valueChange: -10
       - parameterType: 2
-        valueChange: 0
+        valueChange: -10
       - parameterType: 3
-        valueChange: -2
+        valueChange: -10
       - parameterType: 4
-        valueChange: -2
+        valueChange: -10
       - parameterType: 5
-        valueChange: 0
+        valueChange: 10
   rightChoice:
     choiceText: "\uBC1B\uC544\uB4DC\uB9B0\uB2E4."
     successCondition: "\uB9AC\uB354\uC2ED,>20"
@@ -61,31 +61,31 @@ MonoBehaviour:
         \uB418\uC5B4 \uBCD1\uC0AC\uB4E4\uC758 \uC0AC\uAE30\uAC00 \uC62C\uB77C\uAC14\uB2E4."
       parameterChanges:
       - parameterType: 0
-        valueChange: 0
+        valueChange: 20
       - parameterType: 1
         valueChange: 0
       - parameterType: 2
-        valueChange: 0
+        valueChange: -10
       - parameterType: 3
         valueChange: 0
       - parameterType: 4
-        valueChange: 0
+        valueChange: 10
       - parameterType: 5
-        valueChange: 0
+        valueChange: 20
     failOutcome:
       outcomeText: "<color=red>\uC2E4\uD328</color>\\n\uBC24\uB9C8\uB2E4 \uAC1C\uAC00
         \uC9D6\uB294 \uBC14\uB78C\uC5D0 \uAE30\uB3C4\uBE44\uB2C9\uC5D0 \uC2E4\uD328\uD558\uACE0
         \uBCD1\uC0AC\uB4E4\uC774 \uC7A0\uC744 \uC798 \uC218 \uC5C6\uC5C8\uB2E4."
       parameterChanges:
       - parameterType: 0
-        valueChange: 0
+        valueChange: -10
       - parameterType: 1
         valueChange: 0
       - parameterType: 2
-        valueChange: 0
+        valueChange: -5
       - parameterType: 3
         valueChange: 0
       - parameterType: 4
         valueChange: 0
       - parameterType: 5
-        valueChange: 0
+        valueChange: 10
