@@ -15,7 +15,6 @@ MonoBehaviour:
   Keys: 01000000
   Values:
   - {fileID: 6359357163627931060}
---- !u!114 &6359357163627931060
 MonoBehaviour:
   m_ObjectHideFlags: 2
   m_CorrespondingSourceObject: {fileID: 0}
@@ -29,7 +28,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_LoaderManagerInstance: {fileID: 7141798795384202887}
   m_InitManagerOnStart: 1
---- !u!114 &7141798795384202887
 MonoBehaviour:
   m_ObjectHideFlags: 2
   m_CorrespondingSourceObject: {fileID: 0}
