@@ -2499,7 +2499,6 @@ GameObject:
   - component: {fileID: 8929980382474116086}
   - component: {fileID: 1841914536119662210}
   - component: {fileID: 1603206916621453608}
-  - component: {fileID: 9211748793145377957}
   m_Layer: 5
   m_Name: ParameterEventCanvas
   m_TagString: Untagged
@@ -2591,20 +2590,6 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
---- !u!114 &9211748793145377957
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4231055131587908799}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8c55f1f20b584a5418905a52e1aadb49, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  characterImage: {fileID: 4185815856657639445}
-  characterNameText: {fileID: 5603925535751527739}
 --- !u!1 &4570819941460714299
 GameObject:
   m_ObjectHideFlags: 0
@@ -2911,7 +2896,7 @@ MonoBehaviour:
   karmaBorderImage: {fileID: 1537091625730197971}
   karmaColorGradient:
     serializedVersion: 2
-    key0: {r: 0.066037714, g: 0.066037714, b: 0.066037714, a: 1}
+    key0: {r: 0, g: 0, b: 0, a: 1}
     key1: {r: 1, g: 1, b: 1, a: 1}
     key2: {r: 0, g: 0, b: 0, a: 0}
     key3: {r: 0, g: 0, b: 0, a: 0}
@@ -3207,8 +3192,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 447, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
+  m_AnchoredPosition: {x: 446.125, y: 0}
+  m_SizeDelta: {x: 101.75, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1417977466681414677
 CanvasRenderer:
