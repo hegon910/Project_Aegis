@@ -6,65 +6,59 @@ public enum BattleAction { None, Attack, Defend }
 
 public class BattleController : MonoBehaviour
 {
-    [Header("전장 참조/인덱스")]
     [SerializeField] BattleGround ground;
-    [SerializeField] int currentIndex = 0;
-
-    [Header("이동 설정")]
+    [SerializeField] int currentIndex;
     [SerializeField] float moveSpeed = 5f;
+    [SerializeField] int attackStep = 4;
+    [SerializeField] int defendStep = 1;
+    [SerializeField] int direction = +1; // Player=1, Enemy=-1
+    public int Direction => direction;     // Player=1, Enemy=-1
+    public int AttackStep => attackStep;   // 4
+    public int DefendStep => defendStep;   // 1
+    public int CurrentIndex => currentIndex;
 
-    [Header("행동 파라미터")]
-    [SerializeField] int attackStep = 4;   // 전진 칸 수
-    [SerializeField] int defendStep = 1;   // 후퇴 칸 수
-    [SerializeField] int direction = 1;    // 플레이어:+1, 적:-1
-
-    bool isMoving = false;
-    Vector3 targetPos;
-
-    public bool IsBusy => isMoving;
+    bool isMoving;
+    Coroutine moveRoutine;
 
     void Start()
     {
         if (!ground) ground = FindObjectOfType<BattleGround>();
-        if (ground) transform.position = ground.GetGroundPos(currentIndex);
+        transform.position = ground.GetGroundPos(currentIndex);
     }
 
     public void DoAction(BattleAction action)
     {
-        if (isMoving || !ground) return;
-
-        switch (action)
-        {
-            case BattleAction.Attack:
-                TryMoveBy(direction * attackStep);
-                break;
-            case BattleAction.Defend:
-                TryMoveBy(-direction * defendStep);
-                break;
-        }
-    }
-
-    void TryMoveBy(int step)
-    {
         if (isMoving) return;
+        int step = (action == BattleAction.Attack) ? direction * attackStep : -direction * defendStep;
+        int next = Mathf.Clamp(currentIndex + step, 0, ground.LaneLength - 1);
+        if (next == currentIndex) return;
 
-        int nextIndex = Mathf.Clamp(currentIndex + step, 0, ground.LaneLength - 1);
-        if (nextIndex == currentIndex) return;
-
-        currentIndex = nextIndex;
-        targetPos = ground.GetGroundPos(currentIndex);
-        StartCoroutine(MoveToTarget());
+        currentIndex = next;
+        if (moveRoutine != null) StopCoroutine(moveRoutine);
+        moveRoutine = StartCoroutine(MoveTo(ground.GetGroundPos(currentIndex)));
     }
 
-    IEnumerator MoveToTarget()
+    public void CrushResult(int index)
+    {
+        index = Mathf.Clamp(index, 0, ground.LaneLength - 1);
+        if (moveRoutine != null) StopCoroutine(moveRoutine);
+        currentIndex = index;
+        transform.position = ground.GetGroundPos(currentIndex);
+        isMoving = false;
+        moveRoutine = null;
+    }
+
+    IEnumerator MoveTo(Vector3 target)
     {
         isMoving = true;
-        while (Vector3.Distance(transform.position, targetPos) > 0.01f)
+        while (Vector3.Distance(transform.position, target) > 0.01f)
         {
-            transform.position = Vector3.MoveTowards(transform.position, targetPos, moveSpeed * Time.deltaTime);
+            transform.position = Vector3.MoveTowards(transform.position, target, moveSpeed * Time.deltaTime);
             yield return null;
         }
-        transform.position = targetPos;
+        transform.position = target;
         isMoving = false;
     }
+
+    public bool IsBusy => isMoving;
 }
