@@ -6,34 +6,65 @@ public enum BattleAction { None, Attack, Defend }
 
 public class BattleController : MonoBehaviour
 {
-    [SerializeField] BattleMover mover;
+    [Header("전장 참조/인덱스")]
+    [SerializeField] BattleGround ground;
+    [SerializeField] int currentIndex = 0;
 
-    [Header("전진/후퇴 스텝")]
-    [SerializeField] int attackStep = 4;   // 전진
-    [SerializeField] int defendStep = 1;   // 후퇴
+    [Header("이동 설정")]
+    [SerializeField] float moveSpeed = 5f;
 
-    [Header("방향 설정")]
-    [SerializeField] int direction = 1;    // 플레이어: +1(오른쪽 전진), 적: -1(왼쪽 전진)
+    [Header("행동 파라미터")]
+    [SerializeField] int attackStep = 4;   // 전진 칸 수
+    [SerializeField] int defendStep = 1;   // 후퇴 칸 수
+    [SerializeField] int direction = 1;    // 플레이어:+1, 적:-1
 
-    void Awake()
+    bool isMoving = false;
+    Vector3 targetPos;
+
+    public bool IsBusy => isMoving;
+
+    void Start()
     {
-        if (!mover) mover = GetComponent<BattleMover>();
+        if (!ground) ground = FindObjectOfType<BattleGround>();
+        if (ground) transform.position = ground.GetGroundPos(currentIndex);
     }
 
     public void DoAction(BattleAction action)
     {
-        if (mover == null || mover.IsMoving) return;
+        if (isMoving || !ground) return;
 
         switch (action)
         {
             case BattleAction.Attack:
-                mover.TryMoveBy(direction * attackStep);
+                TryMoveBy(direction * attackStep);
                 break;
             case BattleAction.Defend:
-                mover.TryMoveBy(-direction * defendStep);
+                TryMoveBy(-direction * defendStep);
                 break;
         }
     }
 
-    public bool IsBusy => mover != null && mover.IsMoving;//외부프러퍼티
+    void TryMoveBy(int step)
+    {
+        if (isMoving) return;
+
+        int nextIndex = Mathf.Clamp(currentIndex + step, 0, ground.LaneLength - 1);
+        if (nextIndex == currentIndex) return;
+
+        currentIndex = nextIndex;
+        targetPos = ground.GetGroundPos(currentIndex);
+        StartCoroutine(MoveToTarget());
+    }
+
+    IEnumerator MoveToTarget()
+    {
+        isMoving = true;
+        while (Vector3.Distance(transform.position, targetPos) > 0.01f)
+        {
+            transform.position = Vector3.MoveTowards(transform.position, targetPos, moveSpeed * Time.deltaTime);
+            yield return null;
+        }
+        transform.position = targetPos;
+        isMoving = false;
+    }
 }
