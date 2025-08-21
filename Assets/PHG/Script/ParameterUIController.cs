@@ -62,7 +62,7 @@ public class ParameterUIController : MonoBehaviour
             UpdateSliderInstantly(ui, initialValue);
         }
 
-        UpdateWarInstantly(PlayerStats.Instance.GetStat(ParameterType.전세));
+        UpdateWarInstantly(PlayerStats.Instance.GetStat(ParameterType.전황));
         UpdateKarma(PlayerStats.Instance.GetStat(ParameterType.카르마));
     }
 
@@ -102,7 +102,7 @@ public class ParameterUIController : MonoBehaviour
     private void OnStatChanged(ParameterType type, int changeAmount, int newValue)
     {
         if (type == ParameterType.카르마) UpdateKarma(newValue);
-        else if (type == ParameterType.전세)
+        else if (type == ParameterType.전황)
         {
             if (changeAmount == 0) return;
             AnimateWarUpdate(newValue);

@@ -63,8 +63,7 @@ public class UIFlowSimulator : MonoBehaviour
         if (currentLiveEventData != null)
         {
             dialogue = currentLiveEventData.dialogue;
-            characterName = currentLiveEventData.characterName;
-            characterSprite = currentLiveEventData.characterSprite;
+            characterSprite = currentLiveEventData.eventSprite;
             leftChoiceText = currentLiveEventData.leftChoice.choiceText;
             rightChoiceText = currentLiveEventData.rightChoice.choiceText;
         }
