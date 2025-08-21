@@ -1,14 +1,14 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using System.Collections.Generic;
 using System;
-// namespace PHG »èÁ¦
+// namespace PHG ì‚­ì œ
 public class PlayerStats : MonoBehaviour
 {
 
     public static PlayerStats Instance { get; private set; }
 
-    // ´É·ÂÄ¡ º¯°æ ÀÌº¥Æ®¸¦ ¼±¾ğÇÕ´Ï´Ù.
-    // <¾î¶² ´É·ÂÄ¡°¡, ¸î ¸¸Å­ º¯ÇØ¼­, ÇöÀç ¸îÀÌ µÇ¾ú´ÂÁö>¸¦ ¾Ë·ÁÁİ´Ï´Ù.
+    // ëŠ¥ë ¥ì¹˜ ë³€ê²½ ì´ë²¤íŠ¸ë¥¼ ì„ ì–¸í•©ë‹ˆë‹¤.
+    // <ì–´ë–¤ ëŠ¥ë ¥ì¹˜ê°€, ëª‡ ë§Œí¼ ë³€í•´ì„œ, í˜„ì¬ ëª‡ì´ ë˜ì—ˆëŠ”ì§€>ë¥¼ ì•Œë ¤ì¤ë‹ˆë‹¤.
     public static event Action<ParameterType, int, int> OnStatChanged;
 
     private Dictionary<ParameterType, int> stats = new Dictionary<ParameterType, int>();
@@ -29,12 +29,12 @@ public class PlayerStats : MonoBehaviour
 
     private void InitializeStats()
     {
-        stats[ParameterType.Á¤Ä¡·Â] = 50;
-        stats[ParameterType.º´·Â] = 50;
-        stats[ParameterType.¹°ÀÚ] = 80;
-        stats[ParameterType.¸®´õ½Ê] = 50;
-        stats[ParameterType.Àü¼¼] = 50;
-        stats[ParameterType.Ä«¸£¸¶] = 50;
+        stats[ParameterType.ì •ì¹˜ë ¥] = 50;
+        stats[ParameterType.ë³‘ë ¥] = 50;
+        stats[ParameterType.ë¬¼ì] = 50;
+        stats[ParameterType.ë¦¬ë”ì‹­] = 50;
+        stats[ParameterType.ì „í™©] = 50;
+        stats[ParameterType.ì¹´ë¥´ë§ˆ] = 50;
     }
 
     public int GetStat(ParameterType type)
@@ -49,25 +49,25 @@ public class PlayerStats : MonoBehaviour
             if (stats.ContainsKey(change.parameterType))
             {
                 stats[change.parameterType] += change.valueChange;
-                Debug.Log($"<color=cyan>½ºÅÈ º¯°æ: {change.parameterType}ÀÌ(°¡) {change.valueChange}¸¸Å­ º¯°æµÇ¾î ÇöÀç {stats[change.parameterType]}ÀÔ´Ï´Ù.</color>");
+                Debug.Log($"<color=cyan>ìŠ¤íƒ¯ ë³€ê²½: {change.parameterType}ì´(ê°€) {change.valueChange}ë§Œí¼ ë³€ê²½ë˜ì–´ í˜„ì¬ {stats[change.parameterType]}ì…ë‹ˆë‹¤.</color>");
 
-                // ´É·ÂÄ¡ º¯°æ ÀÌº¥Æ®¸¦ ¹æ¼ÛÇÕ´Ï´Ù.
+                // ëŠ¥ë ¥ì¹˜ ë³€ê²½ ì´ë²¤íŠ¸ë¥¼ ë°©ì†¡í•©ë‹ˆë‹¤.
                 OnStatChanged?.Invoke(change.parameterType, change.valueChange, stats[change.parameterType]);
             }
         }
     }
 }
 
-// ParameterType enumÀº EventData.cs¿¡ Á¤ÀÇµÇ¾î ÀÖÀ» °ÍÀ¸·Î ¿¹»óµË´Ï´Ù.
-// ¸¸¾à ¾ø´Ù¸é ¾Æ·¡ ÄÚµå¸¦ PlayerStats.cs ÆÄÀÏ ÇÏ´Ü¿¡ Ãß°¡ÇØÁÖ¼¼¿ä.
+// ParameterType enumì€ EventData.csì— ì •ì˜ë˜ì–´ ìˆì„ ê²ƒìœ¼ë¡œ ì˜ˆìƒë©ë‹ˆë‹¤.
+// ë§Œì•½ ì—†ë‹¤ë©´ ì•„ë˜ ì½”ë“œë¥¼ PlayerStats.cs íŒŒì¼ í•˜ë‹¨ì— ì¶”ê°€í•´ì£¼ì„¸ìš”.
 /*
 public enum ParameterType
 {
-    Á¤Ä¡·Â,
-    º´·Â,
-    ¹°ÀÚ,
-    ¸®´õ½Ê,
-    Àü¼¼,
-    Ä«¸£¸¶
+    ì •ì¹˜ë ¥,
+    ë³‘ë ¥,
+    ë¬¼ì,
+    ë¦¬ë”ì‹­,
+    ì „ì„¸,
+    ì¹´ë¥´ë§ˆ
 }
 */
