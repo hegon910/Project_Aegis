@@ -8,8 +8,12 @@ public class BattleController : MonoBehaviour
 {
     [SerializeField] BattleMover mover;
 
-    const int ATTACK = 4;  // 앞으로 4칸
-    const int DEFEND = 1;  // 뒤로 1칸
+    [Header("전진/후퇴 스텝")]
+    [SerializeField] int attackStep = 4;   // 전진
+    [SerializeField] int defendStep = 1;   // 후퇴
+
+    [Header("방향 설정")]
+    [SerializeField] int direction = 1;    // 플레이어: +1(오른쪽 전진), 적: -1(왼쪽 전진)
 
     void Awake()
     {
@@ -23,12 +27,13 @@ public class BattleController : MonoBehaviour
         switch (action)
         {
             case BattleAction.Attack:
-                mover.TryMoveBy(ATTACK);
+                mover.TryMoveBy(direction * attackStep);
                 break;
-
             case BattleAction.Defend:
-                mover.TryMoveBy(-DEFEND);
+                mover.TryMoveBy(-direction * defendStep);
                 break;
         }
     }
+
+    public bool IsBusy => mover != null && mover.IsMoving;//외부프러퍼티
 }

@@ -5,13 +5,13 @@ using UnityEngine.UI;
 
 public class TestBattleUI : MonoBehaviour
 {
-    [SerializeField] BattleController controller;
+    [SerializeField] BattleTurnManager turnMgr;
     [SerializeField] Button attackButton;
     [SerializeField] Button defendButton;
 
     void Awake()
     {
-        attackButton.onClick.AddListener(() => controller.DoAction(BattleAction.Attack));
-        defendButton.onClick.AddListener(() => controller.DoAction(BattleAction.Defend));
+        attackButton.onClick.AddListener(() => turnMgr.OnClick_PlayerAttack());
+        defendButton.onClick.AddListener(() => turnMgr.OnClick_PlayerDefend());
     }
 }
