@@ -24,7 +24,7 @@ MonoBehaviour:
         \uC5EC\uC720\uB530\uC704\uB294 \uC5C6\uB2E4."
       parameterChanges:
       - parameterType: 0
-        valueChange: -10
+        valueChange: -30
       - parameterType: 1
         valueChange: 0
       - parameterType: 2

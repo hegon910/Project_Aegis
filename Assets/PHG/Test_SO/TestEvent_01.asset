@@ -26,13 +26,13 @@ MonoBehaviour:
         \uC788\uC5C8\uB2E4."
       parameterChanges:
       - parameterType: 0
-        valueChange: 0
+        valueChange: 30
       - parameterType: 1
-        valueChange: -10
+        valueChange: 0
       - parameterType: 2
-        valueChange: 10
+        valueChange: 30
       - parameterType: 3
-        valueChange: 10
+        valueChange: 30
       - parameterType: 4
         valueChange: 10
       - parameterType: 5
@@ -42,11 +42,11 @@ MonoBehaviour:
         \uC801\uAD70\uC5D0\uAC8C \uC704\uCE58\uAC00 \uB178\uCD9C\uB418\uC5C8\uB2E4."
       parameterChanges:
       - parameterType: 0
-        valueChange: 0
+        valueChange: -30
       - parameterType: 1
-        valueChange: -10
+        valueChange: 0
       - parameterType: 2
-        valueChange: -10
+        valueChange: -30
       - parameterType: 3
         valueChange: 0
       - parameterType: 4
@@ -62,9 +62,9 @@ MonoBehaviour:
         \uC544\uAD70\uC774\uC5C8\uB2E4. \uBB34\uC0AC\uD788 \uAD6C\uCD9C\uD588\uB2E4."
       parameterChanges:
       - parameterType: 0
-        valueChange: 10
+        valueChange: 30
       - parameterType: 1
-        valueChange: 10
+        valueChange: 30
       - parameterType: 2
         valueChange: 0
       - parameterType: 3
@@ -78,9 +78,9 @@ MonoBehaviour:
         \uBC15\uC77C\uBCD1\uC774 \uC0AC\uC0B4\uB418\uC5C8\uB2E4."
       parameterChanges:
       - parameterType: 0
-        valueChange: -10
+        valueChange: -30
       - parameterType: 1
-        valueChange: -10
+        valueChange: -30
       - parameterType: 2
         valueChange: 0
       - parameterType: 3
