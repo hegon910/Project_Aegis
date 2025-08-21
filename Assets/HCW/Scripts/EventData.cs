@@ -8,7 +8,7 @@ public enum ParameterType
     병력,
     물자,
     리더십,
-    전세,
+    전황,
     카르마
 }
 

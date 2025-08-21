@@ -33,14 +33,14 @@ public class DataManager : MonoBehaviour
     }
 
     // ID를 통해 두 데이터를 합쳐서 새로운 구조의 EventData로 반환하는 함수
-    public EventData GetEventDataById(int id)
+    public EventData GetEventDataById(int ID)
     {
-        var stringData = StringDataList.FirstOrDefault(data => data.id == id);
-        var rewardData = RewardDataList.FirstOrDefault(data => data.id == id);
+        var stringData = StringDataList.FirstOrDefault(data => data.id == ID);
+        var rewardData = RewardDataList.FirstOrDefault(data => data.id == ID);
 
         if (stringData == null || rewardData == null)
         {
-            Debug.LogError($"이벤트 데이터를 찾을수없습니다 : {id}");
+            Debug.LogError($"이벤트 데이터를 찾을수없습니다 : {ID}");
             return null;
         }
 
@@ -64,7 +64,7 @@ public class DataManager : MonoBehaviour
         if (rewardData.left_success_delta_military != 0) eventData.leftChoice.successOutcome.parameterChanges.Add(new ParameterChange { parameterType = ParameterType.병력, valueChange = rewardData.left_success_delta_military });
         if (rewardData.left_success_delta_supplies != 0) eventData.leftChoice.successOutcome.parameterChanges.Add(new ParameterChange { parameterType = ParameterType.물자, valueChange = rewardData.left_success_delta_supplies });
         if (rewardData.left_success_delta_leadership != 0) eventData.leftChoice.successOutcome.parameterChanges.Add(new ParameterChange { parameterType = ParameterType.리더십, valueChange = rewardData.left_success_delta_leadership });
-        if (rewardData.left_success_delta_war != 0) eventData.leftChoice.successOutcome.parameterChanges.Add(new ParameterChange { parameterType = ParameterType.전세, valueChange = rewardData.left_success_delta_war });
+        if (rewardData.left_success_delta_war != 0) eventData.leftChoice.successOutcome.parameterChanges.Add(new ParameterChange { parameterType = ParameterType.전황, valueChange = rewardData.left_success_delta_war });
         if (rewardData.left_success_delta_karma != 0) eventData.leftChoice.successOutcome.parameterChanges.Add(new ParameterChange { parameterType = ParameterType.카르마, valueChange = rewardData.left_success_delta_karma });
 
         // 왼쪽 실패 효과
@@ -72,7 +72,7 @@ public class DataManager : MonoBehaviour
         if (rewardData.left_fail_delta_military != 0) eventData.leftChoice.failOutcome.parameterChanges.Add(new ParameterChange { parameterType = ParameterType.병력, valueChange = rewardData.left_fail_delta_military });
         if (rewardData.left_fail_delta_supplies != 0) eventData.leftChoice.failOutcome.parameterChanges.Add(new ParameterChange { parameterType = ParameterType.물자, valueChange = rewardData.left_fail_delta_supplies });
         if (rewardData.left_fail_delta_leadership != 0) eventData.leftChoice.failOutcome.parameterChanges.Add(new ParameterChange { parameterType = ParameterType.리더십, valueChange = rewardData.left_fail_delta_leadership });
-        if (rewardData.left_fail_delta_war != 0) eventData.leftChoice.failOutcome.parameterChanges.Add(new ParameterChange { parameterType = ParameterType.전세, valueChange = rewardData.left_fail_delta_war });
+        if (rewardData.left_fail_delta_war != 0) eventData.leftChoice.failOutcome.parameterChanges.Add(new ParameterChange { parameterType = ParameterType.전황, valueChange = rewardData.left_fail_delta_war });
         if (rewardData.left_fail_delta_karma != 0) eventData.leftChoice.failOutcome.parameterChanges.Add(new ParameterChange { parameterType = ParameterType.카르마, valueChange = rewardData.left_fail_delta_karma });
 
         // 오른쪽 선택지 정보 매핑
@@ -90,7 +90,7 @@ public class DataManager : MonoBehaviour
         if (rewardData.right_success_delta_military != 0) eventData.rightChoice.successOutcome.parameterChanges.Add(new ParameterChange { parameterType = ParameterType.병력, valueChange = rewardData.right_success_delta_military });
         if (rewardData.right_success_delta_supplies != 0) eventData.rightChoice.successOutcome.parameterChanges.Add(new ParameterChange { parameterType = ParameterType.물자, valueChange = rewardData.right_success_delta_supplies });
         if (rewardData.right_success_delta_leadership != 0) eventData.rightChoice.successOutcome.parameterChanges.Add(new ParameterChange { parameterType = ParameterType.리더십, valueChange = rewardData.right_success_delta_leadership });
-        if (rewardData.right_success_delta_war != 0) eventData.rightChoice.successOutcome.parameterChanges.Add(new ParameterChange { parameterType = ParameterType.전세, valueChange = rewardData.right_success_delta_war });
+        if (rewardData.right_success_delta_war != 0) eventData.rightChoice.successOutcome.parameterChanges.Add(new ParameterChange { parameterType = ParameterType.전황, valueChange = rewardData.right_success_delta_war });
         if (rewardData.right_success_delta_karma != 0) eventData.rightChoice.successOutcome.parameterChanges.Add(new ParameterChange { parameterType = ParameterType.카르마, valueChange = rewardData.right_success_delta_karma });
 
         // 오른쪽 실패 효과
@@ -98,7 +98,7 @@ public class DataManager : MonoBehaviour
         if (rewardData.right_fail_delta_military != 0) eventData.rightChoice.failOutcome.parameterChanges.Add(new ParameterChange { parameterType = ParameterType.병력, valueChange = rewardData.right_fail_delta_military });
         if (rewardData.right_fail_delta_supplies != 0) eventData.rightChoice.failOutcome.parameterChanges.Add(new ParameterChange { parameterType = ParameterType.물자, valueChange = rewardData.right_fail_delta_supplies });
         if (rewardData.right_fail_delta_leadership != 0) eventData.rightChoice.failOutcome.parameterChanges.Add(new ParameterChange { parameterType = ParameterType.리더십, valueChange = rewardData.right_fail_delta_leadership });
-        if (rewardData.right_fail_delta_war != 0) eventData.rightChoice.failOutcome.parameterChanges.Add(new ParameterChange { parameterType = ParameterType.전세, valueChange = rewardData.right_fail_delta_war });
+        if (rewardData.right_fail_delta_war != 0) eventData.rightChoice.failOutcome.parameterChanges.Add(new ParameterChange { parameterType = ParameterType.전황, valueChange = rewardData.right_fail_delta_war });
         if (rewardData.right_fail_delta_karma != 0) eventData.rightChoice.failOutcome.parameterChanges.Add(new ParameterChange { parameterType = ParameterType.카르마, valueChange = rewardData.right_fail_delta_karma });
 
         return eventData;

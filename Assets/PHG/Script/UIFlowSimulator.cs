@@ -1,17 +1,17 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
 public class UIFlowSimulator : MonoBehaviour
 {
-    [Header("UI ÄÁÆ®·Ñ·¯ ÂüÁ¶")]
+    [Header("UI ì»¨íŠ¸ë¡¤ëŸ¬ ì°¸ì¡°")]
     [SerializeField] private UIPanelController uiPanelController;
     [SerializeField] private SituationCardController situationCardController;
     [SerializeField] private CardController cardController;
     [SerializeField] private ParameterUIController parameterUIController;
 
-    [Header("µğ¹ö±ë ¸ğµå")]
+    [Header("ë””ë²„ê¹… ëª¨ë“œ")]
     [SerializeField] private bool forceDebugMode = false;
     [SerializeField] private List<UIEventData> debugEventSequence;
 
@@ -56,12 +56,12 @@ public class UIFlowSimulator : MonoBehaviour
             }
         }
 
-        // µ¥ÀÌÅÍ ¼Ò½º¿¡ µû¶ó º¯¼ö ÇÒ´ç
+        // ë°ì´í„° ì†ŒìŠ¤ì— ë”°ë¼ ë³€ìˆ˜ í• ë‹¹
         if (currentLiveEventData != null)
         {
             dialogue = currentLiveEventData.dialogue;
-            characterName = currentLiveEventData.characterName;
-            characterSprite = currentLiveEventData.characterSprite;
+            //characterName = currentLiveEventData.characterName;
+            //characterSprite = currentLiveEventData.characterSprite;
             leftChoiceText = currentLiveEventData.leftChoice.choiceText;
             rightChoiceText = currentLiveEventData.rightChoice.choiceText;
         }
@@ -75,7 +75,7 @@ public class UIFlowSimulator : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("¸ğµç ÀÌº¥Æ®°¡ Á¾·áµÇ¾ú½À´Ï´Ù.");
+            Debug.LogWarning("ëª¨ë“  ì´ë²¤íŠ¸ê°€ ì¢…ë£Œë˜ì—ˆìŠµë‹ˆë‹¤.");
             if (cardController != null) cardController.gameObject.SetActive(false);
             return;
         }
@@ -84,16 +84,16 @@ public class UIFlowSimulator : MonoBehaviour
         situationCardController.Show(dialogue);
         cardController.SetChoiceTexts(leftChoiceText, rightChoiceText);
 
-        // ´ÙÀ½ ÀÌº¥Æ®°¡ ½ÃÀÛµÇ±â Á÷Àü¿¡ Ä«µåÀÇ »óÅÂ(À§Ä¡, È¸Àü)¸¦ ÃÊ±âÈ­ÇÕ´Ï´Ù.
+        // ë‹¤ìŒ ì´ë²¤íŠ¸ê°€ ì‹œì‘ë˜ê¸° ì§ì „ì— ì¹´ë“œì˜ ìƒíƒœ(ìœ„ì¹˜, íšŒì „)ë¥¼ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
         cardController.ResetCardState();
         cardController.gameObject.SetActive(true);
     }
 
     public void HandleChoice(bool isRightChoice)
     {
-        // ¡Ú¡Ú¡Ú ¼öÁ¤µÈ ºÎºĞ ¡Ú¡Ú¡Ú
-        // ¿©±â¼­ Ä«µå¸¦ Áï½Ã ºñÈ°¼ºÈ­ÇÏ´ø ¹®Á¦ÀÇ ÄÚµå¸¦ »èÁ¦Çß½À´Ï´Ù.
-        // ÀÌÁ¦ Ä«µå´Â ¿¬ÃâÀ» ¸ğµÎ ¼öÇàÇÒ ¼ö ÀÖ½À´Ï´Ù.
+        // â˜…â˜…â˜… ìˆ˜ì •ëœ ë¶€ë¶„ â˜…â˜…â˜…
+        // ì—¬ê¸°ì„œ ì¹´ë“œë¥¼ ì¦‰ì‹œ ë¹„í™œì„±í™”í•˜ë˜ ë¬¸ì œì˜ ì½”ë“œë¥¼ ì‚­ì œí–ˆìŠµë‹ˆë‹¤.
+        // ì´ì œ ì¹´ë“œëŠ” ì—°ì¶œì„ ëª¨ë‘ ìˆ˜í–‰í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.
 
         string resultTextToShow = "";
         List<ParameterChange> changes = null;
@@ -127,7 +127,7 @@ public class UIFlowSimulator : MonoBehaviour
     {
         situationCardController.UpdateText(resultText);
 
-        // ¿äÃ»ÇÏ½Å´ë·Î °á°ú È®ÀÎ ½Ã°£Àº 0.3ÃÊ·Î À¯ÁöÇÕ´Ï´Ù.
+        // ìš”ì²­í•˜ì‹ ëŒ€ë¡œ ê²°ê³¼ í™•ì¸ ì‹œê°„ì€ 0.3ì´ˆë¡œ ìœ ì§€í•©ë‹ˆë‹¤.
         yield return new WaitForSeconds(3f);
 
         uiPanelController.Hide();
@@ -139,7 +139,7 @@ public class UIFlowSimulator : MonoBehaviour
     }
 
     /// <summary>
-    /// (ÇÙ½É ±â´É) Ä«µå µå·¡±× ½Ã, º¯°æµÉ ÆÄ¶ó¹ÌÅÍ Åä±ÛÀ» ¹Ì¸® º¸¿©Áİ´Ï´Ù.
+    /// (í•µì‹¬ ê¸°ëŠ¥) ì¹´ë“œ ë“œë˜ê·¸ ì‹œ, ë³€ê²½ë  íŒŒë¼ë¯¸í„° í† ê¸€ì„ ë¯¸ë¦¬ ë³´ì—¬ì¤ë‹ˆë‹¤.
     /// </summary>
     public void PreviewAffectedParameters(bool isRightChoice)
     {
@@ -155,7 +155,7 @@ public class UIFlowSimulator : MonoBehaviour
 
         if (choice == null) return;
 
-        // ¼º°ø/½ÇÆĞ °á°ú¿¡ Æ÷ÇÔµÈ ¸ğµç ÆÄ¶ó¹ÌÅÍ¸¦ Áßº¹ ¾øÀÌ ÇÕÄ¨´Ï´Ù.
+        // ì„±ê³µ/ì‹¤íŒ¨ ê²°ê³¼ì— í¬í•¨ëœ ëª¨ë“  íŒŒë¼ë¯¸í„°ë¥¼ ì¤‘ë³µ ì—†ì´ í•©ì¹©ë‹ˆë‹¤.
         var affectedTypes = new HashSet<ParameterType>();
         foreach (var change in choice.successOutcome.parameterChanges)
         {
@@ -175,7 +175,7 @@ public class UIFlowSimulator : MonoBehaviour
     }
 
     /// <summary>
-    /// (ÇÙ½É ±â´É) Ä«µå µå·¡±×¸¦ ¸ØÃß¸é ¹Ì¸®º¸±â Åä±ÛÀ» ¸ğµÎ ²ü´Ï´Ù.
+    /// (í•µì‹¬ ê¸°ëŠ¥) ì¹´ë“œ ë“œë˜ê·¸ë¥¼ ë©ˆì¶”ë©´ ë¯¸ë¦¬ë³´ê¸° í† ê¸€ì„ ëª¨ë‘ ë•ë‹ˆë‹¤.
     /// </summary>
     public void ClearParameterPreview()
     {
