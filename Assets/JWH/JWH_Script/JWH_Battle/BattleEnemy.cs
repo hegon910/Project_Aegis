@@ -6,6 +6,8 @@ public class BattleEnemy : MonoBehaviour
 {
     [SerializeField] BattleController controller;
     [SerializeField] int hp = 5; // 임시값
+    [SerializeField] int shield = 0; // 쉴드 추가, 어차피 적은 획듯하는 경우 없음
+    const int MaxShield = 3;
 
     void Awake() 
     {
@@ -20,8 +22,12 @@ public class BattleEnemy : MonoBehaviour
 
     public void TakeDamage(int amount)//임시값
     {
-        hp = Mathf.Max(0, hp - amount);
-        Debug.Log($"Enemy HP -> {hp}");
+        int fromShield = Mathf.Min(shield, amount);
+        shield -= fromShield;
+        int remain = amount - fromShield;
+        if (remain > 0) hp = Mathf.Max(0, hp - remain);
+
+        Debug.Log($"Enemy HP -> {hp}, Shield -> {shield}");
     }
 
     public BattleController Ctrl => controller;

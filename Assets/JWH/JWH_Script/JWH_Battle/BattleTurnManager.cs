@@ -75,7 +75,8 @@ public class BattleTurnManager : MonoBehaviour
 
             case (BattleAction.Defend, BattleAction.Attack):
                 Debug.Log("수비 vs 공격 → 공격 무효, 적군 뒤로 1칸");
-                // 공격 무효 → 적만 뒤로 1
+                // 공격 무효 → 적만 뒤로 1, 플레이어 쉴드 1획득
+                player.GainShield(1);
                 SeparateEnemyOnly(meet, eBack, last);
                 break;
 
