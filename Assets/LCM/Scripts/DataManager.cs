@@ -35,8 +35,8 @@ public class DataManager : MonoBehaviour
     // ID를 통해 두 데이터를 합쳐서 새로운 구조의 EventData로 반환하는 함수
     public EventData GetEventDataById(int ID)
     {
-        var stringData = StringDataList.FirstOrDefault(data => data.id == ID);
-        var rewardData = RewardDataList.FirstOrDefault(data => data.id == ID);
+        var stringData = StringDataList.FirstOrDefault(data => data.ID == id);
+        var rewardData = RewardDataList.FirstOrDefault(data => data.ID == id);
 
         if (stringData == null || rewardData == null)
         {
@@ -109,7 +109,7 @@ public class DataManager : MonoBehaviour
 [System.Serializable]
 public class EventStringData
 {
-    public int id { get; set; }
+    public int ID { get; set; }
     public string eventText { get; set; }
     public string leftChoiceText { get; set; }
     public string rightChoiceText { get; set; }
@@ -117,12 +117,13 @@ public class EventStringData
     public string leftFailText { get; set; }
     public string rightSuccessText { get; set; }
     public string rightFailText { get; set; }
+    public string charactername { get; set; }
 }
 
 [System.Serializable]
 public class EventRewardData
 {
-    public int id { get; set; }
+    public int ID { get; set; }
     public int left_success_delta_politics { get; set; }
     public int left_success_delta_military { get; set; }
     public int left_success_delta_supplies { get; set; }
