@@ -33,20 +33,21 @@ public class DataManager : MonoBehaviour
     }
 
     // ID를 통해 두 데이터를 합쳐서 새로운 구조의 EventData로 반환하는 함수
-    public EventData GetEventDataById(int ID)
+    public EventData GetEventDataById(int id)
     {
-        var stringData = StringDataList.FirstOrDefault(data => data.ID == ID);
-        var rewardData = RewardDataList.FirstOrDefault(data => data.ID == ID);
+        var stringData = StringDataList.FirstOrDefault(data => data.ID == id);
+        var rewardData = RewardDataList.FirstOrDefault(data => data.ID == id);
 
         if (stringData == null || rewardData == null)
         {
-            Debug.LogError($"이벤트 데이터를 찾을수없습니다 : {ID}");
+            Debug.LogError($"이벤트 데이터를 찾을수없습니다 : {id}");
             return null;
         }
 
         EventData eventData = ScriptableObject.CreateInstance<EventData>();
 
         // 기본 정보
+        eventData.eventName = $"이벤트 : {id}"; // CSV에 이벤트 이름이 없어 ID로 임시 생성
         eventData.dialogue = stringData.eventText;
 
         // 왼쪽 선택지 정보
