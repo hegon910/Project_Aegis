@@ -8,6 +8,8 @@ public class BattlePlayer : MonoBehaviour
     [SerializeField] int hp = 5; // 임시값
     [SerializeField] int shield = 0; // 쉴드 추가
     const int MaxShield = 3;
+    public int HP => hp;
+    public bool IsDead => hp <= 0;
 
     void Awake() { if (!controller) controller = GetComponent<BattleController>(); }
 

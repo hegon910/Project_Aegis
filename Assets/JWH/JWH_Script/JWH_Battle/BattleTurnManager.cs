@@ -8,80 +8,135 @@ public class BattleTurnManager : MonoBehaviour
     [SerializeField] BattlePlayer player;
     [SerializeField] BattleEnemy enemy;
 
+    [Header("Turn Settings")]
+    [SerializeField] int maxTurns = 30;
+    int currentTurn = 0;
+    bool battleEnded = false;
     bool turnRunning;
 
-    public void OnClick_PlayerAttack() { if (!turnRunning) StartCoroutine(Co_Turn(BattleAction.Attack)); }
-    public void OnClick_PlayerDefend() { if (!turnRunning) StartCoroutine(Co_Turn(BattleAction.Defend)); }
+    public void OnClick_PlayerAttack() { if (!turnRunning && !IsBattleEnded) GoStartTurn(BattleAction.Attack); }
+    public void OnClick_PlayerDefend() { if (!turnRunning && !IsBattleEnded) GoStartTurn(BattleAction.Defend); }
 
-    IEnumerator Co_Turn(BattleAction playerAction)
+    void GoStartTurn(BattleAction playerAction)
     {
+        if (battleEnded) return;
+        if (currentTurn >= maxTurns)
+        {
+            Debug.Log($"턴 제한({maxTurns})에 도달 전투를 종료");
+            return;
+        }
+
+        currentTurn++;
+        Debug.Log($"Turn {currentTurn}/{maxTurns} 시작 - Player Action: {playerAction}");
+        StartCoroutine(Co_Turn(playerAction));
+    }
+
+    void EndBattle(string resultLog)
+    {
+        if (battleEnded) return;
+        battleEnded = true;
+        Debug.Log(resultLog);
+        Debug.Log("전투 종료");
+    }
+
+    void CheckWinLoseDrawAfterTurn()
+    {
+        
+        if (player.IsDead && enemy.IsDead)
+        {
+            EndBattle("무승부 동시 전멸");
+            return;
+        }
+        if (enemy.IsDead)
+        {
+            EndBattle("승리 적의 체력이 0");
+            return;
+        }
+        if (player.IsDead)
+        {
+            EndBattle("패배 플레이어의 체력이 0");
+            return;
+        }
+    }
+
+        IEnumerator Co_Turn(BattleAction playerAction)
+        {
         turnRunning = true;
 
-        // 1) 적 행동만 랜덤 결정
+        // 적 행동만 랜덤 결정
         var enemyAction = enemy.ChooseAction50();
 
-        // 2) 둘 다 동시에 이동 시작 (플레이어 입력 그대로)
+        // 둘 다 동시에 이동 시작 (플레이어 입력 그대로)
         player.Act(playerAction);
         enemy.Act(enemyAction);
 
-        // 3) 닿는 프레임 감지 & 즉시 처리
+        // 닿는 프레임 감지 즉시 처리
         int last = ground.LaneLength - 1;
         while (player.IsBusy || enemy.IsBusy)
         {
             int pIdx = ground.GetGroundIndex(player.Tf.position);
             int eIdx = ground.GetGroundIndex(enemy.Tf.position);
 
-            if (pIdx >= eIdx) // 접촉/교차
+            if (pIdx >= eIdx) // 접촉
             {
                 // 접점으로 스냅(둘을 같은 기준에 정렬)
                 int meet = Mathf.Clamp(Mathf.RoundToInt((pIdx + eIdx) * 0.5f), 0, last);
                 player.Ctrl.CrushResult(meet);
                 enemy.Ctrl.CrushResult(meet);
 
-                // === 4가지 충돌 규칙 ===
+                // 충돌규칙
                 ApplyCollisionRules(playerAction, enemyAction, meet, last);
 
-                // (충돌 처리 끝) 턴 종료
+                // 승패결정
+                CheckWinLoseDrawAfterTurn();
+                Debug.Log($"Turn {currentTurn}/{maxTurns} 종료");
                 turnRunning = false;
+                if (!battleEnded && currentTurn >= maxTurns)//무승부 30턴
+                    EndBattle($"무승부 턴 제한 {maxTurns} 소진");
+
                 yield break;
             }
             yield return null;
         }
 
-        // 4) 한 번도 안 닿았으면 그냥 종료
+        // 그냥 종료
+        Debug.Log($"Turn {currentTurn}/{maxTurns} 종료(비충돌)");
         turnRunning = false;
-    }
+        CheckWinLoseDrawAfterTurn();
+        if (!battleEnded && currentTurn >= maxTurns)
+            EndBattle($"무승부  턴 제한 {maxTurns} 소진");
+        }
 
     void ApplyCollisionRules(BattleAction pAct, BattleAction eAct, int meet, int last)
     {
-        // 분리 대상 칸 계산 (항상 최소 1칸 이상 떨어지게 보정)
+        //칸 계산 (항상 최소 1칸 이상 떨어지게 보정)
         int pBack = SafeBackIndex(player.Ctrl, meet, last); // 플레이어 뒤로 1
         int eBack = SafeBackIndex(enemy.Ctrl, meet, last); // 적 뒤로 1
 
         switch ((pAct, eAct))
         {
             case (BattleAction.Attack, BattleAction.Attack):
-                Debug.Log("공격 vs 공격 → 서로 피해 1, 각자 뒤로 1칸");
+                Debug.Log("공격 vs 공격  서로 피해 1, 각자 뒤로 1칸");
                 player.TakeDamage(1);
                 enemy.TakeDamage(1);
                 SeparateBoth(meet, pBack, eBack, last);
                 break;
 
             case (BattleAction.Attack, BattleAction.Defend):
-                Debug.Log("공격 vs 수비 → 공격 무효, 플레이어 뒤로 1칸");
-                // 공격 무효 → 플레이어만 뒤로 1
+                Debug.Log("공격 vs 수비  공격 무효, 플레이어 뒤로 1칸");
+                // 공격 무효  플레이어만 뒤로 1
                 SeparatePlayerOnly(meet, pBack, last);
                 break;
 
             case (BattleAction.Defend, BattleAction.Attack):
-                Debug.Log("수비 vs 공격 → 공격 무효, 적군 뒤로 1칸");
-                // 공격 무효 → 적만 뒤로 1, 플레이어 쉴드 1획득
+                Debug.Log("수비 vs 공격  공격 무효, 적군 뒤로 1칸");
+                // 공격 무효  적만 뒤로 1, 플레이어 쉴드 1획득
                 player.GainShield(1);
                 SeparateEnemyOnly(meet, eBack, last);
                 break;
 
             case (BattleAction.Defend, BattleAction.Defend):
-                Debug.Log("수비 vs 수비 → 서로 뒤로 1칸");
+                Debug.Log("수비 vs 수비  서로 뒤로 1칸");
                 // 서로 뒤로 1
                 SeparateBoth(meet, pBack, eBack, last);
                 break;
@@ -91,7 +146,7 @@ public class BattleTurnManager : MonoBehaviour
     // 뒤로 1칸(가장자리 보정)
     int SafeBackIndex(BattleController ctrl, int meet, int last)
     {
-        int idx = meet - ctrl.Direction; // 뒤는 -direction * 1
+        int idx = meet - ctrl.Direction; // 뒤는 direction  1
         idx = Mathf.Clamp(idx, 0, last);
         return idx;
     }
@@ -131,4 +186,9 @@ public class BattleTurnManager : MonoBehaviour
         }
         enemy.Ctrl.CrushResult(eBack);
     }
+
+    //외부로 턴 정보 넘길예정 아마 승패쪽에서
+    public int CurrentTurn => currentTurn;
+    public int MaxTurns => maxTurns;
+    public bool IsBattleEnded => battleEnded || currentTurn >= maxTurns;
 }
