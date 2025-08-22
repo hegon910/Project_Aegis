@@ -10,7 +10,7 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     private float distanceMoved;
 
     [Header("참조")]
-    public TMP_Text choiceText;
+    public SituationCardController situationCardController;
     public UIFlowSimulator flowSimulator;
 
     private string leftChoiceTextString;
@@ -18,12 +18,14 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
     private bool isPreviewing = false;
     private bool wasRightPreview = false;
+
     void Awake()
     {
         rectTransform = GetComponent<RectTransform>();
         initialPosition = rectTransform.anchoredPosition;
     }
 
+    // ★★★ 아이콘 관련 로직 삭제! 원래 함수로 복귀 ★★★
     public void SetChoiceTexts(string left, string right)
     {
         leftChoiceTextString = left;
@@ -31,7 +33,6 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     }
 
     public void OnBeginDrag(PointerEventData eventData) { }
-
 
     public void OnDrag(PointerEventData eventData)
     {
@@ -45,28 +46,32 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         rectTransform.anchoredPosition = new Vector2(localPoint.x, initialPosition.y);
         rectTransform.localEulerAngles = new Vector3(0, 0, -distanceMoved * 0.1f);
 
-        // ★★★ 수정된 부분: 두 기능을 모두 합쳤습니다. ★★★
         float threshold = 50f;
-
-        // 1. (복구된 기능) 선택지 텍스트 표시
         float maxSwipe = 300f;
+
+        string textToShow = "";
+        Color colorToShow = Color.clear;
+
         if (distanceMoved > threshold)
         {
-            choiceText.text = rightChoiceTextString;
-            choiceText.color = new Color(0.2f, 0.8f, 0.2f, Mathf.InverseLerp(threshold, maxSwipe, distanceMoved));
+            textToShow = rightChoiceTextString;
+            float alpha = Mathf.InverseLerp(threshold, maxSwipe, distanceMoved);
+            colorToShow = new Color(0.2f, 0.8f, 0.2f, alpha);
         }
         else if (distanceMoved < -threshold)
         {
-            choiceText.text = leftChoiceTextString;
-            choiceText.color = new Color(0.8f, 0.2f, 0.2f, Mathf.InverseLerp(-threshold, -maxSwipe, distanceMoved));
-        }
-        else
-        {
-            choiceText.text = "";
+            textToShow = leftChoiceTextString;
+            float alpha = Mathf.InverseLerp(-threshold, -maxSwipe, distanceMoved);
+            colorToShow = new Color(0.8f, 0.2f, 0.2f, alpha);
         }
 
-        // 2. (유지된 기능) 토글 미리보기
-        if (distanceMoved > threshold) // 오른쪽으로 기울였을 때
+        // ★★★ 아이콘 관련 로직 삭제! 텍스트와 색상만 전달 ★★★
+        situationCardController.UpdateChoicePreview(textToShow, colorToShow);
+
+        float dimmerAlpha = Mathf.InverseLerp(threshold, maxSwipe, Mathf.Abs(distanceMoved)) * 0.7f;
+        flowSimulator.UpdateDimmer(dimmerAlpha);
+
+        if (distanceMoved > threshold)
         {
             if (!isPreviewing || !wasRightPreview)
             {
@@ -75,7 +80,7 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
                 wasRightPreview = true;
             }
         }
-        else if (distanceMoved < -threshold) // 왼쪽으로 기울였을 때
+        else if (distanceMoved < -threshold)
         {
             if (!isPreviewing || wasRightPreview)
             {
@@ -84,7 +89,7 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
                 wasRightPreview = false;
             }
         }
-        else // 중앙 근처로 돌아왔을 때
+        else
         {
             if (isPreviewing)
             {
@@ -96,17 +101,16 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        choiceText.color = new Color(choiceText.color.r, choiceText.color.g, choiceText.color.b, 0);
+        situationCardController.UpdateChoicePreview("", Color.clear);
+        flowSimulator.UpdateDimmer(0f);
 
         if (Mathf.Abs(distanceMoved) > 250f)
         {
-            // 이 부분이 이제 정상적으로 호출됩니다.
             flowSimulator.HandleChoice(distanceMoved > 0);
             AnimateCardOffscreen();
         }
         else
         {
-            // 드래그가 충분하지 않을 때만 제자리로 돌아옵니다.
             if (isPreviewing)
             {
                 flowSimulator.ClearParameterPreview();
@@ -114,7 +118,6 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             }
             rectTransform.DOAnchorPos(initialPosition, 0.3f).SetEase(Ease.OutBack);
             rectTransform.DORotate(Vector3.zero, 0.3f).SetEase(Ease.OutBack);
-            choiceText.text = "";
         }
     }
 
@@ -132,6 +135,5 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         rectTransform.DOKill();
         rectTransform.anchoredPosition = initialPosition;
         rectTransform.localEulerAngles = Vector3.zero;
-        choiceText.text = "";
     }
 }

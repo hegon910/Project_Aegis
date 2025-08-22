@@ -40,7 +40,7 @@ public class PlayerStats : MonoBehaviour
         stats.Clear();
         stats[ParameterType.정치력] = 50;
         stats[ParameterType.병력] = 50;
-        stats[ParameterType.물자] = 80;
+        stats[ParameterType.물자] = 50;
         stats[ParameterType.리더십] = 50;
         stats[ParameterType.전황] = 50;
         stats[ParameterType.카르마] = 50;

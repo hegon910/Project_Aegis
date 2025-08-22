@@ -1,7 +1,9 @@
-ï»¿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq;
+using System.Collections;
+using DG.Tweening;
 
 [System.Serializable]
 public class ParameterSliderUI
@@ -10,80 +12,80 @@ public class ParameterSliderUI
     public Slider slider;
     public Image fillImage;
     public Toggle affectedToggle;
+    public Image subEventFillImage;
 }
 
 public class ParameterUIController : MonoBehaviour
 {
-    [Header("ìŠ¬ë¼ì´ë” ì„¤ì •")]
+    [Header("½½¶óÀÌ´õ ¼³Á¤")]
     public List<ParameterSliderUI> parameterSliders;
+
+    // ¡å 1¹ø ¿äÃ»: ¿ø·¡´ë·Î ±×¶óµğ¾ğÆ® »ç¿ëÀ¸·Î º¹±Í
     public Gradient sliderColorGradient;
 
-    [Header("ì „ì„¸ ìŠ¬ë¼ì´ë”")] 
-    public Slider warSlider;
-    public Image warFillImage;
+    // ¡å 1¹ø ¿äÃ»: ÆÄ¶ó¹ÌÅÍ º¯È­ Áß¿¡ Ç¥½ÃµÉ Æ¯Á¤ »ö»ó
+    [Tooltip("ÆÄ¶ó¹ÌÅÍ ¼öÄ¡°¡ º¯ÇÏ´Â µ¿¾È Ç¥½ÃµÉ »ö»ó")]
+    public Color parameterChangeColor = Color.yellow;
 
-    [Header("ì¹´ë¥´ë§ˆ í…Œë‘ë¦¬ ì„¤ì •")]
+
+    [Header("Àü¼¼ ½½¶óÀÌ´õ")]
+    public Slider warSlider;
+
+    [Header("Ä«¸£¸¶ Å×µÎ¸® ¼³Á¤")]
     public Image karmaBorderImage;
     public Gradient karmaColorGradient;
 
-    // ì´ ìŠ¤í¬ë¦½íŠ¸ê°€ í™œì„±í™”ë  ë•Œ ì´ë²¤íŠ¸ ë¦¬ìŠ¤ë„ˆë¥¼ ë“±ë¡í•©ë‹ˆë‹¤.
     void OnEnable()
     {
         PlayerStats.OnStatChanged += OnStatChanged;
     }
 
-    // ë¹„í™œì„±í™”ë  ë•Œ ë¦¬ìŠ¤ë„ˆë¥¼ í•´ì œí•©ë‹ˆë‹¤.
     void OnDisable()
     {
         PlayerStats.OnStatChanged -= OnStatChanged;
     }
 
-    // â˜…â˜…â˜… ì¶”ê°€ëœ ë¶€ë¶„ â˜…â˜…â˜…
-    // ê²Œì„ ì‹œì‘ ì‹œ, ëª¨ë“  UIì˜ ì´ˆê¸° ìƒíƒœë¥¼ ì„¤ì •í•©ë‹ˆë‹¤.
     void Start()
     {
-        // PlayerStatsê°€ ì´ˆê¸°í™”ë  ì‹œê°„ì„ ë²Œê¸° ìœ„í•´ í•œ í”„ë ˆì„ ëŒ€ê¸°í•©ë‹ˆë‹¤.
         StartCoroutine(InitializeUI());
     }
 
-    private IEnumerator<WaitForEndOfFrame> InitializeUI()
+    private IEnumerator InitializeUI()
     {
         yield return new WaitForEndOfFrame();
-
         if (PlayerStats.Instance == null) yield break;
         ClearAllToggles();
 
-        // ëª¨ë“  ìŠ¬ë¼ì´ë”ì˜ ì´ˆê¸°ê°’ì„ ì„¤ì •í•©ë‹ˆë‹¤.
         foreach (var ui in parameterSliders)
         {
             int initialValue = PlayerStats.Instance.GetStat(ui.type);
-            UpdateSlider(ui, initialValue); // ì´í™íŠ¸ ì—†ì´ UIë§Œ ì—…ë°ì´íŠ¸
+            UpdateSliderInstantly(ui, initialValue);
         }
-        int initialWar = PlayerStats.Instance.GetStat(ParameterType.ì „í™©);
-        UpdateWar(initialWar);
-        // ì¹´ë¥´ë§ˆì˜ ì´ˆê¸°ê°’ì„ ì„¤ì •í•©ë‹ˆë‹¤.
-        int initialKarma = PlayerStats.Instance.GetStat(ParameterType.ì¹´ë¥´ë§ˆ);
-        UpdateKarma(initialKarma); // ì´í™íŠ¸ ì—†ì´ UIë§Œ ì—…ë°ì´íŠ¸
+
+        UpdateWarInstantly(PlayerStats.Instance.GetStat(ParameterType.ÀüÈ²));
+        UpdateKarma(PlayerStats.Instance.GetStat(ParameterType.Ä«¸£¸¶));
     }
 
-    /// <summary>
-    /// ë³€ê²½ë  íŒŒë¼ë¯¸í„° ëª©ë¡ì„ ë°›ì•„ì™€ í•´ë‹¹í•˜ëŠ” í† ê¸€ì„ ì¼­ë‹ˆë‹¤.
-    /// </summary>
-    public void UpdateAffectedToggles(List<ParameterChange> changes)
+    // (UpdateAffectedToggles, ClearAllToggles ÇÔ¼ö´Â ÀÌÀü°ú µ¿ÀÏÇÏ¿© »ı·«)
+    public void UpdateAffectedToggles(List<ParameterChange> changes, bool isSubEvent = false)
     {
-        // 1. ìš°ì„  ëª¨ë“  í† ê¸€ì„ ë•ë‹ˆë‹¤.
         ClearAllToggles();
-
-        // 2. ë³€ê²½ëŸ‰ì´ 0ì´ ì•„ë‹Œ íŒŒë¼ë¯¸í„°ì— í•´ë‹¹í•˜ëŠ” í† ê¸€ë§Œ ì°¾ì•„ì„œ ì¼­ë‹ˆë‹¤.
         foreach (var change in changes)
         {
-            if (change.valueChange != 0)
+            if (change.valueChange == 0) continue;
+
+            ParameterSliderUI ui = parameterSliders.FirstOrDefault(s => s.type == change.parameterType);
+            if (ui == null) continue;
+
+            if (isSubEvent && ui.subEventFillImage != null)
             {
-                ParameterSliderUI ui = parameterSliders.FirstOrDefault(s => s.type == change.parameterType);
-                if (ui != null && ui.affectedToggle != null)
-                {
-                    ui.affectedToggle.isOn = true;
-                }
+                ui.subEventFillImage.gameObject.SetActive(true);
+                if (ui.affectedToggle != null) ui.affectedToggle.gameObject.SetActive(false);
+            }
+            else if (!isSubEvent && ui.affectedToggle != null)
+            {
+                ui.affectedToggle.isOn = true;
+                if (ui.subEventFillImage != null) ui.subEventFillImage.gameObject.SetActive(false);
             }
         }
     }
@@ -92,85 +94,93 @@ public class ParameterUIController : MonoBehaviour
     {
         foreach (var ui in parameterSliders)
         {
-            if (ui.affectedToggle != null)
-            {
-                ui.affectedToggle.isOn = false;
-            }
+            if (ui.affectedToggle != null) ui.affectedToggle.isOn = false;
+            if (ui.subEventFillImage != null) ui.subEventFillImage.gameObject.SetActive(false);
         }
     }
 
-
-    // PlayerStatsì—ì„œ ë³€ê²½ ì•Œë¦¼ì´ ì˜¤ë©´ ì´ í•¨ìˆ˜ê°€ í˜¸ì¶œë©ë‹ˆë‹¤.
-
     private void OnStatChanged(ParameterType type, int changeAmount, int newValue)
     {
-        // â˜…â˜…â˜… ìˆ˜ì •ëœ ë¶€ë¶„ â˜…â˜…â˜…
-        // if-else if êµ¬ì¡°ë¡œ ê° íŒŒë¼ë¯¸í„°ë¥¼ ëª…í™•í•˜ê²Œ ë¶„ë¦¬í•©ë‹ˆë‹¤.
-        if (type == ParameterType.ì¹´ë¥´ë§ˆ)
+        if (type == ParameterType.Ä«¸£¸¶) UpdateKarma(newValue);
+        else if (type == ParameterType.ÀüÈ²)
         {
-            UpdateKarma(newValue);
+            if (changeAmount == 0) return;
+            AnimateWarUpdate(newValue);
         }
-        else if (type == ParameterType.ì „í™©)
+        else
         {
-            UpdateWar(newValue);
-        }
-        else // ë‚˜ë¨¸ì§€ 4ê°œ íŒŒë¼ë¯¸í„°
-        {
+            if (changeAmount == 0) return;
             ParameterSliderUI ui = parameterSliders.FirstOrDefault(s => s.type == type);
             if (ui != null)
             {
-                UpdateSlider(ui, newValue);
+                // ¡Ú 1¹ø ¿äÃ»: »õ·Î¿î ¾Ö´Ï¸ŞÀÌ¼Ç ·ÎÁ÷À» È£Ãâ
+                AnimateSliderUpdate(ui, newValue);
                 ShowChangeEffect(ui.slider.transform, changeAmount);
             }
         }
     }
 
-    // ìŠ¬ë¼ì´ë” UIë¥¼ ì—…ë°ì´íŠ¸í•˜ëŠ” ë¡œì§ (ë¶„ë¦¬ë¨)
-    private void UpdateSlider(ParameterSliderUI ui, int currentValue)
+    // ¾Ö´Ï¸ŞÀÌ¼Ç ¾øÀÌ ½½¶óÀÌ´õ UI¸¦ Áï½Ã ¾÷µ¥ÀÌÆ®ÇÏ´Â ÇÔ¼ö
+    private void UpdateSliderInstantly(ParameterSliderUI ui, int currentValue)
     {
         if (ui == null || ui.slider == null) return;
 
-        // â˜…â˜…â˜… ìˆ˜ì •ëœ í•µì‹¬ ë¡œlic â˜…â˜…â˜…
-        // 0~100 ì‚¬ì´ì˜ ê°’ì„ 0~4 ì‚¬ì´ì˜ ê°’ìœ¼ë¡œ ë³€í™˜í•©ë‹ˆë‹¤.
-        // 1~25 -> 1, 26~50 -> 2, 51~75 -> 3, 76~100 -> 4
         float valueForSlider = Mathf.Ceil(currentValue / 25.0f);
         ui.slider.value = valueForSlider;
 
-        // ìŠ¬ë¼ì´ë” ìƒ‰ìƒì€ ë¶€ë“œëŸ¬ìš´ ë³€í™”ë¥¼ ìœ„í•´ ì›ë˜ ê°’ì„ ì‚¬ìš©í•©ë‹ˆë‹¤.
         if (ui.fillImage != null && sliderColorGradient != null)
         {
-            float normalizedOriginalValue = currentValue / 100f;
-            ui.fillImage.color = sliderColorGradient.Evaluate(normalizedOriginalValue);
+            // ¿ø·¡ ±×¶óµğ¾ğÆ® »ö»óÀ¸·Î ¼³Á¤
+            ui.fillImage.color = sliderColorGradient.Evaluate(currentValue / 100f);
         }
     }
-    private void UpdateWar(int currentValue)
+
+    /// <summary>
+    /// ¡Ú 1¹ø ¿äÃ»: ¼öÁ¤µÈ ÆÄ¶ó¹ÌÅÍ º¯È­ ¾Ö´Ï¸ŞÀÌ¼Ç
+    /// </summary>
+    private void AnimateSliderUpdate(ParameterSliderUI ui, int newTotalValue)
+    {
+        if (ui == null || ui.slider == null) return;
+
+        // 1. Áï½Ã 'º¯È­ Áß »ö»ó'À¸·Î º¯°æ
+        if (ui.fillImage != null)
+        {
+            ui.fillImage.color = parameterChangeColor;
+        }
+
+        float targetSliderValue = Mathf.Ceil(newTotalValue / 25.0f);
+
+        // 2. ½½¶óÀÌ´õ °ª¸¸ ¾Ö´Ï¸ŞÀÌ¼ÇÀ¸·Î º¯°æ
+        ui.slider.DOValue(targetSliderValue, 2f)
+            .SetEase(Ease.OutCubic)
+            .OnComplete(() => {
+                // 3. ¾Ö´Ï¸ŞÀÌ¼ÇÀÌ ³¡³ª¸é ¿ø·¡ÀÇ ±×¶óµğ¾ğÆ® '´ë±â »ö»ó'À¸·Î º¹±Í
+                UpdateSliderInstantly(ui, newTotalValue);
+            });
+    }
+
+    private void UpdateWarInstantly(int currentValue)
+    {
+        if (warSlider != null) warSlider.value = currentValue;
+    }
+
+    // ¡Ú¡Ú¡Ú ¼öÁ¤: ±âÁ¸ UpdateWar ÇÔ¼ö¸¦ ¾Ö´Ï¸ŞÀÌ¼Ç ±â´ÉÀ¸·Î º¯°æ
+    private void AnimateWarUpdate(int currentValue)
     {
         if (warSlider != null)
         {
-            // 1. ì „ì„¸ ê°’ì„ ìŠ¬ë¼ì´ë”ì— ê·¸ëŒ€ë¡œ ë°˜ì˜í•©ë‹ˆë‹¤.
-            warSlider.value = currentValue;
-
-            // 2. ìŠ¬ë¼ì´ë” ìƒ‰ìƒì„ ê·¸ë¼ë””ì–¸íŠ¸ì— ë§ì¶° ë³€ê²½í•©ë‹ˆë‹¤.
-            if (warFillImage != null && sliderColorGradient != null)
-            {
-                float normalizedValue = currentValue / 100f;
-                warFillImage.color = sliderColorGradient.Evaluate(normalizedValue);
-            }
+            warSlider.DOValue(currentValue, 2f).SetEase(Ease.OutCubic);
         }
     }
-    // ì¹´ë¥´ë§ˆ UIë¥¼ ì—…ë°ì´íŠ¸í•˜ëŠ” ë¡œì§ (ë¶„ë¦¬ë¨)
     private void UpdateKarma(int currentValue)
     {
-        if (karmaBorderImage != null)
-        {
-            float normalizedValue = currentValue / 100f;
-            karmaBorderImage.color = karmaColorGradient.Evaluate(normalizedValue);
-        }
+        if (karmaBorderImage == null) return;
+        float normalizedValue = currentValue / 100f;
+        karmaBorderImage.color = karmaColorGradient.Evaluate(normalizedValue);
     }
 
     private void ShowChangeEffect(Transform parent, int changeAmount)
     {
-        // ì´í™íŠ¸ ì—°ì¶œ ë¡œì§ (ë³€ê²½ ì—†ìŒ)
-        Debug.Log($"{parent.name} ìœ„ì¹˜ì— {(changeAmount > 0 ? "ì¦ê°€" : "ê°ì†Œ")} ì´í™íŠ¸ í‘œì‹œ!");
+        Debug.Log($"{parent.name} À§Ä¡¿¡ {(changeAmount > 0 ? "Áõ°¡" : "°¨¼Ò")} ÀÌÆåÆ® Ç¥½Ã!");
     }
 }
