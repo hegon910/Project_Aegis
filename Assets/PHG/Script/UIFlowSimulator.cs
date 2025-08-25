@@ -82,7 +82,7 @@ public class UIFlowSimulator : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("��� �̺�Ʈ�� ����Ǿ����ϴ�.");
+            Debug.LogWarning("모든 이벤트가 종료되었습니다.");
             if (cardController != null) cardController.gameObject.SetActive(false);
             return;
         }
@@ -90,7 +90,7 @@ public class UIFlowSimulator : MonoBehaviour
         uiPanelController.Show(characterSprite, characterName);
         situationCardController.Show(dialogue);
 
-        // �ڡڡ� ������ ���� ���� ����! �ؽ�Ʈ�� �����ϵ��� ���� �ڡڡ�
+        // 선택지 텍스트 설정
         cardController.SetChoiceTexts(leftChoiceText, rightChoiceText);
 
         cardController.ResetCardState();
