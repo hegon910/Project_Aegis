@@ -14,4 +14,12 @@ public class TestBattleUI : MonoBehaviour
         attackButton.onClick.AddListener(() => turnMgr.OnClick_PlayerAttack());
         defendButton.onClick.AddListener(() => turnMgr.OnClick_PlayerDefend());
     }
+
+    void Update()
+    {
+        if (!turnMgr) return;
+        bool interactable = !turnMgr.IsBattleEnded;
+        if (attackButton.interactable != interactable) attackButton.interactable = interactable;
+        if (defendButton.interactable != interactable) defendButton.interactable = interactable;
+    }
 }
