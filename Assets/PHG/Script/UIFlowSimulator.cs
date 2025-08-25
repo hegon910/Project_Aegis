@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,22 +6,22 @@ using System.Linq;
 
 public class UIFlowSimulator : MonoBehaviour
 {
-    [Header("UI ÄÁÆ®·Ñ·¯ ÂüÁ¶")]
+    [Header("UI ì»¨íŠ¸ë¡¤ëŸ¬ ì°¸ì¡°")]
     [SerializeField] private UIPanelController uiPanelController;
     [SerializeField] private SituationCardController situationCardController;
     [SerializeField] private CardController cardController;
     [SerializeField] private ParameterUIController parameterUIController;
 
-    [Header("¿¬Ãâ È¿°ú")]
+    [Header("ì—°ì¶œ íš¨ê³¼")]
     [SerializeField] private Image dimmerPanel;
 
-    [Header("µð¹ö±ë ¸ðµå")]
+    [Header("ë””ë²„ê¹… ëª¨ë“œ")]
     [SerializeField] private bool forceDebugMode = false;
     [SerializeField] private List<UIEventData> debugEventSequence;
 
     private EventData currentLiveEventData;
     private UIEventData currentDebugEventData;
-    private int eventId = 1;
+    private int eventId = 10001;
 
     void Start()
     {
@@ -77,7 +77,7 @@ public class UIFlowSimulator : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("¸ðµç ÀÌº¥Æ®°¡ Á¾·áµÇ¾ú½À´Ï´Ù.");
+            Debug.LogWarning("ï¿½ï¿½ï¿½ ï¿½Ìºï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ç¾ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.");
             if (cardController != null) cardController.gameObject.SetActive(false);
             return;
         }
@@ -85,7 +85,7 @@ public class UIFlowSimulator : MonoBehaviour
         uiPanelController.Show(characterSprite, characterName);
         situationCardController.Show(dialogue);
 
-        // ¡Ú¡Ú¡Ú ¾ÆÀÌÄÜ ¸ÅÇÎ ·ÎÁ÷ »èÁ¦! ÅØ½ºÆ®¸¸ Àü´ÞÇÏµµ·Ï ¼öÁ¤ ¡Ú¡Ú¡Ú
+        // ï¿½Ú¡Ú¡ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½! ï¿½Ø½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ú¡Ú¡ï¿½
         cardController.SetChoiceTexts(leftChoiceText, rightChoiceText);
 
         cardController.ResetCardState();
