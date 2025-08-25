@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
+using UnityEngine.EventSystems;
 using System.Collections.Generic;
-using System.Linq; // ✨ 정렬(OrderBy)을 위해 추가
+using System.Linq;
 
 public class CommanderCarouselController : MonoBehaviour
 {
@@ -8,36 +9,40 @@ public class CommanderCarouselController : MonoBehaviour
     public List<Transform> commanderButtons;
 
     [Header("Rotation Settings")]
-    [Tooltip("회전 반경 (클수록 넓게 퍼짐)")]
     public float radius = 500f;
-    [Tooltip("드래그 감도")]
-    public float dragSensitivity = 0.2f;
-    [Tooltip("자동 정렬 속도")]
+    public float dragSensitivity = 0.2f; // 이제 InputManager의 drag 값을 조절하는 용도
     public float snapSpeed = 10f;
 
     [Header("Scale Settings")]
-    [Tooltip("중앙(앞)에 있을 때 크기")]
     public Vector3 centerScale = new Vector3(1.2f, 1.2f, 1f);
-    [Tooltip("양 옆(뒤)에 있을 때 크기")]
     public Vector3 sideScale = new Vector3(0.8f, 0.8f, 1f);
 
     private float currentRotationAngle = 0f;
     private float targetRotationAngle = 0f;
     private float[] itemBaseAngles;
-
-    private bool isDragging = false;
-    private float startDragAngle;
-    private Vector2 startDragPos;
+    private bool isDragging = false; // 캐러셀이 현재 드래그에 반응 중인지 여부
 
     public int centerIndex { get; private set; }
 
-    // ✨ 겹침 순서 정렬을 위한 임시 저장 클래스
-    private class CommanderDepthInfo
+    private class CommanderDepthInfo { public Transform transform; public float zPos; }
+
+    // ✨ InputManager의 방송을 듣기 시작 (구독)
+    void OnEnable()
     {
-        public Transform transform;
-        public float zPos;
+        InputManager.OnDragStart += HandleDragStart;
+        InputManager.OnDrag += HandleDrag;
+        InputManager.OnDragEnd += HandleDragEnd;
+        InputManager.OnClick += HandleClick;
     }
 
+    // ✨ InputManager의 방송을 더 이상 듣지 않음 (구독 취소)
+    void OnDisable()
+    {
+        InputManager.OnDragStart -= HandleDragStart;
+        InputManager.OnDrag -= HandleDrag;
+        InputManager.OnDragEnd -= HandleDragEnd;
+        InputManager.OnClick -= HandleClick;
+    }
     void Start()
     {
         int count = commanderButtons.Count;
@@ -60,49 +65,66 @@ public class CommanderCarouselController : MonoBehaviour
 
     void Update()
     {
-        HandleDragInput();
-
+        // 드래그 중이 아닐 때만 목표 각도로 부드럽게 회전 (Snap)
         if (!isDragging)
         {
             currentRotationAngle = Mathf.LerpAngle(currentRotationAngle, targetRotationAngle, Time.deltaTime * snapSpeed);
         }
-
         UpdateCommanderPositions();
     }
 
-    private void HandleDragInput()
+    // --- 아래는 InputManager의 방송을 받아서 처리하는 함수들 ---
+
+    private void HandleDragStart(Vector2 dragStartPosition)
     {
-        if (Input.GetMouseButtonDown(0))
+        isDragging = true;
+    }
+
+    private void HandleDrag(Vector2 dragDelta)
+    {
+        // InputManager가 보내준 '움직인 거리'만큼만 회전
+        currentRotationAngle += dragDelta.x * dragSensitivity;
+    }
+
+    private void HandleDragEnd()
+    {
+        isDragging = false;
+
+        // 가장 가까운 아이템으로 정렬
+        float minAngleDiff = float.MaxValue;
+        int closestIndex = 0;
+        for (int i = 0; i < commanderButtons.Count; i++)
         {
-            isDragging = true;
-            startDragPos = Input.mousePosition;
-            startDragAngle = currentRotationAngle;
-        }
-
-        if (Input.GetMouseButton(0) && isDragging)
-        {
-            float dragDistance = (Input.mousePosition.x - startDragPos.x);
-            currentRotationAngle = startDragAngle + (dragDistance * dragSensitivity);
-        }
-
-        if (Input.GetMouseButtonUp(0) && isDragging)
-        {
-            isDragging = false;
-
-            float minAngleDiff = float.MaxValue;
-            int closestIndex = 0;
-
-            for (int i = 0; i < commanderButtons.Count; i++)
+            float angleDifference = Mathf.Abs(Mathf.DeltaAngle(currentRotationAngle, -itemBaseAngles[i]));
+            if (angleDifference < minAngleDiff)
             {
-                float angleDifference = Mathf.Abs(Mathf.DeltaAngle(currentRotationAngle, -itemBaseAngles[i]));
-                if (angleDifference < minAngleDiff)
+                minAngleDiff = angleDifference;
+                closestIndex = i;
+            }
+        }
+        centerIndex = closestIndex;
+        targetRotationAngle = -itemBaseAngles[centerIndex];
+    }
+
+
+    private void HandleClick(Vector2 clickPosition)
+    {
+        // UI Raycast를 통해 정확히 어떤 버튼이 클릭되었는지 확인
+        PointerEventData pointerData = new PointerEventData(EventSystem.current) { position = clickPosition };
+        List<RaycastResult> results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(pointerData, results);
+
+        if (results.Count > 0)
+        {
+            foreach (var result in results)
+            {
+                Transform clickedObject = result.gameObject.transform;
+                if (commanderButtons.Contains(clickedObject))
                 {
-                    minAngleDiff = angleDifference;
-                    closestIndex = i;
+                    OnCommanderClicked(clickedObject);
+                    break;
                 }
             }
-            centerIndex = closestIndex;
-            targetRotationAngle = -itemBaseAngles[centerIndex];
         }
     }
 
