@@ -1,8 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
+using GooglePlayGames;
+using GooglePlayGames.BasicApi;
+using UnityEngine.SocialPlatforms;
+using System.Threading.Tasks;
 
 public class GameManager : MonoBehaviour
 {
@@ -60,14 +63,27 @@ public class GameManager : MonoBehaviour
     public void OnTitlePanelTouched()
     {
         titlePanel.SetActive(false);
-        loginPanel.SetActive(true);
-    }
 
-    public void TestPlayerButtonClicked()
-    {
-        loginPanel.SetActive(false);
+        PlayGamesPlatform.Instance.Authenticate(OnAuthenticated);
+
         menuPanel.SetActive(true);
     }
+
+    private void OnAuthenticated(SignInStatus status)
+    {
+        if (status == SignInStatus.Success)
+        {
+            Debug.Log("구글 플레이 게임 서비스 로그인 성공");
+        }
+        else
+        {
+            Debug.LogError("구글 플레이 게임 서비스 로그인 실패: " + status);
+        }
+
+
+    }
+
+    
 
     public void OnNewGameButtonClicked()
     {
@@ -114,7 +130,7 @@ public class GameManager : MonoBehaviour
             Debug.Log($"{PlayerStats.Instance.GetStat(ParameterType.리더십)}");
         }
 
-        CheckGameOverConditions();
+        //CheckGameOverConditions();
 
         // 게임 상태 업데이트 로직을 여기에 추가할 수 있습니다.
         // 예: 게임 오버 조건 체크, UI 업데이트 등
