@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Cysharp.Threading.Tasks;
 
 public class EventManager : MonoBehaviour
 {
@@ -10,7 +11,9 @@ public class EventManager : MonoBehaviour
     [SerializeField]
     private EventPanelController eventPanelController;
 
+    [SerializeField]
     private List<int> allEventIds; // DataManager가 로드한 모든 이벤트 ID의 원본 리스트
+    [SerializeField]
     private List<int> eventIdPool; // 현재 플레이 가능한 이벤트 ID만 담는 리스트
 
     private void Awake()
@@ -26,17 +29,29 @@ public class EventManager : MonoBehaviour
         }
     }
 
-    private void Start()
+    private async UniTaskVoid Start()
     {
-        if (DataManager.Instance != null && DataManager.Instance.StringDataList != null)
+        if (DataManager.Instance == null)
         {
+            Debug.LogError("DataManager 인스턴스를 찾을 수 없습니다. 씬에 배치되었는지 확인하세요.");
+            return;
+        }
+
+        Debug.Log("EventManager: DataManager 초기화 완료를 기다립니다.");
+
+        try
+        {
+            await DataManager.Instance.InitializeDataAsync();
+
             allEventIds = DataManager.Instance.StringDataList.Select(data => data.ID).ToList();
-            ResetEventPool(); // 이벤트 풀 초기화
+            ResetEventPool();
+
             Debug.Log($"이벤트 매니저 초기화 완료. 총 {allEventIds.Count}개의 이벤트가 로드되었습니다.");
         }
-        else
+        catch (System.Exception ex)
         {
-            Debug.LogError("DataManager 또는 StringDataList가 초기화되지 않았습니다. Scene에 DataManager가 있는지, 실행 순서가 맞는지 확인해주세요.");
+            // 로드 실패 시 오류 처리
+            Debug.LogError($"이벤트 매니저 초기화 실패: 데이터 로드 중 오류 발생. {ex.Message}");
             allEventIds = new List<int>();
             eventIdPool = new List<int>();
         }
