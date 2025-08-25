@@ -31,6 +31,14 @@ public class BattlePlayer : MonoBehaviour
         shield = Mathf.Clamp(shield + amount, 0, MaxShield);
         Debug.Log($"Player Shield +{amount} => {shield}");
     }
+
+    public void KillByRingOut()
+    {
+        if (hp <= 0) return;
+        hp = 0;
+        Debug.Log("플레이어 링아웃");
+    }
+
     public BattleController Ctrl => controller;
     public Transform Tf => controller != null ? controller.transform : transform;
 }

@@ -387,6 +387,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   controller: {fileID: 541911174}
   hp: 5
+  shield: 0
 --- !u!212 &541911172
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -449,7 +450,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 6.53, y: 0.35483524, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.8, y: 0.8, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -813,7 +814,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -6.42, y: 0.35483524, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.8, y: 0.8, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -832,6 +833,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   controller: {fileID: 1291546677}
   hp: 5
+  shield: 0
 --- !u!1 &1330084748
 GameObject:
   m_ObjectHideFlags: 0
@@ -997,6 +999,7 @@ MonoBehaviour:
   ground: {fileID: 1731451648}
   player: {fileID: 1291546681}
   enemy: {fileID: 541911169}
+  maxTurns: 30
 --- !u!4 &1381244658
 Transform:
   m_ObjectHideFlags: 0

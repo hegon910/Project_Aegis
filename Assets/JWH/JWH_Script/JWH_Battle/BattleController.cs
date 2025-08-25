@@ -60,5 +60,13 @@ public class BattleController : MonoBehaviour
         isMoving = false;
     }
 
+    public bool RingOut(BattleAction action)
+    {
+        int step = (action == BattleAction.Attack) ? direction * attackStep : -direction * defendStep;
+        int desired = currentIndex + step;
+        int last = ground.LaneLength - 1;
+        return desired < 0 || desired > last;   // 밖으로 나가면 링아웃
+    }
+
     public bool IsBusy => isMoving;
 }

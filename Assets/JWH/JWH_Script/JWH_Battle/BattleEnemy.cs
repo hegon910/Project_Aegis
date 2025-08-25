@@ -32,6 +32,13 @@ public class BattleEnemy : MonoBehaviour
         Debug.Log($"Enemy HP -> {hp}, Shield -> {shield}");
     }
 
+    public void KillByRingOut()
+    {
+        if (hp <= 0) return;
+        hp = 0;
+        Debug.Log("Àû±º ¸µ¾Æ¿ô");
+    }
+
     public BattleController Ctrl => controller;
     public Transform Tf => controller != null ? controller.transform : transform;
 }

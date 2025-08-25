@@ -66,6 +66,21 @@ public class BattleTurnManager : MonoBehaviour
         // 적 행동만 랜덤 결정
         var enemyAction = enemy.ChooseAction50();
 
+        bool pRingOut = player.Ctrl.RingOut(playerAction);
+        bool eRingOut = enemy.Ctrl.RingOut(enemyAction);
+
+        if (pRingOut || eRingOut)
+        {
+            if (pRingOut) player.KillByRingOut();
+            if (eRingOut) enemy.KillByRingOut();
+            CheckWinLoseDrawAfterTurn();
+            Debug.Log($"Turn {currentTurn}/{maxTurns} 종료(장외 즉시 판정)");
+            turnRunning = false;
+            if (!battleEnded && currentTurn >= maxTurns)
+                EndBattle($"무승부 턴 제한 {maxTurns} 소진");
+            yield break;
+        }
+
         // 둘 다 동시에 이동 시작 (플레이어 입력 그대로)
         player.Act(playerAction);
         enemy.Act(enemyAction);
