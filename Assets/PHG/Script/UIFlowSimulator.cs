@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 
 public class UIFlowSimulator : MonoBehaviour
 {
@@ -23,13 +24,17 @@ public class UIFlowSimulator : MonoBehaviour
     private UIEventData currentDebugEventData;
     private int eventId = 10001;
 
-    void Start()
+    async UniTaskVoid Start()
     {
         if (uiPanelController != null) uiPanelController.gameObject.SetActive(false);
         if (situationCardController != null) situationCardController.gameObject.SetActive(false);
         if (cardController != null) cardController.gameObject.SetActive(false);
         if (dimmerPanel != null) dimmerPanel.color = Color.clear;
 
+        // EventManager가 준비될 때까지 기다림
+        await UniTask.WaitUntil(() => EventManager.Instance != null && EventManager.Instance.IsInitialized);
+
+        // EventManager가 준비되었으므로 첫 이벤트 로드
         LoadEvent(eventId);
     }
 
@@ -125,6 +130,12 @@ public class UIFlowSimulator : MonoBehaviour
 
     private IEnumerator TransitionToNextEvent(string resultText)
     {
+        // 현재 이벤트를 완료 목록에 추가
+        if (PlayerStats.Instance != null)
+        {
+            PlayerStats.Instance.completedEventIds.Add(eventId);
+        }
+
         situationCardController.UpdateText(resultText);
         yield return new WaitForSeconds(3f);
         uiPanelController.Hide();
