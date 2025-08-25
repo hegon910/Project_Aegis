@@ -119,6 +119,7 @@ public class EventStringData
     public string rightSuccessText { get; set; }
     public string rightFailText { get; set; }
     public string charactername { get; set; }
+    public string PageType { get; set; }
 }
 
 [System.Serializable]
