@@ -8,23 +8,22 @@ public static class Csvparser
 {
     // 따옴표 안의 쉼표는 무시하고, 따옴표 밖의 쉼표만 기준으로 분리하는 정규식
     // (?=...)은 앞을 내다보는 정규식으로, 따옴표가 짝수 개(즉, 따옴표 밖에 있는) 
-    // 위치의 쉼표만 찾습니다.
     private static readonly Regex CsvSplitRegex = new Regex(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
 
     public static List<T> Parse<T>(TextAsset csvFile) where T : new()
     {
         var dataList = new List<T>();
 
-        // 인코딩 문제로 인한 오류를 방지하기 위해 UTF-8로 파일을 읽습니다.
         string[] lines = csvFile.text.Split('\n');
-
         string[] headers = CsvSplitRegex.Split(lines[0]);
         var headerMap = new Dictionary<string, int>();
+
         for (int i = 0; i < headers.Length; i++)
         {
             string headerName = headers[i].Trim().Trim('"');
             headerMap[headerName] = i;
         }
+
 
         for (int i = 1; i < lines.Length; i++)
         {
