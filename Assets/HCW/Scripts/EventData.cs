@@ -55,6 +55,7 @@ public class EventChoice
 public class EventData : ScriptableObject
 {
     [Header("이벤트 기본 정보")]
+    public string eventName;
     public Sprite eventSprite;
 
     [TextArea(3, 10)]
