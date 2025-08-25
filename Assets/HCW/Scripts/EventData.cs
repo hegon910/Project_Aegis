@@ -51,7 +51,7 @@ public class EventChoice
 
 
 // 최종 이벤트 데이터를 담는 스크립터블 오브젝트
-[CreateAssetMenu(fileName = "New Event", menuName = "Aegis/Event Data")]
+
 public class EventData : ScriptableObject
 {
     [Header("이벤트 기본 정보")]
