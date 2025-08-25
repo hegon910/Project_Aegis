@@ -1,5 +1,5 @@
-using UnityEngine;
 using System; // Action 이벤트를 위해 필요
+using UnityEngine;
 
 public class InputManager : MonoBehaviour
 {
@@ -71,6 +71,9 @@ public class InputManager : MonoBehaviour
         {
             if (isDragging)
             {
+                // -- 스와이프 방향 감지 로직 추가 --- 
+                DetectSwipeDirection();
+
                 // 드래그 종료 이벤트 방송
                 OnDragEnd?.Invoke();
             }
@@ -81,6 +84,37 @@ public class InputManager : MonoBehaviour
             }
             isPointerDown = false;
             isDragging = false;
+        }
+    }
+
+    // --- 스와이프 방향을 감지하고 디버그 로그를 출력하는 함수 --- 
+    private void DetectSwipeDirection()
+    {
+        Vector2 swipeDelta = (Vector2)Input.mousePosition - startPos;
+
+        // X축 이동량이 Y축 이동량보다 큰 경우 (좌우 스와이프)
+        if (Mathf.Abs(swipeDelta.x) > Mathf.Abs(swipeDelta.y))
+        {
+            if (swipeDelta.x > 0)
+            {
+                Debug.Log("오른쪽으로 스와이프!");
+            }
+            else
+            {
+                Debug.Log("왼쪽으로 스와이프!");
+            }
+        }
+        // Y축 이동량이 X축 이동량보다 큰 경우 (상하 스와이프)
+        else
+        {
+            if (swipeDelta.y > 0)
+            {
+                Debug.Log("위로 스와이프!");
+            }
+            else
+            {
+                Debug.Log("아래로 스와이프!");
+            }
         }
     }
 }
