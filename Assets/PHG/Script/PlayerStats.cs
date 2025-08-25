@@ -9,6 +9,9 @@ public class PlayerStats : MonoBehaviour
 
     private Dictionary<ParameterType, int> stats = new Dictionary<ParameterType, int>();
 
+    public int playthroughCount { get; set; } = 1;
+    public List<int> completedEventIds { get; private set; } = new List<int>();
+
 #if UNITY_EDITOR
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void EditorReset()
@@ -44,6 +47,9 @@ public class PlayerStats : MonoBehaviour
         stats[ParameterType.리더십] = 50;
         stats[ParameterType.전황] = 50;
         stats[ParameterType.카르마] = 50;
+
+        playthroughCount = 1;
+        completedEventIds.Clear();
     }
 
     public int GetStat(ParameterType type)
