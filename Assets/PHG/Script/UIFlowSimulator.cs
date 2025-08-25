@@ -34,8 +34,36 @@ public class UIFlowSimulator : MonoBehaviour
         // EventManager가 준비될 때까지 기다림
         await UniTask.WaitUntil(() => EventManager.Instance != null && EventManager.Instance.IsInitialized);
 
-        // EventManager가 준비되었으므로 첫 이벤트 로드
-        LoadEvent(eventId);
+        // EventManager에게 다음 이벤트를 달라고 요청
+        RequestNextEvent();
+    }
+
+    private void RequestNextEvent()
+    {
+        if (forceDebugMode)
+        {
+            // 디버그 모드: 순차 진행 (이 부분은 디버그 시퀀스에 따라 다르게 동작할 수 있음)
+            eventId++;
+            LoadEvent(eventId);
+        }
+        else
+        {
+            // 일반 모드: EventManager에서 다음 이벤트 ID를 받아옴 (순차 또는 랜덤)
+            int nextEventId = EventManager.Instance.GetNextEventId();
+            if (nextEventId != -1)
+            {
+                eventId = nextEventId;
+                LoadEvent(eventId);
+            }
+            else
+            {
+                Debug.Log("진행할 이벤트가 없습니다.");
+                // TODO: 튜토리얼이 끝났거나 한 회차가 끝났을 때
+                // PlayerStats.Instance.playthroughCount++; 를 추가해서 회차를 + 해야함
+
+                if (cardController != null) cardController.gameObject.SetActive(false);
+            }
+        }
     }
 
     private void LoadEvent(int id)
@@ -130,8 +158,8 @@ public class UIFlowSimulator : MonoBehaviour
 
     private IEnumerator TransitionToNextEvent(string resultText)
     {
-        // 현재 이벤트를 완료 목록에 추가
-        if (PlayerStats.Instance != null)
+        // 현재 이벤트를 완료 목록에 추가 (디버그 모드가 아닐 때만)
+        if (PlayerStats.Instance != null && !forceDebugMode)
         {
             PlayerStats.Instance.completedEventIds.Add(eventId);
         }
@@ -141,8 +169,9 @@ public class UIFlowSimulator : MonoBehaviour
         uiPanelController.Hide();
         situationCardController.Hide();
         yield return new WaitUntil(() => !situationCardController.gameObject.activeInHierarchy);
-        eventId++;
-        LoadEvent(eventId);
+
+        // EventManager에게 다음 이벤트를 달라고 요청
+        RequestNextEvent();
     }
 
     public void PreviewAffectedParameters(bool isRightChoice)
