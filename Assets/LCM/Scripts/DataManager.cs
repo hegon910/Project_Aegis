@@ -155,6 +155,7 @@ public class EventStringData
     public string rightFailText { get; set; }
     public string charactername { get; set; }
     public string PageType { get; set; }
+    public string characterImage { get; set; }  
 }
 
 [System.Serializable]
