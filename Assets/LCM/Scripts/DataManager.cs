@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 
 public class DataManager : MonoBehaviour
 {
@@ -15,7 +17,6 @@ public class DataManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            LoadAllData();
         }
         else
         {
@@ -23,18 +24,52 @@ public class DataManager : MonoBehaviour
         }
     }
 
-    private void LoadAllData()
+    public async UniTask InitializeDataAsync()
     {
-        TextAsset stringCsv = Resources.Load<TextAsset>("eventStringData");
-        StringDataList = Csvparser.Parse<EventStringData>(stringCsv);
-
-        TextAsset rewardCsv = Resources.Load<TextAsset>("eventRewardData");
-        RewardDataList = Csvparser.Parse<EventRewardData>(rewardCsv);
+        await LoadAllDataAsync();
     }
+
+    private async UniTask LoadAllDataAsync()
+    {
+        var ct = this.GetCancellationTokenOnDestroy();
+
+        Debug.Log("데이터 비동기 로드 및 파싱 시작...");
+
+        try
+        {
+            var stringTask = Csvparser.ParseAsync<EventStringData>("eventStringData", ct);
+            var rewardTask = Csvparser.ParseAsync<EventRewardData>("eventRewardData", ct);
+
+            var (loadedStringList, loadedRewardList) = await UniTask.WhenAll(stringTask, rewardTask);
+
+            // 작업 완료 후 결과 할당
+            StringDataList = loadedStringList;
+            RewardDataList = loadedRewardList;
+
+            Debug.Log($"데이터 로드 및 파싱 완료. 총 데이터: {StringDataList.Count + RewardDataList.Count}개");
+        }
+        catch (System.OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            Debug.Log("데이터 로드 작업이 취소되었습니다 (GameObject 파괴).");
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"데이터 로드 중 치명적인 오류 발생: {ex.Message}");
+            throw; // 호출한 쪽으로 오류를 다시 던져서 처리를 위임
+        }
+
+    }
+
 
     // ID를 통해 두 데이터를 합쳐서 새로운 구조의 EventData로 반환하는 함수
     public EventData GetEventDataById(int id)
     {
+
+        if (StringDataList == null || RewardDataList == null)
+        {
+            return null;
+        }
+
         var stringData = StringDataList.FirstOrDefault(data => data.ID == id);
         var rewardData = RewardDataList.FirstOrDefault(data => data.ID == id);
 
@@ -119,6 +154,8 @@ public class EventStringData
     public string rightSuccessText { get; set; }
     public string rightFailText { get; set; }
     public string charactername { get; set; }
+    public string PageType { get; set; }
+    public string characterImage { get; set; }  
 }
 
 [System.Serializable]

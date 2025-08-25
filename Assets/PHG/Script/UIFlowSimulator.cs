@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 
 public class UIFlowSimulator : MonoBehaviour
 {
@@ -23,14 +24,46 @@ public class UIFlowSimulator : MonoBehaviour
     private UIEventData currentDebugEventData;
     private int eventId = 10001;
 
-    void Start()
+    async UniTaskVoid Start()
     {
         if (uiPanelController != null) uiPanelController.gameObject.SetActive(false);
         if (situationCardController != null) situationCardController.gameObject.SetActive(false);
         if (cardController != null) cardController.gameObject.SetActive(false);
         if (dimmerPanel != null) dimmerPanel.color = Color.clear;
 
-        LoadEvent(eventId);
+        // EventManager가 준비될 때까지 기다림
+        await UniTask.WaitUntil(() => EventManager.Instance != null && EventManager.Instance.IsInitialized);
+
+        // EventManager에게 다음 이벤트를 달라고 요청
+        RequestNextEvent();
+    }
+
+    private void RequestNextEvent()
+    {
+        if (forceDebugMode)
+        {
+            // 디버그 모드: 순차 진행 (이 부분은 디버그 시퀀스에 따라 다르게 동작할 수 있음)
+            eventId++;
+            LoadEvent(eventId);
+        }
+        else
+        {
+            // 일반 모드: EventManager에서 다음 이벤트 ID를 받아옴 (순차 또는 랜덤)
+            int nextEventId = EventManager.Instance.GetNextEventId();
+            if (nextEventId != -1)
+            {
+                eventId = nextEventId;
+                LoadEvent(eventId);
+            }
+            else
+            {
+                Debug.Log("진행할 이벤트가 없습니다.");
+                // TODO: 튜토리얼이 끝났거나 한 회차가 끝났을 때
+                // PlayerStats.Instance.playthroughCount++; 를 추가해서 회차를 + 해야함
+
+                if (cardController != null) cardController.gameObject.SetActive(false);
+            }
+        }
     }
 
     private void LoadEvent(int id)
@@ -77,7 +110,7 @@ public class UIFlowSimulator : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("��� �̺�Ʈ�� ����Ǿ����ϴ�.");
+            Debug.LogWarning("모든 이벤트가 종료되었습니다.");
             if (cardController != null) cardController.gameObject.SetActive(false);
             return;
         }
@@ -85,7 +118,7 @@ public class UIFlowSimulator : MonoBehaviour
         uiPanelController.Show(characterSprite, characterName);
         situationCardController.Show(dialogue);
 
-        // �ڡڡ� ������ ���� ���� ����! �ؽ�Ʈ�� �����ϵ��� ���� �ڡڡ�
+        // 선택지 텍스트 설정
         cardController.SetChoiceTexts(leftChoiceText, rightChoiceText);
 
         cardController.ResetCardState();
@@ -125,13 +158,20 @@ public class UIFlowSimulator : MonoBehaviour
 
     private IEnumerator TransitionToNextEvent(string resultText)
     {
+        // 현재 이벤트를 완료 목록에 추가 (디버그 모드가 아닐 때만)
+        if (PlayerStats.Instance != null && !forceDebugMode)
+        {
+            PlayerStats.Instance.completedEventIds.Add(eventId);
+        }
+
         situationCardController.UpdateText(resultText);
         yield return new WaitForSeconds(3f);
         uiPanelController.Hide();
         situationCardController.Hide();
         yield return new WaitUntil(() => !situationCardController.gameObject.activeInHierarchy);
-        eventId++;
-        LoadEvent(eventId);
+
+        // EventManager에게 다음 이벤트를 달라고 요청
+        RequestNextEvent();
     }
 
     public void PreviewAffectedParameters(bool isRightChoice)
