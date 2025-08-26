@@ -1,3 +1,5 @@
+// CardController.cs
+
 using UnityEngine;
 using UnityEngine.EventSystems;
 using TMPro;
@@ -11,7 +13,8 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
     [Header("참조")]
     public SituationCardController situationCardController;
-    public UIFlowSimulator flowSimulator;
+    // [수정] UIFlowSimulator 직접 참조를 IChoiceHandler 인터페이스로 변경
+    public IChoiceHandler choiceHandler;
 
     private string leftChoiceTextString;
     private string rightChoiceTextString;
@@ -25,7 +28,6 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         initialPosition = rectTransform.anchoredPosition;
     }
 
-    // ★★★ 아이콘 관련 로직 삭제! 원래 함수로 복귀 ★★★
     public void SetChoiceTexts(string left, string right)
     {
         leftChoiceTextString = left;
@@ -65,17 +67,18 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             colorToShow = new Color(0.8f, 0.2f, 0.2f, alpha);
         }
 
-        // ★★★ 아이콘 관련 로직 삭제! 텍스트와 색상만 전달 ★★★
         situationCardController.UpdateChoicePreview(textToShow, colorToShow);
 
         float dimmerAlpha = Mathf.InverseLerp(threshold, maxSwipe, Mathf.Abs(distanceMoved)) * 0.7f;
-        flowSimulator.UpdateDimmer(dimmerAlpha);
+        // [수정] choiceHandler를 통해 UpdateDimmer 호출
+        choiceHandler?.UpdateDimmer(dimmerAlpha);
 
         if (distanceMoved > threshold)
         {
             if (!isPreviewing || !wasRightPreview)
             {
-                flowSimulator.PreviewAffectedParameters(true);
+                // [수정] choiceHandler를 통해 PreviewAffectedParameters 호출
+                choiceHandler?.PreviewAffectedParameters(true);
                 isPreviewing = true;
                 wasRightPreview = true;
             }
@@ -84,7 +87,8 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         {
             if (!isPreviewing || wasRightPreview)
             {
-                flowSimulator.PreviewAffectedParameters(false);
+                // [수정] choiceHandler를 통해 PreviewAffectedParameters 호출
+                choiceHandler?.PreviewAffectedParameters(false);
                 isPreviewing = true;
                 wasRightPreview = false;
             }
@@ -93,7 +97,8 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         {
             if (isPreviewing)
             {
-                flowSimulator.ClearParameterPreview();
+                // [수정] choiceHandler를 통해 ClearParameterPreview 호출
+                choiceHandler?.ClearParameterPreview();
                 isPreviewing = false;
             }
         }
@@ -102,18 +107,21 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     public void OnEndDrag(PointerEventData eventData)
     {
         situationCardController.UpdateChoicePreview("", Color.clear);
-        flowSimulator.UpdateDimmer(0f);
+        // [수정] choiceHandler를 통해 UpdateDimmer 호출
+        choiceHandler?.UpdateDimmer(0f);
 
         if (Mathf.Abs(distanceMoved) > 250f)
         {
-            flowSimulator.HandleChoice(distanceMoved > 0);
+            // [수정] choiceHandler를 통해 HandleChoice 호출
+            choiceHandler?.HandleChoice(distanceMoved > 0);
             AnimateCardOffscreen();
         }
         else
         {
             if (isPreviewing)
             {
-                flowSimulator.ClearParameterPreview();
+                // [수정] choiceHandler를 통해 ClearParameterPreview 호출
+                choiceHandler?.ClearParameterPreview();
                 isPreviewing = false;
             }
             rectTransform.DOAnchorPos(initialPosition, 0.3f).SetEase(Ease.OutBack);

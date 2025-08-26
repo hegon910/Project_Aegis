@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
 
-public class UIFlowSimulator : MonoBehaviour
+public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 {
     [Header("UI 컨트롤러 참조")]
     [SerializeField] private UIPanelController uiPanelController;
@@ -28,13 +28,15 @@ public class UIFlowSimulator : MonoBehaviour
     {
         if (uiPanelController != null) uiPanelController.gameObject.SetActive(false);
         if (situationCardController != null) situationCardController.gameObject.SetActive(false);
-        if (cardController != null) cardController.gameObject.SetActive(false);
+        if (cardController != null)
+        {
+            cardController.gameObject.SetActive(false);
+            // [추가] CardController에게 이 스크립트가 선택지를 처리할 것이라고 알려줌
+            cardController.choiceHandler = this;
+        }
         if (dimmerPanel != null) dimmerPanel.color = Color.clear;
 
-        // EventManager가 준비될 때까지 기다림
         await UniTask.WaitUntil(() => EventManager.Instance != null && EventManager.Instance.IsInitialized);
-
-        // EventManager에게 다음 이벤트를 달라고 요청
         RequestNextEvent();
     }
 
@@ -126,6 +128,7 @@ public class UIFlowSimulator : MonoBehaviour
     }
 
 
+
     public void HandleChoice(bool isRightChoice)
     {
         string resultTextToShow = "";
@@ -155,6 +158,7 @@ public class UIFlowSimulator : MonoBehaviour
 
         StartCoroutine(TransitionToNextEvent(resultTextToShow));
     }
+
 
     private IEnumerator TransitionToNextEvent(string resultText)
     {

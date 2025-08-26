@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3bfbc0696c95cdb4298dc0a8e898e721, type: 3}
+  m_Name: TestMainScenario1_1_2_EnterRoom
+  m_EditorClassIdentifier: 
+  nodeId: 1103
+  characterName: "\uC9C0\uD718\uAD00(\uB098\uB808\uC774\uC158)"
+  characterSprite: {fileID: 21300000, guid: cf5944e3e803c92469d2eaf267f277af, type: 3}
+  storyText: "\uBB38\uC744 \uC5F4\uACE0 \uB4E4\uC5B4\uAC00\uC790 \uBD84\uC8FC\uD55C
+    \uB4EF \uC6C0\uC9C1\uC774\uB294 \uBCD1\uC0AC\uAC00 \uB208\uC5D0 \uB748\uB2E4.
+    (\uBB38 \uC5F4\uB9AC\uB294 \uC18C\uB9AC)"
+  choices:
+  - choiceText: "\"\uC800\uAE30...\""
+    nextNode: {fileID: 11400000, guid: 8a85cf8ef7b8dda489f25ec6e0c7ca94, type: 2}
+    parameterChanges: []
+  - choiceText: "\"\uD06C\uD760.\""
+    nextNode: {fileID: 11400000, guid: 8a85cf8ef7b8dda489f25ec6e0c7ca94, type: 2}
+    parameterChanges: []
