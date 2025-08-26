@@ -3,6 +3,7 @@ using GooglePlayGames.BasicApi;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class GameManager : MonoBehaviour
 {
@@ -10,6 +11,7 @@ public class GameManager : MonoBehaviour
 
     [Header("UI 참조")]
     [SerializeField] private GameObject titlePanel;
+    [SerializeField] private GameObject titleCanvas;
     [SerializeField] private GameObject loginPanel;
     [SerializeField] private GameObject menuPanel;
     [SerializeField] private GameObject overwriteWarningPanel;
@@ -19,6 +21,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject storyPanel;
     [SerializeField] private GameObject battlePanel;
     [SerializeField] private GameObject battleResultPanel;
+    [SerializeField] private TMPro.TextMeshProUGUI battleResultText;
+    [SerializeField] private GameObject InGameUIPanel;
     [SerializeField] private Button testPlayerButton;
 
     // [추가] UIFlowSimulator를 직접 제어하기 위한 참조
@@ -30,6 +34,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Button Commander2Button;
     [SerializeField] private Button Commander3Button;
 
+
+    BattlePlayer player;
+    BattleEnemy enemy;
     private bool hasSaveDate = false;
 
     private void Awake()
@@ -125,6 +132,7 @@ public class GameManager : MonoBehaviour
             PlayerStats.Instance.InitializeStats();
         }
         menuPanel.SetActive(false);
+        titleCanvas.SetActive(false);
         commanderSelectionCanvas.SetActive(true);
     }
 
@@ -164,6 +172,7 @@ public class GameManager : MonoBehaviour
     public void GoToBattlePanel()
     {
         if (storyPanel != null) storyPanel.SetActive(false);
+        if (InGameUIPanel != null) InGameUIPanel.SetActive(false);
         if (battlePanel != null)
         {
             battlePanel.SetActive(true);
@@ -178,10 +187,27 @@ public class GameManager : MonoBehaviour
 
     public void GoToBattleResultPanel()
     {
-        if (battlePanel != null) battlePanel.SetActive(false);
+       // if (battlePanel != null) battlePanel.SetActive(false);
         if (battleResultPanel != null)
         {
             battleResultPanel.SetActive(true);
+            if(player.IsDead&&enemy.IsDead ==false)
+            {
+                battleResultText.text = "패배";
+            }
+            else if(player.IsDead == false && enemy.IsDead)
+            {
+                battleResultText.text = "승리";
+            }
+            else if (player.IsDead && enemy.IsDead)
+            {
+                battleResultText.text = "무승부";
+            }
+            else
+            {
+                return;
+            }
+
         }
         else
         {

@@ -69,6 +69,8 @@ public class BattleTurnManager : MonoBehaviour
             EndBattle("패배 플레이어의 체력이 0");
             return;
         }
+
+      //  GameManager.instance.GoToBattleResultPanel();
     }
 
         IEnumerator Co_Turn(BattleAction playerAction)
