@@ -110,27 +110,35 @@ public class GameManager : MonoBehaviour
         mainGameCanvas.SetActive(true);
     }
 
-    public void GoToStoryPanel()
+    public void GoToStoryPanel() //uiflow에서 호출필요
     {
         mainGameCanvas.SetActive(false);
         storyPanel.SetActive(true);
     }
 
-    public void GoToBattlePanel()
+    public void GoToBattlePanel() //스토리 끝나면 호출
     {
         storyPanel.SetActive(false);
         battlePanel.SetActive(true);
     }
 
-    public void GoToBattleResultPanel()
+    public void GoToBattleResultPanel() //전투끝나면 호출
     {
         battlePanel.SetActive(false);
         battleResultPanel.SetActive(true);
+
+        //1~5장일 경우
+        
+        //6장일 경우 엔딩
+        //TODO 엔딩이벤트패널, 엔딩시스템...없음
     }
 
-    public void ReturnToMainGameCanvas()
+    public void ReturnToMainGameCanvas() //전투 결과 끝나면
     {
+        //플레이어 파라미터 초기화
         PlayerStats.Instance.InitializeStats();
+        //TODO 이벤트매니저에 다시 이벤트풀 초기화?
+        //TODO 전투이벤트도 초기화 할게 있으면?
 
         battleResultPanel.SetActive(false);
         mainGameCanvas.SetActive(true);
