@@ -11,6 +11,7 @@ public class DataManager : MonoBehaviour
 
     public List<EventStringData> StringDataList { get; private set; }
     public List<EventRewardData> RewardDataList { get; private set; }
+
     private void Awake()
     {
         if (Instance == null)
