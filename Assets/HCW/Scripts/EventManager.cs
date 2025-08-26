@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Cysharp.Threading.Tasks;
 
 public class EventManager : MonoBehaviour
 {
@@ -10,8 +11,12 @@ public class EventManager : MonoBehaviour
     [SerializeField]
     private EventPanelController eventPanelController;
 
-    private List<int> allEventIds; // DataManager가 로드한 모든 이벤트 ID의 원본 리스트
-    private List<int> eventIdPool; // 현재 플레이 가능한 이벤트 ID만 담는 리스트
+    // 이벤트 데이터 관련
+    private List<int> tutorialEventIds;
+    private List<int> commonEventPool;
+    private int currentTutorialIndex = 0;
+
+    public bool IsInitialized { get; private set; } = false;
 
     private void Awake()
     {
@@ -26,74 +31,126 @@ public class EventManager : MonoBehaviour
         }
     }
 
-    private void Start()
+    private async UniTaskVoid Start()
     {
-        if (DataManager.Instance != null && DataManager.Instance.StringDataList != null)
+        if (DataManager.Instance == null)
         {
-            allEventIds = DataManager.Instance.StringDataList.Select(data => data.ID).ToList();
-            ResetEventPool(); // 이벤트 풀 초기화
-            Debug.Log($"이벤트 매니저 초기화 완료. 총 {allEventIds.Count}개의 이벤트가 로드되었습니다.");
+            Debug.LogError("DataManager 인스턴스를 찾을 수 없습니다.");
+            return;
+        }
+
+        try
+        {
+            await DataManager.Instance.InitializeDataAsync();
+            
+            // 튜토리얼 ID 목록을 미리 만들어 정렬해둡니다.
+            tutorialEventIds = DataManager.Instance.StringDataList
+                .Where(data => data.PageType == "Tutorial")
+                .Select(data => data.ID)
+                .OrderBy(id => id)
+                .ToList();
+
+            // 공용 이벤트 풀을 준비합니다.
+            ResetCommonEventPool();
+
+            Debug.Log("이벤트 매니저 초기화 완료.");
+            IsInitialized = true;
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"이벤트 매니저 초기화 실패: {ex.Message}");
+        }
+    }
+
+    // 공용 이벤트 풀을 리셋하는 함수
+    private void ResetCommonEventPool()
+    {
+        if (PlayerStats.Instance == null || DataManager.Instance == null || DataManager.Instance.StringDataList == null)
+        {
+            Debug.LogError("PlayerStats 또는 DataManager가 초기화되지 않았습니다.");
+            commonEventPool = new List<int>();
+            return;
+        }
+
+        var commonEvents = DataManager.Instance.StringDataList
+            .Where(data => data.PageType == "Common");
+
+        var completedIds = new HashSet<int>(PlayerStats.Instance.completedEventIds);
+
+        List<int> filteredEventIds = commonEvents
+            .Where(data => !completedIds.Contains(data.ID))
+            .Select(data => data.ID)
+            .ToList();
+
+        commonEventPool = new List<int>(filteredEventIds);
+        Debug.Log($"공용 이벤트 풀 리셋 완료. 사용 가능한 이벤트 {commonEventPool.Count}개.");
+    }
+
+    // 다음 이벤트를 가져오는 메인 함수
+    public int GetNextEventId()
+    {
+        if (PlayerStats.Instance.playthroughCount == 1)
+        {
+            // 1회차: 튜토리얼 순차 진행
+            if (currentTutorialIndex < tutorialEventIds.Count)
+            {
+                int nextTutorialId = tutorialEventIds[currentTutorialIndex];
+                
+                // 이미 완료한 튜토리얼 이벤트는 건너뜀 (세이브/로드 시 필요)
+                if (PlayerStats.Instance.completedEventIds.Contains(nextTutorialId))
+                {
+                    currentTutorialIndex++;
+                    return GetNextEventId(); // 재귀 호출로 다음 이벤트 찾기
+                }
+                
+                currentTutorialIndex++;
+                return nextTutorialId;
+            }
+            else
+            {
+                Debug.Log("튜토리얼 완료.");
+                return -1; // 튜토리얼 종료
+            }
         }
         else
         {
-            Debug.LogError("DataManager 또는 StringDataList가 초기화되지 않았습니다. Scene에 DataManager가 있는지, 실행 순서가 맞는지 확인해주세요.");
-            allEventIds = new List<int>();
-            eventIdPool = new List<int>();
-        }
-    }
-
-    /// <summary>
-    /// 현재는 모든 이벤트를 가져오지만 추후 필터링 로직을 추가필요
-    /// </summary>
-    private void ResetEventPool()
-    {
-        // TODO: 기획서 2번 항목.
-        // 현재는 모든 이벤트를 풀에 추가합니다.
-        // 나중에는 현재 게임의 회차(RoundType), 장(PageType)에 맞는 이벤트만
-        // allEventIds 리스트에서 필터링해서 eventIdPool에 추가하는 로직이 필요
-        eventIdPool = new List<int>(allEventIds);
-    }
-
-    /// <summary>
-    /// 랜덤 이벤트를 재생, 기획서의 순서도 흐름을 따라야함
-    /// </summary>
-    public void PlayRandomEvent()
-    {
-        // 이벤트 플레이 여부 체크 (플레이할 이벤트가 풀에 남았는지 확인)
-        if (eventIdPool == null || eventIdPool.Count == 0)
-        {
-            Debug.Log("현재 조건에서 보여줄 수 있는 모든 이벤트를 다 봤습니다. 이벤트 풀을 초기화합니다.");
-            ResetEventPool();
-            
-            if (eventIdPool.Count == 0)
+            // 2회차 이상: 공용 이벤트 랜덤 진행
+            if (commonEventPool == null || commonEventPool.Count == 0)
             {
-                Debug.LogError("플레이할 이벤트가 없습니다.");
-                if(eventPanelController != null) eventPanelController.gameObject.SetActive(false);
-                return;
+                ResetCommonEventPool();
+                if (commonEventPool.Count == 0)
+                {
+                    Debug.LogWarning("모든 공용 이벤트를 완료했습니다.");
+                    return -1; // 모든 이벤트 완료
+                }
             }
+
+            int randomIndex = Random.Range(0, commonEventPool.Count);
+            int randomId = commonEventPool[randomIndex];
+            commonEventPool.RemoveAt(randomIndex);
+            return randomId;
+        }
+    }
+
+    // 이벤트를 화면에 표시하는 역할
+    public void DisplayEventById(int id)
+    {
+        if (id == -1)
+        {
+            if(eventPanelController != null) eventPanelController.gameObject.SetActive(false);
+            Debug.Log("표시할 이벤트가 없습니다.");
+            return;
         }
 
-        // 파라미터 이벤트 랜덤 선택
-        int randomIndex = Random.Range(0, eventIdPool.Count);
-        int randomId = eventIdPool[randomIndex];
+        EventData eventData = DataManager.Instance.GetEventDataById(id);
 
-        // 한번 사용한 이벤트는 풀에서 제거 (중복 방지)
-        eventIdPool.RemoveAt(randomIndex);
-
-        // 지난 회차 플레이 검색
-        // TODO: DataManager가 지난 회차 플레이 기록을 저장하고 GetEventDataById 호출 시
-        // ID에 해당하는 이벤트가 지난 회차에 플레이되었는지 확인하고,
-        // 그에 맞는 분기 데이터를(AnotherEventQuestion 등) 조합하여 EventData 반환필요
-        EventData eventData = DataManager.Instance.GetEventDataById(randomId);
-
-        // 유저 선택 및 결과 처리 (UI 표시)
         if (eventData != null && eventPanelController != null)
         {
             eventPanelController.DisplayEvent(eventData);
         }
         else
         {
-            Debug.LogError($"EventManager: EventData(ID: {randomId}) 또는 EventPanelController가 없습니다.");
+            Debug.LogError($"EventManager: EventData(ID: {id}) 또는 EventPanelController가 없습니다.");
         }
     }
 }

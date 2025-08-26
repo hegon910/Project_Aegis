@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "717049361935",
+    "project_id": "projectaegis-bfe28",
+    "storage_bucket": "projectaegis-bfe28.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:717049361935:android:5c88d316ff36603f4d157a",
+        "android_client_info": {
+          "package_name": "com.KGA.ProjectAegis"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNEZWId72Iej5ElnYlqnhmwbxTKjpbS3M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
