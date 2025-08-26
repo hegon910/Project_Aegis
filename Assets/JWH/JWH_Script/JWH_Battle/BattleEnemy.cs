@@ -10,6 +10,12 @@ public class BattleEnemy : MonoBehaviour
     const int MaxShield = 3;
     public int HP => hp;
     public bool IsDead => hp <= 0;
+    public int Shield => shield; //
+    public void ResetStatus(int hpInit = 5, int shieldInit = 0)
+    {
+        hp = Mathf.Max(0, hpInit);
+        shield = Mathf.Clamp(shieldInit, 0, 3);
+    }
 
     void Awake() 
     {
@@ -30,6 +36,13 @@ public class BattleEnemy : MonoBehaviour
         if (remain > 0) hp = Mathf.Max(0, hp - remain);
 
         Debug.Log($"Enemy HP -> {hp}, Shield -> {shield}");
+    }
+
+    public void KillByRingOut()
+    {
+        if (hp <= 0) return;
+        hp = 0;
+        Debug.Log("Àû±º ¸µ¾Æ¿ô");
     }
 
     public BattleController Ctrl => controller;
