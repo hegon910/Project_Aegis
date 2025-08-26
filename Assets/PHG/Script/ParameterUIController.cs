@@ -45,20 +45,42 @@ public class ParameterUIController : MonoBehaviour
         PlayerStats.OnStatChanged -= OnStatChanged;
     }
 
-    void Start()
-    {
-        StartCoroutine(InitializeUI());
-    }
+    //void Start()
+    //{
+    //    StartCoroutine(InitializeUI());
+    //}
+    //
+    //private IEnumerator InitializeUI()
+    //{
+    //    yield return new WaitForEndOfFrame();
+    //    if (PlayerStats.Instance == null) yield break;
+    //    ClearAllToggles();
+    //
+    //    foreach (var ui in parameterSliders)
+    //    {
+    //        int initialValue = PlayerStats.Instance.GetStat(ui.type);
+    //        UpdateSliderInstantly(ui, initialValue);
+    //    }
+    //
+    //    UpdateWarInstantly(PlayerStats.Instance.GetStat(ParameterType.전황));
+    //    UpdateKarma(PlayerStats.Instance.GetStat(ParameterType.카르마));
+    //}
 
-    private IEnumerator InitializeUI()
+    public void InitializeAndDisplayStats()
     {
-        yield return new WaitForEndOfFrame();
-        if (PlayerStats.Instance == null) yield break;
+        if (PlayerStats.Instance == null)
+        {
+            Debug.LogError("PlayerStats 인스턴스가 없어 UI를 초기화할 수 없습니다!");
+            return;
+        }
+
         ClearAllToggles();
 
         foreach (var ui in parameterSliders)
         {
             int initialValue = PlayerStats.Instance.GetStat(ui.type);
+            // 디버깅을 위해 로그 추가
+            Debug.Log($"[UI 초기화] {ui.type} 파라미터 값을 {initialValue}(으)로 설정합니다.");
             UpdateSliderInstantly(ui, initialValue);
         }
 

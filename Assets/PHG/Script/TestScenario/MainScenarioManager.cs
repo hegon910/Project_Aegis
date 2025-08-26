@@ -1,19 +1,16 @@
 // MainScenarioManager.cs
 
-using UnityEngine;
-using UnityEngine.UI;
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
 
-// [추가] MainScenarioManager가 제어할 UI 요소들을 묶어서 관리하는 전용 클래스
-// 이렇게 하면 인스펙터 창이 깔끔해지고 관리가 용이해집니다.
 [System.Serializable]
 public class MainStoryUI
 {
     [Header("메인 패널 오브젝트")]
-    public GameObject panelRoot; // storyPanel 자체의 GameObject
+    public GameObject panelRoot;
 
     [Header("캐릭터 관련")]
     public Image characterImage;
@@ -21,50 +18,73 @@ public class MainStoryUI
 
     [Header("대사")]
     public TextMeshProUGUI dialogueText;
+
+    [Header("선택지 미리보기")]
+    public Image choicePreviewImage;
+    public TextMeshProUGUI choicePreviewText;
 }
 
 public class MainScenarioManager : MonoBehaviour, IChoiceHandler
 {
     [Header("UI 컨트롤러 참조")]
-    // [수정] SituationCardController 참조를 제거하고, 필요한 UI만 남깁니다.
-    [SerializeField] private UIPanelController uiPanelController;
     [SerializeField] private CardController cardController;
     [SerializeField] private ParameterUIController parameterUIController;
     [SerializeField] private Image dimmerPanel;
 
-    [Header("메인 스토리 UI 요소")]
-    [SerializeField] private TextMeshProUGUI dialogueText;
+    [Header("메인 스토리 전용 UI")]
+    [SerializeField] private MainStoryUI mainStoryUI;
     [SerializeField] private float typingSpeed = 0.05f;
 
     [Header("시나리오 시작점")]
-    // [복원] 인스펙터에서 시작 노드를 직접 지정하는 방식을 사용합니다.
     [SerializeField] private StoryNode startingNode;
 
     private StoryNode currentNode;
     private Coroutine typingCoroutine;
     private bool IsTyping => typingCoroutine != null;
 
-    // [복원] GameManager의 제어 없이, Start()에서 자동으로 시나리오를 시작합니다.
     void Start()
     {
         if (cardController != null) cardController.choiceHandler = this;
         if (dimmerPanel != null) dimmerPanel.color = Color.clear;
 
+        if (mainStoryUI.choicePreviewText != null)
+        {
+            mainStoryUI.choicePreviewText.text = "";
+            mainStoryUI.choicePreviewText.color = Color.clear;
+        }
+
         if (startingNode != null)
         {
-            // StartScenario 함수를 직접 호출합니다.
             StartScenario(startingNode);
         }
         else
         {
             Debug.LogError("시작 노드(startingNode)가 인스펙터에 할당되지 않았습니다!");
-            // 시작할 스토리가 없으면 바로 비활성화하거나 다른 처리를 할 수 있습니다.
             gameObject.SetActive(false);
         }
     }
 
+    public void UpdateChoicePreview(string text, Color color)
+    {
+        // [추가] 이미지의 색상을 업데이트합니다.
+        if (mainStoryUI.choicePreviewImage != null)
+        {
+            // 기존 이미지의 RGB 색상은 유지한 채, 투명도(alpha) 값만 전달받은 color의 값으로 변경합니다.
+            Color imageColor = mainStoryUI.choicePreviewImage.color;
+            imageColor.a = color.a;
+            mainStoryUI.choicePreviewImage.color = imageColor;
+        }
+
+        // 기존 텍스트 업데이트 로직은 그대로 유지합니다.
+        if (mainStoryUI.choicePreviewText != null)
+        {
+            mainStoryUI.choicePreviewText.text = text;
+            mainStoryUI.choicePreviewText.color = color;
+        }
+    }
     public void StartScenario(StoryNode startNode)
     {
+        mainStoryUI.panelRoot.SetActive(true);
         DisplayNode(startNode);
     }
 
@@ -78,15 +98,20 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
 
         currentNode = node;
 
-        // 1. UIPanelController로 초상화와 이름 표시
-        uiPanelController.Show(currentNode.characterSprite, currentNode.characterName);
+        mainStoryUI.characterNameText.text = currentNode.characterName;
+        if (currentNode.characterSprite != null)
+        {
+            mainStoryUI.characterImage.sprite = currentNode.characterSprite;
+            mainStoryUI.characterImage.color = Color.white;
+        }
+        else
+        {
+            mainStoryUI.characterImage.color = Color.clear;
+        }
 
-        // 2. 이 스크립트가 직접 타이핑 효과 시작
-        if (typingCoroutine != null)
-            StopCoroutine(typingCoroutine);
+        if (typingCoroutine != null) StopCoroutine(typingCoroutine);
         typingCoroutine = StartCoroutine(TypeText(currentNode.storyText));
 
-        // 3. 선택지 유무에 따라 카드 표시/숨김
         if (currentNode.choices != null && currentNode.choices.Count >= 2)
         {
             cardController.gameObject.SetActive(true);
@@ -96,7 +121,6 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
         else
         {
             cardController.gameObject.SetActive(false);
-            // 선택지가 하나이거나 없을 경우 자동 진행
             StartCoroutine(AutoTransitionToNext(
                 (currentNode.choices != null && currentNode.choices.Count == 1) ? currentNode.choices[0].nextNode : null
             ));
@@ -106,15 +130,12 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
     public void HandleChoice(bool isRightChoice)
     {
         if (IsTyping) return;
-
         int choiceIndex = isRightChoice ? 1 : 0;
         Choice selectedChoice = currentNode.choices[choiceIndex];
-
         if (selectedChoice.parameterChanges != null && PlayerStats.Instance != null)
         {
             PlayerStats.Instance.ApplyChanges(selectedChoice.parameterChanges);
         }
-
         StartCoroutine(TransitionToNextNode(selectedChoice.nextNode));
     }
 
@@ -134,10 +155,10 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
 
     private IEnumerator TypeText(string text)
     {
-        dialogueText.text = "";
+        mainStoryUI.dialogueText.text = "";
         foreach (char letter in text.ToCharArray())
         {
-            dialogueText.text += letter;
+            mainStoryUI.dialogueText.text += letter;
             yield return new WaitForSeconds(typingSpeed);
         }
         typingCoroutine = null;
@@ -145,12 +166,9 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
 
     private void EndScenario()
     {
-        gameObject.SetActive(false);
-        // 시나리오가 끝나면 GameManager의 다음 단계 함수를 호출 (이 부분은 유지)
+        mainStoryUI.panelRoot.SetActive(false);
         GameManager.instance.GoToBattlePanel();
     }
-
-    // --- 나머지 IChoiceHandler 인터페이스 구현부 ---
 
     public void PreviewAffectedParameters(bool isRightChoice)
     {
@@ -162,8 +180,6 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
             parameterUIController.UpdateAffectedToggles(previewChanges);
         }
     }
-
-    public void CycleChoice() { }
 
     public void ClearParameterPreview()
     {

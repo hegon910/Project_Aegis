@@ -1,9 +1,8 @@
 // CardController.cs
 
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using TMPro;
-using DG.Tweening;
 
 public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
@@ -12,8 +11,9 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     private float distanceMoved;
 
     [Header("참조")]
+    // [복원] 기존 SituationCardController에 대한 참조를 되살립니다.
     public SituationCardController situationCardController;
-    // [수정] UIFlowSimulator 직접 참조를 IChoiceHandler 인터페이스로 변경
+    // [유지] MainScenarioManager와의 연결을 위한 참조는 그대로 유지합니다.
     public IChoiceHandler choiceHandler;
 
     private string leftChoiceTextString;
@@ -67,17 +67,17 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             colorToShow = new Color(0.8f, 0.2f, 0.2f, alpha);
         }
 
-        situationCardController.UpdateChoicePreview(textToShow, colorToShow);
+        // [핵심 수정] 두 곳 모두에 미리보기 업데이트를 보냅니다.
+        situationCardController?.UpdateChoicePreview(textToShow, colorToShow); // 기존 기능을 위한 호출
+        choiceHandler?.UpdateChoicePreview(textToShow, colorToShow);           // MainScenarioManager를 위한 호출
 
         float dimmerAlpha = Mathf.InverseLerp(threshold, maxSwipe, Mathf.Abs(distanceMoved)) * 0.7f;
-        // [수정] choiceHandler를 통해 UpdateDimmer 호출
         choiceHandler?.UpdateDimmer(dimmerAlpha);
 
         if (distanceMoved > threshold)
         {
             if (!isPreviewing || !wasRightPreview)
             {
-                // [수정] choiceHandler를 통해 PreviewAffectedParameters 호출
                 choiceHandler?.PreviewAffectedParameters(true);
                 isPreviewing = true;
                 wasRightPreview = true;
@@ -87,7 +87,6 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         {
             if (!isPreviewing || wasRightPreview)
             {
-                // [수정] choiceHandler를 통해 PreviewAffectedParameters 호출
                 choiceHandler?.PreviewAffectedParameters(false);
                 isPreviewing = true;
                 wasRightPreview = false;
@@ -97,7 +96,6 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         {
             if (isPreviewing)
             {
-                // [수정] choiceHandler를 통해 ClearParameterPreview 호출
                 choiceHandler?.ClearParameterPreview();
                 isPreviewing = false;
             }
@@ -106,13 +104,14 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        situationCardController.UpdateChoicePreview("", Color.clear);
-        // [수정] choiceHandler를 통해 UpdateDimmer 호출
+        // [핵심 수정] 드래그가 끝나면 두 곳 모두의 미리보기를 초기화합니다.
+        situationCardController?.UpdateChoicePreview("", Color.clear); // 기존 기능을 위한 호출
+        choiceHandler?.UpdateChoicePreview("", Color.clear);           // MainScenarioManager를 위한 호출
+
         choiceHandler?.UpdateDimmer(0f);
 
         if (Mathf.Abs(distanceMoved) > 250f)
         {
-            // [수정] choiceHandler를 통해 HandleChoice 호출
             choiceHandler?.HandleChoice(distanceMoved > 0);
             AnimateCardOffscreen();
         }
@@ -120,7 +119,6 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         {
             if (isPreviewing)
             {
-                // [수정] choiceHandler를 통해 ClearParameterPreview 호출
                 choiceHandler?.ClearParameterPreview();
                 isPreviewing = false;
             }

@@ -120,6 +120,10 @@ public class GameManager : MonoBehaviour
 
     public void StartNewGame()
     {
+        if (PlayerStats.Instance != null)
+        {
+            PlayerStats.Instance.InitializeStats();
+        }
         menuPanel.SetActive(false);
         commanderSelectionCanvas.SetActive(true);
     }
