@@ -35,6 +35,9 @@ public class BackendManager : MonoBehaviour
             Auth = FirebaseAuth.DefaultInstance;
         });
     }
+
+    //익명로그인
+    //이메일로그인
     
     
 }

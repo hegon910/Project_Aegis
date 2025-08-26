@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 public class GameManager : MonoBehaviour
 {
-    public static GameManager instance {get; private set;}
+    public static GameManager instance { get; private set; }
 
     [Header("UI 참조")]
     [SerializeField] private GameObject titlePanel;
@@ -19,6 +19,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private GameObject mainGameCanvas;
     [SerializeField] private GameObject commanderSelectionCanvas;
+    [SerializeField] private GameObject storyPanel;
+    [SerializeField] private GameObject battlePanel;
+    [SerializeField] private GameObject battleResultPanel;
     [SerializeField] private Button testPlayerButton;
 
     [Header("지휘관 선택")]
@@ -46,12 +49,11 @@ public class GameManager : MonoBehaviour
     {
         //플레이어 파라미터 초기화
 
-
         //필요한 패널만 활성화
         titlePanel.SetActive(true);
         loginPanel.SetActive(false);
         menuPanel.SetActive(false);
-//        overwriteWarningPanel.SetActive(false);
+        //overwriteWarningPanel.SetActive(false);
         gameOverPanel.SetActive(false);
         mainGameCanvas.SetActive(false);
         commanderSelectionCanvas.SetActive(false);
@@ -79,11 +81,9 @@ public class GameManager : MonoBehaviour
         {
             Debug.LogError("구글 플레이 게임 서비스 로그인 실패: " + status);
         }
-
-
     }
 
-    
+
 
     public void OnNewGameButtonClicked()
     {
@@ -101,13 +101,38 @@ public class GameManager : MonoBehaviour
     public void StartNewGame()
     {
         menuPanel.SetActive(false);
-        commanderSelectionCanvas.SetActive(true);             
+        commanderSelectionCanvas.SetActive(true);
     }
 
     public void OnCommanderSelected(int commanderIndex)
     {
-        // 선택된 지휘관에 따라 게임 시작
         commanderSelectionCanvas.SetActive(false);
+        mainGameCanvas.SetActive(true);
+    }
+
+    public void GoToStoryPanel()
+    {
+        mainGameCanvas.SetActive(false);
+        storyPanel.SetActive(true);
+    }
+
+    public void GoToBattlePanel()
+    {
+        storyPanel.SetActive(false);
+        battlePanel.SetActive(true);
+    }
+
+    public void GoToBattleResultPanel()
+    {
+        battlePanel.SetActive(false);
+        battleResultPanel.SetActive(true);
+    }
+
+    public void ReturnToMainGameCanvas()
+    {
+        PlayerStats.Instance.InitializeStats();
+
+        battleResultPanel.SetActive(false);
         mainGameCanvas.SetActive(true);
     }
 
@@ -121,18 +146,7 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.G))
-        {
-            TestGameOverConditions();
-            Debug.Log($"{PlayerStats.Instance.GetStat(ParameterType.정치력)}");
-            Debug.Log($"{PlayerStats.Instance.GetStat(ParameterType.병력)}");
-            Debug.Log($"{PlayerStats.Instance.GetStat(ParameterType.물자)}");
-            Debug.Log($"{PlayerStats.Instance.GetStat(ParameterType.리더십)}");
-        }
 
-        //CheckGameOverConditions();
-
-        // 게임 상태 업데이트 로직을 여기에 추가할 수 있습니다.
         // 예: 게임 오버 조건 체크, UI 업데이트 등
     }
 
@@ -166,10 +180,7 @@ public class GameManager : MonoBehaviour
     }
     public void GameOver()
     {
-        if (PlayerStats.Instance.GetStat(ParameterType.정치력) <= 0 ||
-            PlayerStats.Instance.GetStat(ParameterType.병력) <= 0 ||
-            PlayerStats.Instance.GetStat(ParameterType.물자) <= 0 ||
-            PlayerStats.Instance.GetStat(ParameterType.리더십) <= 0)
+
         {
             HandleGameOver();
         }
@@ -177,7 +188,7 @@ public class GameManager : MonoBehaviour
         Debug.Log("게임 오버! 모든 능력치가 0 이하입니다.");
         // 게임 오버 UI 표시, 조작 막기, 사운드 재생 등을 구현할 수 있습니다.
     }
-    
+
 
     private void HandleGameOver()
     {
@@ -195,13 +206,11 @@ public class GameManager : MonoBehaviour
 
         // 게임 오버 메시지 표시 (필요한 경우)
         // Debug.Log("당신은 게임오버 되었습니다.");
-
-        // 
     }
 
     private void TestGameOverConditions()
     {
-        
+
         // 테스트용으로 게임 오버 조건을 강제로 발생시킵니다.
         PlayerStats.Instance.ApplyChanges(new List<ParameterChange>
         {
@@ -211,7 +220,7 @@ public class GameManager : MonoBehaviour
             new ParameterChange { parameterType = ParameterType.리더십, valueChange = -100 }
         });
     }
-    
+
     /// 게임엔딩
     /// 엔딩조건을 확인하여 
     /// 관련 매니저에게 전달
@@ -222,9 +231,12 @@ public class GameManager : MonoBehaviour
     /// 게임 불러오기
     /// 기능구현
 
-   
+
     public void ExitGame()
     {
         Application.Quit();
     }
+    
+
+    
 }
