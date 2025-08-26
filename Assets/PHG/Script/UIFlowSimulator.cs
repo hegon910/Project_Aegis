@@ -24,33 +24,42 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     private UIEventData currentDebugEventData;
     private int eventId = 10001;
 
-    async UniTaskVoid Start()
+    public async void BeginFlow()
     {
+        // 시작 시 UI 초기화
         if (uiPanelController != null) uiPanelController.gameObject.SetActive(false);
         if (situationCardController != null) situationCardController.gameObject.SetActive(false);
         if (cardController != null)
         {
             cardController.gameObject.SetActive(false);
-            // [추가] CardController에게 이 스크립트가 선택지를 처리할 것이라고 알려줌
             cardController.choiceHandler = this;
         }
         if (dimmerPanel != null) dimmerPanel.color = Color.clear;
 
-        await UniTask.WaitUntil(() => EventManager.Instance != null && EventManager.Instance.IsInitialized);
+        // EventManager가 준비될 때까지 기다림 (이미 로딩이 끝난 상태일 수 있으므로 짧게 확인)
+        await UniTask.Yield();
+        if (EventManager.Instance == null || !EventManager.Instance.IsInitialized)
+        {
+            await UniTask.WaitUntil(() => EventManager.Instance != null && EventManager.Instance.IsInitialized);
+        }
+
         RequestNextEvent();
     }
+
 
     private void RequestNextEvent()
     {
         if (forceDebugMode)
         {
-            // 디버그 모드: 순차 진행 (이 부분은 디버그 시퀀스에 따라 다르게 동작할 수 있음)
+            // 디버그 모드: 순차 진행
+            // eventId를 사용하지 않고 debugEventSequence의 인덱스로 직접 접근하는 것이 더 안전할 수 있습니다.
+            // 여기서는 기존 로직을 유지하며 구조만 수정합니다.
             eventId++;
             LoadEvent(eventId);
         }
-        else
+        else 
         {
-            // 일반 모드: EventManager에서 다음 이벤트 ID를 받아옴 (순차 또는 랜덤)
+            // 일반 모드
             int nextEventId = EventManager.Instance.GetNextEventId();
             if (nextEventId != -1)
             {
@@ -59,11 +68,11 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             }
             else
             {
-                Debug.Log("진행할 이벤트가 없습니다.");
-                // TODO: 튜토리얼이 끝났거나 한 회차가 끝났을 때
-                // PlayerStats.Instance.playthroughCount++; 를 추가해서 회차를 + 해야함
-
+                Debug.Log("진행할 이벤트가 모두 소진되었습니다. 스토리 페이즈로 넘어갑니다.");
                 if (cardController != null) cardController.gameObject.SetActive(false);
+
+                // 이벤트가 끝나면 GameManager에게 다음 단계 진행을 요청
+                GameManager.instance.GoToStoryPanel();
             }
         }
     }
@@ -154,8 +163,8 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         if (changes != null && PlayerStats.Instance != null)
         {
             PlayerStats.Instance.ApplyChanges(changes);
+            // GameManager.instance.CheckGameOverConditions(); // 이 줄은 이제 필요 없습니다.
         }
-
         StartCoroutine(TransitionToNextEvent(resultTextToShow));
     }
 
