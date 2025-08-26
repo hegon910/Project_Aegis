@@ -9,7 +9,13 @@ public class BattlePlayer : MonoBehaviour
     [SerializeField] int shield = 0; // 쉴드 추가
     const int MaxShield = 3;
     public int HP => hp;
+    public int Shield => shield;
     public bool IsDead => hp <= 0;
+    public void ResetStatus(int hpInit = 5, int shieldInit = 0)//포기화용
+    {
+        hp = Mathf.Max(0, hpInit);
+        shield = Mathf.Clamp(shieldInit, 0, 3);
+    }
 
     void Awake() { if (!controller) controller = GetComponent<BattleController>(); }
 

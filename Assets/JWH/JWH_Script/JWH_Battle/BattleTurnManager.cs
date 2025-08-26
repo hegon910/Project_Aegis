@@ -17,6 +17,17 @@ public class BattleTurnManager : MonoBehaviour
     public void OnClick_PlayerAttack() { if (!turnRunning && !IsBattleEnded) GoStartTurn(BattleAction.Attack); }
     public void OnClick_PlayerDefend() { if (!turnRunning && !IsBattleEnded) GoStartTurn(BattleAction.Defend); }
 
+    public System.Action<string> OnBattleEnd; // 결과 통지(스토리 복귀용)
+
+    public void ResetForNewBattle(int newMaxTurns = 30)
+    {
+        maxTurns = newMaxTurns;
+        currentTurn = 0;
+        battleEnded = false;
+        turnRunning = false;
+        Debug.Log("전투 초기화 완료");
+    }
+
     void GoStartTurn(BattleAction playerAction)
     {
         if (battleEnded) return;
@@ -37,6 +48,7 @@ public class BattleTurnManager : MonoBehaviour
         battleEnded = true;
         Debug.Log(resultLog);
         Debug.Log("전투 종료");
+        OnBattleEnd?.Invoke(resultLog);
     }
 
     void CheckWinLoseDrawAfterTurn()
@@ -66,27 +78,16 @@ public class BattleTurnManager : MonoBehaviour
         // 적 행동만 랜덤 결정
         var enemyAction = enemy.ChooseAction50();
 
-        bool pRingOut = player.Ctrl.RingOut(playerAction);
-        bool eRingOut = enemy.Ctrl.RingOut(enemyAction);
-
-        if (pRingOut || eRingOut)
-        {
-            if (pRingOut) player.KillByRingOut();
-            if (eRingOut) enemy.KillByRingOut();
-            CheckWinLoseDrawAfterTurn();
-            Debug.Log($"Turn {currentTurn}/{maxTurns} 종료(장외 즉시 판정)");
-            turnRunning = false;
-            if (!battleEnded && currentTurn >= maxTurns)
-                EndBattle($"무승부 턴 제한 {maxTurns} 소진");
-            yield break;
-        }
-
         // 둘 다 동시에 이동 시작 (플레이어 입력 그대로)
         player.Act(playerAction);
         enemy.Act(enemyAction);
 
         // 닿는 프레임 감지 즉시 처리
         int last = ground.LaneLength - 1;
+
+        
+
+
         while (player.IsBusy || enemy.IsBusy)
         {
             int pIdx = ground.GetGroundIndex(player.Tf.position);
@@ -122,11 +123,11 @@ public class BattleTurnManager : MonoBehaviour
             EndBattle($"무승부  턴 제한 {maxTurns} 소진");
         }
 
+    int IntendedBackIndex(BattleController ctrl, int meet) => meet - ctrl.Direction;
     void ApplyCollisionRules(BattleAction pAct, BattleAction eAct, int meet, int last)
     {
-        //칸 계산 (항상 최소 1칸 이상 떨어지게 보정)
-        int pBack = SafeBackIndex(player.Ctrl, meet, last); // 플레이어 뒤로 1
-        int eBack = SafeBackIndex(enemy.Ctrl, meet, last); // 적 뒤로 1
+        int pBackIntended = IntendedBackIndex(player.Ctrl, meet);
+        int eBackIntended = IntendedBackIndex(enemy.Ctrl, meet);
 
         switch ((pAct, eAct))
         {
@@ -134,72 +135,92 @@ public class BattleTurnManager : MonoBehaviour
                 Debug.Log("공격 vs 공격  서로 피해 1, 각자 뒤로 1칸");
                 player.TakeDamage(1);
                 enemy.TakeDamage(1);
-                SeparateBoth(meet, pBack, eBack, last);
+                SeparateBoth(meet, pBackIntended, eBackIntended, last);
                 break;
 
             case (BattleAction.Attack, BattleAction.Defend):
                 Debug.Log("공격 vs 수비  공격 무효, 플레이어 뒤로 1칸");
-                // 공격 무효  플레이어만 뒤로 1
-                SeparatePlayerOnly(meet, pBack, last);
+                SeparatePlayerOnly(meet, pBackIntended, last);
                 break;
 
             case (BattleAction.Defend, BattleAction.Attack):
-                Debug.Log("수비 vs 공격  공격 무효, 적군 뒤로 1칸");
-                // 공격 무효  적만 뒤로 1, 플레이어 쉴드 1획득
+                Debug.Log("수비 vs 공격  공격 무효, 적군 뒤로 1칸 (플레이어 쉴드 +1)");
                 player.GainShield(1);
-                SeparateEnemyOnly(meet, eBack, last);
+                SeparateEnemyOnly(meet, eBackIntended, last);
                 break;
 
             case (BattleAction.Defend, BattleAction.Defend):
                 Debug.Log("수비 vs 수비  서로 뒤로 1칸");
-                // 서로 뒤로 1
-                SeparateBoth(meet, pBack, eBack, last);
+                SeparateBoth(meet, pBackIntended, eBackIntended, last);
                 break;
         }
     }
 
-    // 뒤로 1칸(가장자리 보정)
-    int SafeBackIndex(BattleController ctrl, int meet, int last)
+    void ResolveBackFor(bool isPlayer, BattleController ctrl, int intended, int last)
     {
-        int idx = meet - ctrl.Direction; // 뒤는 direction  1
-        idx = Mathf.Clamp(idx, 0, last);
-        return idx;
+        if (intended < 0 || intended > last)
+        {
+            if (isPlayer) player.KillByRingOut();
+            else enemy.KillByRingOut();
+        }
+        else
+        {
+            ctrl.CrushResult(intended);
+        }
     }
 
+    // 뒤로 1칸(가장자리 보정)
+    //int SafeBackIndex(BattleController ctrl, int meet, int last)
+    //{
+    //    int idx = meet - ctrl.Direction; // 뒤는 direction  1
+    //    idx = Mathf.Clamp(idx, 0, last);
+    //    return idx;
+    //}
+
     // 서로 뒤로: 항상 1칸 이상 떨어지도록 보정
-    void SeparateBoth(int meet, int pBack, int eBack, int last)
+    void SeparateBoth(int meet, int pBackIntended, int eBackIntended, int last)
     {
-        // 혹시 같은 칸이 되면 한쪽을 추가 보정
+        // 겹치지 않도록 추가 보정 전, 우선 KO 여부 판단
+        bool pOut = (pBackIntended < 0 || pBackIntended > last);
+        bool eOut = (eBackIntended < 0 || eBackIntended > last);
+
+        if (pOut) player.KillByRingOut();
+        if (eOut) enemy.KillByRingOut();
+        if (pOut || eOut) return;
+
+        // 의도 위치가 같은 칸이면 한쪽을 추가 보정
+        int pBack = pBackIntended;
+        int eBack = eBackIntended;
         if (pBack == eBack)
         {
             if (meet == 0) eBack = Mathf.Min(meet + 1, last);
             else if (meet == last) pBack = Mathf.Max(meet - 1, 0);
             else eBack = Mathf.Min(meet + 1, last);
         }
+
         player.Ctrl.CrushResult(pBack);
         enemy.Ctrl.CrushResult(eBack);
     }
 
-    void SeparatePlayerOnly(int meet, int pBack, int last)
+    void SeparatePlayerOnly(int meet, int pBackIntended, int last)
     {
-        // 플레이어만 뒤로, 적은 접점 유지
-        // 단, 같은 칸이면 적을 한 칸 전방으로 보정하여 겹침 방지
-        if (pBack == meet)
+        // 적은 접점 유지(겹침 방지 보정 유지)
+        if (pBackIntended == meet)
         {
             int eFwd = Mathf.Min(meet + 1, last);
             enemy.Ctrl.CrushResult(eFwd);
         }
-        player.Ctrl.CrushResult(pBack);
+        ResolveBackFor(true, player.Ctrl, pBackIntended, last);
     }
 
-    void SeparateEnemyOnly(int meet, int eBack, int last)
+    void SeparateEnemyOnly(int meet, int eBackIntended, int last)
     {
-        if (eBack == meet)
+        if (eBackIntended == meet)
         {
             int pFwd = Mathf.Max(meet - 1, 0);
             player.Ctrl.CrushResult(pFwd);
         }
-        enemy.Ctrl.CrushResult(eBack);
+        ResolveBackFor(false, enemy.Ctrl, eBackIntended, last);
     }
 
     //외부로 턴 정보 넘길예정 아마 승패쪽에서

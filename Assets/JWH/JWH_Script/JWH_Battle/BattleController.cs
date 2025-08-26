@@ -16,6 +16,10 @@ public class BattleController : MonoBehaviour
     public int AttackStep => attackStep;   // 4
     public int DefendStep => defendStep;   // 1
     public int CurrentIndex => currentIndex;
+    
+    public void ForcePlace(int tileIndex) => CrushResult(tileIndex);//초기화 시작  배치
+    
+    public void SetDirection(int dir) { direction = Mathf.Sign(dir) >= 0 ? +1 : -1; }//초기화 방향 지정
 
     bool isMoving;
     Coroutine moveRoutine;
