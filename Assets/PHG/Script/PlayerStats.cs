@@ -38,7 +38,7 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
-    public void InitializeStats()
+    public void InitializeStats() 
     {
         stats.Clear();
         stats[ParameterType.정치력] = 50;
@@ -66,6 +66,9 @@ public class PlayerStats : MonoBehaviour
                 stats[change.parameterType] += change.valueChange;
                 Debug.Log($"<color=cyan>스탯 변경: {change.parameterType}이(가) {change.valueChange}만큼 변경되어 현재 {stats[change.parameterType]}입니다.</color>");
                 OnStatChanged?.Invoke(change.parameterType, change.valueChange, stats[change.parameterType]);
+
+                //lhk 0826 게임오버조건 확인
+                GameManager.instance.OnParameterChanged();
             }
         }
     }
