@@ -1,6 +1,6 @@
 Index,PackNumber,GroupNumber,EndingString,LeftSelectString,NextLeftSelectString,LeftSelectReward,RightSelectString,NextRightSelectString,RightSelectReward,IsFinishString,CharacterName,CharacterImg,BG,SE,QuestionString_kr
 1,1001,1,101,100013,2,0,100014,3,0,0,1,Aide_Idle,CommandCenter,"","서브스토리 기본팩1의 스토리 입니다. 해당 값이 맞나요?"
-2,1001,1,102,0,0,0,0,0,0,1,2,Aide_Idle,CommandCenter,"","서브스토리 기본팩1의 스토리가 맞습니다. 서브스토리를 종료합니다."
+2,1002,1,102,0,0,0,0,0,0,1,2,Aide_Idle,CommandCenter,"","서브스토리 기본팩1의 스토리가 맞습니다. 서브스토리를 종료합니다."
 3,1001,1,103,100013,4,0,100014,5,0,0,1,Aide_Idle,CommandCenter,"","해당 스토리는 서브스토리 기본팩1의 서브스토리가 맞습니다."
 4,1001,1,0,0,0,0,0,0,0,1,1,Aide_Idle,CommandCenter,"","확인이 완료되었습니다. 서브스토리를 종료합니다."
 5,1001,1,0,0,0,0,0,0,0,1,1,Aide_Idle,CommandCenter,"","해당 스토리는 서브스토리1입니다. DataTable로드 확인을 부탁드립니다."

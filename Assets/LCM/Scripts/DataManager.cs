@@ -84,7 +84,6 @@ public class DataManager : MonoBehaviour
             var subEventListLookup = loadedSubEventList
                 .Where(s => s.StringNum != 0)
                 .ToDictionary(s => s.StringNum, s => s);
-
             // Cho_Num을 키로 하는 선택지 텍스트 룩업 테이블 생성
             var choiceTextLookup = loadedSubEventList
                 .Where(s => s.Cho_Num != 0 && !string.IsNullOrEmpty(s.Cho_Text))
@@ -114,12 +113,14 @@ public class DataManager : MonoBehaviour
                 string rightText = string.Empty;
                 choiceTextLookup.TryGetValue(actionData.RightSelectString, out rightText);
 
-                string endText = string.Empty;
-                endTextLookup.TryGetValue(listData.End_Num, out endText);
-
                 // SubEventActionData의 CharacterName(정수)을 사용해 캐릭터 이름 조회
                 string characterName = string.Empty;
                 characterNameLookup.TryGetValue(actionData.CharacterName, out characterName);
+
+                string endText = string.Empty;
+                endTextLookup.TryGetValue(listData.End_Num, out endText);
+
+                
 
                 // 4. 새로운 SubEventData 객체 생성 및 값 채우기
                 return new SubEventData
@@ -148,6 +149,7 @@ public class DataManager : MonoBehaviour
             foreach (var subEvent in SubEvents)
             {
                 Debug.Log($"[Index: {subEvent.Index}] " +
+                          $"팩넘버 : {subEvent.PackNumber}" +
                           $"질문: {subEvent.QuestionString_kr} | " +
                           $"캐릭터: {subEvent.CharacterName} | " +
                           $"선택지1: {subEvent.LeftSelectString} | " +
