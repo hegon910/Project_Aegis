@@ -120,9 +120,7 @@ public class DataManager : MonoBehaviour
                 string endText = string.Empty;
                 endTextLookup.TryGetValue(listData.End_Num, out endText);
 
-                
-
-                // 4. 새로운 SubEventData 객체 생성 및 값 채우기
+                // 새로운 SubEventData 객체 생성 및 값 채우기
                 return new SubEventData
                 {
                     // SubEventActionData에서 가져올 필드
@@ -146,16 +144,17 @@ public class DataManager : MonoBehaviour
             }).Where(e => e != null).ToList();
 
             Debug.Log($"데이터 로드 및 통합 완료! 총 {SubEvents.Count}개의 이벤트가 준비되었습니다.");
-            foreach (var subEvent in SubEvents)
-            {
-                Debug.Log($"[Index: {subEvent.Index}] " +
-                          $"팩넘버 : {subEvent.PackNumber}" +
-                          $"질문: {subEvent.QuestionString_kr} | " +
-                          $"캐릭터: {subEvent.CharacterName} | " +
-                          $"선택지1: {subEvent.LeftSelectString} | " +
-                          $"선택지2: {subEvent.RightSelectString} | " +
-                          $"엔딩텍스트: {subEvent.End_Text}");
-            }
+            // 데이터 구조 테스트 코드
+            //foreach (var subEvent in SubEvents)
+            //{
+            //    Debug.Log($"[Index: {subEvent.Index}] " +
+            //              $"팩넘버 : {subEvent.PackNumber}" +
+            //              $"질문: {subEvent.QuestionString_kr} | " +
+            //              $"캐릭터: {subEvent.CharacterName} | " +
+            //              $"선택지1: {subEvent.LeftSelectString} | " +
+            //              $"선택지2: {subEvent.RightSelectString} | " +
+            //              $"엔딩텍스트: {subEvent.End_Text}");
+            //}
         }
         catch (System.Exception ex)
         {
