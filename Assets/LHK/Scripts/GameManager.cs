@@ -1,11 +1,8 @@
-using System.Collections;
+using GooglePlayGames;
+using GooglePlayGames.BasicApi;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using GooglePlayGames;
-using GooglePlayGames.BasicApi;
-using UnityEngine.SocialPlatforms;
-using System.Threading.Tasks;
 
 public class GameManager : MonoBehaviour
 {
@@ -23,6 +20,10 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject battlePanel;
     [SerializeField] private GameObject battleResultPanel;
     [SerializeField] private Button testPlayerButton;
+
+    // [추가] UIFlowSimulator를 직접 제어하기 위한 참조
+    [Header("코어 시스템 참조")]
+    [SerializeField] private UIFlowSimulator uiFlowSimulator;
 
     [Header("지휘관 선택")]
     [SerializeField] private Button Commander1Button;
@@ -47,6 +48,23 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // [추가] 스탯 변경 이벤트를 구독/해제하여 게임오버를 자동으로 체크
+    private void OnEnable()
+    {
+        PlayerStats.OnStatChanged += OnStatChanged_CheckGameOver;
+    }
+
+    private void OnDisable()
+    {
+        PlayerStats.OnStatChanged -= OnStatChanged_CheckGameOver;
+    }
+
+    private void Start()
+    {
+        Debug.Log("====게임 매니저가 초기화=====");
+        InitializeGame();
+    }
+
     private void InitializeGame()
     {
         //플레이어 파라미터 초기화
@@ -56,13 +74,9 @@ public class GameManager : MonoBehaviour
         titlePanel.SetActive(true);
         loginPanel.SetActive(false);
         menuPanel.SetActive(false);
-        //overwriteWarningPanel.SetActive(false);
         gameOverPanel.SetActive(false);
         mainGameCanvas.SetActive(false);
         commanderSelectionCanvas.SetActive(false);
-
-        // 저장데이터 유무를 확인 저장관련 매니저에서 확인
-        // hasSaveDate = TODO
     }
 
     public void OnTitlePanelTouched()
@@ -72,11 +86,18 @@ public class GameManager : MonoBehaviour
         PlayGamesPlatform.Instance.Authenticate(OnAuthenticated);
 
         menuPanel.SetActive(true);
+
+
+
     }
 
     private void OnAuthenticated(SignInStatus status)
     {
         if (status == SignInStatus.Success)
+
+
+
+
         {
             Debug.Log("구글 플레이 게임 서비스 로그인 성공");
         }
@@ -91,8 +112,11 @@ public class GameManager : MonoBehaviour
     public void OnNewGameButtonClicked()
     {
         if (hasSaveDate)
+
         {
             overwriteWarningPanel.SetActive(true);
+
+
         }
         else
         {
@@ -111,44 +135,80 @@ public class GameManager : MonoBehaviour
     {
         commanderSelectionCanvas.SetActive(false);
         mainGameCanvas.SetActive(true);
+
+        // [추가] 지휘관 선택 후 UIFlowSimulator에게 이벤트 흐름 시작을 명령
+        if (uiFlowSimulator != null)
+        {
+            uiFlowSimulator.BeginFlow();
+        }
+        else
+        {
+            Debug.LogError("UIFlowSimulator가 GameManager에 할당되지 않았습니다!");
+        }
     }
 
-    public void GoToStoryPanel() //uiflow에서 호출필요
+    // [수정] 아직 구현되지 않은 패널에 대한 Null 예외 처리 추가
+    public void GoToStoryPanel()
     {
-        mainGameCanvas.SetActive(false);
-        storyPanel.SetActive(true);
+       // mainGameCanvas.SetActive(false);
+        if (storyPanel != null)
+        {
+            storyPanel.SetActive(true);
+            // TODO: MainScenarioManager 시작 로직 호출
+            // MainScenarioManager.Instance.StartScenario(...);
+        }
+        else
+        {
+            Debug.LogWarning("Story Panel이 할당되지 않아 전투 페이즈로 바로 넘어갑니다.");
+            GoToBattlePanel(); // 스토리가 없으면 바로 전투로
+        }
     }
 
-    public void GoToBattlePanel() //스토리 끝나면 호출
+    public void GoToBattlePanel()
     {
-        storyPanel.SetActive(false);
-        battlePanel.SetActive(true);
+        if (storyPanel != null) storyPanel.SetActive(false);
+        if (battlePanel != null)
+        {
+            battlePanel.SetActive(true);
+            // TODO: BattleManager 시작 로직 호출
+        }
+        else
+        {
+            Debug.LogWarning("Battle Panel이 할당되지 않아 결과 페이즈로 바로 넘어갑니다.");
+            GoToBattleResultPanel(); // 전투가 없으면 바로 결과로
+        }
     }
 
-    public void GoToBattleResultPanel() //전투끝나면 호출
+    public void GoToBattleResultPanel()
     {
-        battlePanel.SetActive(false);
-        battleResultPanel.SetActive(true);
-
-        //1~5장일 경우
-
-        //6장일 경우 엔딩
-        //TODO 엔딩이벤트패널, 엔딩시스템...없음
+        if (battlePanel != null) battlePanel.SetActive(false);
+        if (battleResultPanel != null)
+        {
+            battleResultPanel.SetActive(true);
+        }
+        else
+        {
+            Debug.LogWarning("Battle Result Panel이 할당되지 않아 메인 캔버스로 바로 돌아갑니다.");
+            ReturnToMainGameCanvas();
+        }
     }
 
-    public void ReturnToMainGameCanvas() //전투 결과 끝나면
+    public void ReturnToMainGameCanvas()
     {
-        //플레이어 파라미터 초기화
         PlayerStats.Instance.InitializeStats();
-        //TODO 이벤트매니저에 다시 이벤트풀 초기화?
-        //TODO 전투이벤트도 초기화 할게 있으면?
 
-        battleResultPanel.SetActive(false);
+        if (battleResultPanel != null) battleResultPanel.SetActive(false);
         mainGameCanvas.SetActive(true);
+
+        // [추가] 한 챕터가 끝나고 다시 이벤트 흐름 시작
+        if (uiFlowSimulator != null)
+        {
+            uiFlowSimulator.BeginFlow();
+        }
     }
 
-
-    private void Start()
+    // [추가] 스탯이 변경될 때마다 자동으로 호출될 함수
+    private void OnStatChanged_CheckGameOver(ParameterType type, int change, int currentValue)
     {
         Debug.Log("====게임 매니저가 초기화=====");
         InitializeGame();
@@ -196,7 +256,6 @@ public class GameManager : MonoBehaviour
 
     public void CheckGameOverConditions()
     {
-        // 게임 오버 조건을 확인하고, 조건이 충족되면 게임 오버 처리
         if (PlayerStats.Instance.GetStat(ParameterType.정치력) <= 0 ||
             PlayerStats.Instance.GetStat(ParameterType.병력) <= 0 ||
             PlayerStats.Instance.GetStat(ParameterType.물자) <= 0 ||
