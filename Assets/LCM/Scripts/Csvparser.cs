@@ -45,12 +45,57 @@ public static class Csvparser
 
                     try
                     {
-                        object convertedValue = System.Convert.ChangeType(trimmedValue, property.PropertyType);
+                        object convertedValue = null;
+                        // 타입에 따라 안전한 변환 로직 추가
+                        if (property.PropertyType == typeof(int))
+                        {
+                            // int 타입이고 값이 비어있으면 0으로 변환
+                            if (string.IsNullOrWhiteSpace(trimmedValue))
+                            {
+                                convertedValue = 0;
+                            }
+                            else
+                            {
+                                convertedValue = int.Parse(trimmedValue);
+                            }
+                        }
+                        else if (property.PropertyType == typeof(bool))
+                        {
+                            // bool 타입이고 값이 비어있으면 false로 변환
+                            if (string.IsNullOrWhiteSpace(trimmedValue))
+                            {
+                                convertedValue = false;
+                            }
+                            else
+                            {
+                                // "TRUE" 또는 "FALSE"를 인식하도록 처리
+                                convertedValue = bool.Parse(trimmedValue.ToLower());
+                            }
+                        }
+                        else
+                        {
+                            // 그 외 타입은 기본 ChangeType 사용
+                            convertedValue = System.Convert.ChangeType(trimmedValue, property.PropertyType);
+                        }
+
                         property.SetValue(data, convertedValue);
                     }
-                    catch
+                    catch (System.FormatException)
                     {
-                        Debug.LogError($"'{property.Name}' 변환 오류. 값: '{rawValue}', 타입: '{property.PropertyType}'");
+                        // 변환 실패 시 0이나 false를 기본값으로 설정
+                        if (property.PropertyType == typeof(int))
+                        {
+                            property.SetValue(data, 0);
+                        }
+                        else if (property.PropertyType == typeof(bool))
+                        {
+                            property.SetValue(data, false);
+                        }
+                        Debug.LogError($"'{property.Name}' 변환 오류. 값: '{rawValue}', 타입: '{property.PropertyType}' - 기본값으로 설정합니다.");
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Debug.LogError($"'{property.Name}' 변환 오류. 값: '{rawValue}', 타입: '{property.PropertyType}' - 예외: {ex.Message}");
                     }
                 }
             }
