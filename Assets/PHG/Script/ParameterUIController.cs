@@ -135,7 +135,6 @@ public class ParameterUIController : MonoBehaviour
             ParameterSliderUI ui = parameterSliders.FirstOrDefault(s => s.type == type);
             if (ui != null)
             {
-                // ★ 1번 요청: 새로운 애니메이션 로직을 호출
                 AnimateSliderUpdate(ui, newValue);
                 ShowChangeEffect(ui.slider.transform, changeAmount);
             }

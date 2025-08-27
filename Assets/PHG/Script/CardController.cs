@@ -104,15 +104,23 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        // [핵심 수정] 드래그가 끝나면 두 곳 모두의 미리보기를 초기화합니다.
+
         situationCardController?.UpdateChoicePreview("", Color.clear); // 기존 기능을 위한 호출
         choiceHandler?.UpdateChoicePreview("", Color.clear);           // MainScenarioManager를 위한 호출
 
         choiceHandler?.UpdateDimmer(0f);
 
-        if (Mathf.Abs(distanceMoved) > 250f)
+        bool canChoose = true;
+        if (choiceHandler is MainScenarioManager mainScenarioManager)
         {
-            choiceHandler?.HandleChoice(distanceMoved > 0);
+            // 3. 맞다면, MainScenarioManager의 CanMakeChoice 프로퍼티를 통해
+            //    타이핑 중인지 확인하여 선택 가능 여부를 결정합니다.
+            canChoose = mainScenarioManager.CanMakeChoice;
+        }
+
+        if (Mathf.Abs(distanceMoved) > 250f && canChoose)
+        {
+            choiceHandler.HandleChoice(distanceMoved > 0);
             AnimateCardOffscreen();
         }
         else
@@ -141,5 +149,7 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         rectTransform.DOKill();
         rectTransform.anchoredPosition = initialPosition;
         rectTransform.localEulerAngles = Vector3.zero;
+        isPreviewing = false;
+        wasRightPreview = false;
     }
 }

@@ -14,6 +14,12 @@ public class BattleTurnManager : MonoBehaviour
     bool battleEnded = false;
     bool turnRunning;
 
+    [Header("Character Initial Stats")]
+    [SerializeField] int initialPlayerHP = 5;
+    [SerializeField] int initialPlayerShield = 0;
+    [SerializeField] int initialEnemyHP = 5;
+    [SerializeField] int initialEnemyShield = 0;
+    [SerializeField] int playerStartIndex = 0;
     public void OnClick_PlayerAttack() { if (!turnRunning && !IsBattleEnded) GoStartTurn(BattleAction.Attack); }
     public void OnClick_PlayerDefend() { if (!turnRunning && !IsBattleEnded) GoStartTurn(BattleAction.Defend); }
 
@@ -25,9 +31,30 @@ public class BattleTurnManager : MonoBehaviour
         currentTurn = 0;
         battleEnded = false;
         turnRunning = false;
-        Debug.Log("전투 초기화 완료");
-    }
 
+        // 플레이어 상태 및 위치 초기화
+        if (player != null)
+        {
+            player.ResetStatus(initialPlayerHP, initialPlayerShield);
+            if (player.Ctrl != null)
+            {
+                player.Ctrl.ForcePlace(playerStartIndex);
+            }
+        }
+
+        // 적 상태 및 위치 초기화
+        if (enemy != null && ground != null)
+        {
+            enemy.ResetStatus(initialEnemyHP, initialEnemyShield);
+            if (enemy.Ctrl != null)
+            {
+                int enemyStartIndex = ground.LaneLength > 0 ? ground.LaneLength - 1 : 13;
+                enemy.Ctrl.ForcePlace(enemyStartIndex);
+            }
+        }
+
+        Debug.Log("전투 및 캐릭터 상태 초기화 완료");
+    }
     void GoStartTurn(BattleAction playerAction)
     {
         if (battleEnded) return;

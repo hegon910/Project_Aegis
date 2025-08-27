@@ -24,6 +24,9 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     private UIEventData currentDebugEventData;
     private int eventId = 10001;
 
+    bool nothing;
+    public bool CanMakeChoice => nothing;
+
     public async void BeginFlow()
     {
         if (parameterUIController != null)

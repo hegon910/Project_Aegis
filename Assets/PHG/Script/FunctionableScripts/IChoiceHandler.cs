@@ -2,6 +2,7 @@ using UnityEngine;
 
 public interface IChoiceHandler
 {
+  //  bool CanMakeChoice { get; }
     void HandleChoice(bool isRightChoice);
     void PreviewAffectedParameters(bool isRightChoice);
     void ClearParameterPreview();
