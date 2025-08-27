@@ -38,7 +38,7 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
-    public void InitializeStats()
+    public void InitializeStats() 
     {
         stats.Clear();
         stats[ParameterType.정치력] = 50;

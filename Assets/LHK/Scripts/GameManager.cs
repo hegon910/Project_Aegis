@@ -29,6 +29,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Button Commander2Button;
     [SerializeField] private Button Commander3Button;
 
+    [Header("디버그")]
+    [SerializeField] private Button forceGameOverButton;
 
     private bool hasSaveDate = false; // 저장된 데이터가 있는지 여부(임시)
 
@@ -150,7 +152,42 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log("====게임 매니저가 초기화=====");
         InitializeGame();
+        
+
+#if UNITY_EDITOR
+        if (forceGameOverButton != null)
+        {
+            forceGameOverButton.gameObject.SetActive(true);
+            forceGameOverButton.onClick.AddListener(OnForceGameOverButtonClicked); //** 나중에 리무브리스너******
+        }
+#endif
     }
+
+#if UNITY_EDITOR
+    public void OnForceGameOverButtonClicked()
+    {
+        ForceGameOver();
+    }
+
+    public void ForceGameOver()
+    {
+
+        // GameManager에서 직접 파라미터 변화 리스트를 생성하여 PlayerStats에 전달
+        List<ParameterChange> changes = new List<ParameterChange>
+        {
+            // 모든 파라미터에 충분히 큰 음수 값을 적용
+            new ParameterChange { parameterType = ParameterType.정치력, valueChange = -100 },
+            new ParameterChange { parameterType = ParameterType.병력, valueChange = -100 },
+            new ParameterChange { parameterType = ParameterType.물자, valueChange = -100 },
+            new ParameterChange { parameterType = ParameterType.리더십, valueChange = -100 }
+        };
+
+        Debug.Log("<color=red>디버그: GameManager에서 파라미터 변경을 직접 호출하여 게임오버 유발.</color>");
+
+        // PlayerStats의 ApplyChanges 메소드를 호출하여 파라미터 변경
+        PlayerStats.Instance.ApplyChanges(changes);
+    }
+#endif
 
     public void OnParameterChanged()
     {
@@ -171,11 +208,12 @@ public class GameManager : MonoBehaviour
     }
     public void GameOver()
     {
+
         gameOverPanel.SetActive(true);
         Debug.Log("게임 오버");
 
         // 조작 막기
-        Time.timeScale = 0; // 게임 일시 정지
+        
 
         // 게임 오버 사운드 재생
         // AudioManager.Instance.PlayGameOverSound();
@@ -189,9 +227,21 @@ public class GameManager : MonoBehaviour
         Debug.Log("게임을 재시작합니다.");
 
         // 현재 진행상황 초기화 및 장 처음부터 다시 시작
-        Time.timeScale = 1; // 게임 재개
+
+
         gameOverPanel.SetActive(false);
+        Debug.Log("게임오버 패널 비활성화");
+
         PlayerStats.Instance.InitializeStats();
+        
+        Debug.Log("플레이어 파라미터 초기화");
+
+
+        Debug.Log(PlayerStats.Instance.GetStat(ParameterType.정치력));
+        Debug.Log(PlayerStats.Instance.GetStat(ParameterType.병력));
+        Debug.Log(PlayerStats.Instance.GetStat(ParameterType.물자));
+        Debug.Log(PlayerStats.Instance.GetStat(ParameterType.리더십));
+        
         //TODO 이벤트매니저에 다시 이벤트풀 초기화?
         //TODO 전투이벤트도 초기화 할게 있으면?
         mainGameCanvas.SetActive(true);
