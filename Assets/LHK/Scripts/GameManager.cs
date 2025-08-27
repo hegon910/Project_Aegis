@@ -3,6 +3,9 @@ using GooglePlayGames.BasicApi;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
+using UnityEngine.SceneManagement;
+using UnityEngine.Events;
 
 public class GameManager : MonoBehaviour
 {
@@ -10,6 +13,7 @@ public class GameManager : MonoBehaviour
 
     [Header("UI 참조")]
     [SerializeField] private GameObject titlePanel;
+    [SerializeField] private GameObject titleCanvas;
     [SerializeField] private GameObject loginPanel;
     [SerializeField] private GameObject menuPanel;
     [SerializeField] private GameObject overwriteWarningPanel;
@@ -19,22 +23,34 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject storyPanel;
     [SerializeField] private GameObject battlePanel;
     [SerializeField] private GameObject battleResultPanel;
+    [SerializeField] private TMPro.TextMeshProUGUI battleResultText;
+    [SerializeField] private GameObject InGameUIPanel;
     [SerializeField] private Button testPlayerButton;
+    [SerializeField] private GameObject optionCanvas;
+    [SerializeField] private Button exitButton;
 
+    [Header("범용 확인 창")]
+    [SerializeField] private GameObject confirmationPanel;
+    [SerializeField] private TMPro.TextMeshProUGUI confirmationText;
     // [추가] UIFlowSimulator를 직접 제어하기 위한 참조
     [Header("코어 시스템 참조")]
     [SerializeField] private UIFlowSimulator uiFlowSimulator;
+    [SerializeField] private BattleTurnManager battleTurnManager;
+    [SerializeField] private MainScenarioManager mainScenarioManager;
+
 
     [Header("지휘관 선택")]
     [SerializeField] private Button Commander1Button;
     [SerializeField] private Button Commander2Button;
     [SerializeField] private Button Commander3Button;
 
+
     [Header("디버그")]
     [SerializeField] private Button forceGameOverButton;
 
     private bool hasSaveDate = false; // 저장된 데이터가 있는지 여부(임시)
 
+    private UnityAction onConfirmAction;
     private void Awake()
     {
         if (instance == null)
@@ -77,6 +93,8 @@ public class GameManager : MonoBehaviour
         gameOverPanel.SetActive(false);
         mainGameCanvas.SetActive(false);
         commanderSelectionCanvas.SetActive(false);
+        optionCanvas.SetActive(false);
+        confirmationPanel.SetActive(false);
     }
 
     public void OnTitlePanelTouched()
@@ -127,15 +145,55 @@ public class GameManager : MonoBehaviour
 
     public void StartNewGame()
     {
+        ResetAllGameData();
+       // if (PlayerStats.Instance != null)
+       // {
+       //     PlayerStats.Instance.InitializeStats();
+       // }
         menuPanel.SetActive(false);
+        titleCanvas.SetActive(false);
         commanderSelectionCanvas.SetActive(true);
     }
 
+    public void ShowConfirmation(string message, UnityAction confirmAction)
+    {
+        if (confirmationPanel != null)
+        {
+            confirmationText.text = message;
+            onConfirmAction = confirmAction;
+            confirmationPanel.SetActive(true);
+        }
+        else
+        {
+            Debug.LogWarning("Confirmation Panel이 Inspector에 할당되지 않았습니다!");
+        }
+    }
+    public void OnConfirm()
+    {
+        onConfirmAction?.Invoke(); // 저장해둔 행동 실행
+        if (confirmationPanel != null)
+        {
+            confirmationPanel.SetActive(false);
+        }
+        onConfirmAction = null; // 실행 후 초기화
+    }
+
+    /// <summary>
+    /// [신규] 확인 창의 '아니오' 버튼에 연결될 메서드입니다.
+    /// </summary>
+    public void OnCancel()
+    {
+        if (confirmationPanel != null)
+        {
+            confirmationPanel.SetActive(false);
+        }
+        onConfirmAction = null; // 행동 취소 후 초기화
+    }
     public void OnCommanderSelected(int commanderIndex)
     {
         commanderSelectionCanvas.SetActive(false);
         mainGameCanvas.SetActive(true);
-
+        InGameUIPanel.SetActive(true);
         // [추가] 지휘관 선택 후 UIFlowSimulator에게 이벤트 흐름 시작을 명령
         if (uiFlowSimulator != null)
         {
@@ -150,41 +208,87 @@ public class GameManager : MonoBehaviour
     // [수정] 아직 구현되지 않은 패널에 대한 Null 예외 처리 추가
     public void GoToStoryPanel()
     {
-       // mainGameCanvas.SetActive(false);
+        // ▼ [핵심 수정] MainScenarioManager가 이미 실행 중인지 확인하는 보호 코드 추가
+        if (mainScenarioManager != null && mainScenarioManager.IsScenarioRunning)
+        {
+            // 이미 시나리오가 진행 중이라면, 중복 실행을 막고 아무것도 하지 않습니다.
+            Debug.Log("[GM] 시나리오가 이미 진행 중이므로 새로운 시작 요청을 무시합니다.");
+            return;
+        }
+
         if (storyPanel != null)
         {
             storyPanel.SetActive(true);
-            // TODO: MainScenarioManager 시작 로직 호출
-            // MainScenarioManager.Instance.StartScenario(...);
+
+            if (mainScenarioManager != null)
+            {
+                mainScenarioManager.BeginScenarioFromStart();
+            }
+            else
+            {
+                Debug.LogError("MainScenarioManager가 GameManager에 할당되지 않았습니다!");
+            }
         }
         else
         {
             Debug.LogWarning("Story Panel이 할당되지 않아 전투 페이즈로 바로 넘어갑니다.");
-            GoToBattlePanel(); // 스토리가 없으면 바로 전투로
+            GoToBattlePanel();
         }
     }
+
 
     public void GoToBattlePanel()
     {
         if (storyPanel != null) storyPanel.SetActive(false);
+        if (InGameUIPanel != null) InGameUIPanel.SetActive(false);
         if (battlePanel != null)
         {
             battlePanel.SetActive(true);
-            // TODO: BattleManager 시작 로직 호출
+           if(battleTurnManager != null)
+            {
+                battleTurnManager.OnBattleEnd += HandleBattleEnd;
+            }
+            else
+            {
+                Debug.LogError("BattleTurnManager가 GameManager에 할당되지 않았습니다!");
+            }
         }
         else
         {
             Debug.LogWarning("Battle Panel이 할당되지 않아 결과 페이즈로 바로 넘어갑니다.");
-            GoToBattleResultPanel(); // 전투가 없으면 바로 결과로
+            GoToBattleResultPanel("전투 패널 없음"); // 전투가 없으면 바로 결과로
         }
     }
-
-    public void GoToBattleResultPanel()
+    private void HandleBattleEnd(string resultLog)
     {
-        if (battlePanel != null) battlePanel.SetActive(false);
+        // 결과 패널로 이동하면서 전달받은 결과 로그를 넘겨줍니다.
+        GoToBattleResultPanel(resultLog);
+
+        // 이벤트 중복 호출을 막기 위해 등록을 해제합니다.
+        if (battleTurnManager != null)
+        {
+            battleTurnManager.OnBattleEnd -= HandleBattleEnd;
+        }
+    }
+    public void GoToBattleResultPanel(string battleResult)
+    {
         if (battleResultPanel != null)
         {
             battleResultPanel.SetActive(true);
+
+            // 전달받은 문자열에 특정 키워드가 포함되어 있는지 확인하여 결과를 표시합니다.
+            if (battleResult.Contains("승리"))
+            {
+                battleResultText.text = "승리";
+            }
+            else if (battleResult.Contains("패배"))
+            {
+                battleResultText.text = "패배";
+            }
+            else // "무승부" 또는 그 외의 모든 경우
+            {
+                battleResultText.text = "무승부";
+            }
         }
         else
         {
@@ -195,7 +299,7 @@ public class GameManager : MonoBehaviour
 
     public void ReturnToMainGameCanvas()
     {
-        PlayerStats.Instance.InitializeStats();
+      //  PlayerStats.Instance.InitializeStats();
 
         if (battleResultPanel != null) battleResultPanel.SetActive(false);
         mainGameCanvas.SetActive(true);
@@ -281,6 +385,7 @@ public class GameManager : MonoBehaviour
         // Debug.Log("당신은 게임오버 되었습니다.");
     }
 
+
     public void OnGameOverPanelTouched()
     {
         Debug.Log("게임을 재시작합니다.");
@@ -306,8 +411,131 @@ public class GameManager : MonoBehaviour
         mainGameCanvas.SetActive(true);
     }
 
+
+    public void ShowOptionsPanel()
+    {
+        if (optionCanvas != null)
+        {
+            optionCanvas.SetActive(true);
+        }
+        else
+        {
+            Debug.LogWarning("Option Canvas가 Inspector에 할당되지 않았습니다!");
+        }
+    }
+
+    public void HideOptionsPanel()
+    {
+        if (optionCanvas != null)
+        {
+            optionCanvas.SetActive(false);
+        }
+    }
+
+
+    private void TestGameOverConditions()
+    {
+        // 테스트용으로 게임 오버 조건을 강제로 발생시킵니다.
+        PlayerStats.Instance.ApplyChanges(new List<ParameterChange>
+        {
+            new ParameterChange { parameterType = ParameterType.정치력, valueChange = -100 },
+            new ParameterChange { parameterType = ParameterType.병력, valueChange = -100 },
+            new ParameterChange { parameterType = ParameterType.물자, valueChange = -100 },
+            new ParameterChange { parameterType = ParameterType.리더십, valueChange = -100 }
+        });
+    }
+
+    /// 게임엔딩
+    /// 엔딩조건을 확인하여 
+    /// 관련 매니저에게 전달
+
+    /// 게임 저장
+    /// 기능구현
+
+    /// 게임 불러오기
+    /// 기능구현
+
+    public void ReturnToTitle()
+    {
+        Debug.Log("QA 버튼: 타이틀 화면으로 돌아갑니다.");
+        Time.timeScale = 1;
+
+        if (mainGameCanvas != null) mainGameCanvas.SetActive(false);
+        if (commanderSelectionCanvas != null) commanderSelectionCanvas.SetActive(false);
+        if (storyPanel != null) storyPanel.SetActive(false);
+        if (battlePanel != null) battlePanel.SetActive(false);
+        if (battleResultPanel != null) battleResultPanel.SetActive(false);
+        if (gameOverPanel != null) gameOverPanel.SetActive(false);
+        if (menuPanel != null) menuPanel.SetActive(false);
+        if (InGameUIPanel != null) InGameUIPanel.SetActive(false);
+
+        if (titleCanvas != null) titleCanvas.SetActive(true);
+        if (titlePanel != null) titlePanel.SetActive(true);
+
+        //  모든 데이터 초기화 호출 시점 변경 (기존 PlayerStats 초기화는 ResetAllGameData 내부로 이동)
+        ResetAllGameData();
+    }
+
+
+    private void ResetAllGameData()
+    {
+        Debug.Log("==== 모든 게임 데이터 초기화를 시작합니다 ====");
+
+        if (PlayerStats.Instance != null)
+        {
+            PlayerStats.Instance.InitializeStats();
+        }
+        else
+        {
+            Debug.LogWarning("PlayerStats 인스턴스를 찾을 수 없어 초기화에 실패했습니다.");
+        }
+
+        if (EventManager.Instance != null)
+        {
+            EventManager.Instance.ResetEventManagerState();
+        }
+        else
+        {
+            Debug.LogWarning("EventManager 인스턴스를 찾을 수 없어 초기화에 실패했습니다.");
+        }
+
+        // 전투 관리자 초기화
+        if (battleTurnManager != null)
+        {
+            battleTurnManager.ResetForNewBattle();
+        }
+        else
+        {
+            Debug.LogWarning("BattleTurnManager 인스턴스를 찾을 수 없어 초기화에 실패했습니다.");
+        }
+
+        // 시나리오 관리자 초기화
+        if (mainScenarioManager != null)
+        {
+            // ▼ [디버깅 로그] GameManager가 시나리오 리셋을 요청하는지 확인합니다.
+            Debug.Log("[GM] Requesting MainScenarioManager to reset state...");
+            mainScenarioManager.ResetScenarioState();
+        }
+        else
+        {
+            Debug.LogWarning("MainScenarioManager 인스턴스를 찾을 수 없어 초기화에 실패했습니다.");
+        }
+    }
+
     public void ExitGame()
     {
-        Application.Quit();
+        ShowConfirmation("게임을 종료하시겠습니까?", () =>
+        {
+            Debug.Log("게임 종료 확인됨");
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+                Application.Quit();
+#endif
+        });
     }
+
+
+
+
 }

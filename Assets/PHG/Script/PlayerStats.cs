@@ -29,7 +29,7 @@ public class PlayerStats : MonoBehaviour
 #if UNITY_EDITOR
             // 에디터에서 테스트할 때만 자동으로 초기화합니다.
             // 실제 빌드에서는 메뉴에서 '새 게임'을 눌렀을 때 초기화해야 합니다.
-            InitializeStats();
+          //  InitializeStats();
 #endif
         }
         else

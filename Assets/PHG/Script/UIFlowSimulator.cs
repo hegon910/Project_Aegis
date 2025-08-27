@@ -24,8 +24,15 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     private UIEventData currentDebugEventData;
     private int eventId = 10001;
 
+    bool nothing;
+    public bool CanMakeChoice => nothing;
+
     public async void BeginFlow()
     {
+        if (parameterUIController != null)
+        {
+            parameterUIController.InitializeAndDisplayStats();
+        }
         // 시작 시 UI 초기화
         if (uiPanelController != null) uiPanelController.gameObject.SetActive(false);
         if (situationCardController != null) situationCardController.gameObject.SetActive(false);
@@ -47,17 +54,18 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     }
 
 
-    private void RequestNextEvent()
+   private void RequestNextEvent()
     {
+        // [수정] if-else 구문으로 디버그 모드와 일반 모드를 명확히 분리
         if (forceDebugMode)
         {
             // 디버그 모드: 순차 진행
             // eventId를 사용하지 않고 debugEventSequence의 인덱스로 직접 접근하는 것이 더 안전할 수 있습니다.
             // 여기서는 기존 로직을 유지하며 구조만 수정합니다.
-            eventId++;
+            eventId++; 
             LoadEvent(eventId);
         }
-        else 
+        else // [수정] else를 추가하여 아래 코드가 디버그 모드일 때 실행되지 않도록 함
         {
             // 일반 모드
             int nextEventId = EventManager.Instance.GetNextEventId();
@@ -244,5 +252,10 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         char op = opAndValue.Contains(">") ? '>' : '<';
         if (!int.TryParse(opAndValue.Substring(1), out int value)) return true;
         return op == '>' ? PlayerStats.Instance.GetStat(paramType) > value : PlayerStats.Instance.GetStat(paramType) < value;
+    }
+
+    public void UpdateChoicePreview(string text, Color color)
+    {
+       //
     }
 }

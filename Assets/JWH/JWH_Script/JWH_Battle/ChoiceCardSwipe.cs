@@ -1,27 +1,57 @@
+// ChoiceCardSwipe.cs
+
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using DG.Tweening;
+using TMPro;
+
+[System.Serializable]
+public class SwipePreviewUI
+{
+    public Image previewImage;
+    public TextMeshProUGUI previewText;
+
+    public void SetAlpha(float alpha)
+    {
+        if (previewImage)
+        {
+            var color = previewImage.color;
+            color.a = alpha;
+            previewImage.color = color;
+        }
+        if (previewText)
+        {
+            var color = previewText.color;
+            color.a = alpha;
+            previewText.color = color;
+        }
+    }
+}
 
 public class ChoiceCardSwipe : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [Header("Refs")]
-    [SerializeField] RectTransform card;          
-    [SerializeField] Canvas canvas;               
-    [SerializeField] float followLerp = 20f;      // 드래그 중 따라오는 속도
+    [SerializeField] RectTransform card;
+    [SerializeField] Canvas canvas;
 
     [Header("Thresholds")]
-    [SerializeField] float minSwipeDistance = 140f;   // 스와이프 거리
-    [SerializeField] float verticalBias = 1.2f;       // 위/좌우 판정 비율
+    [SerializeField] float minSwipeDistance = 140f;
+    [SerializeField] float verticalBias = 1.2f;
+
+    [Header("Preview UI")]
+    [SerializeField] private SwipePreviewUI attackPreview;
+    [SerializeField] private SwipePreviewUI defendPreview;
+    [SerializeField] private SwipePreviewUI skillPreview;
 
     [Header("Events")]
-    public UnityEvent onSwipeLeft;   // 공격
-    public UnityEvent onSwipeRight;  // 방어
-    public UnityEvent onSwipeUp;     // 스킬
+    public UnityEvent onSwipeLeft;
+    public UnityEvent onSwipeRight;
+    public UnityEvent onSwipeUp;
 
-    Vector2 startPos;
+    Vector2 initialPosition;
     Vector2 dragDelta;
-    bool dragging;
 
     void Reset()
     {
@@ -33,79 +63,144 @@ public class ChoiceCardSwipe : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     {
         if (!card) card = GetComponent<RectTransform>();
         if (!canvas) canvas = GetComponentInParent<Canvas>();
-        startPos = card.anchoredPosition;
+        initialPosition = card.anchoredPosition;
+
+        attackPreview?.SetAlpha(0);
+        defendPreview?.SetAlpha(0);
+        skillPreview?.SetAlpha(0);
     }
 
     public void OnBeginDrag(PointerEventData e)
     {
-        dragging = true;
         dragDelta = Vector2.zero;
     }
 
     public void OnDrag(PointerEventData e)
     {
-        // 스크린 이동
-        Vector2 delta;
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            card.parent as RectTransform, e.position, e.pressEventCamera, out delta);
-
+        // 실제 터치/마우스의 이동량은 계속 누적합니다.
         dragDelta += e.delta / canvas.scaleFactor;
-        var target = startPos + dragDelta;
-        card.anchoredPosition = Vector2.Lerp(card.anchoredPosition, target, Time.deltaTime * followLerp);
-        card.rotation = Quaternion.Euler(0, 0, Mathf.Clamp(-dragDelta.x * 0.05f, -10f, 10f)); // 살짝 기울이기
+
+        // [핵심 수정] CardController의 로직을 정확히 반영합니다.
+        // 드래그 방향을 판단하여 움직이는 축을 X 또는 Y로 고정합니다.
+        Vector2 targetPosition = initialPosition;
+        float absX = Mathf.Abs(dragDelta.x);
+        float absY = Mathf.Abs(dragDelta.y);
+
+        // 수직 움직임이 우세할 경우 (위쪽으로만)
+        if (absY * verticalBias > absX)
+        {
+            // Y축으로만 움직이되, 아래로는 움직이지 않도록 고정합니다.
+            targetPosition.y = initialPosition.y + Mathf.Max(0, dragDelta.y);
+        }
+        // 수평 움직임이 우세할 경우
+        else
+        {
+            // X축으로만 움직입니다.
+            targetPosition.x = initialPosition.x + dragDelta.x;
+        }
+
+        // 계산된 고정된 위치로 카드를 이동시킵니다.
+        card.anchoredPosition = targetPosition;
+
+        // 카드의 기울임은 수평 움직임에만 반응하도록 유지합니다.
+        card.rotation = Quaternion.Euler(0, 0, Mathf.Clamp(-dragDelta.x * 0.05f, -10f, 10f));
+
+        // 미리보기 연출은 실제 드래그 값을 사용해야 자연스럽습니다.
+        HandlePreviews();
     }
 
     public void OnEndDrag(PointerEventData e)
     {
-        dragging = false;
-        Vector2 v = dragDelta;
-        var absX = Mathf.Abs(v.x);
-        var absY = Mathf.Abs(v.y) * verticalBias;
+        attackPreview?.SetAlpha(0);
+        defendPreview?.SetAlpha(0);
+        skillPreview?.SetAlpha(0);
+
+        var absX = Mathf.Abs(dragDelta.x);
+        var absY = Mathf.Abs(dragDelta.y);
 
         bool decided = false;
-        if (absY > absX && v.y > minSwipeDistance)         // 위: 스킬
+        Vector2 direction = Vector2.zero;
+
+        if (absY * verticalBias > absX && dragDelta.y > minSwipeDistance)
         {
             onSwipeUp?.Invoke();
             decided = true;
+            direction = Vector2.up;
         }
-        else if (absX >= absY && v.x <= -minSwipeDistance)  // 좌: 공격
+        else if (absX >= absY * verticalBias && dragDelta.x <= -minSwipeDistance)
         {
             onSwipeLeft?.Invoke();
             decided = true;
+            direction = Vector2.left;
         }
-        else if (absX >= absY && v.x >= minSwipeDistance)  // 우: 방어
+        else if (absX >= absY * verticalBias && dragDelta.x >= minSwipeDistance)
         {
             onSwipeRight?.Invoke();
             decided = true;
+            direction = Vector2.right;
         }
 
-        
-        if (decided) StartCoroutine(Co_FlyAndReset(v.normalized));
-        else ResetCard();
+        if (decided)
+        {
+            AnimateCardOffscreen(direction);
+        }
+        else
+        {
+            ResetCard();
+        }
     }
 
-    System.Collections.IEnumerator Co_FlyAndReset(Vector2 dir)
+    private void HandlePreviews()
     {
-        float t = 0f;
-        Vector2 from = card.anchoredPosition;
-        Vector2 to = from + dir * 400f;
-        Quaternion rotFrom = card.rotation;
-        Quaternion rotTo = Quaternion.Euler(0, 0, dir.x < 0 ? -20f : (dir.x > 0 ? 20f : 0f));
+        float absX = Mathf.Abs(dragDelta.x);
+        float absY = Mathf.Abs(dragDelta.y);
+        float previewThreshold = minSwipeDistance / 2f;
 
-        while (t < 1f)
+        if (absY * verticalBias > absX && dragDelta.y > previewThreshold)
         {
-            t += Time.deltaTime * 3f;
-            card.anchoredPosition = Vector2.Lerp(from, to, t);
-            card.rotation = Quaternion.Slerp(rotFrom, rotTo, t);
-            yield return null;
+            float alpha = Mathf.InverseLerp(previewThreshold, minSwipeDistance, dragDelta.y);
+            skillPreview?.SetAlpha(alpha);
+            attackPreview?.SetAlpha(0);
+            defendPreview?.SetAlpha(0);
         }
-        ResetCard();
+        else if (absX >= absY * verticalBias && dragDelta.x < -previewThreshold)
+        {
+            float alpha = Mathf.InverseLerp(previewThreshold, minSwipeDistance, absX);
+            attackPreview?.SetAlpha(alpha);
+            skillPreview?.SetAlpha(0);
+            defendPreview?.SetAlpha(0);
+        }
+        else if (absX >= absY * verticalBias && dragDelta.x > previewThreshold)
+        {
+            float alpha = Mathf.InverseLerp(previewThreshold, minSwipeDistance, absX);
+            defendPreview?.SetAlpha(alpha);
+            attackPreview?.SetAlpha(0);
+            skillPreview?.SetAlpha(0);
+        }
+        else
+        {
+            attackPreview?.SetAlpha(0);
+            defendPreview?.SetAlpha(0);
+            skillPreview?.SetAlpha(0);
+        }
+    }
+
+    private void AnimateCardOffscreen(Vector2 direction)
+    {
+        card.DOAnchorPos(card.anchoredPosition + direction * 1200f, 0.5f).SetEase(Ease.InQuad);
+        card.DORotate(new Vector3(0, 0, -direction.x * 45f), 0.5f).SetEase(Ease.InQuad)
+            .OnComplete(() =>
+            {
+                card.anchoredPosition = initialPosition;
+                card.rotation = Quaternion.identity;
+                dragDelta = Vector2.zero;
+            });
     }
 
     void ResetCard()
     {
-        card.anchoredPosition = startPos;
-        card.rotation = Quaternion.identity;
+        card.DOAnchorPos(initialPosition, 0.3f).SetEase(Ease.OutBack);
+        card.DORotate(Vector3.zero, 0.3f).SetEase(Ease.OutBack);
         dragDelta = Vector2.zero;
     }
 }

@@ -5,9 +5,12 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/LHK/Scenes/test_lhk.unity
     guid: 2e75c101e533c3648aef365daba45836
+  - enabled: 1
+    path: Assets/PHG/Scene/PHG_Scene.unity
+    guid: 8fe4efc4c46224a4dac6df3c8d67c681
   m_configObjects:
     com.unity.adaptiveperformance.google.android.provider_settings: {fileID: 11400000, guid: 4039b010bab894a40afbb80013cb3e4b, type: 2}
     com.unity.adaptiveperformance.loader_settings: {fileID: 11400000, guid: d79d791c63bc3d84e8e8d2645499e15f, type: 2}
