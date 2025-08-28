@@ -22,22 +22,17 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 
     private EventData currentLiveEventData;
     private UIEventData currentDebugEventData;
-    private int currentEventId;
+    private int eventId = 10001;
 
-    private void OnEnable()
-    {
-        // EventManager의 이벤트 구독
-        EventManager.OnParameterEventReady += HandleParameterEvent;
-    }
+    bool nothing;
+    public bool CanMakeChoice => nothing;
 
-    private void OnDisable()
+    public async void BeginFlow()
     {
-        // EventManager의 이벤트 구독 취소
-        EventManager.OnParameterEventReady -= HandleParameterEvent;
-    }
-
-    public void BeginFlow()
-    {
+        if (parameterUIController != null)
+        {
+            parameterUIController.InitializeAndDisplayStats();
+        }
         // 시작 시 UI 초기화
         if (uiPanelController != null) uiPanelController.gameObject.SetActive(false);
         if (situationCardController != null) situationCardController.gameObject.SetActive(false);
@@ -48,120 +43,146 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         }
         if (dimmerPanel != null) dimmerPanel.color = Color.clear;
 
-        // 디버그 모드일 경우, 첫 이벤트를 강제로 시작
-        if (forceDebugMode && debugEventSequence.Count > 0)
+        // EventManager가 준비될 때까지 기다림 (이미 로딩이 끝난 상태일 수 있으므로 짧게 확인)
+        await UniTask.Yield();
+        if (EventManager.Instance == null || !EventManager.Instance.IsInitialized)
         {
-            HandleParameterEvent(1); // 디버그 시퀀스는 ID를 1부터 시작한다고 가정
+            await UniTask.WaitUntil(() => EventManager.Instance != null && EventManager.Instance.IsInitialized);
         }
+
+        RequestNextEvent();
     }
 
-    private void HandleParameterEvent(int eventId)
+
+   private void RequestNextEvent()
     {
+        // [수정] if-else 구문으로 디버그 모드와 일반 모드를 명확히 분리
         if (forceDebugMode)
         {
-            // 디버그 모드에서는 eventId를 인덱스로 변환하여 사용
-            int debugIndex = eventId - 1;
-            if (debugEventSequence != null && debugIndex >= 0 && debugIndex < debugEventSequence.Count)
-            {
-                currentDebugEventData = debugEventSequence[debugIndex];
-                LoadEvent(currentDebugEventData);
-            }
-            else
-            {
-                Debug.LogWarning("디버그 이벤트 시퀀스가 종료되었습니다.");
-            }
+            // 디버그 모드: 순차 진행
+            // eventId를 사용하지 않고 debugEventSequence의 인덱스로 직접 접근하는 것이 더 안전할 수 있습니다.
+            // 여기서는 기존 로직을 유지하며 구조만 수정합니다.
+            eventId++; 
+            LoadEvent(eventId);
         }
-        else
+        else // [수정] else를 추가하여 아래 코드가 디버그 모드일 때 실행되지 않도록 함
         {
             // 일반 모드
-            currentEventId = eventId;
-            var eventData = DataManager.Instance.GetEventDataById(eventId);
-            if (eventData != null)
-            { 
-                currentLiveEventData = eventData;
-                LoadEvent(currentLiveEventData);
+            int nextEventId = EventManager.Instance.GetNextEventId();
+            if (nextEventId != -1)
+            {
+                eventId = nextEventId;
+                LoadEvent(eventId);
             }
             else
             {
-                Debug.LogError($"ID({eventId})에 해당하는 이벤트 데이터를 찾을 수 없습니다.");
+                Debug.Log("진행할 이벤트가 모두 소진되었습니다. 스토리 페이즈로 넘어갑니다.");
+                if (cardController != null) cardController.gameObject.SetActive(false);
+
+                // 이벤트가 끝나면 GameManager에게 다음 단계 진행을 요청
+                GameManager.instance.GoToStoryPanel();
             }
         }
     }
 
-    private void LoadEvent(object eventDataObject)
+    private void LoadEvent(int id)
     {
         if (parameterUIController != null)
         {
             parameterUIController.ClearAllToggles();
         }
 
+        currentLiveEventData = null;
+        currentDebugEventData = null;
+
         string dialogue = "", characterName = "";
         string leftChoiceText = "", rightChoiceText = "";
         Sprite characterSprite = null;
 
-        if (eventDataObject is EventData liveData)
+        if (!forceDebugMode)
         {
-            dialogue = liveData.dialogue;
-            characterSprite = liveData.eventSprite;
-            leftChoiceText = liveData.leftChoice.choiceText;
-            rightChoiceText = liveData.rightChoice.choiceText;
-        }
-        else if (eventDataObject is UIEventData debugData)
-        {
-            dialogue = debugData.dialogue;
-            characterName = debugData.characterName;
-            characterSprite = debugData.characterSprite;
-            leftChoiceText = debugData.leftChoice.choiceText;
-            rightChoiceText = debugData.rightChoice.choiceText;
+            currentLiveEventData = DataManager.Instance.GetEventDataById(id);
         }
         else
         {
-            Debug.LogError("알 수 없는 이벤트 데이터 타입입니다.");
+            int debugIndex = id - 1;
+            if (debugEventSequence != null && debugIndex >= 0 && debugIndex < debugEventSequence.Count)
+            {
+                currentDebugEventData = debugEventSequence[debugIndex];
+            }
+        }
+
+        if (currentLiveEventData != null)
+        {
+            dialogue = currentLiveEventData.dialogue;
+            characterSprite = currentLiveEventData.eventSprite;
+            leftChoiceText = currentLiveEventData.leftChoice.choiceText;
+            rightChoiceText = currentLiveEventData.rightChoice.choiceText;
+        }
+        else if (currentDebugEventData != null)
+        {
+            dialogue = currentDebugEventData.dialogue;
+            characterName = currentDebugEventData.characterName;
+            characterSprite = currentDebugEventData.characterSprite;
+            leftChoiceText = currentDebugEventData.leftChoice.choiceText;
+            rightChoiceText = currentDebugEventData.rightChoice.choiceText;
+        }
+        else
+        {
+            Debug.LogWarning("모든 이벤트가 종료되었습니다.");
+            if (cardController != null) cardController.gameObject.SetActive(false);
             return;
         }
 
         uiPanelController.Show(characterSprite, characterName);
         situationCardController.Show(dialogue);
 
+        // 선택지 텍스트 설정
         cardController.SetChoiceTexts(leftChoiceText, rightChoiceText);
+
         cardController.ResetCardState();
         cardController.gameObject.SetActive(true);
     }
+
+
 
     public void HandleChoice(bool isRightChoice)
     {
         string resultTextToShow = "";
         List<ParameterChange> changes = null;
 
-        EventChoice choice = null;
         if (currentLiveEventData != null)
         {
-            choice = isRightChoice ? currentLiveEventData.rightChoice : currentLiveEventData.leftChoice;
+            var choice = isRightChoice ? currentLiveEventData.rightChoice : currentLiveEventData.leftChoice;
+            bool success = CheckCondition(choice.successCondition);
+            var outcome = success ? choice.successOutcome : choice.failOutcome;
+            resultTextToShow = outcome.outcomeText;
+            changes = outcome.parameterChanges;
         }
         else if (currentDebugEventData != null)
         {
-            choice = isRightChoice ? currentDebugEventData.rightChoice : currentDebugEventData.leftChoice;
+            var choice = isRightChoice ? currentDebugEventData.rightChoice : currentDebugEventData.leftChoice;
+            bool success = CheckCondition(choice.successCondition);
+            var outcome = success ? choice.successOutcome : choice.failOutcome;
+            resultTextToShow = outcome.outcomeText;
+            changes = outcome.parameterChanges;
         }
-
-        if (choice == null) return;
-
-        bool success = CheckCondition(choice.successCondition);
-        var outcome = success ? choice.successOutcome : choice.failOutcome;
-        resultTextToShow = outcome.outcomeText;
-        changes = outcome.parameterChanges;
 
         if (changes != null && PlayerStats.Instance != null)
         {
             PlayerStats.Instance.ApplyChanges(changes);
+            // GameManager.instance.CheckGameOverConditions(); // 이 줄은 이제 필요 없습니다.
         }
-        StartCoroutine(TransitionToNext(resultTextToShow));
+        StartCoroutine(TransitionToNextEvent(resultTextToShow));
     }
 
-    private IEnumerator TransitionToNext(string resultText)
+
+    private IEnumerator TransitionToNextEvent(string resultText)
     {
+        // 현재 이벤트를 완료 목록에 추가 (디버그 모드가 아닐 때만)
         if (PlayerStats.Instance != null && !forceDebugMode)
         {
-            PlayerStats.Instance.completedEventIds.Add(currentEventId);
+            PlayerStats.Instance.completedEventIds.Add(eventId);
         }
 
         situationCardController.UpdateText(resultText);
@@ -170,9 +191,8 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         situationCardController.Hide();
         yield return new WaitUntil(() => !situationCardController.gameObject.activeInHierarchy);
 
-        // 다음 턴 진행 준비가 완료되었음을 알림 (필요 시)
-        // GameManager.Instance.OnEventFinished(); 
-        Debug.Log("이벤트 종료. 다음 턴을 기다립니다.");
+        // EventManager에게 다음 이벤트를 달라고 요청
+        RequestNextEvent();
     }
 
     public void PreviewAffectedParameters(bool isRightChoice)
@@ -232,5 +252,10 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         char op = opAndValue.Contains(">") ? '>' : '<';
         if (!int.TryParse(opAndValue.Substring(1), out int value)) return true;
         return op == '>' ? PlayerStats.Instance.GetStat(paramType) > value : PlayerStats.Instance.GetStat(paramType) < value;
+    }
+
+    public void UpdateChoicePreview(string text, Color color)
+    {
+       //
     }
 }

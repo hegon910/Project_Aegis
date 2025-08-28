@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: TestMainScenario1_1_2_EnterRoom
   m_EditorClassIdentifier: 
   nodeId: 1103
-  characterName: "\uC9C0\uD718\uAD00(\uB098\uB808\uC774\uC158)"
-  characterSprite: {fileID: 21300000, guid: cf5944e3e803c92469d2eaf267f277af, type: 3}
+  characterName: "(\uB098\uB808\uC774\uC158)"
+  characterSprite: {fileID: 0}
   storyText: "\uBB38\uC744 \uC5F4\uACE0 \uB4E4\uC5B4\uAC00\uC790 \uBD84\uC8FC\uD55C
     \uB4EF \uC6C0\uC9C1\uC774\uB294 \uBCD1\uC0AC\uAC00 \uB208\uC5D0 \uB748\uB2E4.
     (\uBB38 \uC5F4\uB9AC\uB294 \uC18C\uB9AC)"

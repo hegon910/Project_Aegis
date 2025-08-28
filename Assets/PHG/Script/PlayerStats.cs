@@ -29,7 +29,7 @@ public class PlayerStats : MonoBehaviour
 #if UNITY_EDITOR
             // 에디터에서 테스트할 때만 자동으로 초기화합니다.
             // 실제 빌드에서는 메뉴에서 '새 게임'을 눌렀을 때 초기화해야 합니다.
-            InitializeStats();
+          //  InitializeStats();
 #endif
         }
         else
@@ -38,7 +38,7 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
-    public void InitializeStats()
+    public void InitializeStats() 
     {
         stats.Clear();
         stats[ParameterType.정치력] = 50;
@@ -66,6 +66,9 @@ public class PlayerStats : MonoBehaviour
                 stats[change.parameterType] += change.valueChange;
                 Debug.Log($"<color=cyan>스탯 변경: {change.parameterType}이(가) {change.valueChange}만큼 변경되어 현재 {stats[change.parameterType]}입니다.</color>");
                 OnStatChanged?.Invoke(change.parameterType, change.valueChange, stats[change.parameterType]);
+
+                //lhk 0826 게임오버조건 확인
+                GameManager.instance.OnParameterChanged();
             }
         }
     }
