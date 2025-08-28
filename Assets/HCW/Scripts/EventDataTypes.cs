@@ -1,7 +1,6 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
-// 파라미터 종류
 public enum ParameterType
 {
     정치력,
@@ -12,7 +11,6 @@ public enum ParameterType
     카르마
 }
 
-// 파라미터 변화량을 저장하는 클래스
 [System.Serializable]
 public class ParameterChange
 {
@@ -22,7 +20,6 @@ public class ParameterChange
     public int valueChange;
 }
 
-// 선택지의 성공 또는 실패 결과를 저장하는 클래스
 [System.Serializable]
 public class ChoiceOutcome
 {
@@ -32,7 +29,6 @@ public class ChoiceOutcome
     public List<ParameterChange> parameterChanges = new List<ParameterChange>();
 }
 
-// 하나의 선택지 정보를 모두 담는 클래스
 [System.Serializable]
 public class EventChoice
 {
@@ -49,10 +45,8 @@ public class EventChoice
     public ChoiceOutcome failOutcome;
 }
 
-
-// 최종 이벤트 데이터를 담는 스크립터블 오브젝트
-
-public class EventData : ScriptableObject
+[System.Serializable]
+public class EventData
 {
     [Header("이벤트 기본 정보")]
     public string eventName;

@@ -1,22 +1,39 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
+
+public enum EventManagerState
+{
+    Idle,
+    InCycle,
+    InSubEvent
+}
 
 public class EventManager : MonoBehaviour
 {
     public static EventManager Instance { get; private set; }
 
-    [Header("참조")]
-    [SerializeField]
-    private EventPanelController eventPanelController;
+    public static event Action<int> OnParameterEventReady;
+    public static event Action<SubEventData> OnSubEventReady;
 
-    // 이벤트 데이터 관련
-    private List<int> tutorialEventIds;
-    private List<int> commonEventPool;
-    private int currentTutorialIndex = 0;
+    [Header("설정")]
+    [SerializeField] private int totalEventsPerCycle = 24;
 
-    public bool IsInitialized { get; private set; } = false;
+    
+
+    // 상태 변수
+    private EventManagerState currentState = EventManagerState.Idle;
+    private int currentChapter = 1;
+    private int selectedPackNumber;
+    private int currentSubEventIndex;
+
+    // 이벤트 풀 및 재생 목록
+    private List<int> playedSubEventGroups = new List<int>();
+    private List<int> currentCyclePlaylist = new List<int>();
+    private int playlistIndex = 0;
+    private List<int> commonEventPool = new List<int>();
 
     private void Awake()
     {
@@ -31,132 +48,214 @@ public class EventManager : MonoBehaviour
         }
     }
 
-    private async UniTaskVoid Start()
+    // --- 내부 이벤트 필터링 메서드 ---
+
+    private List<int> GetSubEventGroupsForPack(int packNumber)
     {
-        if (DataManager.Instance == null)
-        {
-            Debug.LogError("DataManager 인스턴스를 찾을 수 없습니다.");
-            return;
-        }
-
-        try
-        {
-            await DataManager.Instance.InitializeDataAsync();
-            
-            // 튜토리얼 ID 목록을 미리 만들어 정렬해둡니다.
-            tutorialEventIds = DataManager.Instance.StringDataList
-                .Where(data => data.PageType == "Tutorial")
-                .Select(data => data.ID)
-                .OrderBy(id => id)
-                .ToList();
-
-            // 공용 이벤트 풀을 준비합니다.
-            ResetCommonEventPool();
-
-            Debug.Log("이벤트 매니저 초기화 완료.");
-            IsInitialized = true;
-        }
-        catch (System.Exception ex)
-        {
-            Debug.LogError($"이벤트 매니저 초기화 실패: {ex.Message}");
-        }
+        if (DataManager.Instance?.SubEvents == null) return new List<int>();
+        return DataManager.Instance.SubEvents
+            .Where(e => e.PackNumber == packNumber)
+            .Select(e => e.GroupNumber)
+            .Distinct()
+            .ToList();
     }
 
-    // 공용 이벤트 풀을 리셋하는 함수
+    private List<SubEventData> GetSubEventChain(int packNumber, int groupNumber)
+    {
+        if (DataManager.Instance?.SubEvents == null) return new List<SubEventData>();
+        return DataManager.Instance.SubEvents
+            .Where(e => e.PackNumber == packNumber && e.GroupNumber == groupNumber)
+            .OrderBy(e => e.Index)
+            .ToList();
+    }
+
+    private List<int> GetParameterEventsForChapter(int chapter)
+    {
+        if (DataManager.Instance?.StringDataList == null) return new List<int>();
+        string pageType = (chapter == 1) ? "Tutorial" : "Common";
+        return DataManager.Instance.StringDataList
+            .Where(d => d.PageType == pageType)
+            .Select(d => d.ID)
+            .ToList();
+    }
+
     private void ResetCommonEventPool()
     {
-        if (PlayerStats.Instance == null || DataManager.Instance == null || DataManager.Instance.StringDataList == null)
+        if (DataManager.Instance?.StringDataList == null)
         {
-            Debug.LogError("PlayerStats 또는 DataManager가 초기화되지 않았습니다.");
             commonEventPool = new List<int>();
             return;
         }
-
-        var commonEvents = DataManager.Instance.StringDataList
-            .Where(data => data.PageType == "Common");
-
-        var completedIds = new HashSet<int>(PlayerStats.Instance.completedEventIds);
-
-        List<int> filteredEventIds = commonEvents
-            .Where(data => !completedIds.Contains(data.ID))
-            .Select(data => data.ID)
+        commonEventPool = DataManager.Instance.StringDataList
+            .Where(d => d.PageType == "Common")
+            .Select(d => d.ID)
             .ToList();
-
-        commonEventPool = new List<int>(filteredEventIds);
-        Debug.Log($"공용 이벤트 풀 리셋 완료. 사용 가능한 이벤트 {commonEventPool.Count}개.");
     }
 
-    // 다음 이벤트를 가져오는 메인 함수
-    public int GetNextEventId()
+
+    public async UniTask StartNewGame(int packNumber)
     {
-        if (PlayerStats.Instance.playthroughCount == 1)
+        selectedPackNumber = packNumber;
+        currentChapter = 1;
+        playedSubEventGroups.Clear();
+
+        await DataManager.Instance.InitializeDataAsync();
+        await DataManager.Instance.SubIntializeDataAsync();
+        
+        ResetCommonEventPool();
+        StartNewCycle();
+        currentState = EventManagerState.InCycle;
+        Debug.Log($"새 게임 시작. 팩: {selectedPackNumber}, 챕터: {currentChapter}");
+        PlayNextTurn(); // Start the first event
+    }
+
+    private void StartNewCycle()
+    {
+        var availableGroups = GetSubEventGroupsForPack(selectedPackNumber)
+            .Except(playedSubEventGroups).ToList();
+
+        if (availableGroups.Count == 0)
         {
-            // 1회차: 튜토리얼 순차 진행
-            if (currentTutorialIndex < tutorialEventIds.Count)
+            Debug.LogWarning("플레이할 수 있는 서브 이벤트 그룹이 더 이상 없습니다. 공용 이벤트를 재생합니다.");
+            playlistIndex = 0;
+            currentCyclePlaylist = commonEventPool.OrderBy(x => Guid.NewGuid()).ToList();
+            return;
+        }
+
+        int selectedGroup = availableGroups[UnityEngine.Random.Range(0, availableGroups.Count)];
+        playedSubEventGroups.Add(selectedGroup);
+        var subEventChain = GetSubEventChain(selectedPackNumber, selectedGroup);
+        int subEventLength = subEventChain.Count;
+
+        int numParameterEvents = totalEventsPerCycle - subEventLength;
+        var parameterEventIds = GetParameterEventsForChapter(currentChapter);
+        var selectedParameterEvents = parameterEventIds.OrderBy(x => Guid.NewGuid()).Take(numParameterEvents).ToList();
+
+        currentCyclePlaylist.Clear();
+        currentCyclePlaylist.Add(subEventChain.First().Index);
+        currentCyclePlaylist.AddRange(selectedParameterEvents);
+        
+        currentCyclePlaylist = currentCyclePlaylist.OrderBy(x => Guid.NewGuid()).ToList();
+
+        playlistIndex = 0;
+        Debug.Log($"새로운 사이클 시작. 서브 이벤트 그룹: {selectedGroup} ({subEventLength}턴), 파라미터 이벤트: {numParameterEvents}턴");
+    }
+
+    public void PlayNextTurn()
+    {
+        if (currentState == EventManagerState.Idle) return;
+
+        if (currentState == EventManagerState.InSubEvent)
+        {
+            Debug.Log("서브 이벤트 진행 중... 유저의 선택을 기다립니다.");
+            return;
+        }
+        
+        if (currentState == EventManagerState.InCycle)
+        {
+            if (playlistIndex >= currentCyclePlaylist.Count)
             {
-                int nextTutorialId = tutorialEventIds[currentTutorialIndex];
-                
-                // 이미 완료한 튜토리얼 이벤트는 건너뜀 (세이브/로드 시 필요)
-                if (PlayerStats.Instance.completedEventIds.Contains(nextTutorialId))
+                Debug.Log("현재 사이클의 모든 이벤트를 완료했습니다. 다음 사이클을 시작합니다.");
+                currentChapter++;
+                StartNewCycle();
+                if (currentCyclePlaylist.Count == 0)
                 {
-                    currentTutorialIndex++;
-                    return GetNextEventId(); // 재귀 호출로 다음 이벤트 찾기
+                    Debug.LogError("플레이할 이벤트가 없습니다.");
+                    return;
                 }
-                
-                currentTutorialIndex++;
-                return nextTutorialId;
+            }
+
+            int eventId = currentCyclePlaylist[playlistIndex++];
+            
+            if (eventId < 10000)
+            {
+                currentState = EventManagerState.InSubEvent;
+                DisplaySubEvent(eventId);
             }
             else
             {
-                Debug.Log("튜토리얼 완료.");
-                return -1; // 튜토리얼 종료
+                Debug.Log($"파라미터 이벤트(ID: {eventId}) 발생을 알립니다.");
+                OnParameterEventReady?.Invoke(eventId);
             }
+        }
+    }
+
+    private void DisplaySubEvent(int index)
+    {
+        currentSubEventIndex = index;
+        var data = DataManager.Instance.SubEvents.FirstOrDefault(e => e.Index == index);
+        if (data != null)
+        {
+            OnSubEventReady?.Invoke(data);
+            Debug.Log($"서브 이벤트 (Index: {data.Index}) 발생을 알립니다.");
+
+            if (data.IsFinish)
+            {
+                Debug.Log("서브 이벤트 체인 종료.");
+                currentState = EventManagerState.InCycle;
+            }
+        }
+    }
+    
+    public void OnSubEventChoiceSelected(bool isLeftChoice)
+    {
+        if (currentState != EventManagerState.InSubEvent) return;
+
+        var currentData = DataManager.Instance.SubEvents.FirstOrDefault(e => e.Index == currentSubEventIndex);
+        if (currentData == null) return;
+
+        int nextIndex = -1;
+        string nextIndexStr = isLeftChoice ? currentData.NextLeftSelectString : currentData.NextRightSelectString;
+        int.TryParse(nextIndexStr, out nextIndex);
+
+        if(nextIndex > 0)
+        {
+            DisplaySubEvent(nextIndex);
         }
         else
         {
-            // 2회차 이상: 공용 이벤트 랜덤 진행
-            if (commonEventPool == null || commonEventPool.Count == 0)
-            {
-                ResetCommonEventPool();
-                if (commonEventPool.Count == 0)
-                {
-                    Debug.LogWarning("모든 공용 이벤트를 완료했습니다.");
-                    return -1; // 모든 이벤트 완료
-                }
-            }
+            Debug.Log("서브 이벤트 체인 종료. 공용 이벤트를 재생합니다.");
+            currentState = EventManagerState.InCycle;
 
-            int randomIndex = Random.Range(0, commonEventPool.Count);
-            int randomId = commonEventPool[randomIndex];
-            commonEventPool.RemoveAt(randomIndex);
-            return randomId;
+            if (commonEventPool.Count > 0)
+            {
+                int randomIndex = UnityEngine.Random.Range(0, commonEventPool.Count);
+                int randomId = commonEventPool[randomIndex];
+                commonEventPool.RemoveAt(randomIndex);
+                
+                OnParameterEventReady?.Invoke(randomId);
+            }
+            else
+            {
+                Debug.LogWarning("모든 공용 이벤트를 완료했습니다. 다음 턴을 진행합니다.");
+                PlayNextTurn();
+            }
         }
     }
 
     public void ResetEventManagerState()
     {
-        currentTutorialIndex = 0; // 튜토리얼 진행도 초기화
-        ResetCommonEventPool();   // 공용 이벤트 풀을 다시 채움
+        currentState = EventManagerState.Idle;
+        currentChapter = 1;
+        selectedPackNumber = 0;
+        playedSubEventGroups.Clear();
+        currentCyclePlaylist.Clear();
+        playlistIndex = 0;
+        ResetCommonEventPool();
         Debug.Log("EventManager 상태가 초기화되었습니다.");
     }
-    // 이벤트를 화면에 표시하는 역할
+
     public void DisplayEventById(int id)
     {
-        if (id == -1)
+        if (id < 10000)
         {
-            if(eventPanelController != null) eventPanelController.gameObject.SetActive(false);
-            Debug.Log("표시할 이벤트가 없습니다.");
-            return;
-        }
-
-        EventData eventData = DataManager.Instance.GetEventDataById(id);
-
-        if (eventData != null && eventPanelController != null)
-        {
-            eventPanelController.DisplayEvent(eventData);
+            currentState = EventManagerState.InSubEvent;
+            DisplaySubEvent(id);
         }
         else
         {
-            Debug.LogError($"EventManager: EventData(ID: {id}) 또는 EventPanelController가 없습니다.");
+            currentState = EventManagerState.InCycle;
+            OnParameterEventReady?.Invoke(id);
         }
     }
 }
