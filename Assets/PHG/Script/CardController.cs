@@ -16,6 +16,10 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     // [유지] MainScenarioManager와의 연결을 위한 참조는 그대로 유지합니다.
     public IChoiceHandler choiceHandler;
 
+    [Header("스와이프 제한")]
+    [SerializeField] private float maxSwipeDistance = 200f; // 최대 스와이프 거리
+    [SerializeField] private float maxRotationAngle = 20f;  // 최대 회전 각도
+
     private string leftChoiceTextString;
     private string rightChoiceTextString;
 
@@ -44,9 +48,16 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             eventData.pressEventCamera,
             out Vector2 localPoint);
 
+        float clampedX = Mathf.Clamp(localPoint.x, -maxSwipeDistance, maxSwipeDistance);
+        rectTransform.anchoredPosition = new Vector2(clampedX, initialPosition.y);
+
+
         distanceMoved = localPoint.x;
-        rectTransform.anchoredPosition = new Vector2(localPoint.x, initialPosition.y);
-        rectTransform.localEulerAngles = new Vector3(0, 0, -distanceMoved * 0.1f);
+
+        float rotationMultiplier = 0.1f;
+        float targetRotation = -distanceMoved * rotationMultiplier;
+        float clampedRotation = Mathf.Clamp(targetRotation, -maxRotationAngle, maxRotationAngle);
+        rectTransform.localEulerAngles = new Vector3(0, 0, clampedRotation);
 
         float threshold = 50f;
         float maxSwipe = 300f;
@@ -118,7 +129,7 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             canChoose = mainScenarioManager.CanMakeChoice;
         }
 
-        if (Mathf.Abs(distanceMoved) > 250f && canChoose)
+        if (Mathf.Abs(distanceMoved) > 200f && canChoose)
         {
             choiceHandler.HandleChoice(distanceMoved > 0);
             AnimateCardOffscreen();

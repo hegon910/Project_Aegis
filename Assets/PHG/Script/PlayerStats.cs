@@ -67,8 +67,9 @@ public class PlayerStats : MonoBehaviour
                 Debug.Log($"<color=cyan>스탯 변경: {change.parameterType}이(가) {change.valueChange}만큼 변경되어 현재 {stats[change.parameterType]}입니다.</color>");
                 OnStatChanged?.Invoke(change.parameterType, change.valueChange, stats[change.parameterType]);
 
-                //lhk 0826 게임오버조건 확인
-                GameManager.instance.OnParameterChanged();
+                // [수정] 불필요한 중간 메서드 대신 게임오버 조건을 직접 확인하도록 변경
+                // GameManager.instance.OnParameterChanged(); (기존 코드)
+                GameManager.instance.CheckGameOverConditions(); // (수정된 코드)
             }
         }
     }
