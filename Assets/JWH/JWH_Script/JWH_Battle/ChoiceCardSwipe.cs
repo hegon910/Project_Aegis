@@ -40,6 +40,11 @@ public class ChoiceCardSwipe : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     [SerializeField] float minSwipeDistance = 140f;
     [SerializeField] float verticalBias = 1.2f;
 
+    [Header("스와이프 제한")]
+    [SerializeField] private float maxHorizontalSwipe = 350f;
+    [SerializeField] private float maxVerticalSwipe = 200f;
+    [SerializeField] private float maxRotationAngle = 20f;
+
     [Header("Preview UI")]
     [SerializeField] private SwipePreviewUI attackPreview;
     [SerializeField] private SwipePreviewUI defendPreview;
@@ -77,38 +82,31 @@ public class ChoiceCardSwipe : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     public void OnDrag(PointerEventData e)
     {
-        // 실제 터치/마우스의 이동량은 계속 누적합니다.
         dragDelta += e.delta / canvas.scaleFactor;
 
-        // [핵심 수정] CardController의 로직을 정확히 반영합니다.
-        // 드래그 방향을 판단하여 움직이는 축을 X 또는 Y로 고정합니다.
         Vector2 targetPosition = initialPosition;
         float absX = Mathf.Abs(dragDelta.x);
         float absY = Mathf.Abs(dragDelta.y);
 
-        // 수직 움직임이 우세할 경우 (위쪽으로만)
         if (absY * verticalBias > absX)
         {
-            // Y축으로만 움직이되, 아래로는 움직이지 않도록 고정합니다.
-            targetPosition.y = initialPosition.y + Mathf.Max(0, dragDelta.y);
+            float deltaY = Mathf.Max(0, dragDelta.y);
+            // [수정] 수직 이동 거리 제한
+            targetPosition.y = initialPosition.y + Mathf.Clamp(deltaY, 0, maxVerticalSwipe);
         }
-        // 수평 움직임이 우세할 경우
         else
         {
-            // X축으로만 움직입니다.
-            targetPosition.x = initialPosition.x + dragDelta.x;
+            // [수정] 수평 이동 거리 제한
+            targetPosition.x = initialPosition.x + Mathf.Clamp(dragDelta.x, -maxHorizontalSwipe, maxHorizontalSwipe);
         }
 
-        // 계산된 고정된 위치로 카드를 이동시킵니다.
         card.anchoredPosition = targetPosition;
 
-        // 카드의 기울임은 수평 움직임에만 반응하도록 유지합니다.
-        card.rotation = Quaternion.Euler(0, 0, Mathf.Clamp(-dragDelta.x * 0.05f, -10f, 10f));
+        // [수정] 회전 각도를 인스펙터에서 설정 가능하도록 변경
+        card.rotation = Quaternion.Euler(0, 0, Mathf.Clamp(-dragDelta.x * 0.05f, -maxRotationAngle, maxRotationAngle));
 
-        // 미리보기 연출은 실제 드래그 값을 사용해야 자연스럽습니다.
         HandlePreviews();
     }
-
     public void OnEndDrag(PointerEventData e)
     {
         attackPreview?.SetAlpha(0);
@@ -187,16 +185,28 @@ public class ChoiceCardSwipe : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     private void AnimateCardOffscreen(Vector2 direction)
     {
-        card.DOAnchorPos(card.anchoredPosition + direction * 1200f, 0.5f).SetEase(Ease.InQuad);
-        card.DORotate(new Vector3(0, 0, -direction.x * 45f), 0.5f).SetEase(Ease.InQuad)
-            .OnComplete(() =>
-            {
-                card.anchoredPosition = initialPosition;
-                card.rotation = Quaternion.identity;
-                dragDelta = Vector2.zero;
-            });
-    }
+        // [수정] 떨림 효과와 퇴장 애니메이션을 Sequence로 묶어 순차적으로 실행합니다.
+        float shakeDuration = 0.4f;
+        float shakeStrength = 7f;
+        int vibrato = 25;
 
+        Sequence sequence = DOTween.Sequence();
+
+        // 1. 먼저 카드를 흔드는 애니메이션을 추가합니다.
+        sequence.Append(card.DOShakeRotation(shakeDuration, new Vector3(0, 0, shakeStrength), vibrato, 90, false, ShakeRandomnessMode.Harmonic));
+
+        // 2. 이어서 카드가 화면 밖으로 날아가는 애니메이션을 추가합니다.
+      //  sequence.Append(card.DOAnchorPos(card.anchoredPosition + direction * 1200f, 0.5f).SetEase(Ease.InQuad));
+       // sequence.Join(card.DORotate(new Vector3(0, 0, -direction.x * 45f), 0.5f).SetEase(Ease.InQuad));
+
+        // 3. 모든 애니메이션이 끝나면 카드의 상태를 초기화합니다.
+        sequence.OnComplete(() =>
+        {
+            card.anchoredPosition = initialPosition;
+            card.rotation = Quaternion.identity;
+            dragDelta = Vector2.zero;
+        });
+    }
     void ResetCard()
     {
         card.DOAnchorPos(initialPosition, 0.3f).SetEase(Ease.OutBack);
