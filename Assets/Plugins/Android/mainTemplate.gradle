@@ -4,12 +4,15 @@ apply plugin: 'com.android.library'
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 // Android Resolver Dependencies Start
-    implementation 'com.google.android.gms:play-services-base:18.7.2' // Assets/Firebase/Editor/AppDependencies.xml:17
-    implementation 'com.google.firebase:firebase-analytics:23.0.0' // Assets/Firebase/Editor/AuthDependencies.xml:15
-    implementation 'com.google.firebase:firebase-app-unity:13.1.0' // Assets/Firebase/Editor/AppDependencies.xml:22
-    implementation 'com.google.firebase:firebase-auth:24.0.0' // Assets/Firebase/Editor/AuthDependencies.xml:13
-    implementation 'com.google.firebase:firebase-auth-unity:13.1.0' // Assets/Firebase/Editor/AuthDependencies.xml:20
-    implementation 'com.google.firebase:firebase-common:22.0.0' // Assets/Firebase/Editor/AppDependencies.xml:13
+    implementation 'com.google.android.gms:play-services-base:18.7.2' // Assets/Import/Firebase/Editor/DatabaseDependencies.xml:17
+    implementation 'com.google.firebase:firebase-analytics:23.0.0' // Assets/Import/Firebase/Editor/DatabaseDependencies.xml:15
+    implementation 'com.google.firebase:firebase-analytics-unity:13.1.0' // Assets/Import/Firebase/Editor/AnalyticsDependencies.xml:18
+    implementation 'com.google.firebase:firebase-app-unity:13.1.0' // Assets/Import/Firebase/Editor/AppDependencies.xml:22
+    implementation 'com.google.firebase:firebase-auth:24.0.0' // Assets/Import/Firebase/Editor/AuthDependencies.xml:13
+    implementation 'com.google.firebase:firebase-auth-unity:13.1.0' // Assets/Import/Firebase/Editor/AuthDependencies.xml:20
+    implementation 'com.google.firebase:firebase-common:22.0.0' // Assets/Import/Firebase/Editor/AppDependencies.xml:13
+    implementation 'com.google.firebase:firebase-database:22.0.0' // Assets/Import/Firebase/Editor/DatabaseDependencies.xml:13
+    implementation 'com.google.firebase:firebase-database-unity:13.1.0' // Assets/Import/Firebase/Editor/DatabaseDependencies.xml:22
     implementation 'com.google.games:gpgs-plugin-support:2.1.0' // Assets/GooglePlayGames/com.google.play.games/Editor/GooglePlayGamesPluginDependencies.xml:11
 // Android Resolver Dependencies End
 **DEPS**}
