@@ -19,10 +19,10 @@ dependencyResolutionManagement {
 // Android Resolver Repos Start
         def unityProjectPath = $/file:///**DIR_UNITYPROJECT**/$.replace("\\", "/")
         maven {
-            url (unityProjectPath + "/Assets/GooglePlayGames/com.google.play.games/Editor/m2repository") // Assets/GooglePlayGames/com.google.play.games/Editor/GooglePlayGamesPluginDependencies.xml:11
+            url (unityProjectPath + "/Assets/GeneratedLocalRepo/Firebase/m2repository") // Assets/Firebase/Editor/DatabaseDependencies.xml:22, Assets/Import/Firebase/Editor/AppDependencies.xml:22, Assets/Import/Firebase/Editor/AuthDependencies.xml:20
         }
         maven {
-            url (unityProjectPath + "/Assets/Firebase/m2repository") // Assets/Import/Firebase/Editor/AnalyticsDependencies.xml:18, Assets/Import/Firebase/Editor/AppDependencies.xml:22, Assets/Import/Firebase/Editor/AuthDependencies.xml:20, Assets/Import/Firebase/Editor/DatabaseDependencies.xml:22
+            url (unityProjectPath + "/Assets/GooglePlayGames/com.google.play.games/Editor/m2repository") // Assets/GooglePlayGames/com.google.play.games/Editor/GooglePlayGamesPluginDependencies.xml:11
         }
         mavenLocal()
 // Android Resolver Repos End

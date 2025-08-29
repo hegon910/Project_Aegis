@@ -5,55 +5,34 @@ using TMPro;
 public class EventPanelController : MonoBehaviour
 {
     [Header("UI 참조")]
-    [SerializeField] private Image characterImage;
+    [SerializeField] private Image eventImage;
     [SerializeField] private TextMeshProUGUI dialogueText;
+    [SerializeField] private TextMeshProUGUI choiceText;
 
-    private void Start()
-    {
-        // 시작할 때 패널을 비활성화
-        gameObject.SetActive(false);
-    }
+    private EventData currentEventData;
 
-    private void OnEnable()
+    // EventData를 받아와서 UI에 내용을 채우는 메서드
+    public void DisplayEvent(EventData data)
     {
-        // TODO: 이벤트 기반으로 변경 시 구독
-        // EventManager.OnSubEventReady += DisplaySubEvent;
-    }
+        currentEventData = data;
 
-    private void OnDisable()
-    {
-        // TODO: 이벤트 기반으로 변경 시 구독 취소
-        // EventManager.OnSubEventReady -= DisplaySubEvent;
-    }
-
-    /// <summary>
-    /// 서브 이벤트를 UI에 표시
-    /// </summary>
-    public void DisplaySubEvent(SubEventData data)
-    {
-        if (data == null) 
+        if (currentEventData == null)
         {
+            Debug.LogError("표시할 이벤트 데이터가 없습니다.");
             gameObject.SetActive(false);
             return;
         }
 
         gameObject.SetActive(true);
 
-        dialogueText.text = data.QuestionString_kr;
-        characterImage.sprite = Resources.Load<Sprite>($"Images/{data.CharacterImg}");
-    }
+        // UI 요소에 데이터 할당
+        eventImage.sprite = currentEventData.eventSprite;
+        dialogueText.text = currentEventData.dialogue;
 
-    public void DisplayParameterEvent(EventData data)
-    {
-        if (data == null) 
+        // 드래그 시작 전에는 선택지 텍스트를 비워둡니다.
+        if (choiceText != null)
         {
-            gameObject.SetActive(false);
-            return;
+            choiceText.text = string.Empty;
         }
-
-        gameObject.SetActive(true);
-
-        dialogueText.text = data.dialogue;
-        characterImage.sprite = data.eventSprite;
     }
 }
