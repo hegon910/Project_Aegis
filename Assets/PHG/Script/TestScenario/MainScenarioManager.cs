@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections;
 using System.Linq;
 using TMPro;
@@ -8,14 +8,14 @@ using UnityEngine.UI;
 [System.Serializable]
 public class MainStoryUI
 {
-    [Header("¸ŞÀÎ ÆĞ³Î ¿ÀºêÁ§Æ®")]
+    [Header("ë©”ì¸ íŒ¨ë„ ì˜¤ë¸Œì íŠ¸")]
     public GameObject panelRoot;
-    [Header("Ä³¸¯ÅÍ °ü·Ã")]
+    [Header("ìºë¦­í„° ê´€ë ¨")]
     public Image characterImage;
     public TextMeshProUGUI characterNameText;
-    [Header("´ë»ç")]
+    [Header("ëŒ€ì‚¬")]
     public TextMeshProUGUI dialogueText;
-    [Header("¼±ÅÃÁö ¹Ì¸®º¸±â")]
+    [Header("ì„ íƒì§€ ë¯¸ë¦¬ë³´ê¸°")]
     public Image choicePreviewImage;
     public TextMeshProUGUI choicePreviewText;
 }
@@ -25,16 +25,16 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
     public event Action OnScenarioEnded;
     public bool IsScenarioRunning { get; private set; }
 
-    [Header("UI ÄÁÆ®·Ñ·¯ ÂüÁ¶")]
+    [Header("UI ì»¨íŠ¸ë¡¤ëŸ¬ ì°¸ì¡°")]
     [SerializeField] private CardController cardController;
     [SerializeField] private ParameterUIController parameterUIController;
     [SerializeField] private Image dimmerPanel;
 
-    [Header("¸ŞÀÎ ½ºÅä¸® Àü¿ë UI")]
+    [Header("ë©”ì¸ ìŠ¤í† ë¦¬ ì „ìš© UI")]
     [SerializeField] private MainStoryUI mainStoryUI;
     [SerializeField] private float typingSpeed = 0.05f;
 
-    [Header("½Ã³ª¸®¿À ½ÃÀÛÁ¡")]
+    [Header("ì‹œë‚˜ë¦¬ì˜¤ ì‹œì‘ì ")]
     [SerializeField] private StoryNode startingNode;
 
     private StoryNode currentNode;
@@ -54,7 +54,7 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
             mainStoryUI.choicePreviewText.color = Color.clear;
         }
 
-        // ¡å [¼öÁ¤ 1] GameManager¿ÍÀÇ Ãæµ¹À» ¸·±â À§ÇØ, ¿©±â¼­ ½Ã³ª¸®¿À¸¦ ÀÚµ¿À¸·Î ½ÃÀÛÇÏ´Â ºÎºĞÀ» ºñÈ°¼ºÈ­ÇÕ´Ï´Ù.
+        // â–¼ [ìˆ˜ì • 1] GameManagerì™€ì˜ ì¶©ëŒì„ ë§‰ê¸° ìœ„í•´, ì—¬ê¸°ì„œ ì‹œë‚˜ë¦¬ì˜¤ë¥¼ ìë™ìœ¼ë¡œ ì‹œì‘í•˜ëŠ” ë¶€ë¶„ì„ ë¹„í™œì„±í™”í•©ë‹ˆë‹¤.
         /*
         if (startingNode != null)
         {
@@ -62,7 +62,7 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
         }
         else
         {
-            Debug.LogError("½ÃÀÛ ³ëµå(startingNode)°¡ ÀÎ½ºÆåÅÍ¿¡ ÇÒ´çµÇÁö ¾Ê¾Ò½À´Ï´Ù!");
+            Debug.LogError("ì‹œì‘ ë…¸ë“œ(startingNode)ê°€ ì¸ìŠ¤í™í„°ì— í• ë‹¹ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤!");
             gameObject.SetActive(false);
         }
         */
@@ -80,12 +80,12 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
         if (mainStoryUI.characterNameText != null) mainStoryUI.characterNameText.text = "";
         if (mainStoryUI.characterImage != null) mainStoryUI.characterImage.color = Color.clear;
         if (cardController != null) cardController.gameObject.SetActive(false);
-        Debug.Log("MainScenarioManager »óÅÂ°¡ ÃÊ±âÈ­µÇ¾ú½À´Ï´Ù.");
+        Debug.Log("MainScenarioManager ìƒíƒœê°€ ì´ˆê¸°í™”ë˜ì—ˆìŠµë‹ˆë‹¤.");
     }
 
     public void BeginScenarioFromStart()
     {
-        IsScenarioRunning = true; // »óÅÂ ÇÃ·¡±× ¼³Á¤
+        IsScenarioRunning = true; // ìƒíƒœ í”Œë˜ê·¸ ì„¤ì •
         currentNode = startingNode;
         if (currentNode != null)
         {
@@ -94,19 +94,24 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
         }
         else
         {
-            Debug.LogError("½ÃÀÛ ³ëµå°¡ ¾ø½À´Ï´Ù!");
+            Debug.LogError("ì‹œì‘ ë…¸ë“œê°€ ì—†ìŠµë‹ˆë‹¤!");
         }
     }
 
     private void EndScenario()
     {
-        IsScenarioRunning = false; // »óÅÂ ÇÃ·¡±× ¸®¼Â
+        IsScenarioRunning = false;
         mainStoryUI.panelRoot.SetActive(false);
-        GameManager.instance.GoToBattlePanel();
+        if (PlayerStats.Instance.playthroughCount == 1)
+        {
+            GameManager.instance.StartEventFlow();
+        }
+        else
+        {
+            GameManager.instance.GoToBattlePanel();
+        }
+            
     }
-
-
-  
 
     void Update()
     {
@@ -166,27 +171,27 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
         }
         if (typingCoroutine != null) StopCoroutine(typingCoroutine);
         typingCoroutine = StartCoroutine(TypeText(currentNode.storyText));
-        // ¼±ÅÃÁö Ç¥½Ã ·ÎÁ÷ÀÌ ¿Ö ½ÇÇàµÇÁö ¾Ê´ÂÁö È®ÀÎÇÏ±â À§ÇØ »ó¼¼ ·Î±×¸¦ Ãß°¡ÇÕ´Ï´Ù.
-        Debug.Log($"--- [Áø´Ü] DisplayNode Á¤º¸: ÇöÀç ³ëµå '{currentNode.name}' ---");
+        // ì„ íƒì§€ í‘œì‹œ ë¡œì§ì´ ì™œ ì‹¤í–‰ë˜ì§€ ì•ŠëŠ”ì§€ í™•ì¸í•˜ê¸° ìœ„í•´ ìƒì„¸ ë¡œê·¸ë¥¼ ì¶”ê°€í•©ë‹ˆë‹¤.
+        Debug.Log($"--- [ì§„ë‹¨] DisplayNode ì •ë³´: í˜„ì¬ ë…¸ë“œ '{currentNode.name}' ---");
         if (currentNode.choices == null)
         {
-            Debug.LogError("[Áø´Ü] currentNode.choices ¸®½ºÆ®°¡ NULLÀÔ´Ï´Ù!");
+            Debug.LogError("[ì§„ë‹¨] currentNode.choices ë¦¬ìŠ¤íŠ¸ê°€ NULLì…ë‹ˆë‹¤!");
         }
         else
         {
-            Debug.Log($"[Áø´Ü] currentNode.choices ¸®½ºÆ®¿¡ Æ÷ÇÔµÈ ¼±ÅÃÁö °³¼ö: {currentNode.choices.Count}");
+            Debug.Log($"[ì§„ë‹¨] currentNode.choices ë¦¬ìŠ¤íŠ¸ì— í¬í•¨ëœ ì„ íƒì§€ ê°œìˆ˜: {currentNode.choices.Count}");
         }
         if (currentNode.choices != null && currentNode.choices.Count >= 2)
         {
             if (cardController != null) cardController.choiceHandler = this;
-            Debug.Log("[Áø´Ü] ¼±ÅÃÁö Ç¥½Ã Á¶°Ç ÃæÁ·. Ä«µå UI¸¦ È°¼ºÈ­ÇÕ´Ï´Ù.");
+            Debug.Log("[ì§„ë‹¨] ì„ íƒì§€ í‘œì‹œ ì¡°ê±´ ì¶©ì¡±. ì¹´ë“œ UIë¥¼ í™œì„±í™”í•©ë‹ˆë‹¤.");
             cardController.gameObject.SetActive(true);
             cardController.SetChoiceTexts(currentNode.choices[0].choiceText, currentNode.choices[1].choiceText);
             cardController.ResetCardState();
         }
         else
         {
-            Debug.Log("[Áø´Ü] ¼±ÅÃÁö°¡ ¾ø°Å³ª ºÎÁ·ÇÏ¿© ÀÚµ¿ ÁøÇà ·ÎÁ÷À¸·Î ³Ñ¾î°©´Ï´Ù.");
+            Debug.Log("[ì§„ë‹¨] ì„ íƒì§€ê°€ ì—†ê±°ë‚˜ ë¶€ì¡±í•˜ì—¬ ìë™ ì§„í–‰ ë¡œì§ìœ¼ë¡œ ë„˜ì–´ê°‘ë‹ˆë‹¤.");
             cardController.gameObject.SetActive(false);
             StartCoroutine(AutoTransitionToNext(
                 (currentNode.choices != null && currentNode.choices.Count == 1) ? currentNode.choices[0].nextNode : null
