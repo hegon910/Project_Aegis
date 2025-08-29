@@ -339,7 +339,7 @@ public class DataManager : MonoBehaviour
             return null;
         }
 
-        EventData eventData = ScriptableObject.CreateInstance<EventData>();
+        EventData eventData = new EventData();
 
         // 기본 정보
         eventData.eventName = $"이벤트 : {id}"; // CSV에 이벤트 이름이 없어 ID로 임시 생성

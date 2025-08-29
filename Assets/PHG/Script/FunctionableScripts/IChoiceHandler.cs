@@ -1,17 +1,13 @@
-// IChoiceHandler.cs
-// 이 파일을 새로 생성해주세요.
+using UnityEngine;
 
 public interface IChoiceHandler
 {
-    // 선택 확정 시 호출
+  //  bool CanMakeChoice { get; }
     void HandleChoice(bool isRightChoice);
-
-    // 카드 드래그 중 파라미터 미리보기 시 호출
     void PreviewAffectedParameters(bool isRightChoice);
-
-    // 미리보기 해제 시 호출
     void ClearParameterPreview();
-
-    // 카드 드래그 중 화면 어둡게 할 때 호출
     void UpdateDimmer(float alpha);
+
+    // [추가] 카드 드래그 시 선택지 미리보기 UI를 업데이트하기 위한 통로
+    void UpdateChoicePreview(string text, Color color);
 }

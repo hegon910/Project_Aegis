@@ -132,6 +132,12 @@ public class EventManager : MonoBehaviour
         }
     }
 
+    public void ResetEventManagerState()
+    {
+        currentTutorialIndex = 0; // 튜토리얼 진행도 초기화
+        ResetCommonEventPool();   // 공용 이벤트 풀을 다시 채움
+        Debug.Log("EventManager 상태가 초기화되었습니다.");
+    }
     // 이벤트를 화면에 표시하는 역할
     public void DisplayEventById(int id)
     {
