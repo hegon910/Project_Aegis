@@ -64,7 +64,7 @@ public static class Csvparser
                             // bool 타입이고 값이 비어있으면 false로 변환
                             if (string.IsNullOrWhiteSpace(trimmedValue))
                             {
-                                convertedValue = false;
+                                convertedValue = null;
                             }
                             else
                             {
