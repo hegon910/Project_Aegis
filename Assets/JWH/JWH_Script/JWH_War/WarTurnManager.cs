@@ -25,6 +25,9 @@ public class WarTurnManager : MonoBehaviour
 
     public System.Action<string> OnBattleEnd;
 
+    private int skillCooldownTimer = 0;
+    public int GetSkillCooldown() => skillCooldownTimer;
+
     public void ResetForNewBattle(int newMaxTurns = 30)
     {
         maxTurns = newMaxTurns;
@@ -62,6 +65,11 @@ public class WarTurnManager : MonoBehaviour
         {
             Debug.Log($"턴 제한({maxTurns})에 도달 전투를 종료");
             return;
+        }
+        if (skillCooldownTimer > 0)
+        {
+            skillCooldownTimer--;
+            Debug.Log($"스킬 쿨타임 감소. 남은 턴: {skillCooldownTimer}");
         }
 
         currentTurn++;
@@ -244,6 +252,23 @@ public class WarTurnManager : MonoBehaviour
             player.Ctrl.CrushResult(pFwd);
         }
         ResolveBackFor(false, enemy.Ctrl, eBackIntended, last);
+    }
+
+    public void OnClick_PlayerSkill()
+    {
+        Debug.Log("[WarTurnManager] OnClick_PlayerSkill() 호출됨 (스와이프 UP)");
+
+        if (turnRunning || IsBattleEnded || player.currentSkill == null || skillCooldownTimer > 0)
+        {
+            Debug.Log("[WarTurnManager] 스킬 사용 조건 불충족.");
+            return;
+        }
+        SkillData usedSkill = player.currentSkill;
+        Debug.Log($"[WarTurnManager] 모든 조건 통과. '{usedSkill.skillName}' 스킬 사용 시도.");
+        player.UseSkill(enemy, this);
+        skillCooldownTimer = usedSkill.cooldown;
+        Debug.Log($"[WarTurnManager] 스킬 쿨타임 {skillCooldownTimer}턴으로 설정.");
+        player.EquipSkill(null);
     }
 
     //외부로 턴 정보 넘길예정 아마 승패쪽에서

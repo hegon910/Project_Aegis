@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38e70fb32f158324aafbe5e4c951b3ff, type: 3}
+  m_Name: "\uC0C8\uB85C\uC6B4 \uC9C1\uC811 \uD53C\uD574 \uC2A4\uD0AC"
+  m_EditorClassIdentifier: 
+  skillID: AIRSTRIKE
+  skillName: "\uC804\uBC29\uD3ED\uACA9"
+  description: "\uC804\uBC29\uC73C\uB85C \uD3ED\uACA9\uC744 \uD558\uC5EC \uC801\uAD70\uC5D0\uAC8C
+    2\uC758 \uD53C\uD574\uB97C \uC90D\uB2C8\uB2E4"
+  cooldown: 10
+  damage: 2
