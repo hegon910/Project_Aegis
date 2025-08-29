@@ -73,6 +73,29 @@ public class PlayerStats : MonoBehaviour
             }
         }
     }
+
+    public void StartNewPlaythrough()
+    {
+        playthroughCount++;
+
+        stats.Clear();
+        stats[ParameterType.정치력] = 50;
+        stats[ParameterType.병력] = 50;
+        stats[ParameterType.물자] = 50;
+        stats[ParameterType.리더십] = 50;
+        stats[ParameterType.전황] = 50;
+        stats[ParameterType.카르마] = 50;
+        
+        Debug.Log($"({playthroughCount})회차를 시작합니다. 스탯이 초기화되었습니다.");
+    }
+
+    public void AddCompletedEvent(int eventId)
+    {
+        if (!completedEventIds.Contains(eventId))
+        {
+            completedEventIds.Add(eventId);
+        }
+    }
 }
 
 // ParameterType enum은 EventData.cs에 정의되어 있을 것으로 예상됩니다.
