@@ -10,9 +10,22 @@ public class DataManager : MonoBehaviour
 {
     public static DataManager Instance { get; private set; }
 
+    private UniTaskCompletionSource<bool> _isReady = new UniTaskCompletionSource<bool>();
+    public UniTask IsReady => _isReady.Task;
+
     public List<EventStringData> StringDataList { get; private set; }
     public List<EventRewardData> RewardDataList { get; private set; }
     public List<SubEventData> SubEvents {  get; private set; }
+
+    private Dictionary<int, ParameterEventData> eventDataDict;
+    private Dictionary<int, ParameterEventStringData> eventStringDataDict;
+    private Dictionary<int, ParameterRewardData> rewardDataDict;
+    private Dictionary<int, string> characterNameDict; // 캐릭터 이름 룩업
+    private Dictionary<int, string> rewardTypeDict; //보상 타입 룩업
+    private Dictionary<int, string> choiceTextDict; //선택지 텍스트 룩업
+    private Dictionary<int, string> eventDict; //이벤트타입 룩업
+    private Dictionary<int, string> roundTypeDict; // 라운드타입 룩업
+    private Dictionary<int, string> pageTypeDict; //페이지타입 룩업
 
     private void Awake()
     {
@@ -30,6 +43,49 @@ public class DataManager : MonoBehaviour
     public async UniTask InitializeDataAsync()
     {
         await LoadAllDataAsync();
+        try
+        {
+            Debug.Log("이벤트 데이터 로딩 시작");
+            var eventDataTask = Csvparser.ParseAsync<ParameterEventData>("ParameterEventData");
+            Debug.Log("이벤트 스트링 데이터 로딩 시작");
+            var eventStringDataTask = Csvparser.ParseAsync<ParameterEventStringData>("ParameterEventStringData");
+            Debug.Log("보상 데이터 로딩 시작");
+            var rewardDataTask = Csvparser.ParseAsync<ParameterRewardData>("ParameterRewardData");
+            Debug.Log("이벤트 스트링 데이터 리스트 데이터 로딩 시작");
+            var characterTask = Csvparser.ParseAsync<CharacterData>("ParameterEventStringDataList");
+            Debug.Log("보상 데이터 리스트 로딩 시작");
+            var rewardTypeTask = Csvparser.ParseAsync<RewardTypeData>("ParameterRewardDataList");
+            Debug.Log("이벤트 데이터 리스트 로딩 시작");
+            var choTextTask = Csvparser.ParseAsync<EventDataList>("ParameterEventDataList");
+
+            var (eventList, eventStringList, rewardList, characterList, rewardTypeList, choTextList) =
+            await UniTask.WhenAll(eventDataTask, eventStringDataTask, rewardDataTask, characterTask, rewardTypeTask, choTextTask);
+
+            Debug.Log("모든 파일 로딩 완료");
+
+            eventDataDict = eventList.ToDictionary(e => e.ID, e => e);
+            eventStringDataDict = eventStringList.ToDictionary(e => e.ID, e => e);
+            rewardDataDict = rewardList.ToDictionary(r => r.ID, r => r);
+            characterNameDict = characterList.ToDictionary(c => c.Chr_index, c => c.Chr_name);
+            rewardTypeDict = rewardTypeList.ToDictionary(t => t.RewardType_index, t => t.RewardType);
+            choiceTextDict = choTextList.ToDictionary(c => c.Cho_Num, c => c.Cho_txt);
+            roundTypeDict = choTextList.GroupBy(a => a.Appearance_Num)
+                                   .ToDictionary(g => g.Key, g => g.First().Appearance_Type);
+
+            pageTypeDict = choTextList.GroupBy(p => p.PageType_Num)
+                                      .ToDictionary(g => g.Key, g => g.First().PageType);
+
+            eventDict = choTextList.GroupBy(c => c.Parameter_Num)
+                                       .ToDictionary(g => g.Key, g => g.First().Parameter_type);
+
+            _isReady.TrySetResult(true);
+            Debug.Log("모든 이벤트 데이터가 성공적으로 로드되었습니다.");
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"데이터 로드 실패: {ex.Message}");
+            _isReady.TrySetException(ex);
+        }
     }
 
     public async UniTask SubIntializeDataAsync()
@@ -67,6 +123,106 @@ public class DataManager : MonoBehaviour
         }
 
     }
+
+    public FullEventData GetFullEventData(int eventID)
+    {
+        // ParameterEventData.csv에서 기본 이벤트 정보 찾기
+        if (!eventDataDict.TryGetValue(eventID, out var eventData))
+        {
+            Debug.LogError($"ID {eventID}에 해당하는 이벤트 데이터를 찾을 수 없습니다.");
+            return null;
+        }
+
+        FullEventData fullData = new FullEventData();
+        fullData.EventID = eventID;
+        if (roundTypeDict.TryGetValue(eventData.RoundType, out var roundTypeStr))
+        {
+            fullData.RoundType = roundTypeStr;
+        }
+        if (pageTypeDict.TryGetValue(eventData.PageType, out var pageTypeStr))
+        {
+            fullData.PageType = pageTypeStr;
+        }
+        if (eventDict.TryGetValue(eventData.ChangeCondition, out var changeConditionStr))
+        {
+            fullData.ChangeCondition = changeConditionStr;
+        }
+
+        // ParameterEventStringData.csv에서 질문, 캐릭터, 배경 정보 찾기
+        if (eventStringDataDict.TryGetValue(eventData.EventQuestion, out var questionString))
+        {
+            fullData.QuestionText = questionString.String_kr;
+            fullData.BG = questionString.BG;
+            fullData.SE = questionString.SoundEffect;
+            fullData.IsFinish = questionString.IsFinishString == 1;
+
+            // CharacterName(int)으로 실제 캐릭터 이름(string) 찾기
+            if (characterNameDict.TryGetValue(questionString.CharacterName, out var characterName))
+            {
+                fullData.CharacterName = characterName;
+            }
+            fullData.CharacterImage = questionString.CharacterImage;
+        }
+
+        // ParameterEventDataList.csv에서 선택지 텍스트 찾기
+        if (choiceTextDict.TryGetValue(eventData.LeftString, out var leftText))
+        {
+            fullData.LeftOptionText = leftText;
+        }
+        if (choiceTextDict.TryGetValue(eventData.RightString, out var rightText))
+        {
+            fullData.RightOptionText = rightText;
+        }
+
+        // ParameterRewardData.csv에서 보상 정보 찾기 및 조합
+        fullData.LeftRewards = GetRewards(eventData.AcceptReward1);
+        fullData.RightRewards = GetRewards(eventData.AcceptReward2); // DenyReward1이 오른쪽 보상일 가능성
+
+        // 선택지 응답 텍스트 가져오기 (LeftAcceptString, DenyString1)
+        if (eventStringDataDict.TryGetValue(eventData.AcceptString1, out var acceptString))
+        {
+            fullData.LeftAcceptString = acceptString.String_kr;
+        }
+        if (eventStringDataDict.TryGetValue(eventData.AcceptString2, out var acceptString2))
+        {
+            fullData.RightAcceptString = acceptString2.String_kr;
+        }
+
+        // NeedType 값 할당
+        if (eventDict.TryGetValue(eventData.NeedType1, out var leftNeed))
+        {
+            fullData.LeftNeedType = leftNeed;
+        }
+        if (eventDict.TryGetValue(eventData.NeedType2, out var rightNeed))
+        {
+            fullData.RightNeedType = rightNeed;
+        }
+
+        return fullData;
+    }
+
+    private List<RewardInfo> GetRewards(int rewardID)
+    {
+        var rewards = new List<RewardInfo>();
+        if (rewardID == 0) return rewards; // 보상 ID가 0이면 빈 리스트 반환
+
+        if (rewardDataDict.TryGetValue(rewardID, out var rewardData))
+        {
+            // 여러 개의 보상을 리스트에 추가
+            if (rewardData.RewardType1 != 0 && rewardTypeDict.TryGetValue(rewardData.RewardType1, out var type1))
+                rewards.Add(new RewardInfo { RewardType = type1, RewardValue = rewardData.RewardValue1 });
+            if (rewardData.RewardType2 != 0 && rewardTypeDict.TryGetValue(rewardData.RewardType2, out var type2))
+                rewards.Add(new RewardInfo { RewardType = type2, RewardValue = rewardData.RewardValue2 });
+            if (rewardData.RewardType3 != 0 && rewardTypeDict.TryGetValue(rewardData.RewardType3, out var type3))
+                rewards.Add(new RewardInfo { RewardType = type3, RewardValue = rewardData.RewardValue3 });
+            if (rewardData.RewardType4 != 0 && rewardTypeDict.TryGetValue(rewardData.RewardType4, out var type4))
+                rewards.Add(new RewardInfo { RewardType = type4, RewardValue = rewardData.RewardValue4 });
+            if (rewardData.RewardType5 != 0 && rewardTypeDict.TryGetValue(rewardData.RewardType5, out var type5))
+                rewards.Add(new RewardInfo { RewardType = type5, RewardValue = rewardData.RewardValue5 });
+        }
+        return rewards;
+    }
+
 
     private async UniTask LoadSubAllDataAsync()
     {
@@ -243,7 +399,53 @@ public class DataManager : MonoBehaviour
 
         return eventData;
     }
+
+    //테스트 코드
+    public void LogFullEventData(int eventID)
+    {
+        FullEventData eventData = GetFullEventData(eventID);
+
+        if (eventData == null)
+        {
+            Debug.LogError($"이벤트 ID {eventID}의 데이터를 찾을 수 없어 로그를 출력할 수 없습니다.");
+            return;
+        }
+
+        string logMessage = $"--- Event ID: {eventData.EventID} ---";
+        logMessage += $"\nRoundType: {eventData.RoundType}";
+        logMessage += $"\nPageType: {eventData.PageType}";
+        logMessage += $"\nChangeCondition: {eventData.ChangeCondition}";
+        logMessage += $"\nQuestionText: {eventData.QuestionText}";
+        logMessage += $"\nCharacterName: {eventData.CharacterName}";
+        logMessage += $"\nCharacterImage: {eventData.CharacterImage}";
+        logMessage += $"\nBG: {eventData.BG}";
+        logMessage += $"\nSE: {eventData.SE}";
+        logMessage += $"\nIsFinish: {eventData.IsFinish}";
+
+        logMessage += "\n\n--- Choices & Rewards ---";
+        logMessage += $"\nLeft Option: {eventData.LeftOptionText}";
+        logMessage += $"\n - Response: {eventData.LeftAcceptString}";
+        logMessage += $"\n - Need Type: {eventData.LeftNeedType}";
+        logMessage += $"\n - Rewards:";
+        foreach (var reward in eventData.LeftRewards)
+        {
+            logMessage += $"  -> {reward.RewardType}: {reward.RewardValue}";
+        }
+
+        logMessage += $"\nRight Option: {eventData.RightOptionText}";
+        logMessage += $"\n - Response: {eventData.RightAcceptString}";
+        logMessage += $"\n - Need Type: {eventData.RightNeedType}";
+        logMessage += $"\n - Rewards:";
+        foreach (var reward in eventData.RightRewards)
+        {
+            logMessage += $"  -> {reward.RewardType}: {reward.RewardValue}";
+        }
+
+        Debug.Log(logMessage);
+    }
 }
+
+
 
 // Csvparser를 위해 필요한 데이터 클래스들
 [System.Serializable]
@@ -294,6 +496,131 @@ public class EventRewardData
     public int right_fail_delta_karma { get; set; }
     public string right_success_threshold{ get; set; }
     public string right_fail_threshold{ get; set; }
+}
+
+//데이터 테이블
+[System.Serializable]
+public class ParameterEventData
+{
+    public int ID { get; set; }
+    public int RoundType { get; set; }
+    public int PageType { get; set; }
+    public int ChangeCondition { get; set; }
+    public int IsConditionSuccess { get; set; }
+    public int EventQuestion { get; set; }
+    public int LeftString { get; set; }
+    public int NeedType1 { get; set; }
+    public int NeedValue1 { get; set; }
+    public int AcceptReward1 { get; set; }
+    public int DenyReward1 { get; set; }
+    public int AcceptString1 { get; set; }
+    public int DenyString1 { get; set; }
+    public int RightString { get; set; }
+    public int NeedType2 { get; set; }
+    public int NeedValue2 { get; set; }
+    public int AcceptReward2 { get; set; }
+    public int DenyReward2 { get; set; }
+    public int AcceptString2 { get; set; }
+    public int DenyString2 { get; set; }
+    public int AnotherEventQuestion { get; set; }
+    public int AnotherLeftString { get; set; }
+    public int AnotherNeedType1 { get; set; }
+    public int AnotehrNeedValue1 { get; set; }
+    public int AnotehrAcceptReward1 { get; set; }
+    public int AnotherDenyReward1 { get; set; }
+    public int AnotherAcceptString1 { get; set; }
+    public int AnotherDenyString1 { get; set; }
+    public int AnotherRightString { get; set; }
+    public int AnotherNeedType2 { get; set; }
+    public int AnotherNeedValue2 { get; set; }
+    public int AnotherAcceptReward2 { get; set; }
+    public int AnotherDenyReward2 { get; set; }
+    public int AnotherAcceptString2 { get; set; }
+    public int AnotherDenyString2 { get; set; }
+}
+[System.Serializable]
+public class ParameterRewardData
+{
+    public int ID { get; set; }
+    public int RewardType1 { get; set; }
+    public int RewardValue1 { get; set; }
+    public int RewardType2 { get; set; }
+    public int RewardValue2 { get; set; }
+    public int RewardType3 { get; set; }
+    public int RewardValue3 { get; set; }
+    public int RewardType4 { get; set; }
+    public int RewardValue4 { get; set; }
+    public int RewardType5 { get; set; }
+    public int RewardValue5 { get; set; }
+}
+[System.Serializable]
+public class ParameterEventStringData
+{
+    public int ID { get; set; }
+    public string BG { get; set; }
+    public string SoundEffect { get; set; }
+    public int CharacterName { get; set; }
+    public string CharacterImage { get; set; }
+    public int IsFinishString { get; set; }
+    public string String_kr { get; set; }
+}
+//룩업 테이블용 클래스 
+[System.Serializable]
+public class CharacterData
+{
+    public string Chr_name{ get; set; }
+    public int Chr_index { get; set; }
+}
+
+[System.Serializable]
+public class RewardTypeData
+{
+    public string RewardType { get; set; }
+    public int RewardType_index { get; set; }
+}
+
+[System.Serializable]
+public class EventDataList
+{
+    public int Appearance_Num { get; set; }
+    public string Appearance_Type { get; set; }
+    public int PageType_Num { get; set; }
+    public string PageType { get; set; }
+    public int Parameter_Num { get; set; }
+    public string Parameter_type { get; set; }
+    public int Event_Num { get; set; }
+    public string Event_Type { get; set; }
+    public int Cho_Num { get; set; }
+    public string Cho_txt { get; set; }
+}
+//통합 데이터 클래스 
+[System.Serializable]
+public class FullEventData
+{
+    public int EventID { get; set; }
+    public string RoundType { get; set; } //ParameterEventDataList에서 가져와야 하는값 (Appearance_Type)
+    public string PageType { get; set; } // ParameterEventDataList에서 가져와야 하는값 (PageType)
+    public string ChangeCondition { get; set; }// ParameterEventDataList에서 가져와야 하는값 (Parameter_type)
+    public string QuestionText { get; set; }
+    public string CharacterName { get; set; }
+    public string CharacterImage { get; set; }
+    public string BG { get; set; }
+    public string SE { get; set; }
+    public bool IsFinish { get; set; }
+    public string LeftOptionText { get; set; }
+    public string RightOptionText { get; set; }
+    public List<RewardInfo> LeftRewards { get; set; }
+    public List<RewardInfo> RightRewards { get; set; }
+    public string LeftAcceptString { get; set; }
+    public string RightAcceptString { get; set; }
+    public string LeftNeedType { get; set; } 
+    public string RightNeedType { get; set; } 
+}
+[System.Serializable]
+public class RewardInfo
+{
+    public string RewardType { get; set; }
+    public int RewardValue { get; set; }
 }
 
 [System.Serializable]
