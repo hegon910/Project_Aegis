@@ -1,4 +1,4 @@
-using GooglePlayGames;
+﻿using GooglePlayGames;
 using GooglePlayGames.BasicApi;
 using System.Collections.Generic;
 using UnityEngine;
@@ -163,6 +163,25 @@ public class GameManager : MonoBehaviour
         mainGameCanvas.SetActive(true);
         InGameUIPanel.SetActive(true);
 
+        if (PlayerStats.Instance.playthroughCount == 1)
+        {
+            GoToStoryPanel();
+        }
+        else
+        {
+            if (uiFlowSimulator != null)
+            {
+                uiFlowSimulator.BeginFlow();
+            }
+            else
+            {
+                Debug.LogError("UIFlowSimulator가 GameManager에 할당되지 않았습니다!");
+            }
+        }
+    }
+
+    public void StartEventFlow()
+    {
         if (uiFlowSimulator != null)
         {
             uiFlowSimulator.BeginFlow();
@@ -350,24 +369,24 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void ReturnToTitle()
+    public void StartNextPlaythrough()
     {
-        Debug.Log("QA 버튼: 타이틀 화면으로 돌아갑니다.");
-        Time.timeScale = 1;
+        Debug.Log("다음 회차를 시작합니다.");
 
-        if (mainGameCanvas != null) mainGameCanvas.SetActive(false);
-        if (commanderSelectionCanvas != null) commanderSelectionCanvas.SetActive(false);
-        if (storyPanel != null) storyPanel.SetActive(false);
-        if (battlePanel != null) battlePanel.SetActive(false);
+        // 회차 정보 갱신
+        PlayerStats.Instance.StartNewPlaythrough();
+
+        // 다음 사이클을 위해 이벤트 매니저 리셋
+        EventManager.Instance.ResetEventManagerState();
+
+        // UI 패널 리셋
         if (battleResultPanel != null) battleResultPanel.SetActive(false);
         if (gameOverPanel != null) gameOverPanel.SetActive(false);
-        if (menuPanel != null) menuPanel.SetActive(false);
-        if (InGameUIPanel != null) InGameUIPanel.SetActive(false);
+        mainGameCanvas.SetActive(true);
+        InGameUIPanel.SetActive(true);
 
-        if (titleCanvas != null) titleCanvas.SetActive(true);
-        if (titlePanel != null) titlePanel.SetActive(true);
-
-        ResetAllGameData();
+        // 새로운 이벤트 흐름 시작
+        StartEventFlow();
     }
 
     public void ResetAllGameData()
