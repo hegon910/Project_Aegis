@@ -148,15 +148,13 @@ public class GameManager : MonoBehaviour
         onConfirmAction = null;
     }
 
-    public void OnCancel()
+    public void CloseUIPanel(GameObject panelToClose)
     {
-        if (confirmationPanel != null)
+        if (panelToClose != null)
         {
-            confirmationPanel.SetActive(false);
+            panelToClose.SetActive(false);
         }
-        onConfirmAction = null;
     }
-
     public void OnCommanderSelected(int commanderIndex)
     {
         commanderSelectionCanvas.SetActive(false);
@@ -221,6 +219,11 @@ public class GameManager : MonoBehaviour
             Debug.LogWarning("Battle Panel이 할당되지 않아 결과 페이즈로 바로 넘어갑니다.");
             GoToBattleResultPanel("전투 패널 없음");
         }
+    }
+
+    public void OnClickedLoginPannel()
+    {
+        if (loginPanel != null) loginPanel.SetActive(true); 
     }
 
     private void HandleBattleEnd(string resultLog)
