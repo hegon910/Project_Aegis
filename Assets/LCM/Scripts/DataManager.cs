@@ -143,9 +143,9 @@ public class DataManager : MonoBehaviour
         {
             fullData.PageType = pageTypeStr;
         }
-        if (eventDict.TryGetValue(eventData.ChangeCondition, out var changeConditionStr))
+        if (eventDict.TryGetValue(eventData.ConditionType, out var changeConditionStr))
         {
-            fullData.ChangeCondition = changeConditionStr;
+            fullData.ConditionType = changeConditionStr;
         }
 
         // ParameterEventStringData.csv에서 질문, 캐릭터, 배경 정보 찾기
@@ -154,6 +154,7 @@ public class DataManager : MonoBehaviour
             fullData.QuestionText = questionString.String_kr;
             fullData.BG = questionString.BG;
             fullData.SE = questionString.SoundEffect;
+            fullData.ChangeCondition = eventData.ChangeCondition;
             fullData.IsFinish = questionString.IsFinishString == 1;
 
             // CharacterName(int)으로 실제 캐릭터 이름(string) 찾기
@@ -505,6 +506,7 @@ public class ParameterEventData
     public int ID { get; set; }
     public int RoundType { get; set; }
     public int PageType { get; set; }
+    public int ConditionType { get; set; }
     public int ChangeCondition { get; set; }
     public int IsConditionSuccess { get; set; }
     public int EventQuestion { get; set; }
@@ -600,7 +602,8 @@ public class FullEventData
     public int EventID { get; set; }
     public string RoundType { get; set; } //ParameterEventDataList에서 가져와야 하는값 (Appearance_Type)
     public string PageType { get; set; } // ParameterEventDataList에서 가져와야 하는값 (PageType)
-    public string ChangeCondition { get; set; }// ParameterEventDataList에서 가져와야 하는값 (Parameter_type)
+    public string ConditionType { get; set; } // ParameterEventDataList에서 가져와야 하는값 (Parameter_type)
+    public int ChangeCondition { get; set; }
     public string QuestionText { get; set; }
     public string CharacterName { get; set; }
     public string CharacterImage { get; set; }
