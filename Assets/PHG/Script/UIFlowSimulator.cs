@@ -1,9 +1,10 @@
-﻿using UnityEngine;
-using UnityEngine.UI;
+﻿using Cysharp.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Cysharp.Threading.Tasks;
+using UnityEngine;
+using UnityEngine.UI;
+using static DataManager;
 
 public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 {
@@ -50,7 +51,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         {
             parameterUIController.InitializeAndDisplayStats();
         }
-        
+
         // UI 초기화
         if (uiPanelController != null) uiPanelController.gameObject.SetActive(false);
         if (situationCardController != null) situationCardController.gameObject.SetActive(false);
@@ -84,7 +85,9 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             // 다른 이벤트에서는 스와이프 튜토리얼 등도 꺼준다.
             tutorialPanel.SetActive(false);
         }
-        currentSubEventData = null; // 다른 타입의 이벤트가 시작됐으므로 초기화
+        currentSubEventData = null;
+
+        // 이 함수는 dialogue나 choiceText 등을 가져오기 위해 그대로 호출합니다.
         currentParameterEventData = DataManager.Instance.GetEventDataById(eventId);
 
         if (currentParameterEventData == null)
@@ -93,9 +96,27 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             return;
         }
 
+        // --- 캐릭터 이름을 직접 찾는 로직 ---
+        string characterName = "이름 없음"; // 기본값
+
+        // 1. eventId로 원본 데이터(ParameterEventData)
+        if (DataManager.Instance.eventDataDict.TryGetValue(eventId, out var rawEventData))
+        {
+            // 2. EventQuestion ID로 문자열 데이터(ParameterEventStringData)
+            if (DataManager.Instance.eventStringDataDict.TryGetValue(rawEventData.EventQuestion, out var stringData))
+            {
+                // 3. 문자열 데이터 안의 CharacterName ID로 characterNameDict에서 실제 이름(string)
+                if (DataManager.Instance.characterNameDict.TryGetValue(stringData.CharacterName, out var name))
+                {
+                    characterName = name;
+                }
+            }
+        }
+
+        // --- 이제 직접 찾은 characterName 변수를 사용 ---
         DisplayEventUI(
             characterSprite: currentParameterEventData.eventSprite,
-            characterName: currentParameterEventData.eventName,
+            characterName: characterName,
             dialogue: currentParameterEventData.dialogue,
             leftChoice: currentParameterEventData.leftChoice.choiceText,
             rightChoice: currentParameterEventData.rightChoice.choiceText
@@ -148,7 +169,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             var choice = isRightChoice ? currentParameterEventData.rightChoice : currentParameterEventData.leftChoice;
             bool success = CheckCondition(choice.successCondition);
             var outcome = success ? choice.successOutcome : choice.failOutcome;
-            
+
             if (outcome.parameterChanges != null && PlayerStats.Instance != null)
             {
                 PlayerStats.Instance.ApplyChanges(outcome.parameterChanges);
@@ -179,7 +200,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         if (currentParameterEventData == null) return;
 
         EventChoice choice = isRightChoice ? currentParameterEventData.rightChoice : currentParameterEventData.leftChoice;
-        
+
         var affectedTypes = new HashSet<ParameterType>();
         foreach (var change in choice.successOutcome.parameterChanges)
         {
@@ -227,6 +248,6 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 
     public void UpdateChoicePreview(string text, Color color)
     {
-       //
+        //
     }
 }
