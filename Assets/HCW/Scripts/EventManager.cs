@@ -16,7 +16,7 @@ public class EventManager : MonoBehaviour
     public static EventManager Instance { get; private set; }
 
     public static event Action<int> OnParameterEventReady;
-    public static event Action<SubEventData> OnSubEventReady;
+    public static event Action<DataManager.SubEventData> OnSubEventReady;
 
     [Header("설정")]
     [SerializeField] private int totalEventsPerCycle = 24;
@@ -73,8 +73,8 @@ public class EventManager : MonoBehaviour
         // 1회차일 경우 튜토리얼 이벤트를 모두 포함
         if (PlayerStats.Instance.playthroughCount == 1)
         {
-            tutorialEvents = DataManager.Instance.StringDataList
-                .Where(d => d.PageType == "Tutorial" && !PlayerStats.Instance.completedEventIds.Contains(d.ID))
+            tutorialEvents = DataManager.Instance.eventDataDict.Values
+                .Where(d => d.PageType == 1 && !PlayerStats.Instance.completedEventIds.Contains(d.ID))
                 .Select(d => d.ID)
                 .ToList();
             currentCyclePlaylist.AddRange(tutorialEvents);
@@ -228,9 +228,9 @@ public class EventManager : MonoBehaviour
             .ToList();
     }
 
-    private List<SubEventData> GetSubEventChain(int packNumber, int groupNumber)
+    private List<DataManager.SubEventData> GetSubEventChain(int packNumber, int groupNumber)
     {
-        if (DataManager.Instance?.SubEvents == null) return new List<SubEventData>();
+        if (DataManager.Instance?.SubEvents == null) return new List<DataManager.SubEventData>();
         return DataManager.Instance.SubEvents
             .Where(e => e.PackNumber == packNumber && e.GroupNumber == groupNumber)
             .OrderBy(e => e.Index)
@@ -239,12 +239,12 @@ public class EventManager : MonoBehaviour
 
     private List<int> GetCommonParameterEvents()
     {
-        if (DataManager.Instance?.StringDataList == null || PlayerStats.Instance == null) return new List<int>();
+        if (DataManager.Instance?.eventDataDict.Values == null || PlayerStats.Instance == null) return new List<int>();
     
         var completedIds = new HashSet<int>(PlayerStats.Instance.completedEventIds);
 
-        return DataManager.Instance.StringDataList
-            .Where(d => d.PageType == "Common" && !completedIds.Contains(d.ID))
+        return DataManager.Instance.eventDataDict.Values
+            .Where(d => d.PageType == 0 && !completedIds.Contains(d.ID))
             .Select(d => d.ID)
             .ToList();
     }
