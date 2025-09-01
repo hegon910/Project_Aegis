@@ -157,8 +157,19 @@ public class GameManager : MonoBehaviour
         onConfirmAction = null;
     }
 
-    public void OnCommanderSelected(int commanderIndex)
+    public async void OnCommanderSelected(int commanderIndex)
     {
+        // 지휘관 선택 시 이벤트 매니저를 초기화하고 새 게임 시작
+        if (EventManager.Instance != null)
+        {
+            await EventManager.Instance.StartNewGame(commanderIndex);
+        }
+        else
+        {
+            Debug.LogError("EventManager 인스턴스를 찾을 수 없습니다!");
+            return;
+        }
+
         commanderSelectionCanvas.SetActive(false);
         mainGameCanvas.SetActive(true);
         InGameUIPanel.SetActive(true);
