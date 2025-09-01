@@ -7,6 +7,7 @@ public class WarPlayer : MonoBehaviour
     [SerializeField] WarController controller;
     [SerializeField] int hp = 5; // 임시값
     [SerializeField] int shield = 0; // 쉴드 추가
+    [SerializeField] int attackPower = 1;
 
     [Header("스킬 & 버프")]
     public string equippedSkillID; //장착스킬
@@ -16,6 +17,7 @@ public class WarPlayer : MonoBehaviour
     const int MaxShield = 3;
     public int HP => hp;
     public int Shield => shield;
+    public int AttackPower => attackPower;
     public bool IsDead => hp <= 0;
     public WarController Ctrl => controller;
     public Transform Tf => controller != null ? controller.transform : transform;

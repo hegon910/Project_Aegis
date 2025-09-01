@@ -7,10 +7,15 @@ public class WarEnemy : MonoBehaviour
     [SerializeField] WarController controller;
     [SerializeField] int hp = 5; // 임시값
     [SerializeField] int shield = 0; // 쉴드 추가, 어차피 적은 획듯하는 경우 없음
+    [SerializeField] int attackPower = 1;
+    [SerializeField, Range(0f, 1f)]
+    private float attackChance = 0.5f; // 0.5=50%, 1=100%
+
     const int MaxShield = 3;
     public int HP => hp;
     public bool IsDead => hp <= 0;
     public int Shield => shield; //
+    public int AttackPower => attackPower;
     public void ResetStatus(int hpInit = 5, int shieldInit = 0)
     {
         hp = Mathf.Max(0, hpInit);
@@ -25,8 +30,8 @@ public class WarEnemy : MonoBehaviour
     public void Act(WarAction action) => controller.DoAction(action);
     public bool IsBusy => controller != null && controller.IsBusy;
 
-    public WarAction ChooseAction50()
-        => (Random.value < 0.5f) ? WarAction.Attack : WarAction.Defend;
+    public WarAction ChooseAction()
+        => (Random.value < attackChance) ? WarAction.Attack : WarAction.Defend;
 
     public void TakeDamage(int amount)//임시값
     {
