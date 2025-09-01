@@ -2,6 +2,7 @@
   <packages>
     <package>com.google.android.gms:play-services-base:18.7.2</package>
     <package>com.google.firebase:firebase-analytics:23.0.0</package>
+    <package>com.google.firebase:firebase-analytics-unity:13.1.0</package>
     <package>com.google.firebase:firebase-app-unity:13.1.0</package>
     <package>com.google.firebase:firebase-auth:24.0.0</package>
     <package>com.google.firebase:firebase-auth-unity:13.1.0</package>
