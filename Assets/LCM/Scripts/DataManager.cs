@@ -362,11 +362,28 @@ public class DataManager : MonoBehaviour
             fullEventData.ConditionType = changeConditionStr;
         }
 
+        //    if (eventStringDataDict.TryGetValue(eventData.EventQuestion, out var questionString))
+        //    {
+        //        fullEventData.dialogue = questionString.String_kr;
+        //        fullEventData.BG = questionString.BG;
+        //        fullEventData.SE = questionString.SoundEffect;
+
+
+        //        // CharacterName(int)으로 실제 캐릭터 이름(string) 찾기
+
+        //    }
+
         if (eventStringDataDict.TryGetValue(eventData.EventQuestion, out var questionString))
         {
             fullEventData.dialogue = questionString.String_kr;
             fullEventData.BG = questionString.BG;
             fullEventData.SE = questionString.SoundEffect;
+
+            if (characterNameDict.TryGetValue(questionString.CharacterName, out var characterName))
+            {
+                fullEventData.CharacterName = characterName;
+            }
+            fullEventData.CharacterImage = questionString.CharacterImage;
         }
 
         // NeedType 값 할당

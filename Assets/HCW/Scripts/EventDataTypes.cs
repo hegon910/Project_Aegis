@@ -53,6 +53,8 @@ public class EventData
     public Sprite eventSprite;
     public string RoundType;
     public string ConditionType;
+    public string CharacterName;
+    public string CharacterImage;
     public string BG;
     public string SE;
 
