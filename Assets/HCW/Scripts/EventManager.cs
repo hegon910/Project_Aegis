@@ -21,6 +21,7 @@ public class EventManager : MonoBehaviour
     [Header("설정")]
     [SerializeField] private int totalEventsPerCycle = 24;
 
+
     // 상태 변수
     private EventManagerState currentState = EventManagerState.Idle;
     private int currentChapter = 1; 
@@ -45,6 +46,7 @@ public class EventManager : MonoBehaviour
             Destroy(gameObject);
         }
     }
+
 
     public async UniTask StartNewGame(int packNumber)
     {
