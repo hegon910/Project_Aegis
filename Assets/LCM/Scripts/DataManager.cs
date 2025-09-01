@@ -312,19 +312,22 @@ public class DataManager : MonoBehaviour
             fullEventData.leftChoice.choiceText = leftText;
         }
         fullEventData.leftChoice.successOutcome = new ChoiceOutcome();
-        if (eventStringDataDict.TryGetValue(eventData.AcceptString1, out var acceptString))
+        if (eventStringDataDict.TryGetValue(eventData.AcceptString1, out var successString))
         {
-            fullEventData.leftChoice.successOutcome.outcomeText = acceptString.String_kr;
+            fullEventData.leftChoice.successOutcome.outcomeText = successString.String_kr;
         }
         fullEventData.leftChoice.successOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.AcceptReward1)));
 
-        // TODO : 왼쪽 실패 텍스트 넣기
+        // 왼쪽 실패 텍스트 
         fullEventData.leftChoice.failOutcome = new ChoiceOutcome();
-        fullEventData.leftChoice.failOutcome.outcomeText = string.Empty;
+        if (eventStringDataDict.TryGetValue(eventData.DenyString1, out var FailString))
+        {
+            fullEventData.leftChoice.failOutcome.outcomeText = FailString.String_kr;
+        }
         fullEventData.leftChoice.failOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.DenyReward1)));
 
 
-        //오른쪽 선택지 생성
+        //오른쪽 선택지 
         fullEventData.rightChoice = new EventChoice();
         if (choiceTextDict.TryGetValue(eventData.RightString, out var rightText))
         {
@@ -333,15 +336,18 @@ public class DataManager : MonoBehaviour
 
         // 오른쪽 성공 결과 텍스트와 보상
         fullEventData.rightChoice.successOutcome = new ChoiceOutcome();
-        if (eventStringDataDict.TryGetValue(eventData.AcceptString2, out var acceptString2))
+        if (eventStringDataDict.TryGetValue(eventData.AcceptString2, out var successString2))
         {
-            fullEventData.rightChoice.successOutcome.outcomeText = acceptString2.String_kr;
+            fullEventData.rightChoice.successOutcome.outcomeText = successString2.String_kr;
         }
         fullEventData.rightChoice.successOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.AcceptReward2)));
 
-        //TODO: 오른쪽 실패 텍스트 넣기
+        // 오른쪽 실패 텍스트 
         fullEventData.rightChoice.failOutcome = new ChoiceOutcome();
-        fullEventData.rightChoice.failOutcome.outcomeText = string.Empty;
+        if (eventStringDataDict.TryGetValue(eventData.DenyString2, out var FailString2))
+        {
+            fullEventData.rightChoice.failOutcome.outcomeText = FailString2.String_kr;
+        }
         fullEventData.rightChoice.failOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.DenyReward2)));
 
 
@@ -361,7 +367,6 @@ public class DataManager : MonoBehaviour
             fullEventData.dialogue = questionString.String_kr;
             fullEventData.BG = questionString.BG;
             fullEventData.SE = questionString.SoundEffect;
-
         }
 
         // NeedType 값 할당
