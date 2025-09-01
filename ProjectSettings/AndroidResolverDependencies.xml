@@ -1,9 +1,5 @@
 <dependencies>
   <packages>
-    <package>com.google.android.gms:play-services-base:18.7.2</package>
-    <package>com.google.firebase:firebase-analytics:23.0.0</package>
-    <package>com.google.firebase:firebase-database:22.0.0</package>
-    <package>com.google.firebase:firebase-database-unity:13.1.0</package>
     <package>com.google.games:gpgs-plugin-support:2.1.0</package>
   </packages>
   <files />
