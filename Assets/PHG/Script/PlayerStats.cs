@@ -96,7 +96,33 @@ public class PlayerStats : MonoBehaviour
             completedEventIds.Add(eventId);
         }
     }
+
+    /// <summary>
+    /// 특정 파라미터의 값을 지정된 수치로 즉시 설정합니다. (치트용)
+    /// </summary>
+    public void SetStat(ParameterType type, int value)
+    {
+        if (stats.ContainsKey(type))
+        {
+            int oldValue = stats[type];
+            // 값의 범위를 0~100 사이로 제한
+            stats[type] = Mathf.Clamp(value, 0, 100);
+
+            int changeAmount = stats[type] - oldValue;
+
+            Debug.Log($"<color=orange>[치트] 스탯 설정: {type}을(를) {stats[type]}(으)로 설정.</color>");
+
+            // UI가 변경사항을 인지하도록 OnStatChanged 이벤트를 호출합니다.
+            // changeAmount가 0이어도 UI 즉시 업데이트를 위해 이벤트를 호출하도록 합니다.
+            OnStatChanged?.Invoke(type, changeAmount, stats[type]);
+
+            // 게임 오버 조건도 확인합니다.
+            GameManager.instance.CheckGameOverConditions();
+        }
+    }
 }
+
+
 
 // ParameterType enum은 EventData.cs에 정의되어 있을 것으로 예상됩니다.
 // 만약 없다면 아래 코드를 PlayerStats.cs 파일 하단에 추가해주세요.

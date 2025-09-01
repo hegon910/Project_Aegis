@@ -19,7 +19,14 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     private EventData currentParameterEventData;
     private SubEventData currentSubEventData;
 
+    [Header("튜토리얼")]
+    [SerializeField] private GameObject tutorialPanel;
+    [SerializeField] private GameObject parameterTutoText;
+    [SerializeField] private GameObject swipeTutorialImage;
+
     public bool CanMakeChoice => true;
+
+    private static bool hasShownChapter1ParameterTutorial = false;
 
     private void OnEnable()
     {
@@ -31,6 +38,10 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     {
         EventManager.OnParameterEventReady -= HandleParameterEvent;
         EventManager.OnSubEventReady -= HandleSubEvent;
+    }
+    public void ResetTutorialState()
+    {
+        hasShownChapter1ParameterTutorial = false;
     }
 
     public void BeginFlow()
@@ -56,6 +67,23 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 
     private void HandleParameterEvent(int eventId)
     {
+        if (PlayerStats.Instance.playthroughCount == 1 &&
+          GameManager.instance.CurrentChapter == 1 &&
+          !hasShownChapter1ParameterTutorial)
+        {
+            if (tutorialPanel != null)
+            {
+                tutorialPanel.SetActive(true);
+                if (parameterTutoText != null) parameterTutoText.SetActive(true);
+                if (swipeTutorialImage != null) swipeTutorialImage.SetActive(false);
+            }
+            hasShownChapter1ParameterTutorial = true;
+        }
+        else if (tutorialPanel != null && tutorialPanel.activeSelf)
+        {
+            // 다른 이벤트에서는 스와이프 튜토리얼 등도 꺼준다.
+            tutorialPanel.SetActive(false);
+        }
         currentSubEventData = null; // 다른 타입의 이벤트가 시작됐으므로 초기화
         currentParameterEventData = DataManager.Instance.GetEventDataById(eventId);
 
@@ -76,6 +104,10 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 
     private void HandleSubEvent(SubEventData data)
     {
+        if (tutorialPanel != null && tutorialPanel.activeSelf)
+        {
+            tutorialPanel.SetActive(false);
+        }
         currentParameterEventData = null; // 다른 타입의 이벤트가 시작됐으므로 초기화
         currentSubEventData = data;
 
@@ -105,6 +137,11 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 
     public void HandleChoice(bool isRightChoice)
     {
+        if (tutorialPanel != null && tutorialPanel.activeSelf)
+        {
+            tutorialPanel.SetActive(false);
+        }
+
         if (currentParameterEventData != null)
         {
             // 파라미터 이벤트 결과 처리
