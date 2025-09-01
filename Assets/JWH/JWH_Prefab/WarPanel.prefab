@@ -400,7 +400,7 @@ RectTransform:
   m_GameObject: {fileID: 3031312480978046272}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 7, y: 1, z: 1}
+  m_LocalScale: {x: 10, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 105391885910344630}
@@ -438,7 +438,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: 57fb51cfd16d1f2459dcd21bca575d20, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -461,8 +461,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   origin: {fileID: 2387749592704131571}
-  laneLength: 14
-  cellSize: 14
+  laneLength: 16
+  cellSize: 70
   anchor: 1
 --- !u!1 &3201014759126432619
 GameObject:
@@ -1503,6 +1503,8 @@ MonoBehaviour:
   controller: {fileID: 4107478897183947592}
   hp: 5
   shield: 0
+  attackPower: 1
+  attackChance: 0.5
 --- !u!114 &4107478897183947592
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1516,11 +1518,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ground: {fileID: 869533868976386670}
-  currentIndex: 13
-  moveSpeed: 500
+  currentIndex: 7
+  moveSpeed: 100
   attackStep: 4
   defendStep: 1
   direction: -1
+  pushPower: 1
+  pushResistance: 0
 --- !u!1 &7126723264662903238
 GameObject:
   m_ObjectHideFlags: 0
@@ -2113,6 +2117,7 @@ MonoBehaviour:
   controller: {fileID: 7584116574300246216}
   hp: 5
   shield: 0
+  attackPower: 1
   equippedSkillID: AIRSTRIKE
   skillDatabase: {fileID: 11400000, guid: 1bf50a35dc2094643aeeb527a7aef982, type: 2}
 --- !u!114 &7584116574300246216
@@ -2128,11 +2133,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ground: {fileID: 869533868976386670}
-  currentIndex: 0
-  moveSpeed: 500
+  currentIndex: 6
+  moveSpeed: 100
   attackStep: 4
   defendStep: 1
   direction: 1
+  pushPower: 1
+  pushResistance: 0
 --- !u!1 &7705710673180044186
 GameObject:
   m_ObjectHideFlags: 0

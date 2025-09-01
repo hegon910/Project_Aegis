@@ -10,6 +10,7 @@ public class WarTurnManager : MonoBehaviour
 
     [Header("Turn Settings")]
     [SerializeField] int maxTurns = 30;
+    //[SerializeField] int pushback = 1;// 밀려나는 칸 수
     int currentTurn = 0;
     bool battleEnded = false;
     bool turnRunning;
@@ -35,26 +36,26 @@ public class WarTurnManager : MonoBehaviour
         battleEnded = false;
         turnRunning = false;
 
-        // 플레이어 상태 및 위치 초기화
-        if (player != null)
-        {
-            player.ResetStatus(initialPlayerHP, initialPlayerShield);
-            if (player.Ctrl != null)
-            {
-                player.Ctrl.ForcePlace(playerStartIndex);
-            }
-        }
+        //// 플레이어 상태 및 위치 초기화
+        //if (player != null)
+        //{
+        //    player.ResetStatus(initialPlayerHP, initialPlayerShield);
+        //    if (player.Ctrl != null)
+        //    {
+        //        player.Ctrl.ForcePlace(playerStartIndex);
+        //    }
+        //}
 
-        // 적 상태 및 위치 초기화
-        if (enemy != null && ground != null)
-        {
-            enemy.ResetStatus(initialEnemyHP, initialEnemyShield);
-            if (enemy.Ctrl != null)
-            {
-                int enemyStartIndex = ground.LaneLength > 0 ? ground.LaneLength - 1 : 13;
-                enemy.Ctrl.ForcePlace(enemyStartIndex);
-            }
-        }
+        //// 적 상태 및 위치 초기화
+        //if (enemy != null && ground != null)
+        //{
+        //    enemy.ResetStatus(initialEnemyHP, initialEnemyShield);
+        //    if (enemy.Ctrl != null)
+        //    {
+        //        int enemyStartIndex = ground.LaneLength > 0 ? ground.LaneLength - 1 : 13;
+        //        enemy.Ctrl.ForcePlace(enemyStartIndex);
+        //    }
+        //}
 
         Debug.Log("전투 및 캐릭터 상태 초기화 완료");
     }
@@ -108,11 +109,32 @@ public class WarTurnManager : MonoBehaviour
       //  GameManager.instance.GoToBattleResultPanel();
     }
 
+    void CheckRingOutStatus()
+    {
+        if (player == null || enemy == null) return;
+
+        int lastIndex = ground.LaneLength - 1; // 15
+
+        // 플레이어 위치 확인
+        if (player.Ctrl.CurrentIndex == 0 || player.Ctrl.CurrentIndex == lastIndex)
+        {
+            player.KillByRingOut();
+            Debug.Log("플레이어 장외!");
+        }
+
+        // 적 위치 확인
+        if (enemy.Ctrl.CurrentIndex == 0 || enemy.Ctrl.CurrentIndex == lastIndex)
+        {
+            enemy.KillByRingOut();
+            Debug.Log("적 장외!");
+        }
+    }
+
     IEnumerator Co_Turn(WarAction playerAction)
     {
         turnRunning = true;
 
-        var enemyAction = enemy.ChooseAction50();
+        var enemyAction = enemy.ChooseAction();
 
         player.Act(playerAction);
         enemy.Act(enemyAction);
@@ -133,55 +155,65 @@ public class WarTurnManager : MonoBehaviour
                 int meet = Mathf.Clamp(Mathf.RoundToInt((pIdx + eIdx) * 0.5f), 0, last);
                 player.Ctrl.CrushResult(meet);
                 enemy.Ctrl.CrushResult(meet);
-
-                ApplyCollisionRules(playerAction, enemyAction, meet, last);
-
-                CheckWinLoseDrawAfterTurn();
                 Debug.Log($"Turn {currentTurn}/{maxTurns} 종료");
                 turnRunning = false;
+                ApplyCollisionRules(playerAction, enemyAction, meet, last);
+                CheckRingOutStatus(); // 장외 확인
+                CheckWinLoseDrawAfterTurn();
+                Debug.Log($"[위치] Player: {player.Ctrl.CurrentIndex} / Enemy: {enemy.Ctrl.CurrentIndex}");
                 if (!battleEnded && currentTurn >= maxTurns)
                     EndBattle($"무승부 턴 제한 {maxTurns} 소진");
-
                 yield break;
             }
             yield return null;
+
         }
 
         Debug.Log($"Turn {currentTurn}/{maxTurns} 종료(비충돌)");
         turnRunning = false;
-        CheckWinLoseDrawAfterTurn();
+        CheckRingOutStatus(); // 장외 확인
+        CheckWinLoseDrawAfterTurn(); // 승패 확인
         if (!battleEnded && currentTurn >= maxTurns)
             EndBattle($"무승부  턴 제한 {maxTurns} 소진");
     }
 
-    int IntendedBackIndex(WarController ctrl, int meet) => meet - ctrl.Direction;
+    int IntendedBackIndex(WarController pushedCtrl, WarController pusherCtrl, int meet)
+    {
+        int totalPush = pusherCtrl.PushPower * pushedCtrl.PushResistance;
+        return meet - (pushedCtrl.Direction * totalPush);
+    }
     void ApplyCollisionRules(WarAction pAct, WarAction eAct, int meet, int last)
     {
-        int pBackIntended = IntendedBackIndex(player.Ctrl, meet);
-        int eBackIntended = IntendedBackIndex(enemy.Ctrl, meet);
+        // 플레이어는 적에 의해, 적은 플레이어에 의해 밀려날 때의 예상 위치를 계산합니다.
+        int pBackIntended = IntendedBackIndex(player.Ctrl, enemy.Ctrl, meet);
+        int eBackIntended = IntendedBackIndex(enemy.Ctrl, player.Ctrl, meet);
 
         switch ((pAct, eAct))
         {
             case (WarAction.Attack, WarAction.Attack):
-                Debug.Log("공격 vs 공격  서로 피해 1, 각자 뒤로 1칸");
-                player.TakeDamage(1);
-                enemy.TakeDamage(1);
+                Debug.Log("공격 vs 공격  서로 피해 1, 각자 뒤로 밀려남");
+                player.TakeDamage(enemy.AttackPower);
+                enemy.TakeDamage(player.AttackPower);
                 SeparateBoth(meet, pBackIntended, eBackIntended, last);
                 break;
 
             case (WarAction.Attack, WarAction.Defend):
-                Debug.Log("공격 vs 수비  공격 무효, 플레이어 뒤로 1칸");
+                Debug.Log("공격 vs 수비  공격 무효, 플레이어만 뒤로 밀려남");
+                // 플레이어만 적에 의해 밀려납니다.
+                pBackIntended = IntendedBackIndex(player.Ctrl, enemy.Ctrl, meet);
                 SeparatePlayerOnly(meet, pBackIntended, last);
                 break;
 
             case (WarAction.Defend, WarAction.Attack):
-                Debug.Log("수비 vs 공격  공격 무효, 적군 뒤로 1칸 (플레이어 쉴드 +1)");
+                Debug.Log("수비 vs 공격  공격 무효, 적군만 뒤로 밀려남 (플레이어 쉴드 +1)");
                 player.GainShield(1);
+                // 적군만 플레이어에 의해 밀려납니다.
+                eBackIntended = IntendedBackIndex(enemy.Ctrl, player.Ctrl, meet);
                 SeparateEnemyOnly(meet, eBackIntended, last);
                 break;
 
             case (WarAction.Defend, WarAction.Defend):
-                Debug.Log("수비 vs 수비  서로 뒤로 1칸");
+                Debug.Log("수비 vs 수비  서로 뒤로 밀려남");
                 SeparateBoth(meet, pBackIntended, eBackIntended, last);
                 break;
         }
@@ -200,15 +232,7 @@ public class WarTurnManager : MonoBehaviour
         }
     }
 
-    // 뒤로 1칸(가장자리 보정)
-    //int SafeBackIndex(BattleController ctrl, int meet, int last)
-    //{
-    //    int idx = meet - ctrl.Direction; // 뒤는 direction  1
-    //    idx = Mathf.Clamp(idx, 0, last);
-    //    return idx;
-    //}
 
-    // 서로 뒤로: 항상 1칸 이상 떨어지도록 보정
     void SeparateBoth(int meet, int pBackIntended, int eBackIntended, int last)
     {
         // 겹치지 않도록 추가 보정 전, 우선 KO 여부 판단

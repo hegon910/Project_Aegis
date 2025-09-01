@@ -12,11 +12,15 @@ public class WarController : MonoBehaviour
     [SerializeField] int attackStep = 4;
     [SerializeField] int defendStep = 1;
     [SerializeField] int direction = +1;
+    [SerializeField] int pushPower = 1; // 이 캐릭터가 다른 캐릭터를 미는 힘
+    [SerializeField] int pushResistance = 1; // 이 캐릭터가 밀렸을 때 밀려나는 정도
 
     public int Direction => direction;
     public int AttackStep => attackStep;
     public int DefendStep => defendStep;
     public int CurrentIndex => currentIndex;
+    public int PushPower => pushPower;
+    public int PushResistance => pushResistance;
 
     RectTransform rectTransform;
     Coroutine moveRoutine;
@@ -70,13 +74,13 @@ public class WarController : MonoBehaviour
         isMoving = false;
     }
 
-    public bool RingOut(WarAction action)
-    {
-        int step = (action == WarAction.Attack) ? direction * attackStep : -direction * defendStep;
-        int desired = currentIndex + step;
-        int last = ground.LaneLength - 1;
-        return desired < 0 || desired > last;
-    }
+    //public bool RingOut(WarAction action)
+    //{
+    //    int step = (action == WarAction.Attack) ? direction * attackStep : -direction * defendStep;
+    //    int desired = currentIndex + step;
+    //    int last = ground.LaneLength - 1;
+    //    return desired < 0 || desired > last;
+    //}
 
     public bool IsBusy => isMoving;
 }
