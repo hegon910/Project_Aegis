@@ -91,117 +91,6 @@ public class DataManager : MonoBehaviour
         await LoadSubAllDataAsync();
     }
 
-
-    //public EventData GetFullEventData(int eventID)
-    //{
-    //    // ParameterEventData.csv에서 기본 이벤트 정보 찾기
-    //    if (!eventDataDict.TryGetValue(eventID, out var eventData))
-    //    {
-    //        Debug.LogError($"ID {eventID}에 해당하는 이벤트 데이터를 찾을 수 없습니다.");
-    //        return null;
-    //    }
-
-    //    EventData fullEventData = new EventData();
-
-
-    //    fullEventData.eventName = eventID;
-
-
-    //    //왼쪽 선택지 생성
-    //    fullEventData.leftChoice = new EventChoice();
-    //    if (choiceTextDict.TryGetValue(eventData.LeftString, out var leftText))
-    //    {
-    //        fullEventData.leftChoice.choiceText = leftText;
-    //    }
-    //    fullEventData.leftChoice.successOutcome = new ChoiceOutcome();
-    //    if (eventStringDataDict.TryGetValue(eventData.AcceptString1, out var acceptString))
-    //    {
-    //        fullEventData.leftChoice.successOutcome.outcomeText = acceptString.String_kr;
-    //    }
-    //    fullEventData.leftChoice.successOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.AcceptReward1)));
-
-    //    // TODO : 왼쪽 실패 텍스트 넣기
-    //    fullEventData.leftChoice.failOutcome = new ChoiceOutcome();
-    //    fullEventData.leftChoice.failOutcome.outcomeText = string.Empty;
-    //    fullEventData.leftChoice.failOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.DenyReward1)));
-
-
-    //    //오른쪽 선택지 생성
-    //    fullEventData.rightChoice = new EventChoice();
-    //    if (choiceTextDict.TryGetValue(eventData.RightString, out var rightText))
-    //    {
-    //        fullEventData.rightChoice.choiceText = rightText;
-    //    }
-
-    //    // 오른쪽 성공 결과 텍스트와 보상
-    //    fullEventData.rightChoice.successOutcome = new ChoiceOutcome();
-    //    if (eventStringDataDict.TryGetValue(eventData.AcceptString2, out var acceptString2))
-    //    {
-    //        fullEventData.rightChoice.successOutcome.outcomeText = acceptString2.String_kr;
-    //    }
-    //    fullEventData.rightChoice.successOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.AcceptReward2)));
-
-    //    //TODO: 오른쪽 실패 텍스트 넣기
-    //    fullEventData.rightChoice.failOutcome = new ChoiceOutcome();
-    //    fullEventData.rightChoice.failOutcome.outcomeText = string.Empty;
-    //    fullEventData.rightChoice.failOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.DenyReward2)));
-
-
-
-
-    //    if (roundTypeDict.TryGetValue(eventData.RoundType, out var roundTypeStr))
-    //    {
-    //        fullEventData.RoundType = roundTypeStr;
-    //    }
-    //    if (pageTypeDict.TryGetValue(eventData.PageType, out var pageTypeStr))
-    //    {
-    //        fullEventData.PageType = pageTypeStr;
-    //    }
-    //    if (eventDict.TryGetValue(eventData.ConditionType, out var changeConditionStr))
-    //    {
-    //        fullEventData.ConditionType = changeConditionStr;
-    //    }
-
-    //    if (eventStringDataDict.TryGetValue(eventData.EventQuestion, out var questionString))
-    //    {
-    //        fullEventData.dialogue = questionString.String_kr;
-    //        fullEventData.BG = questionString.BG;
-    //        fullEventData.SE = questionString.SoundEffect;
-
-
-    //        // CharacterName(int)으로 실제 캐릭터 이름(string) 찾기
-    //        //if (characterNameDict.TryGetValue(questionString.CharacterName, out var characterName))
-    //        //{
-    //        //    fullEventData.CharacterName = characterName;
-    //        //}
-    //        //fullEventData.CharacterImage = questionString.CharacterImage;
-    //    }
-
-    //    // ParameterRewardData.csv에서 보상 정보 찾기 및 조합
-    //    //fullEventData.LeftRewards = GetRewards(eventData.AcceptReward1);
-    //    //fullEventData.RightRewards = GetRewards(eventData.AcceptReward2); // DenyReward1이 오른쪽 보상일 가능성
-
-
-    //    // NeedType 값 할당
-    //    if (eventDict.TryGetValue(eventData.NeedType1, out var leftNeed))
-    //    {
-    //        fullEventData.leftChoice.successCondition = leftNeed;
-    //    }
-    //    if (eventDict.TryGetValue(eventData.NeedType2, out var rightNeed))
-    //    {
-    //        fullEventData.rightChoice.successCondition = rightNeed;
-    //    }
-
-    //    // 실패 조건이 추가적으로 필요할시 제작
-    //    //fullEventData.leftChoice.failCondition = string.Empty;
-    //    //fullEventData.rightChoice.failCondition = string.Empty;
-
-    //    return fullEventData;
-    //}
-
-    
-
-
     private async UniTask LoadSubAllDataAsync()
     {
         var ct = this.GetCancellationTokenOnDestroy();
@@ -361,17 +250,6 @@ public class DataManager : MonoBehaviour
         {
             fullEventData.ConditionType = changeConditionStr;
         }
-
-        //    if (eventStringDataDict.TryGetValue(eventData.EventQuestion, out var questionString))
-        //    {
-        //        fullEventData.dialogue = questionString.String_kr;
-        //        fullEventData.BG = questionString.BG;
-        //        fullEventData.SE = questionString.SoundEffect;
-
-
-        //        // CharacterName(int)으로 실제 캐릭터 이름(string) 찾기
-
-        //    }
 
         if (eventStringDataDict.TryGetValue(eventData.EventQuestion, out var questionString))
         {
