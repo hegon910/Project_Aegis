@@ -6,81 +6,88 @@ public enum WarAction { None, Attack, Defend }
 
 public class WarController : MonoBehaviour
 {
-    [SerializeField] WarGround ground;
-    [SerializeField] int currentIndex;
-    [SerializeField] float moveSpeed = 500f;
-    [SerializeField] int attackStep = 4;
-    [SerializeField] int defendStep = 1;
-    [SerializeField] int direction = +1;
-    [SerializeField] int pushPower = 1; // 이 캐릭터가 다른 캐릭터를 미는 힘
-    [SerializeField] int pushResistance = 1; // 이 캐릭터가 밀렸을 때 밀려나는 정도
+    [Header("Movement")]
+    [SerializeField] float moveSpeed = 100f;    // 초당 이동 속도
+    [SerializeField] int forwardDist = 4;       // 전진 시 이동할 칸 수
+    [SerializeField] int backwardDist = 1;      // 후퇴 시 이동할 칸 수
+    [SerializeField] int direction = 1;         // 이동 방향 (플레이어: 1, 적: -1)
 
-    public int Direction => direction;
-    public int AttackStep => attackStep;
-    public int DefendStep => defendStep;
+    [Header("Stats")]
+    [SerializeField] private int maxHp = 5;         
+    [SerializeField] private int currentHp = 5;     
+    [SerializeField] private int attackPower = 1;   
+
+    WarGround ground;
+    int currentIndex;
+    Coroutine coMove;
+
     public int CurrentIndex => currentIndex;
-    public int PushPower => pushPower;
-    public int PushResistance => pushResistance;
+    public int Direction => direction;
+    public bool IsBusy => coMove != null;
 
-    RectTransform rectTransform;
-    Coroutine moveRoutine;
-    bool isMoving;
+    // --- 스탯 접근 프로퍼티 ---
+    public int MaxHP { get => maxHp; set => maxHp = value; }
+    public int CurrentHP { get => currentHp; set => currentHp = value; }
+    public int AttackPower { get => attackPower; set => attackPower = value; }
 
-    void Awake()
+    public void Init(WarGround ground, int startIndex)
     {
-        rectTransform = GetComponent<RectTransform>();
+        this.ground = ground;
+        currentIndex = startIndex;
+        GetComponent<RectTransform>().anchoredPosition = ground.GetGroundPos(currentIndex);
     }
 
-    public void ForcePlace(int tileIndex) => CrushResult(tileIndex);
-    public void SetDirection(int dir) { direction = Mathf.Sign(dir) >= 0 ? +1 : -1; }
-
-    void Start()
+    public void TakeDamage(int amount)
     {
-        if (!ground) ground = FindObjectOfType<WarGround>();
-        rectTransform.anchoredPosition = ground.GetGroundPos(currentIndex);
+        currentHp = Mathf.Max(0, currentHp - amount);
+        Debug.Log($"{gameObject.name}이(가) {amount} 데미지를 받아 HP가 {currentHp}이(가) 됨");
     }
 
     public void DoAction(WarAction action)
     {
-        if (isMoving) return;
-        int step = (action == WarAction.Attack) ? direction * attackStep : -direction * defendStep;
-        int next = Mathf.Clamp(currentIndex + step, 0, ground.LaneLength - 1);
-        if (next == currentIndex) return;
-
-        currentIndex = next;
-        if (moveRoutine != null) StopCoroutine(moveRoutine);
-        moveRoutine = StartCoroutine(MoveTo(ground.GetGroundPos(currentIndex)));
-    }
-
-    public void CrushResult(int index)
-    {
-        index = Mathf.Clamp(index, 0, ground.LaneLength - 1);
-        if (moveRoutine != null) StopCoroutine(moveRoutine);
-        currentIndex = index;
-        rectTransform.anchoredPosition = ground.GetGroundPos(index);
-        isMoving = false;
-        moveRoutine = null;
-    }
-
-    IEnumerator MoveTo(Vector3 target)
-    {
-        isMoving = true;
-        while (Vector3.Distance(rectTransform.anchoredPosition, target) > 0.01f)
+        int intendedIndex = currentIndex;
+        switch (action)
         {
-            rectTransform.anchoredPosition = Vector3.MoveTowards(rectTransform.anchoredPosition, target, moveSpeed * Time.deltaTime);
-            yield return null;
+            case WarAction.Attack:
+                intendedIndex = currentIndex + direction * forwardDist;
+                break;
+            case WarAction.Defend:
+                intendedIndex = currentIndex - direction * backwardDist;
+                break;
         }
-        rectTransform.anchoredPosition = target;
-        isMoving = false;
+        int targetIndex = Mathf.Clamp(intendedIndex, 0, ground.LaneLength - 1);
+        MoveTo(targetIndex);
     }
 
-    //public bool RingOut(WarAction action)
-    //{
-    //    int step = (action == WarAction.Attack) ? direction * attackStep : -direction * defendStep;
-    //    int desired = currentIndex + step;
-    //    int last = ground.LaneLength - 1;
-    //    return desired < 0 || desired > last;
-    //}
+    public void CrushResult(int targetIndex) => MoveTo(targetIndex, true);
 
-    public bool IsBusy => isMoving;
+    void MoveTo(int targetIndex, bool isCrush = false)
+    {
+        if (coMove != null) StopCoroutine(coMove);
+        coMove = StartCoroutine(Co_MoveTo(targetIndex, isCrush));
+    }
+
+    IEnumerator Co_MoveTo(int targetIndex, bool isCrush)
+    {
+        currentIndex = targetIndex;
+        Vector2 targetPos = ground.GetGroundPos(targetIndex);
+        RectTransform rect = GetComponent<RectTransform>();
+
+        if (isCrush)
+        {
+            rect.anchoredPosition = targetPos;
+        }
+        else
+        {
+            while (Vector2.Distance(rect.anchoredPosition, targetPos) > 1f)
+            {
+                rect.anchoredPosition = Vector2.MoveTowards(
+                    rect.anchoredPosition, targetPos, moveSpeed * Time.deltaTime
+                );
+                yield return null;
+            }
+            rect.anchoredPosition = targetPos;
+        }
+        coMove = null;
+    }
 }
