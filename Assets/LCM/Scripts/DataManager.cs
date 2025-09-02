@@ -189,59 +189,149 @@ public class DataManager : MonoBehaviour
         }
 
         EventData fullEventData = new EventData();
-
-
         fullEventData.eventName = eventID;
 
+        // ChangeCondition에 해당하는 이벤트 데이터를 가져옵니다.
+        bool hasChangeCondition = eventDataDict.TryGetValue(eventData.ChangeCondition, out var anotherEventData);
+        bool isConditionSuccess = hasChangeCondition && anotherEventData.IsConditionSuccess;
 
-        //왼쪽 선택지 생성
+        // 대화, 배경, 효과음, 캐릭터 정보 설정
+        if (isConditionSuccess)
+        {
+            // 조건 성공 시 Another 버전의 데이터 사용
+            if (eventStringDataDict.TryGetValue(eventData.AnotherEventQuestion, out var anotherQuestionString))
+            {
+                fullEventData.dialogue = anotherQuestionString.String_kr;
+                fullEventData.BG = anotherQuestionString.BG;
+                fullEventData.SE = anotherQuestionString.SoundEffect;
+            }
+        }
+        else
+        {
+            // 조건 실패 또는 ChangeCondition 이벤트가 없을 경우 기본 버전의 데이터 사용
+            if (eventStringDataDict.TryGetValue(eventData.EventQuestion, out var questionString))
+            {
+                fullEventData.dialogue = questionString.String_kr;
+                fullEventData.BG = questionString.BG;
+                fullEventData.SE = questionString.SoundEffect;
+            }
+        }
+
+        // 왼쪽 선택지 설정
         fullEventData.leftChoice = new EventChoice();
-        if (choiceTextDict.TryGetValue(eventData.LeftString, out var leftText))
+        if (isConditionSuccess)
         {
-            fullEventData.leftChoice.choiceText = leftText;
+            // 조건 성공 시 AnotherLeftString 사용
+            if (choiceTextDict.TryGetValue(eventData.AnotherLeftString, out var anotherLeftText))
+            {
+                fullEventData.leftChoice.choiceText = anotherLeftText;
+            }
         }
+        else
+        {
+            // 조건 실패 또는 ChangeCondition 이벤트가 없을 경우 LeftString 사용
+            if (choiceTextDict.TryGetValue(eventData.LeftString, out var leftText))
+            {
+                fullEventData.leftChoice.choiceText = leftText;
+            }
+        }
+
+        // 왼쪽 성공 결과 설정
         fullEventData.leftChoice.successOutcome = new ChoiceOutcome();
-        if (eventStringDataDict.TryGetValue(eventData.AcceptString1, out var successString))
+        if (isConditionSuccess)
         {
-            fullEventData.leftChoice.successOutcome.outcomeText = successString.String_kr;
+            if (eventStringDataDict.TryGetValue(eventData.AnotherAcceptString1, out var successString))
+            {
+                fullEventData.leftChoice.successOutcome.outcomeText = successString.String_kr;
+            }
+            fullEventData.leftChoice.successOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.AnotherAcceptReward1)));
         }
-        fullEventData.leftChoice.successOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.AcceptReward1)));
+        else
+        {
+            if (eventStringDataDict.TryGetValue(eventData.AcceptString1, out var successString))
+            {
+                fullEventData.leftChoice.successOutcome.outcomeText = successString.String_kr;
+            }
+            fullEventData.leftChoice.successOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.AcceptReward1)));
+        }
 
-        // 왼쪽 실패 텍스트 
+        // 왼쪽 실패 결과 설정
         fullEventData.leftChoice.failOutcome = new ChoiceOutcome();
-        if (eventStringDataDict.TryGetValue(eventData.DenyString1, out var FailString))
+        if (isConditionSuccess)
         {
-            fullEventData.leftChoice.failOutcome.outcomeText = FailString.String_kr;
+            if (eventStringDataDict.TryGetValue(eventData.AnotherDenyString1, out var failString))
+            {
+                fullEventData.leftChoice.failOutcome.outcomeText = failString.String_kr;
+            }
+            fullEventData.leftChoice.failOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.AnotherDenyReward1)));
         }
-        fullEventData.leftChoice.failOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.DenyReward1)));
+        else
+        {
+            fullEventData.leftChoice.failOutcome = new ChoiceOutcome();
+            if (eventStringDataDict.TryGetValue(eventData.DenyString1, out var FailString))
+            {
+                fullEventData.leftChoice.failOutcome.outcomeText = FailString.String_kr;
+            }
+            fullEventData.leftChoice.failOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.DenyReward1)));
+        }
 
-
-        //오른쪽 선택지 
+        // 오른쪽 선택지 설정
         fullEventData.rightChoice = new EventChoice();
-        if (choiceTextDict.TryGetValue(eventData.RightString, out var rightText))
+        if (isConditionSuccess)
         {
-            fullEventData.rightChoice.choiceText = rightText;
+            if (choiceTextDict.TryGetValue(eventData.AnotherRightString, out var anotherRightText))
+            {
+                fullEventData.rightChoice.choiceText = anotherRightText;
+            }
+        }
+        else
+        {
+            if (choiceTextDict.TryGetValue(eventData.RightString, out var rightText))
+            {
+                fullEventData.rightChoice.choiceText = rightText;
+            }
         }
 
-        // 오른쪽 성공 결과 텍스트와 보상
+        // 오른쪽 성공 결과 설정
         fullEventData.rightChoice.successOutcome = new ChoiceOutcome();
-        if (eventStringDataDict.TryGetValue(eventData.AcceptString2, out var successString2))
+        if (isConditionSuccess)
         {
-            fullEventData.rightChoice.successOutcome.outcomeText = successString2.String_kr;
+            if (eventStringDataDict.TryGetValue(eventData.AnotherAcceptString2, out var successString2))
+            {
+                fullEventData.rightChoice.successOutcome.outcomeText = successString2.String_kr;
+            }
+            fullEventData.rightChoice.successOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.AnotherAcceptReward2)));
         }
-        fullEventData.rightChoice.successOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.AcceptReward2)));
+        else
+        {
+            if (eventStringDataDict.TryGetValue(eventData.AcceptString2, out var successString2))
+            {
+                fullEventData.rightChoice.successOutcome.outcomeText = successString2.String_kr;
+            }
+            fullEventData.rightChoice.successOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.AcceptReward2)));
+        }
 
-        // 오른쪽 실패 텍스트 
+        // 오른쪽 실패 결과 설정
         fullEventData.rightChoice.failOutcome = new ChoiceOutcome();
-        if (eventStringDataDict.TryGetValue(eventData.DenyString2, out var FailString2))
+        if (isConditionSuccess)
         {
-            fullEventData.rightChoice.failOutcome.outcomeText = FailString2.String_kr;
+            if (eventStringDataDict.TryGetValue(eventData.AnotherDenyString2, out var failString2))
+            {
+                fullEventData.rightChoice.failOutcome.outcomeText = failString2.String_kr;
+            }
+            fullEventData.rightChoice.failOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.AnotherDenyReward2)));
         }
-        fullEventData.rightChoice.failOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.DenyReward2)));
+        else
+        {
+            fullEventData.rightChoice.failOutcome = new ChoiceOutcome();
+            if (eventStringDataDict.TryGetValue(eventData.DenyString2, out var FailString2))
+            {
+                fullEventData.rightChoice.failOutcome.outcomeText = FailString2.String_kr;
+            }
+            fullEventData.rightChoice.failOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.DenyReward2)));
+        }
 
-
-
-
+        // 기타 데이터 설정 (IsConditionSuccess와 무관한 필드)
         if (roundTypeDict.TryGetValue(eventData.RoundType, out var roundTypeStr))
         {
             fullEventData.RoundType = roundTypeStr;
@@ -250,21 +340,6 @@ public class DataManager : MonoBehaviour
         {
             fullEventData.ConditionType = changeConditionStr;
         }
-
-        if (eventStringDataDict.TryGetValue(eventData.EventQuestion, out var questionString))
-        {
-            fullEventData.dialogue = questionString.String_kr;
-            fullEventData.BG = questionString.BG;
-            fullEventData.SE = questionString.SoundEffect;
-
-            if (characterNameDict.TryGetValue(questionString.CharacterName, out var characterName))
-            {
-                fullEventData.CharacterName = characterName;
-            }
-            fullEventData.CharacterImage = questionString.CharacterImage;
-        }
-
-        // NeedType 값 할당
         if (eventDict.TryGetValue(eventData.NeedType1, out var leftNeed))
         {
             fullEventData.leftChoice.successCondition = leftNeed;
@@ -310,6 +385,12 @@ public class DataManager : MonoBehaviour
         foreach (var reward in rewards)
         {
             ParameterType type = GetParameterType(reward.RewardType);
+
+            changes.Add(new ParameterChange
+            {
+                parameterType = type,
+                valueChange = reward.RewardValue
+            });
         }
         return changes;
     }
@@ -337,7 +418,7 @@ public class DataManager : MonoBehaviour
         public int PageType { get; set; }
         public int ConditionType { get; set; }
         public int ChangeCondition { get; set; }
-        public int IsConditionSuccess { get; set; }
+        public bool IsConditionSuccess { get; set; }
         public int EventQuestion { get; set; }
         public int LeftString { get; set; }
         public int NeedType1 { get; set; }
@@ -357,7 +438,7 @@ public class DataManager : MonoBehaviour
         public int AnotherLeftString { get; set; }
         public int AnotherNeedType1 { get; set; }
         public int AnotehrNeedValue1 { get; set; }
-        public int AnotehrAcceptReward1 { get; set; }
+        public int AnotherAcceptReward1 { get; set; }
         public int AnotherDenyReward1 { get; set; }
         public int AnotherAcceptString1 { get; set; }
         public int AnotherDenyString1 { get; set; }
