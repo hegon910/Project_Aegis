@@ -17,6 +17,7 @@ public class EventManager : MonoBehaviour
 
     public static event Action<int> OnParameterEventReady;
     public static event Action<DataManager.SubEventData> OnSubEventReady;
+    public static event Action OnEventCycleCompleted;
 
     [Header("설정")]
     [SerializeField] private int totalEventsPerCycle = 24;
@@ -146,6 +147,7 @@ public class EventManager : MonoBehaviour
             {
                 Debug.Log("현재 사이클(챕터)의 모든 이벤트를 완료했습니다.");
                 currentState = EventManagerState.Idle; // 사이클이 끝났으므로 상태를 Idle로 변경
+                OnEventCycleCompleted?.Invoke(); // 사이클 종료 이벤트 호출
 
                 currentChapter++; 
                 Debug.Log($"다음 챕터({currentChapter}) 준비 완료. 외부에서 StartNewCycle()을 호출해야 시작합니다.");
@@ -162,7 +164,7 @@ public class EventManager : MonoBehaviour
             }
             else 
             {
-                Debug.Log($"파라미터 이벤트(ID: {eventId}) 발생을 알립니다.");
+                Debug.Log($"파라미터 이벤트(ID: {eventId})발생");
                 OnParameterEventReady?.Invoke(eventId);
                 PlayerStats.Instance.AddCompletedEvent(eventId);
             }
