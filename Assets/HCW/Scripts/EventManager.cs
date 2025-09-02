@@ -79,10 +79,13 @@ public class EventManager : MonoBehaviour
                 .ToList();
             currentCyclePlaylist.AddRange(tutorialEvents);
         }
+        
+        Debug.Log($"[EventManager] 튜토리얼 이벤트 추가 후: {currentCyclePlaylist.Count}개");
 
         // 남은 슬롯 계산
         int remainingSlots = totalEventsPerCycle - currentCyclePlaylist.Count;
-        
+        Debug.Log($"[EventManager] 남은 슬롯 계산: {totalEventsPerCycle} - {currentCyclePlaylist.Count} = {remainingSlots}개");
+
         if (remainingSlots > 0)
         {
             // 서브 이벤트 추가 (1개 그룹)
@@ -91,19 +94,30 @@ public class EventManager : MonoBehaviour
             {
                 int selectedGroup = availableGroups[UnityEngine.Random.Range(0, availableGroups.Count)];
                 var subEventChain = GetSubEventChain(selectedPackNumber, selectedGroup);
-                
+                Debug.Log($"[EventManager] 서브 이벤트 그룹 {selectedGroup} 선택, 체인 길이: {subEventChain.Count}턴");
+
                 // 서브 이벤트 체인 전체가 들어갈 자리가 있는지 확인
-                if (subEventChain.Count <= remainingSlots)
+                if (subEventChain.Count > 0 && subEventChain.Count <= remainingSlots)
                 {
                     playedSubEventGroups.Add(selectedGroup); // 확정되면 추가
                     currentCyclePlaylist.Add(subEventChain.First().Index);
                     remainingSlots -= subEventChain.Count;
+                    Debug.Log($"[EventManager] 서브 이벤트 추가 후 플레이리스트: {currentCyclePlaylist.Count}개, 남은 슬롯: {remainingSlots}개");
                 }
+                else
+                {
+                    Debug.Log($"[EventManager] 서브 이벤트를 추가하지 않음 (체인 길이: {subEventChain.Count}, 남은 슬롯: {remainingSlots})");
+                }
+            }
+            else
+            {
+                Debug.Log("[EventManager] 추가할 수 있는 서브 이벤트 그룹 없음.");
             }
 
             // 나머지 슬롯을 공용 파라미터 이벤트로 채움
             if (remainingSlots > 0)
             {
+                Debug.Log($"[EventManager] {remainingSlots}개의 공용 파라미터 이벤트를 추가");
                 var commonParameterEvents = GetCommonParameterEvents();
                 currentCyclePlaylist.AddRange(commonParameterEvents.OrderBy(x => Guid.NewGuid()).Take(remainingSlots));
             }
@@ -130,14 +144,12 @@ public class EventManager : MonoBehaviour
         {
             if (playlistIndex >= currentCyclePlaylist.Count)
             {
-                Debug.Log("현재 사이클의 모든 이벤트를 완료. 다음 사이클을 시작합니다.");
-                currentChapter++; // 또는 다른 사이클 종료 로직
-                StartNewCycle();
-                if (currentCyclePlaylist.Count == 0)
-                {
-                    Debug.LogError("플레이할 이벤트가 없습니다.");
-                    return;
-                }
+                Debug.Log("현재 사이클(챕터)의 모든 이벤트를 완료했습니다.");
+                currentState = EventManagerState.Idle; // 사이클이 끝났으므로 상태를 Idle로 변경
+
+                currentChapter++; 
+                Debug.Log($"다음 챕터({currentChapter}) 준비 완료. 외부에서 StartNewCycle()을 호출해야 시작합니다.");
+                return; // 다음 턴을 바로 진행하지 않고 여기서 멈춤
             }
 
             int eventId = currentCyclePlaylist[playlistIndex++];
