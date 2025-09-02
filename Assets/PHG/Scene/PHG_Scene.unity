@@ -448,7 +448,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1012302308274837595, guid: 841a3f826be0fc147a7668138bfff3df, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 448.1306
+      value: 242.0437
       objectReference: {fileID: 0}
     - target: {fileID: 1012302308274837595, guid: 841a3f826be0fc147a7668138bfff3df, type: 3}
       propertyPath: m_LocalScale.x
@@ -464,7 +464,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1162940167391338001, guid: 841a3f826be0fc147a7668138bfff3df, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 347.40002
+      value: 288
       objectReference: {fileID: 0}
     - target: {fileID: 1229271954034258194, guid: 841a3f826be0fc147a7668138bfff3df, type: 3}
       propertyPath: topPanelHeightPercentage
@@ -472,7 +472,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1245210293013154211, guid: 841a3f826be0fc147a7668138bfff3df, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 463.2
+      value: 384
       objectReference: {fileID: 0}
     - target: {fileID: 1640463969224432306, guid: 841a3f826be0fc147a7668138bfff3df, type: 3}
       propertyPath: m_AnchorMax.x
@@ -664,11 +664,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5348385969586163199, guid: 841a3f826be0fc147a7668138bfff3df, type: 3}
       propertyPath: m_SizeDelta.y
-      value: -810.60004
+      value: -672
       objectReference: {fileID: 0}
     - target: {fileID: 5348385969586163199, guid: 841a3f826be0fc147a7668138bfff3df, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -57.90001
+      value: -48
       objectReference: {fileID: 0}
     - target: {fileID: 5603925535751527739, guid: 841a3f826be0fc147a7668138bfff3df, type: 3}
       propertyPath: m_text
@@ -5778,6 +5778,10 @@ PrefabInstance:
       propertyPath: parameterTutoText
       value: 
       objectReference: {fileID: 199568741}
+    - target: {fileID: -3408709345573862190, guid: 4711122b314e6aa4c9c9b7acbd59b74c, type: 3}
+      propertyPath: chapterResultPanel
+      value: 
+      objectReference: {fileID: 1161488980}
     - target: {fileID: -3408709345573862190, guid: 4711122b314e6aa4c9c9b7acbd59b74c, type: 3}
       propertyPath: swipeTutorialImage
       value: 
