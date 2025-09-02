@@ -16,6 +16,9 @@ public class ThreePanelLayoutManager : MonoBehaviour
     [Range(0f, 1f)]
     public float bottomPanelHeightPercentage = 0.15f; // 하단 패널이 차지할 화면 세로 비율 (15%)
 
+    [HideInInspector]
+    public bool layoutUpdateEnabled = true;
+
     private RectTransform parentRectTransform;
 
     void Awake()
@@ -26,10 +29,13 @@ public class ThreePanelLayoutManager : MonoBehaviour
     void Update()
     {
         // 에디터에서 값이 변경될 때마다 또는 게임 실행 중에 적용됩니다.
-        ApplyLayout();
+        if (layoutUpdateEnabled)
+        {
+            ApplyLayout();
+        }
     }
 
-    private void ApplyLayout()
+    public void ApplyLayout()
     {
         if (topPanel == null || middlePanel == null || bottomPanel == null || parentRectTransform == null)
         {

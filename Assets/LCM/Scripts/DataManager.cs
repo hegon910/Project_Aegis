@@ -432,6 +432,12 @@ public class DataManager : MonoBehaviour
         foreach (var reward in rewards)
         {
             ParameterType type = GetParameterType(reward.RewardType);
+
+            changes.Add(new ParameterChange
+            {
+                parameterType = type,
+                valueChange = reward.RewardValue
+            });
         }
         return changes;
     }
