@@ -75,11 +75,13 @@ public class GameManager : MonoBehaviour
     private void OnEnable()
     {
         ChapterResultController.OnSequenceComplete += OnChapterEndSequenceComplete;
+        EventManager.OnEventCycleCompleted += HandleEventCycleCompleted;
     }
 
     private void OnDisable()
     {
         ChapterResultController.OnSequenceComplete -= OnChapterEndSequenceComplete;
+        EventManager.OnEventCycleCompleted -= HandleEventCycleCompleted;
     }
 
     private void Start()
@@ -527,5 +529,29 @@ public class GameManager : MonoBehaviour
             Application.Quit();
 #endif
         });
+    }
+
+    private void HandleEventCycleCompleted()
+    {
+        Debug.Log("GameManager: 이벤트 사이클 완료");
+        if (PlayerStats.Instance == null)
+        {
+            Debug.LogError("GameManager: 이벤트 사이클이 완료되었지만 PlayerStats.Instance가 비었습니다.");
+            return;
+        }
+        Debug.Log($"GameManager: 현재 회차 = {PlayerStats.Instance.playthroughCount}");
+
+        if (PlayerStats.Instance.playthroughCount == 1)
+        {
+            // 1회차에는 이벤트 사이클 후 전투
+            Debug.Log("GameManager: 1회차. 전투 패널로 이동합니다.");
+            GoToBattlePanel();
+        }
+        else
+        {
+            // 2회차부터는 이벤트 사이클 후 메인 스토리
+            Debug.Log("GameManager: 2회차 이상. 스토리 패널로 이동합니다.");
+            GoToStoryPanel();
+        }
     }
 }
