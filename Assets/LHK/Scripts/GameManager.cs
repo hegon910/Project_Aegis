@@ -299,15 +299,21 @@ public class GameManager : MonoBehaviour
             battleResultPanel.SetActive(true);
             if (battleResult.Contains("승리"))
             {
-                battleResultText.text = "승리";
+                //PlayerStat에 전황을 90으로 바꾸기
+                PlayerStats.Instance.SetStat(ParameterType.전황, 90);
+                battleResultText.text = "전투에서 승리하였다. 전쟁에서의 승리도 가까워졌기를.";
             }
             else if (battleResult.Contains("패배"))
             {
-                battleResultText.text = "패배";
+                //PlayerStat에 전황을 10으로 바꾸기
+                PlayerStats.Instance.SetStat(ParameterType.전황, 10);
+                battleResultText.text = "어쩔 수 없군 이번 전투에서는 패배를 받아드리지... 후퇴하라.";
             }
             else
             {
-                battleResultText.text = "무승부";
+                //PlayerStat에 전황을 50으로 바꾸기
+                PlayerStats.Instance.SetStat(ParameterType.전황, 50);
+                battleResultText.text = "무승부라고? 결판을 짓지 못하다니...";
             }
         }
         else
