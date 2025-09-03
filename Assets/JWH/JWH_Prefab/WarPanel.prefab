@@ -407,8 +407,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
+  m_AnchoredPosition: {x: 5.154999, y: 0}
+  m_SizeDelta: {x: 800, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3176153342697927660
 CanvasRenderer:
@@ -438,7 +438,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 57fb51cfd16d1f2459dcd21bca575d20, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -460,10 +460,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d221e4d8d1aea4c4aaece32c4e01c31e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  origin: {fileID: 2387749592704131571}
   laneLength: 16
-  cellSize: 70
-  anchor: 1
+  cellSize: 50
+  previousLaneLength: 16
 --- !u!1 &3201014759126432619
 GameObject:
   m_ObjectHideFlags: 0
@@ -1291,7 +1290,7 @@ GameObject:
   - component: {fileID: 6925899825422557894}
   - component: {fileID: 120504832863057840}
   - component: {fileID: 5409619987361007447}
-  - component: {fileID: 3529057678929307619}
+  - component: {fileID: 4943960949987204362}
   m_Layer: 5
   m_Name: enemy
   m_TagString: Untagged
@@ -1371,11 +1370,11 @@ MonoBehaviour:
   moveSpeed: 500
   forwardDist: 4
   backwardDist: 1
-  direction: 1
+  direction: -1
   maxHp: 5
   currentHp: 5
   attackPower: 1
---- !u!114 &3529057678929307619
+--- !u!114 &4943960949987204362
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1384,12 +1383,32 @@ MonoBehaviour:
   m_GameObject: {fileID: 6188400499487992501}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9c4f09d433c2d15479c274a0650c18dd, type: 3}
+  m_Script: {fileID: 11500000, guid: cc667f745d9bc9847ba628b11e0046cf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   controller: {fileID: 5409619987361007447}
   attackChance: 0.5
   rank: 1
+  attackVsAttack:
+    playerDamage: 0
+    playerKnockback: 0
+    enemyDamage: 0
+    enemyKnockback: 0
+  playerAttackVsEnemyDefend:
+    playerDamage: 0
+    playerKnockback: 0
+    enemyDamage: 0
+    enemyKnockback: 0
+  playerDefendVsEnemyAttack:
+    playerDamage: 0
+    playerKnockback: 0
+    enemyDamage: 0
+    enemyKnockback: 0
+  defendVsDefend:
+    playerDamage: 0
+    playerKnockback: 0
+    enemyDamage: 0
+    enemyKnockback: 0
 --- !u!1 &6210318222153264304
 GameObject:
   m_ObjectHideFlags: 0
@@ -1498,7 +1517,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 173}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &6540825586812264945
@@ -1515,11 +1534,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ground: {fileID: 869533868976386670}
   player: {fileID: 7831991435369316234}
-  enemy: {fileID: 3529057678929307619}
+  enemy: {fileID: 4943960949987204362}
   maxTurns: 30
-  initialPlayerHP: 5
-  initialPlayerShield: 0
-  initialEnemyHP: 5
+  playerStartIndex: 6
+  enemyStartIndex: 9
 --- !u!1 &7126723264662903238
 GameObject:
   m_ObjectHideFlags: 0
@@ -1868,7 +1886,6 @@ GameObject:
   - component: {fileID: 7101532982044637742}
   - component: {fileID: 2580598984102089463}
   - component: {fileID: 1958663304189081122}
-  - component: {fileID: 7288065445341416947}
   m_Layer: 5
   m_Name: ChoiceCard
   m_TagString: Untagged
@@ -1966,7 +1983,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 6540825586812264945}
         m_TargetAssemblyTypeName: WarTurnManager, Assembly-CSharp
-        m_MethodName: OnClick_PlayerAttack
+        m_MethodName: OnClick_PlayerDefend
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1981,7 +1998,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 6540825586812264945}
         m_TargetAssemblyTypeName: WarTurnManager, Assembly-CSharp
-        m_MethodName: OnClick_PlayerDefend
+        m_MethodName: OnClick_PlayerAttack
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -2006,20 +2023,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
---- !u!114 &7288065445341416947
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7612557753482688849}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a5c0324fa33658f4c8c7573168968b90, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  wturnMgr: {fileID: 6540825586812264945}
-  wswipe: {fileID: 1958663304189081122}
 --- !u!1 &7704163244361501351
 GameObject:
   m_ObjectHideFlags: 0
@@ -2131,8 +2134,7 @@ MonoBehaviour:
   controller: {fileID: 5939541314283381738}
   maxShield: 3
   currentShield: 0
-  shieldGainOnDefend: 1
-  equippedSkillID: 
+  equippedSkillID: AIRSTRIKE
   skillDatabase: {fileID: 11400000, guid: 1bf50a35dc2094643aeeb527a7aef982, type: 2}
 --- !u!1 &7705710673180044186
 GameObject:
@@ -2511,8 +2513,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   turnMgr: {fileID: 6540825586812264945}
-  player: {fileID: 0}
-  enemy: {fileID: 3529057678929307619}
+  player: {fileID: 7831991435369316234}
+  enemy: {fileID: 4943960949987204362}
   turnTxt: {fileID: 8859821450248509130}
   pHpTxt: {fileID: 7967131829092281497}
   pShieldTxt: {fileID: 6856110414784059168}
@@ -2722,10 +2724,10 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 4789532223443343805}
   - {fileID: 2387749592704131571}
   - {fileID: 1339541212528671808}
   - {fileID: 956455154403415385}
-  - {fileID: 4789532223443343805}
   m_Father: {fileID: 756283038089796807}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
