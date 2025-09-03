@@ -190,6 +190,7 @@ public class DataManager : MonoBehaviour
 
         EventData fullEventData = new EventData();
         fullEventData.eventName = eventID;
+        fullEventData.IsConditionSuccess = eventData.IsConditionSuccess;
 
         // ChangeCondition에 해당하는 이벤트 데이터를 가져옵니다.
         bool hasChangeCondition = eventDataDict.TryGetValue(eventData.ChangeCondition, out var anotherEventData);
@@ -348,6 +349,31 @@ public class DataManager : MonoBehaviour
         {
             fullEventData.rightChoice.successCondition = rightNeed;
         }
+
+        //테스트코드
+        Debug.Log($"<color=cyan>--- 이벤트 데이터 로드 완료: {fullEventData.eventName} ---</color>");
+        Debug.Log($"<color=white>대화:</color> {fullEventData.dialogue}");
+        Debug.Log($"<color=white>왼쪽 선택지 텍스트:</color> {fullEventData.leftChoice.choiceText}");
+        Debug.Log($"<color=white>왼쪽 선택지 성공 보상:</color> {fullEventData.leftChoice.successOutcome.outcomeText}");
+        Debug.Log($"<color=white>왼쪽 선택지 실패 텍스트:</color> {fullEventData.leftChoice.failOutcome.outcomeText}");
+
+        // 보상 목록을 출력하는 예시
+        foreach (var change in fullEventData.leftChoice.successOutcome.parameterChanges)
+        {
+            Debug.Log($"  - 변경된 파라미터: {change.parameterType}, 값: {change.valueChange}");
+        }
+
+        Debug.Log($"<color=white>오른쪽 선택지 텍스트:</color> {fullEventData.rightChoice.choiceText}");
+        Debug.Log($"<color=white>오른쪽 선택지 성공 보상:</color> {fullEventData.rightChoice.successOutcome.outcomeText}");
+
+        foreach (var change in fullEventData.rightChoice.successOutcome.parameterChanges)
+        {
+            Debug.Log($"  - 변경된 파라미터: {change.parameterType}, 값: {change.valueChange}");
+        }
+
+        Debug.Log($"<color=white>오른쪽 선택지 실패 텍스트:</color> {fullEventData.rightChoice.failOutcome.outcomeText}");
+
+        Debug.Log($"<color=cyan>-------------------------------------------</color>");
 
         return fullEventData;
     }
