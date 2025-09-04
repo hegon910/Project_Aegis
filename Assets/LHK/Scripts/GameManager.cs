@@ -38,6 +38,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private ChapterResultController chapterEndController; // 새로 만든 컨트롤러 연결
     [SerializeField] private List<ChapterResultData> chapterEndDataList;   // 챕터별 데이터 에셋 목록 연결
     private int currentChapter = 1; // 현재 챕터를 추적하기 위한 변수
+    [SerializeField] private GameObject chapterResultPanel;
     public int CurrentChapter => currentChapter;
 
     [Header("범용 확인 창")]
@@ -75,11 +76,13 @@ public class GameManager : MonoBehaviour
     private void OnEnable()
     {
         ChapterResultController.OnSequenceComplete += OnChapterEndSequenceComplete;
+        EventManager.OnEventCycleCompleted += HandleEventCycleCompleted;
     }
 
     private void OnDisable()
     {
         ChapterResultController.OnSequenceComplete -= OnChapterEndSequenceComplete;
+        EventManager.OnEventCycleCompleted -= HandleEventCycleCompleted;
     }
 
     private void Start()
@@ -104,8 +107,11 @@ public class GameManager : MonoBehaviour
     public void OnTitlePanelTouched()
     {
         titlePanel.SetActive(false);
-        PlayGamesPlatform.Instance.Authenticate(OnAuthenticated);
         menuPanel.SetActive(true);
+        if (Application.platform == RuntimePlatform.Android)
+        {
+            PlayGamesPlatform.Instance.Authenticate(OnAuthenticated);
+        }
     }
 
     private void OnAuthenticated(SignInStatus status)
@@ -296,15 +302,21 @@ public class GameManager : MonoBehaviour
             battleResultPanel.SetActive(true);
             if (battleResult.Contains("승리"))
             {
-                battleResultText.text = "승리";
+                //PlayerStat에 전황을 90으로 바꾸기
+                PlayerStats.Instance.SetStat(ParameterType.전황, 90);
+                battleResultText.text = "전투에서 승리하였다. 전쟁에서의 승리도 가까워졌기를.";
             }
             else if (battleResult.Contains("패배"))
             {
-                battleResultText.text = "패배";
+                //PlayerStat에 전황을 10으로 바꾸기
+                PlayerStats.Instance.SetStat(ParameterType.전황, 10);
+                battleResultText.text = "어쩔 수 없군 이번 전투에서는 패배를 받아드리지... 후퇴하라.";
             }
             else
             {
-                battleResultText.text = "무승부";
+                //PlayerStat에 전황을 50으로 바꾸기
+                PlayerStats.Instance.SetStat(ParameterType.전황, 50);
+                battleResultText.text = "무승부라고? 결판을 짓지 못하다니...";
             }
         }
         else
@@ -329,6 +341,17 @@ public class GameManager : MonoBehaviour
     }
     private void StartDetailedResultSequence()
     {
+        if (chapterEndController != null)
+        {
+            chapterEndController.gameObject.SetActive(true);
+            chapterResultPanel.SetActive(true);
+        }
+        else
+        {
+            Debug.LogError("ChapterEndController가 할당되지 않았습니다! 연출 시퀀스를 건너뜁니다.");
+            OnChapterEndSequenceComplete(); // 컨트롤러가 없으면 바로 다음 단계로 넘어갑니다.
+            return;
+        }
         int warSituation = PlayerStats.Instance.GetStat(ParameterType.전황);
         GameOutcome outcome;
 
@@ -527,5 +550,29 @@ public class GameManager : MonoBehaviour
             Application.Quit();
 #endif
         });
+    }
+
+    private void HandleEventCycleCompleted()
+    {
+        Debug.Log("GameManager: 이벤트 사이클 완료");
+        if (PlayerStats.Instance == null)
+        {
+            Debug.LogError("GameManager: 이벤트 사이클이 완료되었지만 PlayerStats.Instance가 비었습니다.");
+            return;
+        }
+        Debug.Log($"GameManager: 현재 회차 = {PlayerStats.Instance.playthroughCount}");
+
+        if (PlayerStats.Instance.playthroughCount == 1)
+        {
+            // 1회차에는 이벤트 사이클 후 전투
+            Debug.Log("GameManager: 1회차. 전투 패널로 이동합니다.");
+            GoToBattlePanel();
+        }
+        else
+        {
+            // 2회차부터는 이벤트 사이클 후 메인 스토리
+            Debug.Log("GameManager: 2회차 이상. 스토리 패널로 이동합니다.");
+            GoToStoryPanel();
+        }
     }
 }

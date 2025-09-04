@@ -5,24 +5,26 @@ using UnityEngine.UI;
 
 public class WarHUD : MonoBehaviour
 {
+    [Header("Core References")]
     [SerializeField] WarTurnManager turnMgr;
     [SerializeField] WarPlayer player;
     [SerializeField] WarEnemy enemy;
     
-
     [Header("Texts")]
-    [SerializeField] TMP_Text turnTxt;      // 예: "1/30"
-    [SerializeField] TMP_Text pHpTxt;       // 예: "HP 5"
-    [SerializeField] TMP_Text pShieldTxt;   // 예: "SH 0"
+    [SerializeField] TMP_Text turnTxt;     
+    
+    [SerializeField] TMP_Text pHpTxt;      
+    [SerializeField] TMP_Text pShieldTxt; 
+    
     [SerializeField] TMP_Text eHpTxt;
-    [SerializeField] TMP_Text skillCooldownText; // 쿨타임 표시 텍스트
+    [SerializeField] TMP_Text skillCooldownText;
 
     [Header("War Status Slider")]
     [SerializeField] Slider warSlider;
     [SerializeField] Image warSliderFill; // 슬라이더의 Fill Image
     [SerializeField] Gradient warSliderGradient; // 슬라이더 값에 따라 변할 색상
 
-    void LateUpdate()
+    void Update()
     {
         if (turnMgr)
         {
@@ -34,13 +36,13 @@ public class WarHUD : MonoBehaviour
         }
         if (player)
         {
-            pHpTxt.text = $"HP {player.HP}";
-            pShieldTxt.text = $"SH {player.Shield}";
+            pHpTxt.text = $"HP: {player.Ctrl.CurrentHP} / {player.Ctrl.MaxHP}";
+            pShieldTxt.text = $"Shield: {player.Shield}";
         }
         if (enemy)
         {
-            eHpTxt.text = $"HP {enemy.HP}";
-            
+            eHpTxt.text = $"HP: {enemy.Ctrl.CurrentHP} / {enemy.Ctrl.MaxHP}";
+
         }
         UpdateWarSlider();
         UpdateSkillUI();

@@ -167,7 +167,8 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         {
             // 파라미터 이벤트 결과 처리
             var choice = isRightChoice ? currentParameterEventData.rightChoice : currentParameterEventData.leftChoice;
-            bool success = CheckCondition(choice.successCondition);
+            // 성공 여부는 이제 SuccessCondition이 판단
+            bool success = choice.condition.Evaluate(PlayerStats.Instance, PlaythroughHistory.Instance); // TODO: PlaythroughHistory 주입 필요
             var outcome = success ? choice.successOutcome : choice.failOutcome;
 
             currentParameterEventData.IsConditionSuccess = success;
@@ -237,17 +238,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             dimmerPanel.color = new Color(0, 0, 0, alpha);
         }
     }
-    private bool CheckCondition(string condition)
-    {
-        if (string.IsNullOrEmpty(condition)) return true;
-        var parts = condition.Split(',');
-        if (parts.Length != 2) return true;
-        System.Enum.TryParse(parts[0], true, out ParameterType paramType);
-        string opAndValue = parts[1];
-        char op = opAndValue.Contains(">") ? '>' : '<';
-        if (!int.TryParse(opAndValue.Substring(1), out int value)) return true;
-        return op == '>' ? PlayerStats.Instance.GetStat(paramType) > value : PlayerStats.Instance.GetStat(paramType) < value;
-    }
+    
 
     public void UpdateChoicePreview(string text, Color color)
     {

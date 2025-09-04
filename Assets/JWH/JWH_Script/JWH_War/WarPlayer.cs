@@ -4,63 +4,72 @@ using UnityEngine;
 
 public class WarPlayer : MonoBehaviour
 {
-    [SerializeField] WarController controller;
-    [SerializeField] int hp = 5; // 임시값
-    [SerializeField] int shield = 0; // 쉴드 추가
-    [SerializeField] int attackPower = 1;
+    [SerializeField] private WarController controller;
 
-    [Header("스킬 & 버프")]
-    public string equippedSkillID; //장착스킬
-    [System.NonSerialized] public SkillData currentSkill; // 스킬 데이터 런타임
+    [Header("Shield System")]
+    [SerializeField] private int maxShield = 3;           
+    [SerializeField] private int currentShield = 0;       
+    
+
+    [Header("Skill & Buffs")]
+    public string equippedSkillID;
+    [System.NonSerialized] public SkillData currentSkill;
     public SkillDatabase skillDatabase;
 
-    const int MaxShield = 3;
-    public int HP => hp;
-    public int Shield => shield;
-    public int AttackPower => attackPower;
-    public bool IsDead => hp <= 0;
+    public int Shield => currentShield; 
     public WarController Ctrl => controller;
-    public Transform Tf => controller != null ? controller.transform : transform;
-   
+    public bool IsDead => controller != null && controller.CurrentHP <= 0;
 
-    void Awake() { if (!controller) controller = GetComponent<WarController>(); }
+    public int AttackPower => controller ? controller.AttackPower : 0;
+
+    void Awake()
+    {
+        if (!controller) controller = GetComponent<WarController>();
+        LoadSkillFromID();
+    }
 
     public void Act(WarAction action) => controller.DoAction(action);
     public bool IsBusy => controller != null && controller.IsBusy;
 
-    public void TakeDamage(int amount)//임시값, 쉴드 → 체력 순으로
+    public void TakeDamage(int amount)
     {
-        int fromShield = Mathf.Min(shield, amount);
-        shield -= fromShield;
+        int fromShield = Mathf.Min(currentShield, amount);
+        currentShield -= fromShield;
         int remain = amount - fromShield;
-        if (remain > 0) hp = Mathf.Max(0, hp - remain);
 
-        Debug.Log($"Player HP -> {hp}, Shield -> {shield}");
+        if (remain > 0 && controller)
+        {
+            controller.TakeDamage(remain);
+        }
+
+        Debug.Log($"Player HP -> {controller.CurrentHP}, Shield -> {currentShield}");
     }
 
     public void GainShield(int amount)
     {
-        shield = Mathf.Clamp(shield + amount, 0, MaxShield);
-        Debug.Log($"Player Shield +{amount} => {shield}");
+        currentShield = Mathf.Clamp(currentShield + amount, 0, maxShield);
+        Debug.Log($"Player Shield +{amount} => {currentShield}");
     }
+    
 
-    public void Heal(int amount)
-    {
-        hp = Mathf.Clamp(hp + amount, 0, hp);
-        Debug.Log($"Player HP +{amount} => {hp}");
-    }
+    // 현재 체력 변경해야 함
+    //public void Heal(int amount)
+    //{
+    //    hp = Mathf.Clamp(hp + amount, 0, hp);
+    //    Debug.Log($"Player HP +{amount} => {hp}");
+    //}
 
-    public void KillByRingOut()
-    {
-        if (hp <= 0) return;
-        hp = 0;
-        Debug.Log("플레이어 링아웃");
-    }
-    public void ResetStatus(int hpInit = 5, int shieldInit = 0)//포기화용
-    {
-        hp = Mathf.Max(0, hpInit);
-        shield = Mathf.Clamp(shieldInit, 0, 3);
-    }
+    //public void KillByRingOut()
+    //{
+    //    if (hp <= 0) return;
+    //    hp = 0;
+    //    Debug.Log("플레이어 링아웃");
+    //}
+    //public void ResetStatus(int hpInit = 5, int shieldInit = 0)//포기화용
+    //{
+    //    hp = Mathf.Max(0, hpInit);
+    //    shield = Mathf.Clamp(shieldInit, 0, 3);
+    //}
 
     public void EquipSkill(SkillData newSkill)
     {

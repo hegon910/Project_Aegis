@@ -10,6 +10,13 @@ public class CommanderInfo : MonoBehaviour
     public GameObject commanderNameObject;
     public GameObject commanderDescriptionObject;
 
+    [Header("Commander Data for Popup")]
+    [TextArea(5, 10)] // Inspector에서 여러 줄 텍스트를 편하게 입력하도록 도와줍니다.
+    public string characterStory; // 팝업에 띄울 심도있는 스토리 텍스트
+
+    [Header("Commander Trait for Gameplay")]
+//    public CommanderTrait trait;
+
     [Header("Fade Settings")]
     [SerializeField] private float fadeInDuration = 0.2f;
     [SerializeField] private float fadeOutDuration = 0.1f;
@@ -43,6 +50,7 @@ public class CommanderInfo : MonoBehaviour
 
         if (commanderNameObject != null) commanderNameObject.SetActive(false);
         if (commanderDescriptionObject != null) commanderDescriptionObject.SetActive(false);
+        
     }
 
     public void Setup(CommanderCarouselController controller)
@@ -93,4 +101,14 @@ public class CommanderInfo : MonoBehaviour
                                   .OnComplete(() => commanderDescriptionObject.SetActive(false));
         }
     }
+
+    public void OnCardClicked()
+    {
+        if (carouselController != null)
+        {
+            carouselController.OnCommanderClicked(this.transform);
+        }
+    }
+
+    // '스토리 버튼'이 클릭되었을 때 (팝업 호출)
 }

@@ -192,145 +192,89 @@ public class DataManager : MonoBehaviour
         fullEventData.eventName = eventID;
         fullEventData.IsConditionSuccess = eventData.IsConditionSuccess;
 
-        // ChangeCondition에 해당하는 이벤트 데이터를 가져옵니다.
         bool hasChangeCondition = eventDataDict.TryGetValue(eventData.ChangeCondition, out var anotherEventData);
         bool isConditionSuccess = hasChangeCondition && anotherEventData.IsConditionSuccess;
 
         // 대화, 배경, 효과음, 캐릭터 정보 설정
-        if (isConditionSuccess)
+        int questionId = isConditionSuccess ? eventData.AnotherEventQuestion : eventData.EventQuestion;
+        if (eventStringDataDict.TryGetValue(questionId, out var questionString))
         {
-            // 조건 성공 시 Another 버전의 데이터 사용
-            if (eventStringDataDict.TryGetValue(eventData.AnotherEventQuestion, out var anotherQuestionString))
+            fullEventData.dialogue = questionString.String_kr;
+            fullEventData.BG = questionString.BG;
+            fullEventData.SE = questionString.SoundEffect;
+            fullEventData.CharacterImage = questionString.CharacterImage;
+            if (characterNameDict.TryGetValue(questionString.CharacterName, out var characterName))
             {
-                fullEventData.dialogue = anotherQuestionString.String_kr;
-                fullEventData.BG = anotherQuestionString.BG;
-                fullEventData.SE = anotherQuestionString.SoundEffect;
-            }
-        }
-        else
-        {
-            // 조건 실패 또는 ChangeCondition 이벤트가 없을 경우 기본 버전의 데이터 사용
-            if (eventStringDataDict.TryGetValue(eventData.EventQuestion, out var questionString))
-            {
-                fullEventData.dialogue = questionString.String_kr;
-                fullEventData.BG = questionString.BG;
-                fullEventData.SE = questionString.SoundEffect;
+                fullEventData.CharacterName = characterName;
             }
         }
 
         // 왼쪽 선택지 설정
         fullEventData.leftChoice = new EventChoice();
-        if (isConditionSuccess)
+        int leftChoiceId = isConditionSuccess ? eventData.AnotherLeftString : eventData.LeftString;
+        if (choiceTextDict.TryGetValue(leftChoiceId, out var leftText))
         {
-            // 조건 성공 시 AnotherLeftString 사용
-            if (choiceTextDict.TryGetValue(eventData.AnotherLeftString, out var anotherLeftText))
-            {
-                fullEventData.leftChoice.choiceText = anotherLeftText;
-            }
-        }
-        else
-        {
-            // 조건 실패 또는 ChangeCondition 이벤트가 없을 경우 LeftString 사용
-            if (choiceTextDict.TryGetValue(eventData.LeftString, out var leftText))
-            {
-                fullEventData.leftChoice.choiceText = leftText;
-            }
+            fullEventData.leftChoice.choiceText = leftText;
         }
 
         // 왼쪽 성공 결과 설정
         fullEventData.leftChoice.successOutcome = new ChoiceOutcome();
-        if (isConditionSuccess)
+        int leftSuccessStringId = isConditionSuccess ? eventData.AnotherAcceptString1 : eventData.AcceptString1;
+        int leftSuccessRewardId = isConditionSuccess ? eventData.AnotherAcceptReward1 : eventData.AcceptReward1;
+        if (eventStringDataDict.TryGetValue(leftSuccessStringId, out var leftSuccessString))
         {
-            if (eventStringDataDict.TryGetValue(eventData.AnotherAcceptString1, out var successString))
-            {
-                fullEventData.leftChoice.successOutcome.outcomeText = successString.String_kr;
-            }
-            fullEventData.leftChoice.successOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.AnotherAcceptReward1)));
+            fullEventData.leftChoice.successOutcome.outcomeText = leftSuccessString.String_kr;
         }
-        else
-        {
-            if (eventStringDataDict.TryGetValue(eventData.AcceptString1, out var successString))
-            {
-                fullEventData.leftChoice.successOutcome.outcomeText = successString.String_kr;
-            }
-            fullEventData.leftChoice.successOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.AcceptReward1)));
-        }
+        fullEventData.leftChoice.successOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(leftSuccessRewardId)));
 
         // 왼쪽 실패 결과 설정
         fullEventData.leftChoice.failOutcome = new ChoiceOutcome();
-        if (isConditionSuccess)
+        int leftFailStringId = isConditionSuccess ? eventData.AnotherDenyString1 : eventData.DenyString1;
+        int leftFailRewardId = isConditionSuccess ? eventData.AnotherDenyReward1 : eventData.DenyReward1;
+        if (eventStringDataDict.TryGetValue(leftFailStringId, out var leftFailString))
         {
-            if (eventStringDataDict.TryGetValue(eventData.AnotherDenyString1, out var failString))
-            {
-                fullEventData.leftChoice.failOutcome.outcomeText = failString.String_kr;
-            }
-            fullEventData.leftChoice.failOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.AnotherDenyReward1)));
+            fullEventData.leftChoice.failOutcome.outcomeText = leftFailString.String_kr;
         }
-        else
-        {
-            fullEventData.leftChoice.failOutcome = new ChoiceOutcome();
-            if (eventStringDataDict.TryGetValue(eventData.DenyString1, out var FailString))
-            {
-                fullEventData.leftChoice.failOutcome.outcomeText = FailString.String_kr;
-            }
-            fullEventData.leftChoice.failOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.DenyReward1)));
-        }
+        fullEventData.leftChoice.failOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(leftFailRewardId)));
+
 
         // 오른쪽 선택지 설정
         fullEventData.rightChoice = new EventChoice();
-        if (isConditionSuccess)
+        int rightChoiceId = isConditionSuccess ? eventData.AnotherRightString : eventData.RightString;
+        if (choiceTextDict.TryGetValue(rightChoiceId, out var rightText))
         {
-            if (choiceTextDict.TryGetValue(eventData.AnotherRightString, out var anotherRightText))
-            {
-                fullEventData.rightChoice.choiceText = anotherRightText;
-            }
-        }
-        else
-        {
-            if (choiceTextDict.TryGetValue(eventData.RightString, out var rightText))
-            {
-                fullEventData.rightChoice.choiceText = rightText;
-            }
+            fullEventData.rightChoice.choiceText = rightText;
         }
 
         // 오른쪽 성공 결과 설정
         fullEventData.rightChoice.successOutcome = new ChoiceOutcome();
-        if (isConditionSuccess)
+        int rightSuccessStringId = isConditionSuccess ? eventData.AnotherAcceptString2 : eventData.AcceptString2;
+        int rightSuccessRewardId = isConditionSuccess ? eventData.AnotherAcceptReward2 : eventData.AcceptReward2;
+        if (eventStringDataDict.TryGetValue(rightSuccessStringId, out var rightSuccessString))
         {
-            if (eventStringDataDict.TryGetValue(eventData.AnotherAcceptString2, out var successString2))
-            {
-                fullEventData.rightChoice.successOutcome.outcomeText = successString2.String_kr;
-            }
-            fullEventData.rightChoice.successOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.AnotherAcceptReward2)));
+            fullEventData.rightChoice.successOutcome.outcomeText = rightSuccessString.String_kr;
         }
-        else
-        {
-            if (eventStringDataDict.TryGetValue(eventData.AcceptString2, out var successString2))
-            {
-                fullEventData.rightChoice.successOutcome.outcomeText = successString2.String_kr;
-            }
-            fullEventData.rightChoice.successOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.AcceptReward2)));
-        }
+        fullEventData.rightChoice.successOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(rightSuccessRewardId)));
 
         // 오른쪽 실패 결과 설정
         fullEventData.rightChoice.failOutcome = new ChoiceOutcome();
-        if (isConditionSuccess)
+        int rightFailStringId = isConditionSuccess ? eventData.AnotherDenyString2 : eventData.DenyString2;
+        int rightFailRewardId = isConditionSuccess ? eventData.AnotherDenyReward2 : eventData.DenyReward2;
+        if (eventStringDataDict.TryGetValue(rightFailStringId, out var rightFailString))
         {
-            if (eventStringDataDict.TryGetValue(eventData.AnotherDenyString2, out var failString2))
-            {
-                fullEventData.rightChoice.failOutcome.outcomeText = failString2.String_kr;
-            }
-            fullEventData.rightChoice.failOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.AnotherDenyReward2)));
+            fullEventData.rightChoice.failOutcome.outcomeText = rightFailString.String_kr;
         }
-        else
-        {
-            fullEventData.rightChoice.failOutcome = new ChoiceOutcome();
-            if (eventStringDataDict.TryGetValue(eventData.DenyString2, out var FailString2))
-            {
-                fullEventData.rightChoice.failOutcome.outcomeText = FailString2.String_kr;
-            }
-            fullEventData.rightChoice.failOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(eventData.DenyReward2)));
-        }
+        fullEventData.rightChoice.failOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(rightFailRewardId)));
+
+        // 성공 조건 생성 (isConditionSuccess와 무관하게 항상 원래 이벤트의 조건 타입을 따름)
+        int leftNeedType = isConditionSuccess ? eventData.AnotherNeedType1 : eventData.NeedType1;
+        int leftNeedValue = isConditionSuccess ? eventData.AnotehrNeedValue1 : eventData.NeedValue1;
+        int rightNeedType = isConditionSuccess ? eventData.AnotherNeedType2 : eventData.NeedType2;
+        int rightNeedValue = isConditionSuccess ? eventData.AnotherNeedValue2 : eventData.NeedValue2;
+
+        fullEventData.leftChoice.condition = CreateSuccessConditionForChoice(eventData.ConditionType, leftNeedType, leftNeedValue, eventData.ChangeCondition);
+        fullEventData.rightChoice.condition = CreateSuccessConditionForChoice(eventData.ConditionType, rightNeedType, rightNeedValue, eventData.ChangeCondition);
+
 
         // 기타 데이터 설정 (IsConditionSuccess와 무관한 필드)
         if (roundTypeDict.TryGetValue(eventData.RoundType, out var roundTypeStr))
@@ -340,14 +284,6 @@ public class DataManager : MonoBehaviour
         if (eventDict.TryGetValue(eventData.ConditionType, out var changeConditionStr))
         {
             fullEventData.ConditionType = changeConditionStr;
-        }
-        if (eventDict.TryGetValue(eventData.NeedType1, out var leftNeed))
-        {
-            fullEventData.leftChoice.successCondition = leftNeed;
-        }
-        if (eventDict.TryGetValue(eventData.NeedType2, out var rightNeed))
-        {
-            fullEventData.rightChoice.successCondition = rightNeed;
         }
 
         //테스트코드
@@ -376,6 +312,46 @@ public class DataManager : MonoBehaviour
         Debug.Log($"<color=cyan>-------------------------------------------</color>");
 
         return fullEventData;
+    }
+    
+    /// <summary>
+    /// CSV 데이터 기반으로 다양한 성공 조건 객체를 생성합니다.
+    /// </summary>
+    private SuccessCondition CreateSuccessConditionForChoice(int conditionType, int needType, int needValue, int changeCondition)
+    {
+        switch (conditionType)
+        {
+            case 1: // 파라미터 이벤트 기록
+            case 2: // 서브 이벤트 기록
+                return new HistorySuccessCondition { requiredEventID = changeCondition };
+            case 3: // 전투 결과
+                return new BattleResultSuccessCondition { requiredBattleResult = needValue };
+            case 4: // 엔딩
+                return new EndingSuccessCondition { requiredEndingID = needValue };
+            case 0: // 조건 없음 -> NeedType을 확인하여 파라미터 또는 무조건 성공으로 분기
+            default:
+                if (needType == 0) // NeedType이 0이면 무조건 성공
+                {
+                    return new GuaranteedSuccessCondition();
+                }
+                else // NeedType이 0이 아니면 파라미터 조건
+                {
+                    if (eventDict.TryGetValue(needType, out var paramName))
+                    {
+                        return new ParameterSuccessCondition
+                        {
+                            targetParameter = GetParameterType(paramName),
+                            requiredValue = needValue
+                        };
+                    }
+                    else
+                    {
+                        // 해당하는 파라미터 이름을 찾지 못할 경우 안전하게 무조건 성공으로 처리
+                        Debug.LogWarning($"SuccessCondition 생성 실패: NeedType {needType}에 해당하는 파라미터를 eventDict에서 찾을 수 없습니다. GuaranteedSuccessCondition으로 대체합니다.");
+                        return new GuaranteedSuccessCondition();
+                    }
+                }
+        }
     }
     private List<RewardInfo> GetRewards(int rewardID)
     {

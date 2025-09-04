@@ -57,14 +57,11 @@ public class SituationCardController : MonoBehaviour
         {
             confirmText.text = text;
             
-            // ★★★ 롤백된 부분 ★★★
-            // 전달받은 textColor(투명도와 RGB 색상 모두 포함)를 그대로 적용합니다.
             confirmText.color = textColor;
         }
 
         if (choicePreviewImage != null)
         {
-            // 배경 이미지의 색상은 흰색으로 고정한 채 투명도만 따라가도록 유지합니다.
             Color imageColor = choicePreviewImage.color;
             imageColor.a = textColor.a * 0.5f;
             choicePreviewImage.color = imageColor;
