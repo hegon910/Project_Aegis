@@ -20,7 +20,7 @@ public class WarController : MonoBehaviour
     WarGround ground;
     int currentIndex;
     Coroutine coMove;
-
+    
     public int CurrentIndex => currentIndex;
     public int Direction => direction;
     public bool IsBusy => coMove != null;
@@ -32,7 +32,7 @@ public class WarController : MonoBehaviour
 
     public void Init(WarGround ground, int startIndex)
     {
-        this.ground = ground;
+        this.ground = ground; //
         currentIndex = startIndex;
         GetComponent<RectTransform>().anchoredPosition = ground.GetGroundPos(currentIndex);
     }

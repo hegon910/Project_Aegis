@@ -73,9 +73,24 @@ public class BattleTurnManager : MonoBehaviour
     {
         if (battleEnded) return;
         battleEnded = true;
+        bool isWin = resultLog.Contains("승리");
+
+
+        //var changes = new List<ParameterChange>//파라미터 관련 추가부분
+        //{
+        //    new ParameterChange
+        //    {
+        //    parameterType = ParameterType.전황,
+        //    valueChange = isWin ? +20 : -20
+        //    }
+        //};
+        //PlayerStats.Instance.ApplyChanges(changes); // 전황 파라미터 변경 적용
+
+
         Debug.Log(resultLog);
         Debug.Log("전투 종료");
         OnBattleEnd?.Invoke(resultLog);
+        // GameManager.instance.GoToBattleResultPanel();//결과 패널 이동은 필요할까?
     }
 
     void CheckWinLoseDrawAfterTurn()
