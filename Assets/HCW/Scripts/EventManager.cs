@@ -181,7 +181,7 @@ public class EventManager : MonoBehaviour
         if (data != null)
         {
             OnSubEventReady?.Invoke(data);
-            Debug.Log($"서브 이벤트 표시: (Index: {data.Index}) {data.QuestionString_kr}");
+            Debug.Log($"서브 이벤트 표시: (Index: {data.Index})");
 
             if (data.IsFinish)
             {

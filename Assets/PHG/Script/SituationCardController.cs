@@ -9,7 +9,7 @@ public class SituationCardController : MonoBehaviour
     private CanvasGroup canvasGroup;
     public TextMeshProUGUI situationText;
 
-    [Header("¼±ÅÃÁö ¹Ì¸®º¸±â")]
+    [Header("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½ï¿½ï¿½ï¿½ï¿½")]
     public Image choicePreviewImage;
     public TextMeshProUGUI confirmText;
 
@@ -48,7 +48,15 @@ public class SituationCardController : MonoBehaviour
 
     public void UpdateText(string newText)
     {
-        situationText.text = newText.Replace("\\n", "\n");
+        if (situationText == null)
+        {
+            Debug.LogError("'situationText' ì°¸ì¡°ê°€ Inspectorì— í• ë‹¹ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤!", this.gameObject);
+            return;
+        }
+
+        // newTextê°€ nullì¼ ê²½ìš°ë¥¼ ëŒ€ë¹„í•˜ì—¬ ì•ˆì „í•˜ê²Œ ì²˜ë¦¬í•©ë‹ˆë‹¤.
+        string displayText = newText ?? string.Empty;
+        situationText.text = displayText.Replace("\n", "\n");
     }
 
     public void UpdateChoicePreview(string text, Color textColor)
@@ -57,14 +65,14 @@ public class SituationCardController : MonoBehaviour
         {
             confirmText.text = text;
             
-            // ¡Ú¡Ú¡Ú ·Ñ¹éµÈ ºÎºĞ ¡Ú¡Ú¡Ú
-            // Àü´Ş¹ŞÀº textColor(Åõ¸íµµ¿Í RGB »ö»ó ¸ğµÎ Æ÷ÇÔ)¸¦ ±×´ë·Î Àû¿ëÇÕ´Ï´Ù.
+            // ï¿½Ú¡Ú¡ï¿½ ï¿½Ñ¹ï¿½ï¿½ ï¿½Îºï¿½ ï¿½Ú¡Ú¡ï¿½
+            // ï¿½ï¿½ï¿½Ş¹ï¿½ï¿½ï¿½ textColor(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ RGB ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)ï¿½ï¿½ ï¿½×´ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
             confirmText.color = textColor;
         }
 
         if (choicePreviewImage != null)
         {
-            // ¹è°æ ÀÌ¹ÌÁöÀÇ »ö»óÀº Èò»öÀ¸·Î °íÁ¤ÇÑ Ã¤ Åõ¸íµµ¸¸ µû¶ó°¡µµ·Ï À¯ÁöÇÕ´Ï´Ù.
+            // ï¿½ï¿½ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã¤ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ó°¡µï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
             Color imageColor = choicePreviewImage.color;
             imageColor.a = textColor.a * 0.5f;
             choicePreviewImage.color = imageColor;
