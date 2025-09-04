@@ -9,7 +9,7 @@ public class WarPlayer : MonoBehaviour
     [Header("Shield System")]
     [SerializeField] private int maxShield = 3;           
     [SerializeField] private int currentShield = 0;       
-    [SerializeField] private int shieldGainOnDefend = 1;
+    
 
     [Header("Skill & Buffs")]
     public string equippedSkillID;
@@ -25,6 +25,7 @@ public class WarPlayer : MonoBehaviour
     void Awake()
     {
         if (!controller) controller = GetComponent<WarController>();
+        LoadSkillFromID();
     }
 
     public void Act(WarAction action) => controller.DoAction(action);

@@ -14,12 +14,10 @@ public class WarTurnManager : MonoBehaviour
     bool battleEnded = false;
     bool turnRunning;
 
-    [Header("Character Initial Stats")]
-    [SerializeField] int initialPlayerHP = 5;
-    [SerializeField] int initialPlayerShield = 0;
-    [SerializeField] int initialEnemyHP = 5;
-    //[SerializeField] int initialEnemyShield = 0;
-    //[SerializeField] int playerStartIndex = 0;
+    [Header("Character Start Positions")]
+    [SerializeField] int playerStartIndex = 6;
+    [SerializeField] int enemyStartIndex = 9;
+
     public void OnClick_PlayerAttack() { if (!turnRunning && !IsBattleEnded) GoStartTurn(WarAction.Attack); }
     public void OnClick_PlayerDefend() { if (!turnRunning && !IsBattleEnded) GoStartTurn(WarAction.Defend); }
 
@@ -27,6 +25,21 @@ public class WarTurnManager : MonoBehaviour
 
     private int skillCooldownTimer = 0;
     public int GetSkillCooldown() => skillCooldownTimer;
+
+    void Start()
+    {
+        // 컨트롤러 초기화
+        if (ground != null && player != null && enemy != null)
+        {
+            player.Ctrl.Init(ground, playerStartIndex);
+            enemy.Ctrl.Init(ground, enemyStartIndex);
+        }
+        else
+        {
+            Debug.LogError("WarTurnManager에 Ground, Player, 또는 Enemy가 할당되지 않아 초기화할 수 없습니다!");
+        }
+    }
+
 
     public void ResetForNewBattle(int newMaxTurns = 30)
     {
@@ -129,6 +142,8 @@ public class WarTurnManager : MonoBehaviour
 
                 enemy.HandleCollision(player, playerAction, enemyAction);
 
+                Debug.Log($"--- Turn {currentTurn} Collision --- Player Index: {player.Ctrl.CurrentIndex}, Enemy Index: {enemy.Ctrl.CurrentIndex}");
+
                 CheckWinLoseDrawAfterTurn();
                 if (!battleEnded && currentTurn >= maxTurns) EndBattle("무승부 - 턴 제한 소진");
 
@@ -137,6 +152,8 @@ public class WarTurnManager : MonoBehaviour
             }
             yield return null;
         }
+
+        Debug.Log($"Turn {currentTurn} End / Player Index: {player.Ctrl.CurrentIndex}, Enemy Index: {enemy.Ctrl.CurrentIndex}");
 
         CheckWinLoseDrawAfterTurn();
         if (!battleEnded && currentTurn >= maxTurns) EndBattle("무승부 - 턴 제한 소진");
