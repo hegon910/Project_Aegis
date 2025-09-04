@@ -10,7 +10,7 @@ ID,BG,SoundEffect,CharacterName,CharacterImage,IsFinishString,String_kr
 10009,CommandCenter,,4,Soldier_Idle,1,"알겠습니다. 현 시간부로 정찰 임무를 마치겠습니다."
 10010,CommandCenter,,6,Reporter_Idle,0,"안녕하십니까 사령관님. 저는 종군기자 입니다. 혹시 이번 전쟁에 대한 소감을 한마디 말씀해 주실 수 있습니까?"
 10011,CommandCenter,,6,Reporter_Idle,1,"투지가 넘치시는군요! 답변 감사합니다!"
-10012,CommandCenter,,6,Reporter_Idle,1,"투지가 넘치시는군요! 답변 감사합니다!"
+10012,CommandCenter,,6,Reporter_Idle,1,"역시 현장에 있는 군인의 답변이군요! 감사합니다!"
 10013,CommandCenter,,3,Louie_Idle,0,"사령관, 이번 전쟁에 대해 어떻게 생각하는가?"
 10014,CommandCenter,,3,Louie_Idle,1,"그런가, 자네의 생각은 잘 알겠네. 이 이야기는 어디까지나 자네와 나만의 이야기로 하지."
 10015,CommandCenter,,4,Soldier_Idle,0,"사령관님, 현재 보급품이 많이 떨어졌습니다."

@@ -199,6 +199,7 @@ public class EventData
     public string ConditionType;
     public string CharacterName;
     public string CharacterImage;
+    public bool IsConditionSuccess;
     public string BG;
     public string SE;
 

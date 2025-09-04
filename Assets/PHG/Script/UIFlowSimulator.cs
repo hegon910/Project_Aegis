@@ -171,6 +171,9 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             bool success = choice.condition.Evaluate(PlayerStats.Instance, PlaythroughHistory.Instance); // TODO: PlaythroughHistory 주입 필요
             var outcome = success ? choice.successOutcome : choice.failOutcome;
 
+            currentParameterEventData.IsConditionSuccess = success;
+            DataManager.Instance.eventDataDict[currentParameterEventData.eventName].IsConditionSuccess = success;
+
             if (outcome.parameterChanges != null && PlayerStats.Instance != null)
             {
                 PlayerStats.Instance.ApplyChanges(outcome.parameterChanges);
