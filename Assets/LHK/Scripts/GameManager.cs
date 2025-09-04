@@ -107,8 +107,11 @@ public class GameManager : MonoBehaviour
     public void OnTitlePanelTouched()
     {
         titlePanel.SetActive(false);
-        PlayGamesPlatform.Instance.Authenticate(OnAuthenticated);
         menuPanel.SetActive(true);
+        if (Application.platform == RuntimePlatform.Android)
+        {
+            PlayGamesPlatform.Instance.Authenticate(OnAuthenticated);
+        }
     }
 
     private void OnAuthenticated(SignInStatus status)
