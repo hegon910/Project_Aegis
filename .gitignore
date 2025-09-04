@@ -78,3 +78,5 @@ imports/
 Import/
 Imports/
 Firebase/
+ExternalDependencyManager/
+GooglePlayGames/

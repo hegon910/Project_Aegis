@@ -258,4 +258,26 @@ public class CommanderCarouselController : MonoBehaviour
             sortedList[i].transform.SetSiblingIndex(i);
         }
     }
+    public void OnGameStartButtonClicked()
+    {
+        // 1. 현재 중앙에 있는 지휘관 정보 가져오기
+        CommanderInfo selectedCommander = commanderInfos[centerIndex];
+
+        // 2. PlayerStats에 선택된 지휘관의 특성을 설정해달라고 요청
+        if (PlayerStats.Instance != null)
+        {
+            PlayerStats.Instance.SetCommanderTrait(selectedCommander.trait);
+        }
+        else
+        {
+            Debug.LogError("PlayerStats 인스턴스가 없어 특성을 설정할 수 없습니다!");
+            return;
+        }
+
+        Debug.Log($"{selectedCommander.gameObject.name} 지휘관으로 게임을 시작합니다. (특성: '{selectedCommander.trait}')");
+
+        // 3. 이후 실제 게임 시작 로직 호출
+        // 예: GameManager.Instance.StartGame();
+        // 예: SceneManager.LoadScene("MainGameScene");
+    }
 }
