@@ -38,6 +38,11 @@ public class WarTurnManager : MonoBehaviour
         {
             Debug.LogError("WarTurnManager에 Ground, Player, 또는 Enemy가 할당되지 않아 초기화할 수 없습니다!");
         }
+        if (player != null && player.currentSkill != null)
+        {
+            skillCooldownTimer = player.currentSkill.cooltime;
+            Debug.Log($"전투 시작! '{player.currentSkill.skillName}' 스킬의 초기 쿨타임({skillCooldownTimer}턴)이 적용됩니다.");
+        }
     }
 
 
@@ -47,6 +52,16 @@ public class WarTurnManager : MonoBehaviour
         currentTurn = 0;
         battleEnded = false;
         turnRunning = false;
+        if (player != null && player.currentSkill != null)
+        {
+            skillCooldownTimer = player.currentSkill.cooltime;
+            Debug.Log($"전투 리셋! '{player.currentSkill.skillName}' 스킬의 초기 쿨타임({skillCooldownTimer}턴)이 적용됩니다.");
+        }
+        else
+        {
+            skillCooldownTimer = 0; // 스킬이 없는 경우 0으로 초기화
+        }
+
         Debug.Log("전투 및 캐릭터 상태 초기화 완료");
     }
     void GoStartTurn(WarAction playerAction)
@@ -163,19 +178,26 @@ public class WarTurnManager : MonoBehaviour
 
     public void OnClick_PlayerSkill()
     {
-        Debug.Log("[WarTurnManager] OnClick_PlayerSkill() 호출됨 (스와이프 UP)");
+        Debug.Log("WarTurnManager OnClick_PlayerSkill() 호출됨 (스와이프 UP)");
 
         if (turnRunning || IsBattleEnded || player.currentSkill == null || skillCooldownTimer > 0)
         {
-            Debug.Log("[WarTurnManager] 스킬 사용 조건 불충족.");
+            if (turnRunning) Debug.LogWarning("WarTurnManager 턴이 진행 중이라 스킬을 사용할 수 없습니다");
+            if (IsBattleEnded) Debug.LogWarning("WarTurnManager 전투가 종료되어 스킬을 사용할 수 없습니다");
+            if (player.currentSkill == null) Debug.LogWarning("WarTurnManager 장착된 스킬이 없습니다");
+            if (skillCooldownTimer > 0) Debug.LogWarning($"WarTurnManager 스킬 쿨타임이 {skillCooldownTimer}턴 남았습니다");
             return;
         }
+
         SkillData usedSkill = player.currentSkill;
-        Debug.Log($"[WarTurnManager] 모든 조건 통과. '{usedSkill.skillName}' 스킬 사용 시도.");
+        Debug.Log($"WarTurnManager 모든 조건 통과. '{usedSkill.skillName}' 스킬 사용 시도");
+
         player.UseSkill(enemy, this);
-        skillCooldownTimer = usedSkill.cooldown;
-        Debug.Log($"[WarTurnManager] 스킬 쿨타임 {skillCooldownTimer}턴으로 설정.");
-        player.EquipSkill(null);
+
+        skillCooldownTimer = usedSkill.cooltime;
+        Debug.Log($"WarTurnManager 스킬 쿨타임 {skillCooldownTimer}턴으로 설정");
+
+
     }
 
     //외부로 턴 정보 넘길예정 아마 승패쪽에서
