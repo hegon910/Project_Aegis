@@ -128,6 +128,7 @@ public class GameManager : MonoBehaviour
 
     public void OnNewGameButtonClicked()
     {
+        Debug.Log("새 게임 버튼 클릭됨");
         if (hasSaveDate)
         {
             overwriteWarningPanel.SetActive(true);

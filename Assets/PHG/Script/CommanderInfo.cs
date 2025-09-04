@@ -15,7 +15,7 @@ public class CommanderInfo : MonoBehaviour
     public string characterStory; // 팝업에 띄울 심도있는 스토리 텍스트
 
     [Header("Commander Trait for Gameplay")]
-//    public CommanderTrait trait;
+    public CommanderTrait trait;
 
     [Header("Fade Settings")]
     [SerializeField] private float fadeInDuration = 0.2f;
