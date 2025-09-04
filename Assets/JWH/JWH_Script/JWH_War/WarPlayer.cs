@@ -107,7 +107,7 @@ public class WarPlayer : MonoBehaviour
         }
     }
 
-    public void UseSkill(WarEnemy enemy, WarTurnManager turnManager)
+    public void UseSkill(WarEnemy enemy, WarTurnManager turnManager)// 턴매니저랑 뭔가 겹치는데 모르겠네
     {
         Debug.Log("UseSkill 함수 호출됨.");
 
@@ -119,12 +119,12 @@ public class WarPlayer : MonoBehaviour
 
         if (currentSkill.CanUse(this, enemy))
         {
-            Debug.Log($" '{currentSkill.skillName}' 스킬 사용 조건 만족. Activate 호출.");
+            Debug.Log($" '{currentSkill.skillName}' 스킬 사용 조건 만족-useskill");
             currentSkill.Activate(this, enemy, turnManager);
         }
         else
         {
-            Debug.LogWarning($"'{currentSkill.skillName}' 스킬 사용 조건 불만족.");
+            Debug.LogWarning($"'{currentSkill.skillName}' 스킬 사용 조건 불만족");
         }
     }
 }
