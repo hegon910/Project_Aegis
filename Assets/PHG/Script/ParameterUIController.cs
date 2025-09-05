@@ -38,6 +38,7 @@ public class ParameterUIController : MonoBehaviour
     void OnEnable()
     {
         PlayerStats.OnStatChanged += OnStatChanged;
+        UpdateAffectedToggles(new List<ParameterChange>()); // 초기화 시 모든 토글 해제
     }
 
     void OnDisable()

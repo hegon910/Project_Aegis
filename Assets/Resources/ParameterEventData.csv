@@ -1,5 +1,5 @@
 ID,RoundType,PageType,ConditionType,ChangeCondition,IsConditionSuccess,EventQuestion,LeftString,NeedType1,NeedValue1,AcceptReward1,DenyReward1,AcceptString1,DenyString1,RightString,NeedType2,NeedValue2,AcceptReward2,DenyReward2,AcceptString2,DenyString2,AnotherEventQuestion,AnotherLeftString,AnotherNeedType1,AnotehrNeedValue1,AnotehrAcceptReward1,AnotherDenyReward1,AnotherAcceptString1,AnotherDenyString1,AnotherRightString,AnotherNeedType2,AnotherNeedValue2,AnotherAcceptReward2,AnotherDenyReward2,AnotherAcceptString2,AnotherDenyString2
-1000001,1,1,0,,,10001,100002,0,,10001,,10002,,100001,0,,10002,,10003,,0,0,,,,,,,,,,,,,
+1000001,1,1,0,,,10001,100001,0,,10001,,10002,,100002,0,,10002,,10003,,0,0,,,,,,,,,,,,,
 1000002,1,1,0,,,10004,100004,0,,10003,,10005,,100003,0,,10004,,10006,,0,0,,,,,,,,,,,,,
 1000003,1,1,0,,,10007,100005,0,,10005,,10008,,100006,0,,10006,,10009,,0,0,,,,,,,,,,,,,
 1000004,1,1,0,,,10010,100007,0,,10007,,10011,,100008,0,,10008,,10012,,0,0,,,,,,,,,,,,,

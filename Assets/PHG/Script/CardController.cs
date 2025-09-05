@@ -69,13 +69,13 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         {
             textToShow = rightChoiceTextString;
             float alpha = Mathf.InverseLerp(threshold, maxSwipe, distanceMoved);
-            colorToShow = new Color(0.2f, 0.8f, 0.2f, alpha);
+            colorToShow = new Color(0.8f, 0.2f, 0.2f, alpha);
         }
         else if (distanceMoved < -threshold)
         {
             textToShow = leftChoiceTextString;
             float alpha = Mathf.InverseLerp(-threshold, -maxSwipe, distanceMoved);
-            colorToShow = new Color(0.8f, 0.2f, 0.2f, alpha);
+            colorToShow = new Color(0.2f, 0.8f, 0.2f, alpha);
         }
 
         // [핵심 수정] 두 곳 모두에 미리보기 업데이트를 보냅니다.

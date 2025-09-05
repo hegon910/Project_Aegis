@@ -1,70 +1,96 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+[RequireComponent(typeof(RectTransform))]
 public class WarGround : MonoBehaviour
 {
-    [Header("기준 설정")]
-    [SerializeField] RectTransform origin; 
-    [SerializeField] int laneLength = 14;
-    [SerializeField] float cellSize = 100f;
+    [Header("레인 설정")]
+    [Tooltip("전투가 벌어질 전체 칸의 개수")]
+    [SerializeField] private int laneLength = 16;
 
-    public enum AnchorX { Left, Center, Right }
-    [SerializeField] AnchorX anchor = AnchorX.Left;
+    [Tooltip("각 칸의 너비")]
+    [SerializeField][ReadOnly] private float cellSize;  //화면 크기에 맞춰 자동으로 계산
+
+    private RectTransform rectTransform;
 
     public int LaneLength => laneLength;
     public float CellSize => cellSize;
 
-    
-    public Vector2 OriginAnchoredPos => (origin ? origin.anchoredPosition : Vector2.zero) + GroundOffset();
-
-    
-    Vector2 GroundOffset()
+    void Awake()
     {
-        float half = cellSize * 0.5f;
-        switch (anchor)
+        rectTransform = GetComponent<RectTransform>();
+        CalculateCellSize();
+    }
+
+    public void CalculateCellSize()    // 화면 너비를 기반으로 각 셀의 크기를 계산하는 함수
+
+    {
+        if (rectTransform != null && laneLength > 0)
         {
-            case AnchorX.Left:
-                return new Vector2(half, 0);
-            case AnchorX.Center:
-                return new Vector2(-(laneLength - 1) * 0.5f * cellSize, 0);
-            case AnchorX.Right:
-                return new Vector2(-(laneLength - 0.5f) * cellSize, 0);
+            cellSize = rectTransform.rect.width / laneLength;
         }
-        return Vector2.zero;
     }
 
-    
-    public Vector2 GetGroundPos(int tileIndex)
+    public Vector2 GetGroundPos(int laneIndex)
     {
-        tileIndex = Mathf.Clamp(tileIndex, 0, laneLength - 1);
-        return OriginAnchoredPos + new Vector2(tileIndex * cellSize, 0);
-    }
-
-    
-    public int GetGroundIndex(Vector2 uiPos)
-    {
-        float dist = uiPos.x - OriginAnchoredPos.x;
-        int tile = Mathf.RoundToInt(dist / cellSize);
-        return Mathf.Clamp(tile, 0, laneLength - 1);
+        laneIndex = Mathf.Clamp(laneIndex, 0, laneLength - 1);
+        float leftEdgeX = -rectTransform.rect.width * rectTransform.pivot.x;
+        float targetX = leftEdgeX + (laneIndex * cellSize) + (cellSize / 2);
+        float targetY = 0;
+        return new Vector2(targetX, targetY);
     }
 
 #if UNITY_EDITOR
-    // 기즈모는 월드 좌표 기준이므로 UI에서는 정확하지 않을 수 있습니다.
-    // 참고용으로만 사용하거나 RectTransform 기준으로 다시 그리는 로직이 필요합니다.
-    void OnDrawGizmos()
-    {
-        if (!origin) return;
+    
+    [SerializeField, HideInInspector]
+    private int previousLaneLength;
 
-        Gizmos.color = Color.green;
-        // OnDrawGizmos는 UI 좌표계가 아닌 월드 좌표계에서 그려지므로,
-        // 실제 게임 화면과 다르게 보일 수 있다는 점을 참고하세요.
-        for (int i = 0; i < laneLength; i++)
+    private void OnValidate()
+    {
+        if (rectTransform == null)
         {
-            // Gizmo를 위해 월드 좌표로 변환
-            Vector3 worldPos = transform.TransformPoint(GetGroundPos(i));
-            Gizmos.DrawWireCube(worldPos, new Vector3(cellSize, cellSize, 0.1f));
+            rectTransform = GetComponent<RectTransform>();
+        }
+
+        if (laneLength != previousLaneLength)
+        {
+            CalculateCellSize();
+            previousLaneLength = laneLength;
         }
     }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (rectTransform == null)
+        {
+            rectTransform = GetComponent<RectTransform>();
+        }
+
+        CalculateCellSize();
+
+        Gizmos.color = new Color(0, 1, 0, 0.5f);
+        Vector3 cellSizeVec = new Vector3(cellSize, rectTransform.rect.height, 0.1f);
+
+        for (int i = 0; i < laneLength; i++)
+        {
+            Vector3 cellCenterWorldPos = transform.TransformPoint(GetGroundPos(i));
+            Gizmos.DrawWireCube(cellCenterWorldPos, cellSizeVec);
+        }
+    }
+
+    public class ReadOnlyAttribute : PropertyAttribute { }
 #endif
 }
+
+#if UNITY_EDITOR
+[UnityEditor.CustomPropertyDrawer(typeof(WarGround.ReadOnlyAttribute))]
+public class ReadOnlyDrawer : UnityEditor.PropertyDrawer
+{
+    public override void OnGUI(Rect position, UnityEditor.SerializedProperty property, GUIContent label)
+    {
+        GUI.enabled = false;
+        UnityEditor.EditorGUI.PropertyField(position, property, label, true);
+        GUI.enabled = true;
+    }
+}
+#endif

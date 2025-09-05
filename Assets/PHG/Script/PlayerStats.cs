@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System;
+using System.Linq;
 
 public class PlayerStats : MonoBehaviour
 {
@@ -9,6 +10,8 @@ public class PlayerStats : MonoBehaviour
 
     private Dictionary<ParameterType, int> stats = new Dictionary<ParameterType, int>();
 
+    public CommanderInfo ActiveCommander { get; private set; }
+    public CommanderTrait ActiveTrait { get; private set; } = CommanderTrait.Devost;
     public int playthroughCount { get; set; } = 1;
     public List<int> completedEventIds { get; private set; } = new List<int>();
 
@@ -38,7 +41,7 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
-    public void InitializeStats() 
+    public void InitializeStats()
     {
         stats.Clear();
         stats[ParameterType.정치력] = 50;
@@ -50,8 +53,49 @@ public class PlayerStats : MonoBehaviour
 
         playthroughCount = 1;
         completedEventIds.Clear();
+
+        if (ActiveCommander == null)
+        {
+            Debug.LogError("InitializeStats 호출 시점에 ActiveCommander가 null입니다!");
+        }
+        else
+        {
+            Debug.Log($"ActiveCommander는 {ActiveCommander.gameObject.name}입니다. initialStatAdjustments 리스트의 항목 개수는 {ActiveCommander.initialStatAdjustments.Count}개 입니다.");
+        }
+        //--------------------------
+
+        if (ActiveCommander != null && ActiveCommander.initialStatAdjustments.Count > 0)
+        {
+            Debug.Log($"<color=yellow>[{ActiveCommander.gameObject.name}] 지휘관의 초기 스탯 보너스를 적용합니다.</color>");
+            ApplyChanges(ActiveCommander.initialStatAdjustments);
+        }
     }
 
+    public void SetActiveCommander(CommanderInfo commanderInfo)
+    {
+        ActiveCommander = commanderInfo;
+        // 개선안을 적용했다면 Trait Logic에서 enum을 가져옵니다.
+        if (commanderInfo.traitLogic != null)
+        {
+            ActiveTrait = commanderInfo.traitLogic.identifier;
+        }
+        else // Trait Logic이 없는 기본 지휘관(데보스트)의 경우
+        {
+            ActiveTrait = CommanderTrait.Devost;
+        }
+        Debug.Log($"<color=lime>지휘관 활성화: {ActiveCommander.gameObject.name}</color>");
+    }
+    public void ApplyImmediateBonus(ParameterType type, int amount)
+    {
+        if (stats.ContainsKey(type))
+        {
+            Debug.Log($"<color=cyan>[특성 보너스] {type}에 {amount}만큼 즉시 적용!</color>");
+            int oldValue = stats[type];
+            stats[type] = Mathf.Clamp(oldValue + amount, 0, 100);
+            OnStatChanged?.Invoke(type, stats[type] - oldValue, stats[type]);
+            GameManager.instance.CheckGameOverConditions();
+        }
+    }
     public int GetStat(ParameterType type)
     {
         return stats.ContainsKey(type) ? stats[type] : 0;
@@ -59,6 +103,8 @@ public class PlayerStats : MonoBehaviour
 
     public void ApplyChanges(List<ParameterChange> changes)
     {
+
+
         foreach (var change in changes)
         {
             if (stats.ContainsKey(change.parameterType))
@@ -87,6 +133,7 @@ public class PlayerStats : MonoBehaviour
         stats[ParameterType.카르마] = 50;
         
         Debug.Log($"({playthroughCount})회차를 시작합니다. 스탯이 초기화되었습니다.");
+       
     }
 
     public void AddCompletedEvent(int eventId)
@@ -120,8 +167,20 @@ public class PlayerStats : MonoBehaviour
             GameManager.instance.CheckGameOverConditions();
         }
     }
+    public void SetCommanderTrait(CommanderTrait trait)
+    {
+        ActiveTrait = trait;
+        Debug.Log($"커맨더 특성 설정: {trait}");
+        Debug.Log($"<color=lime>지휘관 특성 활성화 완료: {ActiveTrait}</color>");
+    }
 }
 
+public enum CommanderTrait
+{
+    Devost,
+    Wille,
+    Risard
+}
 
 
 // ParameterType enum은 EventData.cs에 정의되어 있을 것으로 예상됩니다.

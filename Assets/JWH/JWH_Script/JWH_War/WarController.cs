@@ -20,7 +20,7 @@ public class WarController : MonoBehaviour
     WarGround ground;
     int currentIndex;
     Coroutine coMove;
-
+    
     public int CurrentIndex => currentIndex;
     public int Direction => direction;
     public bool IsBusy => coMove != null;
@@ -32,7 +32,7 @@ public class WarController : MonoBehaviour
 
     public void Init(WarGround ground, int startIndex)
     {
-        this.ground = ground;
+        this.ground = ground; //
         currentIndex = startIndex;
         GetComponent<RectTransform>().anchoredPosition = ground.GetGroundPos(currentIndex);
     }
@@ -43,13 +43,13 @@ public class WarController : MonoBehaviour
         Debug.Log($"{gameObject.name}이(가) {amount} 데미지를 받아 HP가 {currentHp}이(가) 됨");
     }
 
-    public void DoAction(WarAction action)
+    public void DoAction(WarAction action, int extraForwardDist = 0)
     {
         int intendedIndex = currentIndex;
         switch (action)
         {
             case WarAction.Attack:
-                intendedIndex = currentIndex + direction * forwardDist;
+                intendedIndex = currentIndex + direction * (forwardDist + extraForwardDist);
                 break;
             case WarAction.Defend:
                 intendedIndex = currentIndex - direction * backwardDist;

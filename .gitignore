@@ -77,4 +77,6 @@ import/
 imports/
 Import/
 Imports/
-FireBase/
+Firebase/
+ExternalDependencyManager/
+GooglePlayGames/

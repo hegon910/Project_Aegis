@@ -36,7 +36,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 402, y: 0}
+  m_AnchoredPosition: {x: 75, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8826959212931187197
@@ -89,14 +89,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9f942beaf1e99c644b84f373a82c2eaf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ground: {fileID: 0}
-  currentIndex: 0
-  moveSpeed: 500
-  attackStep: 4
-  defendStep: 1
-  direction: 1
-  pushPower: 1
-  pushResistance: 1
+  moveSpeed: 100
+  forwardDist: 4
+  backwardDist: 1
+  direction: -1
+  maxHp: 5
+  currentHp: 5
+  attackPower: 1
 --- !u!114 &-3519295816317485448
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -110,7 +109,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   controller: {fileID: 0}
-  hp: 5
-  shield: 0
-  attackPower: 1
   attackChance: 0.5
+  rank: 1
+  attackVsAttack:
+    playerDamage: 1
+    playerKnockback: 1
+    enemyDamage: 1
+    enemyKnockback: 1
+  playerAttackVsEnemyDefend:
+    playerDamage: 0
+    playerKnockback: 1
+    enemyDamage: 0
+    enemyKnockback: 0
+  playerDefendVsEnemyAttack:
+    playerDamage: 0
+    playerKnockback: 0
+    enemyDamage: 0
+    enemyKnockback: 1

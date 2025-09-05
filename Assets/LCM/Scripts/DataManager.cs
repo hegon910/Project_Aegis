@@ -187,8 +187,8 @@ public class DataManager : MonoBehaviour
             return null;
         }
 
+
         // 분기 조건 확인: ChangeCondition 이벤트가 과거에 성공적으로 완료되었는지 여부
-        // TODO: PlaythroughHistory 시스템과 연동 필요
         bool isBranchTriggered = rawData.ConditionType == 1 && PlaythroughHistory.Instance.HasCompletedEvent(rawData.ChangeCondition);
 
         var fullEventData = new EventData
@@ -196,6 +196,7 @@ public class DataManager : MonoBehaviour
             id = eventID,
             eventName = $"Event_{eventID}" // 임시 이름
         };
+
 
         // 분기 여부에 따라 적절한 질문 ID 선택
         int questionId = isBranchTriggered ? rawData.AnotherEventQuestion : rawData.EventQuestion;
@@ -285,8 +286,10 @@ public class DataManager : MonoBehaviour
         {
             outcome.outcomeText = outcomeString.String_kr;
         }
+
         outcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(rewardId)));
         return outcome;
+
     }
 
     /// <summary>

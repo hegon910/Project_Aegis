@@ -193,12 +193,13 @@ public class EventData
 {
     [Header("이벤트 기본 정보")]
     public int id;
-    public string eventName;
+    public int eventName;
     public Sprite eventSprite;
     public string RoundType;
     public string ConditionType;
     public string CharacterName;
     public string CharacterImage;
+    public bool IsConditionSuccess;
     public string BG;
     public string SE;
 

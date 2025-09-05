@@ -9,12 +9,17 @@ public class WarPlayer : MonoBehaviour
     [Header("Shield System")]
     [SerializeField] private int maxShield = 3;           
     [SerializeField] private int currentShield = 0;       
-    [SerializeField] private int shieldGainOnDefend = 1;
+    
 
     [Header("Skill & Buffs")]
     public string equippedSkillID;
     [System.NonSerialized] public SkillData currentSkill;
     public SkillDatabase skillDatabase;
+    [System.NonSerialized] public bool AttackShieldBuff = false;
+    [System.NonSerialized] public int enhancedAttackStacks = 0;
+    [System.NonSerialized] public bool ThornsBuff = false;
+    [System.NonSerialized] public bool KnockbackBuff = false;
+    [System.NonSerialized] public bool GoGoBuff = false;
 
     public int Shield => currentShield; 
     public WarController Ctrl => controller;
@@ -25,9 +30,22 @@ public class WarPlayer : MonoBehaviour
     void Awake()
     {
         if (!controller) controller = GetComponent<WarController>();
+        LoadSkillFromID();
     }
 
-    public void Act(WarAction action) => controller.DoAction(action);
+    public void Act(WarAction action)
+    {
+        int extraForward = 0;
+        // 행동이 공격이고 돌진 버프가 있다면
+        if (action == WarAction.Attack && GoGoBuff)
+        {
+            Debug.Log("돌진 버프 효과 발동! 4칸 더 전진합니다.");
+            extraForward = 4; // 추가 전진 거리 설정
+            GoGoBuff = false; // 버프는 1회용이므로 사용 후 제거
+        }
+        // controller.DoAction 호출 시 추가 거리를 전달
+        controller.DoAction(action, extraForward);
+    }
     public bool IsBusy => controller != null && controller.IsBusy;
 
     public void TakeDamage(int amount)
@@ -106,7 +124,7 @@ public class WarPlayer : MonoBehaviour
         }
     }
 
-    public void UseSkill(WarEnemy enemy, WarTurnManager turnManager)
+    public void UseSkill(WarEnemy enemy, WarTurnManager turnManager)// 턴매니저랑 뭔가 겹치는데 모르겠네
     {
         Debug.Log("UseSkill 함수 호출됨.");
 
@@ -118,12 +136,12 @@ public class WarPlayer : MonoBehaviour
 
         if (currentSkill.CanUse(this, enemy))
         {
-            Debug.Log($" '{currentSkill.skillName}' 스킬 사용 조건 만족. Activate 호출.");
+            Debug.Log($" '{currentSkill.skillName}' 스킬 사용 조건 만족-useskill");
             currentSkill.Activate(this, enemy, turnManager);
         }
         else
         {
-            Debug.LogWarning($"'{currentSkill.skillName}' 스킬 사용 조건 불만족.");
+            Debug.LogWarning($"'{currentSkill.skillName}' 스킬 사용 조건 불만족");
         }
     }
 }

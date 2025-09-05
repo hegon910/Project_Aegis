@@ -24,6 +24,7 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
 {
     public event Action OnScenarioEnded;
     public bool IsScenarioRunning { get; private set; }
+    public UIPanelAnimator uiAnimator;
 
     [Header("UI 컨트롤러 참조")]
     [SerializeField] private CardController cardController;
@@ -85,6 +86,8 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
 
     public void BeginScenarioFromStart()
     {
+
+        uiAnimator.ShowMainStoryView();
         IsScenarioRunning = true; // 상태 플래그 설정
         currentNode = startingNode;
         if (currentNode != null)
@@ -110,7 +113,8 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
         {
             GameManager.instance.GoToBattlePanel();
         }
-            
+        uiAnimator.ShowDefaultView();
+
     }
 
     void Update()
@@ -148,6 +152,7 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
     public void StartScenario(StoryNode startNode)
     {
         mainStoryUI.panelRoot.SetActive(true);
+
         DisplayNode(startNode);
     }
 
