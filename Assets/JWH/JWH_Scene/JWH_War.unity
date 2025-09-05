@@ -420,6 +420,10 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7831991435369316234, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: equippedSkillID
+      value: GoGo
+      objectReference: {fileID: 0}
     - target: {fileID: 7966315032008839688, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: m_Name
       value: WarPanel

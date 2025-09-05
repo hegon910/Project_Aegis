@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "새로운 직접 피해 스킬", menuName = "Skills/직접피해/단일 대상")]
+[CreateAssetMenu(fileName = "새로운 직접 피해 스킬", menuName = "Skills/직접피해/데미지")]
 public class DirectDamageSkill : SkillData
 {
     [Header("직접 피해 설정")]

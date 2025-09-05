@@ -178,25 +178,28 @@ public class DataManager : MonoBehaviour
 
 
 
-    // ID를 통해 두 데이터를 합쳐서 새로운 구조의 EventData로 반환하는 함수
+    // ID를 통해 파라미터 이벤트 데이터를 구성하고 반환하는 함수
     public EventData GetEventDataById(int eventID)
     {
-        // ParameterEventData.csv에서 기본 이벤트 정보 찾기
-        if (!eventDataDict.TryGetValue(eventID, out var eventData))
+        if (!eventDataDict.TryGetValue(eventID, out var rawData))
         {
-            Debug.LogError($"ID {eventID}에 해당하는 이벤트 데이터를 찾을 수 없습니다.");
+            Debug.LogError($"[DataManager] ID {eventID}에 해당하는 이벤트 데이터를 찾을 수 없습니다.");
             return null;
         }
 
-        EventData fullEventData = new EventData();
-        fullEventData.eventName = eventID;
-        fullEventData.IsConditionSuccess = eventData.IsConditionSuccess;
 
-        bool hasChangeCondition = eventDataDict.TryGetValue(eventData.ChangeCondition, out var anotherEventData);
-        bool isConditionSuccess = hasChangeCondition && anotherEventData.IsConditionSuccess;
+        // 분기 조건 확인: ChangeCondition 이벤트가 과거에 성공적으로 완료되었는지 여부
+        bool isBranchTriggered = rawData.ConditionType == 1 && PlaythroughHistory.Instance.HasCompletedEvent(rawData.ChangeCondition);
 
-        // 대화, 배경, 효과음, 캐릭터 정보 설정
-        int questionId = isConditionSuccess ? eventData.AnotherEventQuestion : eventData.EventQuestion;
+        var fullEventData = new EventData
+        {
+            id = eventID,
+            eventName = $"Event_{eventID}" // 임시 이름
+        };
+
+
+        // 분기 여부에 따라 적절한 질문 ID 선택
+        int questionId = isBranchTriggered ? rawData.AnotherEventQuestion : rawData.EventQuestion;
         if (eventStringDataDict.TryGetValue(questionId, out var questionString))
         {
             fullEventData.dialogue = questionString.String_kr;
@@ -208,149 +211,107 @@ public class DataManager : MonoBehaviour
                 fullEventData.CharacterName = characterName;
             }
         }
-
-        // 왼쪽 선택지 설정
-        fullEventData.leftChoice = new EventChoice();
-        int leftChoiceId = isConditionSuccess ? eventData.AnotherLeftString : eventData.LeftString;
-        if (choiceTextDict.TryGetValue(leftChoiceId, out var leftText))
+        else
         {
-            fullEventData.leftChoice.choiceText = leftText;
+            Debug.LogError($"[DataManager] 질문 ID {questionId}에 해당하는 스트링 데이터를 찾을 수 없습니다.");
         }
 
-        // 왼쪽 성공 결과 설정
-        fullEventData.leftChoice.successOutcome = new ChoiceOutcome();
-        int leftSuccessStringId = isConditionSuccess ? eventData.AnotherAcceptString1 : eventData.AcceptString1;
-        int leftSuccessRewardId = isConditionSuccess ? eventData.AnotherAcceptReward1 : eventData.AcceptReward1;
-        if (eventStringDataDict.TryGetValue(leftSuccessStringId, out var leftSuccessString))
-        {
-            fullEventData.leftChoice.successOutcome.outcomeText = leftSuccessString.String_kr;
-        }
-        fullEventData.leftChoice.successOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(leftSuccessRewardId)));
+        // 왼쪽 및 오른쪽 선택지 구성
+        fullEventData.leftChoice = CreateChoice(rawData, isBranchTriggered, true);
+        fullEventData.rightChoice = CreateChoice(rawData, isBranchTriggered, false);
 
-        // 왼쪽 실패 결과 설정
-        fullEventData.leftChoice.failOutcome = new ChoiceOutcome();
-        int leftFailStringId = isConditionSuccess ? eventData.AnotherDenyString1 : eventData.DenyString1;
-        int leftFailRewardId = isConditionSuccess ? eventData.AnotherDenyReward1 : eventData.DenyReward1;
-        if (eventStringDataDict.TryGetValue(leftFailStringId, out var leftFailString))
-        {
-            fullEventData.leftChoice.failOutcome.outcomeText = leftFailString.String_kr;
-        }
-        fullEventData.leftChoice.failOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(leftFailRewardId)));
-
-
-        // 오른쪽 선택지 설정
-        fullEventData.rightChoice = new EventChoice();
-        int rightChoiceId = isConditionSuccess ? eventData.AnotherRightString : eventData.RightString;
-        if (choiceTextDict.TryGetValue(rightChoiceId, out var rightText))
-        {
-            fullEventData.rightChoice.choiceText = rightText;
-        }
-
-        // 오른쪽 성공 결과 설정
-        fullEventData.rightChoice.successOutcome = new ChoiceOutcome();
-        int rightSuccessStringId = isConditionSuccess ? eventData.AnotherAcceptString2 : eventData.AcceptString2;
-        int rightSuccessRewardId = isConditionSuccess ? eventData.AnotherAcceptReward2 : eventData.AcceptReward2;
-        if (eventStringDataDict.TryGetValue(rightSuccessStringId, out var rightSuccessString))
-        {
-            fullEventData.rightChoice.successOutcome.outcomeText = rightSuccessString.String_kr;
-        }
-        fullEventData.rightChoice.successOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(rightSuccessRewardId)));
-
-        // 오른쪽 실패 결과 설정
-        fullEventData.rightChoice.failOutcome = new ChoiceOutcome();
-        int rightFailStringId = isConditionSuccess ? eventData.AnotherDenyString2 : eventData.DenyString2;
-        int rightFailRewardId = isConditionSuccess ? eventData.AnotherDenyReward2 : eventData.DenyReward2;
-        if (eventStringDataDict.TryGetValue(rightFailStringId, out var rightFailString))
-        {
-            fullEventData.rightChoice.failOutcome.outcomeText = rightFailString.String_kr;
-        }
-        fullEventData.rightChoice.failOutcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(rightFailRewardId)));
-
-        // 성공 조건 생성 (isConditionSuccess와 무관하게 항상 원래 이벤트의 조건 타입을 따름)
-        int leftNeedType = isConditionSuccess ? eventData.AnotherNeedType1 : eventData.NeedType1;
-        int leftNeedValue = isConditionSuccess ? eventData.AnotehrNeedValue1 : eventData.NeedValue1;
-        int rightNeedType = isConditionSuccess ? eventData.AnotherNeedType2 : eventData.NeedType2;
-        int rightNeedValue = isConditionSuccess ? eventData.AnotherNeedValue2 : eventData.NeedValue2;
-
-        fullEventData.leftChoice.condition = CreateSuccessConditionForChoice(eventData.ConditionType, leftNeedType, leftNeedValue, eventData.ChangeCondition);
-        fullEventData.rightChoice.condition = CreateSuccessConditionForChoice(eventData.ConditionType, rightNeedType, rightNeedValue, eventData.ChangeCondition);
-
-
-        // 기타 데이터 설정 (IsConditionSuccess와 무관한 필드)
-        if (roundTypeDict.TryGetValue(eventData.RoundType, out var roundTypeStr))
+        // 기타 데이터 설정
+        if (roundTypeDict.TryGetValue(rawData.RoundType, out var roundTypeStr))
         {
             fullEventData.RoundType = roundTypeStr;
         }
-        if (eventDict.TryGetValue(eventData.ConditionType, out var changeConditionStr))
+        if (eventDict.TryGetValue(rawData.ConditionType, out var conditionTypeStr))
         {
-            fullEventData.ConditionType = changeConditionStr;
+            fullEventData.ConditionType = conditionTypeStr;
         }
-
-        //테스트코드
-        Debug.Log($"<color=cyan>--- 이벤트 데이터 로드 완료: {fullEventData.eventName} ---</color>");
-        Debug.Log($"<color=white>대화:</color> {fullEventData.dialogue}");
-        Debug.Log($"<color=white>왼쪽 선택지 텍스트:</color> {fullEventData.leftChoice.choiceText}");
-        Debug.Log($"<color=white>왼쪽 선택지 성공 보상:</color> {fullEventData.leftChoice.successOutcome.outcomeText}");
-        Debug.Log($"<color=white>왼쪽 선택지 실패 텍스트:</color> {fullEventData.leftChoice.failOutcome.outcomeText}");
-
-        // 보상 목록을 출력하는 예시
-        foreach (var change in fullEventData.leftChoice.successOutcome.parameterChanges)
-        {
-            Debug.Log($"  - 변경된 파라미터: {change.parameterType}, 값: {change.valueChange}");
-        }
-
-        Debug.Log($"<color=white>오른쪽 선택지 텍스트:</color> {fullEventData.rightChoice.choiceText}");
-        Debug.Log($"<color=white>오른쪽 선택지 성공 보상:</color> {fullEventData.rightChoice.successOutcome.outcomeText}");
-
-        foreach (var change in fullEventData.rightChoice.successOutcome.parameterChanges)
-        {
-            Debug.Log($"  - 변경된 파라미터: {change.parameterType}, 값: {change.valueChange}");
-        }
-
-        Debug.Log($"<color=white>오른쪽 선택지 실패 텍스트:</color> {fullEventData.rightChoice.failOutcome.outcomeText}");
-
-        Debug.Log($"<color=cyan>-------------------------------------------</color>");
 
         return fullEventData;
     }
-    
+
+    /// <summary>
+    /// 단일 선택지(EventChoice) 객체를 생성합니다.
+    /// </summary>
+    /// <param name="rawData">CSV에서 읽어온 원본 이벤트 데이터</param>
+    /// <param name="isBranch">분기된 경로의 선택지를 생성할지 여부</param>
+    /// <param name="isLeft">왼쪽 선택지인지 여부</param>
+    /// <returns>생성된 EventChoice 객체</returns>
+    private EventChoice CreateChoice(ParameterEventData rawData, bool isBranch, bool isLeft)
+    {
+        var choice = new EventChoice();
+
+        // 선택지 텍스트, 성공/실패 결과 ID, 보상 ID 등을 분기 및 좌/우에 따라 결정
+        int choiceTextId      = isLeft ? (isBranch ? rawData.AnotherLeftString : rawData.LeftString)
+                                       : (isBranch ? rawData.AnotherRightString : rawData.RightString);
+        int successStringId   = isLeft ? (isBranch ? rawData.AnotherAcceptString1 : rawData.AcceptString1)
+                                       : (isBranch ? rawData.AnotherAcceptString2 : rawData.AcceptString2);
+        int failStringId      = isLeft ? (isBranch ? rawData.AnotherDenyString1 : rawData.DenyString1)
+                                       : (isBranch ? rawData.AnotherDenyString2 : rawData.DenyString2);
+        int successRewardId   = isLeft ? (isBranch ? rawData.AnotherAcceptReward1 : rawData.AcceptReward1)
+                                       : (isBranch ? rawData.AnotherAcceptReward2 : rawData.AcceptReward2);
+        int failRewardId      = isLeft ? (isBranch ? rawData.AnotherDenyReward1 : rawData.DenyReward1)
+                                       : (isBranch ? rawData.AnotherDenyReward2 : rawData.DenyReward2);
+        int needType          = isLeft ? (isBranch ? rawData.AnotherNeedType1 : rawData.NeedType1)
+                                       : (isBranch ? rawData.AnotherNeedType2 : rawData.NeedType2);
+        int needValue         = isLeft ? (isBranch ? rawData.AnotehrNeedValue1 : rawData.NeedValue1) // 'Anotehr' 오타 대응
+                                       : (isBranch ? rawData.AnotherNeedValue2 : rawData.NeedValue2);
+
+        // 선택지 텍스트 설정
+        if (choiceTextDict.TryGetValue(choiceTextId, out var text))
+        {
+            choice.choiceText = text;
+        }
+
+        // 성공/실패 결과 Outcome 객체 생성
+        choice.successOutcome = CreateOutcome(successStringId, successRewardId);
+        choice.failOutcome = CreateOutcome(failStringId, failRewardId);
+
+        // 성공 조건 객체 생성
+        choice.condition = CreateSuccessCondition(needType, needValue);
+
+        return choice;
+    }
+
+    /// <summary>
+    /// 결과(Outcome) 객체를 생성합니다.
+    /// </summary>
+    private ChoiceOutcome CreateOutcome(int stringId, int rewardId)
+    {
+        var outcome = new ChoiceOutcome();
+        if (eventStringDataDict.TryGetValue(stringId, out var outcomeString))
+        {
+            outcome.outcomeText = outcomeString.String_kr;
+        }
+
+        outcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(rewardId)));
+        return outcome;
+
+    }
+
     /// <summary>
     /// CSV 데이터 기반으로 다양한 성공 조건 객체를 생성합니다.
     /// </summary>
-    private SuccessCondition CreateSuccessConditionForChoice(int conditionType, int needType, int needValue, int changeCondition)
+    private SuccessCondition CreateSuccessCondition(int needType, int needValue)
     {
-        switch (conditionType)
+        switch (needType)
         {
-            case 1: // 파라미터 이벤트 기록
-            case 2: // 서브 이벤트 기록
-                return new HistorySuccessCondition { requiredEventID = changeCondition };
-            case 3: // 전투 결과
-                return new BattleResultSuccessCondition { requiredBattleResult = needValue };
-            case 4: // 엔딩
-                return new EndingSuccessCondition { requiredEndingID = needValue };
-            case 0: // 조건 없음 -> NeedType을 확인하여 파라미터 또는 무조건 성공으로 분기
+            case 0: // 없음
+                return new GuaranteedSuccessCondition();
+            case 1: // 정치력
+                return new ParameterSuccessCondition { targetParameter = ParameterType.정치력, requiredValue = needValue };
+            case 2: // 병력
+                return new ParameterSuccessCondition { targetParameter = ParameterType.병력, requiredValue = needValue };
+            case 3: // 물자
+                return new ParameterSuccessCondition { targetParameter = ParameterType.물자, requiredValue = needValue };
+            case 4: // 리더십
+                return new ParameterSuccessCondition { targetParameter = ParameterType.리더십, requiredValue = needValue };
             default:
-                if (needType == 0) // NeedType이 0이면 무조건 성공
-                {
-                    return new GuaranteedSuccessCondition();
-                }
-                else // NeedType이 0이 아니면 파라미터 조건
-                {
-                    if (eventDict.TryGetValue(needType, out var paramName))
-                    {
-                        return new ParameterSuccessCondition
-                        {
-                            targetParameter = GetParameterType(paramName),
-                            requiredValue = needValue
-                        };
-                    }
-                    else
-                    {
-                        // 해당하는 파라미터 이름을 찾지 못할 경우 안전하게 무조건 성공으로 처리
-                        Debug.LogWarning($"SuccessCondition 생성 실패: NeedType {needType}에 해당하는 파라미터를 eventDict에서 찾을 수 없습니다. GuaranteedSuccessCondition으로 대체합니다.");
-                        return new GuaranteedSuccessCondition();
-                    }
-                }
+                Debug.LogWarning($"[DataManager] 알 수 없는 NeedType: {needType}. GuaranteedSuccessCondition으로 처리합니다.");
+                return new GuaranteedSuccessCondition();
         }
     }
     private List<RewardInfo> GetRewards(int rewardID)
@@ -420,7 +381,7 @@ public class DataManager : MonoBehaviour
         public int PageType { get; set; }
         public int ConditionType { get; set; }
         public int ChangeCondition { get; set; }
-        public bool IsConditionSuccess { get; set; }
+        public int IsConditionSuccess { get; set; }
         public int EventQuestion { get; set; }
         public int LeftString { get; set; }
         public int NeedType1 { get; set; }
@@ -574,5 +535,63 @@ public class DataManager : MonoBehaviour
         public string RightSelectString { get; set; }
         public string CharacterName { get; set; }
         public string End_Text { get; set; }
+    }
+
+    // PlayerPrefs를 사용하여 회차 기록을 관리하는 클래스
+    public class PlaythroughHistory
+    {
+        public static PlaythroughHistory Instance { get; private set; } = new PlaythroughHistory();
+
+        private const string CompletedEventsKey = "CompletedEvents";
+        private HashSet<int> completedEvents;
+
+        // 생성자에서 데이터 로드
+        private PlaythroughHistory()
+        {
+            Load();
+        }
+
+        private void Load()
+        {
+            completedEvents = new HashSet<int>();
+            string savedEvents = PlayerPrefs.GetString(CompletedEventsKey, "");
+            if (!string.IsNullOrEmpty(savedEvents))
+            {
+                foreach (var idStr in savedEvents.Split(','))
+                {
+                    if (int.TryParse(idStr, out int id))
+                    {
+                        completedEvents.Add(id);
+                    }
+                }
+            }
+            Debug.Log($"[PlaythroughHistory] 로드 완료. 완료된 이벤트 {completedEvents.Count}개");
+        }
+
+        private void Save()
+        {
+            string eventIds = string.Join(",", completedEvents);
+            PlayerPrefs.SetString(CompletedEventsKey, eventIds);
+            PlayerPrefs.Save(); // 확실한 저장을 위해 호출
+            Debug.Log($"[PlaythroughHistory] 저장 완료. 현재 완료된 이벤트: {eventIds}");
+        }
+
+        public bool HasCompletedEvent(int eventId) => completedEvents.Contains(eventId);
+
+        public void AddCompletedEvent(int eventId)
+        {
+            if (completedEvents.Add(eventId)) // 새로운 이벤트일 경우에만 저장
+            {
+                Save();
+            }
+        }
+
+        public void ClearHistory()
+        {
+            completedEvents.Clear();
+            PlayerPrefs.DeleteKey(CompletedEventsKey);
+            PlayerPrefs.Save();
+            Debug.Log("[PlaythroughHistory] 모든 기록이 삭제되었습니다.");
+        }
     }
 }
