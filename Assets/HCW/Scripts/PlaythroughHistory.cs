@@ -1,8 +1,7 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-// TODO: 이 Enum은 전투 시스템의 실제 결과값과 연동되어야 합니다.
 public enum BattleOutcome
 {
     Win,
@@ -76,9 +75,6 @@ public class PlaythroughHistory : MonoBehaviour
         SaveHistory();
     }
 
-
-    // --- 데이터 저장/로드 (PlayerPrefs 기반의 임시 구현) ---
-    // TODO: 실제 프로젝트에서는 파일 또는 다른 직렬화 방식으로 교체하는 것을 권장합니다.
 
     private const string EventHistoryKey = "PlaythroughHistory_Events";
     private const string EndingHistoryKey = "PlaythroughHistory_Endings";
