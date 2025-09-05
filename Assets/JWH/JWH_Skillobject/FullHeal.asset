@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8d71181d3eb8f445922544d0ae3a764, type: 3}
   m_Name: FullHeal
   m_EditorClassIdentifier: 
-  skillID: 
-  skillName: 
-  description: 
-  cooltime: 0
+  skillID: FullHeal
+  skillName: "\uC758\uB8CC\uD488\uBCF4\uAE09"
+  description: "\uCCB4\uB825\uC744 \uC804\uBD80 \uD68C\uBCF5\uD569\uB2C8\uB2E4"
+  cooltime: 3
