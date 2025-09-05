@@ -37,6 +37,8 @@ public class CommanderCarouselController : MonoBehaviour
     public Slider leadershipPreviewText;
     [Tooltip("잠금 상태에 따라 활성화/비활성화될 시작 버튼")]
     public Button startButton;
+    [Tooltip("모든 카드들이 공유하는 스토리 버튼")]
+    public Button storyButton;
 
     private float currentRotationAngle = 0f;
     private float targetRotationAngle = 0f;
@@ -191,10 +193,15 @@ public class CommanderCarouselController : MonoBehaviour
 
     void UpdateCenterCardState()
     {
-        if (startButton == null) return;
+        if (startButton == null || storyButton == null) return;
+
+
 
         // 중앙 카드의 잠금 해제 여부를 확인합니다.
         bool isCenterUnlocked = UnlockManager.IsUnlocked(commanderInfos[centerIndex].traitEnum);
+        startButton.interactable = isCenterUnlocked;
+        storyButton.gameObject.SetActive(isCenterUnlocked);
+
 
         // 버튼의 상호작용 가능 여부를 설정합니다.
         startButton.interactable = isCenterUnlocked;

@@ -103,17 +103,13 @@ public class CommanderInfo : MonoBehaviour
             // 해금 상태: 정상 정보 표시, 버튼 활성화
             if (nameText != null) nameText.text = originalName;
             if (descriptionText != null) descriptionText.text = originalDescription;
-            if (storyButton != null) storyButton.gameObject.SetActive(true);
         }
         else
         {
             // 잠금 상태: '???'와 안내 문구 표시, 버튼 비활성화
             if (nameText != null) nameText.text = "???";
             if (descriptionText != null) descriptionText.text = "잠금을 해제하세요!";
-        }
-        if (storyButton != null)
-        {
-            storyButton.gameObject.SetActive(isUnlocked);
+            
         }
 
         // 이름 텍스트 페이드인
@@ -134,10 +130,6 @@ public class CommanderInfo : MonoBehaviour
 
     public void HideInfo()
     {
-        if (storyButton != null)
-        {
-            storyButton.gameObject.SetActive(true);
-        }
         // 이름 텍스트 페이드아웃
         if (commanderNameObject != null && nameCanvasGroup != null && commanderNameObject.activeSelf)
         {
