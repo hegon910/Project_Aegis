@@ -201,6 +201,7 @@ public class GameManager : MonoBehaviour
         if (PlayerStats.Instance.playthroughCount == 1)
         {
             GoToStoryPanel();
+            PlayerStats.Instance.InitializeStats();
         }
         else
         {
