@@ -52,6 +52,12 @@ public class CustomEnemy : WarEnemy
                 outcome = playerDefendVsEnemyAttack;
 
                 player.GainShield(1);// 내가 플레이어한테 쉴드 얻는걸 줬던거 같은데 맞나?
+                if (player.ThornsBuff)
+                {
+                    Debug.Log("수비 반격 버프 효과 발동! 적에게 피해 1을 줍니다.");
+                    this.TakeDamage(1); // 적에게 1의 피해를 줌
+                    player.ThornsBuff = false; // 버프는 즉시 제거
+                }
                 break;
 
             
@@ -60,43 +66,46 @@ public class CustomEnemy : WarEnemy
         // 결정된 결과를 적용
         if (outcome != null)
         {
-            ApplyOutcome(player, outcome);
+            ApplyOutcome(player, outcome, playerAction);
         }
     }
 
     // 결과를 실제로 적용하는 함수
-    private void ApplyOutcome(WarPlayer player, CollisionOutcome outcome)
+    private void ApplyOutcome(WarPlayer player, CollisionOutcome outcome, WarAction playerAction)
     {
+        // 데미지 적용 로직 (기존과 동일)
         int finalDamage = player.AttackPower + outcome.enemyBaseDamage;
-        // 데미지 적용
+        finalDamage = Mathf.Max(0, finalDamage);
+        if (player.enhancedAttackStacks > 0)
+        {
+            finalDamage += 1;
+            player.enhancedAttackStacks--;
+        }
+        if (finalDamage > 0)
+        {
+            this.TakeDamage(finalDamage);
+        }
         if (outcome.playerDamage > 0)
         {
             player.TakeDamage(outcome.playerDamage);
         }
-        if (outcome.enemyBaseDamage > 0 || player.AttackPower > 0)
-        {
-            // 최종 데미지 = 플레이어의 현재 공격력 + 설정된 기본 피해량
-            this.TakeDamage(finalDamage);
-        }
-        if (player.enhancedAttackStacks > 0)
-        {
-            Debug.Log($"강화 공격 효과 발동! 추가 피해 1을 줍니다. (남은 횟수: {player.enhancedAttackStacks - 1})");
-            finalDamage += 1; // 추가 피해 1 적용
-            player.enhancedAttackStacks--; // 스택 1 감소
-        }
-        //플레이어의 공격력만큼만 피해: 0
-        //플레이어 공격력 +1의 피해: 1
-        //플레이어 공격력보다 1 낮은 피해: -1
 
-        // 밀림적용
-        // 일단은 만들었는데 이게 필요한가? 플레이어는 얼만큼 밀리는지 기억이 안난다
+        // 밀림 적용
         if (outcome.playerKnockback > 0)
         {
             player.Ctrl.CrushResult(player.Ctrl.CurrentIndex - outcome.playerKnockback);
         }
-        if (outcome.enemyKnockback > 0)
+        int finalEnemyKnockback = outcome.enemyKnockback;
+        if (playerAction == WarAction.Attack && player.KnockbackBuff)
         {
-            this.Ctrl.CrushResult(this.Ctrl.CurrentIndex + outcome.enemyKnockback);
+            Debug.Log("밀치기 강화 버프 효과 발동! 적을 1칸 더 밀어낸다");
+            finalEnemyKnockback += 1; // 최종 밀치기 값에 1을 더함
+            player.KnockbackBuff = false; // 버프 사용 후 제거
+        }
+
+        if (finalEnemyKnockback > 0)
+        {
+            this.Ctrl.CrushResult(this.Ctrl.CurrentIndex + finalEnemyKnockback);
         }
     }
 }
