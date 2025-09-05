@@ -60,6 +60,7 @@ public class GameManager : MonoBehaviour
     private bool hasSaveDate = false;
     private UnityAction onConfirmAction;
     private bool isReturningToTitle = false;
+    private int selectedPackNumber = 1001; // 기본 팩 번호
     private void Awake()
     {
         if (instance == null)
@@ -184,7 +185,8 @@ public class GameManager : MonoBehaviour
         // 지휘관 선택 시 이벤트 매니저를 초기화하고 새 게임 시작
         if (EventManager.Instance != null)
         {
-            await EventManager.Instance.StartNewGame(commanderIndex);
+            // commanderIndex 대신, 메뉴에서 선택했던 selectedPackNumber를 사용
+            await EventManager.Instance.StartNewGame(selectedPackNumber);
         }
         else
         {
@@ -494,6 +496,12 @@ public class GameManager : MonoBehaviour
         {
             Debug.Log("[GM] Requesting MainScenarioManager to reset state...");
             mainScenarioManager.ResetScenarioState();
+        }
+
+        if (DataManager.PlaythroughHistory.Instance != null)
+        {
+            DataManager.PlaythroughHistory.Instance.ClearHistory();
+            Debug.Log("PlaythroughHistory가 초기화되었습니다.");
         }
     }
 
