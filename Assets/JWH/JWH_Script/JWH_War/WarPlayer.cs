@@ -16,6 +16,7 @@ public class WarPlayer : MonoBehaviour
     [System.NonSerialized] public SkillData currentSkill;
     public SkillDatabase skillDatabase;
     [System.NonSerialized] public bool AttackShieldBuff = false;
+    [System.NonSerialized] public int enhancedAttackStacks = 0;
 
     public int Shield => currentShield; 
     public WarController Ctrl => controller;

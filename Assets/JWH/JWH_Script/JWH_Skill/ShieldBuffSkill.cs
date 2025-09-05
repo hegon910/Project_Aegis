@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "새로운 버프 스킬", menuName = "Skills/버프/공격 강화")]
+[CreateAssetMenu(fileName = "새로운 버프 스킬", menuName = "Skills/버프/쉴드")]
 public class AttackShieldBuffSkill : SkillData
 {
     [Header("버프 설정")]
