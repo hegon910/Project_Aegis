@@ -16,7 +16,7 @@ public class CollisionOutcome
     public int enemyKnockback = 0;
 }
 
-public class ProtoEnemy : WarEnemy
+public class CustomEnemy : WarEnemy
 {
     [Header("충돌 결과 설정 가능")]
     [Tooltip("플레이어: 공격 / 적: 공격")]
@@ -28,8 +28,7 @@ public class ProtoEnemy : WarEnemy
     [Tooltip("플레이어: 방어 / 적: 공격")]
     [SerializeField] private CollisionOutcome playerDefendVsEnemyAttack;
 
-    [Tooltip("플레이어: 방어 / 적: 방어")]
-    [SerializeField] private CollisionOutcome defendVsDefend;
+    
 
     // 기존 로직을 데이터 기반으로 변경 나는 천재야
     public override void HandleCollision(WarPlayer player, WarAction playerAction, WarAction myAction)
@@ -55,10 +54,7 @@ public class ProtoEnemy : WarEnemy
                 player.GainShield(1);// 내가 플레이어한테 쉴드 얻는걸 줬던거 같은데 맞나?
                 break;
 
-            case (WarAction.Defend, WarAction.Defend):
-                Debug.Log("충돌: 방어 vs 방어");
-                outcome = defendVsDefend;
-                break;
+            
         }
 
         // 결정된 결과를 적용

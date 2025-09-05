@@ -9,7 +9,7 @@ public abstract class SkillData : ScriptableObject
     public string skillName;
     [TextArea(3, 5)]
     public string description;
-    public int cooldown; // 스킬 쿨타임 턴 수
+    public int cooltime; // 스킬 쿨타임 턴 수
 
     public virtual bool CanUse(WarPlayer player, WarEnemy enemy)
     {
