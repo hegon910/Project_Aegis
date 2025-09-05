@@ -1,10 +1,14 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+
 using Firebase;
 using Firebase.Auth;
 using Firebase.Database;
 using Firebase.Extensions;
+using GooglePlayGames;
+using GooglePlayGames.BasicApi;
+using UnityEngine.SocialPlatforms;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEditor;
@@ -70,6 +74,7 @@ public class FirebaseManager : MonoBehaviour
 
     /// <summary>
     /// 이메일 로그인
+    /// 에디터에서만 개발용으로 사용
     /// </summary>
 #if UNITY_EDITOR
 
@@ -107,16 +112,108 @@ public class FirebaseManager : MonoBehaviour
                 User = task.Result.User;
 
                 loginPanel.SetActive(false);
-                GameManager.instance.OnNewGameButtonClicked();
+                GameManager.instance.OnTitlePanelTouched();
             }
 
         });
     }
 #endif
 
-    /// <summary>
-    /// GPGS로그인  
-    /// </summary>
+    public void GPGSLogin()
+    {
+        PlayGamesPlatform.Instance.Authenticate(ProcessAuthentication);
+        // if (!Social.localUser.authenticated)
+        // {
+        // }
+        // else
+        // {
+        //     Debug.Log("이미 로그인 되어있음");
+        //     GetServerAuthCodeAndSignInFirebase();
+        // }
+    }
+
+    private void ProcessAuthentication(SignInStatus status)
+    {
+        if (status == SignInStatus.Success)
+        {
+            Debug.Log("GPGS 로그인 성공, 서버인증코드 요청");
+            //GetServerAuthCodeAndSignInFirebase();
+        }
+        else
+        {
+            Debug.LogError("GPGS 로그인 실패: " + status);
+            //TODO로그인 실패 UI
+        }
+    }
+
+    private void GetServerAuthCodeAndSignInFirebase()
+    {
+        //서버 인증 코드 요청
+        PlayGamesPlatform.Instance.RequestServerSideAccess(false, authCode =>
+        {
+            if (!string.IsNullOrEmpty(authCode))
+            {
+                Debug.Log($"서버 인증 코드 받음 {authCode}, Firebase 로그인 시도");
+
+                //서버 인증 코드로 파이어베이스 Credential 생성
+                Credential credential = PlayGamesAuthProvider.GetCredential(authCode);
+
+                //파이어베이스에 Credential로 로그인
+                Auth.SignInWithCredentialAsync(credential).ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled)
+                    {
+                        Debug.LogError("Firebase 로그인 취소됨");
+                        return;
+                    }
+                    if (task.IsFaulted)
+                    {
+                        Debug.LogError("Firebase 로그인 실패" + task.Exception);
+                        return;
+                    }
+                    else
+                    {
+                        Debug.Log($"Firebase 로그인 성공 ");
+                        User = task.Result;
+
+                        GameManager.instance.OnTitlePanelTouched();
+                    }
+
+                });
+            }
+            else
+            {
+                Debug.LogError("서버 인증 코드 받기 실패");
+                //TODO 서버 인증 코드 받기 실패 UI
+            }
+        });
+    }
+
+    public void anonymousLogin()
+    {
+        Auth.SignInAnonymouslyAsync().ContinueWithOnMainThread(task =>
+        {
+            if (task.IsCanceled)
+            {
+                Debug.LogError("익명 로그인 취소됨");
+                return;
+            }
+            if (task.IsFaulted)
+            {
+                Debug.LogError("익명 로그인 실패" + task.Exception);
+                return;
+            }
+            else
+            {
+                Debug.Log($"익명 로그인 성공 ");
+                User = task.Result.User;
+
+                GameManager.instance.OnTitlePanelTouched();
+            }
+
+        });
+    }
+
 
     /// <summary>
     /// 익명 로그인
