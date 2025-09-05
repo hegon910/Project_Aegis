@@ -3,6 +3,9 @@ using UnityEngine.EventSystems; // Raycast를 위해 다시 추가
 using System.Collections.Generic;
 using System.Linq;
 using DG.Tweening;
+using TMPro;
+using UnityEngine.UI;
+using System.Collections;
 
 public class CommanderCarouselController : MonoBehaviour
 {
@@ -20,12 +23,28 @@ public class CommanderCarouselController : MonoBehaviour
     public Vector3 centerScale = new Vector3(1.2f, 1.2f, 1f);
     public Vector3 sideScale = new Vector3(0.8f, 0.8f, 1f);
 
+    [Header("Popup UI")]
+    [Tooltip("선택 불가 팝업 패널 (CanvasGroup 컴포넌트 필요)")]
+    public CanvasGroup cantSelectPopup;
+    [Tooltip("팝업이 표시될 시간(초)")]
+    public float popupDuration = 0.5f;
+
+    [Header("Parameter Preview UI")]
+    [Tooltip("각 파라미터의 예상 수치를 표시할 UI 슬라이더 또는 텍스트")]
+    public Slider politicsPreviewText;
+    public Slider troopsPreviewText;
+    public Slider suppliesPreviewText;
+    public Slider leadershipPreviewText;
+    [Tooltip("잠금 상태에 따라 활성화/비활성화될 시작 버튼")]
+    public Button startButton;
+
     private float currentRotationAngle = 0f;
     private float targetRotationAngle = 0f;
     private float[] itemBaseAngles;
     private bool isDragging = false;
     private bool isTweening = false;
     public int centerIndex { get; private set; }
+    private Sequence popupSequence;
 
     private class CommanderDepthInfo { public Transform transform; public float zPos; }
 
@@ -51,22 +70,53 @@ public class CommanderCarouselController : MonoBehaviour
         int count = commanderInfos.Count;
         if (count == 0) return;
 
+        // 1. 코어 데이터 설정 (가장 먼저 실행)
         itemBaseAngles = new float[count];
         float angleStep = 360f / count;
-
         for (int i = 0; i < count; i++)
         {
+            commanderInfos[i].Setup(this);
             itemBaseAngles[i] = i * angleStep;
-            // [수정] CommanderInfo에 Setup을 호출하는 부분은 이제 필요 없습니다.
-            // commanderInfos[i].Setup(this);
         }
 
+        // 2. Invoke를 사용하여 0.1초 뒤에 InitializeUI 함수를 '단 한번' 실행하도록 예약합니다.
+        Invoke("InitializeUI", 0.1f);
+    }
+
+    /// <summary>
+    /// Invoke로 호출될 UI 초기화 전용 함수
+    /// </summary>
+    void InitializeUI()
+    {
+        // 1. 캐러셀의 '초기 상태'를 정의합니다.
         centerIndex = 0;
         targetRotationAngle = -itemBaseAngles[centerIndex];
         currentRotationAngle = targetRotationAngle;
 
+        // 2. 정의된 '초기 상태'를 바탕으로 모든 UI를 업데이트합니다.
         UpdateCommanderPositions();
+        UpdateAllLockOverlays();
+        UpdateParameterPreview(commanderInfos[centerIndex]);
         UpdateInfoVisibility(centerIndex);
+        UpdateCenterCardState();
+    }
+
+    public void UpdateLockStatus()
+    {
+        foreach (var info in commanderInfos)
+        {
+            // UnlockManager에게 해당 지휘관의 enum 값으로 잠금 해제 여부를 물어봅니다.
+            bool isUnlocked = UnlockManager.IsUnlocked(info.traitEnum);
+
+            // 잠금 오버레이 UI를 켜거나 끕니다.
+            if (info.lockOverlay != null)
+            {
+                info.lockOverlay.SetActive(!isUnlocked);
+            }
+
+            // 버튼 자체의 상호작용도 제어할 수 있습니다.
+            // info.GetComponent<Button>().interactable = isUnlocked;
+        }
     }
 
     void Update()
@@ -79,9 +129,117 @@ public class CommanderCarouselController : MonoBehaviour
         }
 
         int currentClosest = FindClosestCommanderToCenter();
-        UpdateInfoVisibility(currentClosest);
+        if (centerIndex != currentClosest)
+        {
+            centerIndex = currentClosest;
+            UpdateInfoVisibility(centerIndex);
+            UpdateParameterPreview(commanderInfos[centerIndex]);
+            UpdateCenterCardState(); // 버튼 상태 업데이트
+        }
+
+        if (Input.GetKeyDown(KeyCode.U))
+        {
+            UnlockCenterCommander();
+        }
+
+        if (Input.GetKeyDown(KeyCode.L))
+        {
+            LockCenterCommander();
+        }
+    
+
+    }
+    public void UpdateAllLockOverlays()
+    {
+        foreach (var info in commanderInfos)
+        {
+            bool isUnlocked = UnlockManager.IsUnlocked(info.traitEnum);
+            if (info.lockOverlay != null)
+            {
+                info.lockOverlay.SetActive(!isUnlocked);
+            }
+        }
+    }
+    private void UnlockCenterCommander()
+    {
+        CommanderInfo centerCommander = commanderInfos[centerIndex];
+        if (!UnlockManager.IsUnlocked(centerCommander.traitEnum))
+        {
+            UnlockManager.Unlock(centerCommander.traitEnum);
+            RefreshUIState(); // UI 즉시 새로고침
+        }
+    }
+    private void LockCenterCommander()
+    {
+        CommanderInfo centerCommander = commanderInfos[centerIndex];
+        if (UnlockManager.IsUnlocked(centerCommander.traitEnum))
+        {
+            UnlockManager.Lock(centerCommander.traitEnum);
+            RefreshUIState(); // UI 즉시 새로고침
+        }
+
+    }
+    private void RefreshUIState()
+    {
+        UpdateAllLockOverlays(); // 모든 카드의 자물쇠 아이콘 업데이트
+        UpdateCenterCardState(); // 시작 버튼 상태 업데이트
+        if (commanderInfos.Count > centerIndex)
+        {
+            commanderInfos[centerIndex].ShowInfo();
+        }
     }
 
+    void UpdateCenterCardState()
+    {
+        if (startButton == null) return;
+
+        // 중앙 카드의 잠금 해제 여부를 확인합니다.
+        bool isCenterUnlocked = UnlockManager.IsUnlocked(commanderInfos[centerIndex].traitEnum);
+
+        // 버튼의 상호작용 가능 여부를 설정합니다.
+        startButton.interactable = isCenterUnlocked;
+        //만약 잠겨있다면, 팝업을 자동으로 표시합니다.
+        if (isCenterUnlocked)
+        {
+            // [해금 상태]라면, 팝업을 강제로 즉시 숨깁니다.
+            HideCantSelectPopup();
+        }
+        else
+        {
+            // [잠금 상태]라면, 팝업을 표시합니다.
+            ShowCantSelectPopup();
+        }
+    }
+
+    void UpdateParameterPreview(CommanderInfo commander)
+    {
+        // 1. 계산을 위한 임시 Dictionary를 만듭니다.
+        Dictionary<ParameterType, int> previewStats = new Dictionary<ParameterType, int>
+        {
+            { ParameterType.정치력, 50 },
+            { ParameterType.병력, 50 },
+            { ParameterType.물자, 50 },
+            { ParameterType.리더십, 50 },
+            { ParameterType.전황, 50 },
+            { ParameterType.카르마, 50 }
+        };
+
+        // 2. 해당 지휘관의 초기 보정값을 임시 Dictionary에 적용합니다.
+        foreach (var change in commander.initialStatAdjustments)
+        {
+            if (previewStats.ContainsKey(change.parameterType))
+            {
+                previewStats[change.parameterType] += change.valueChange;
+            }
+        }
+
+        // 3. 계산이 끝난 값으로 실제 UI 텍스트를 업데이트합니다.
+        if (politicsPreviewText != null) politicsPreviewText.value = previewStats[ParameterType.정치력];
+        if (troopsPreviewText != null) troopsPreviewText.value = previewStats[ParameterType.병력];
+        if (suppliesPreviewText != null) suppliesPreviewText.value = previewStats[ParameterType.물자];
+        if (leadershipPreviewText != null) leadershipPreviewText.value = previewStats[ParameterType.리더십];
+        // ... (모든 파라미터 UI 업데이트) ...
+    }
     // --- 입력 처리 함수들 ---
 
     // [복원 및 수정] 짧은 클릭을 처리하는 함수
@@ -258,26 +416,66 @@ public class CommanderCarouselController : MonoBehaviour
             sortedList[i].transform.SetSiblingIndex(i);
         }
     }
-    public void OnGameStartButtonClicked()
+
+     public void OnGameStartButtonClicked()
     {
-        // 1. 현재 중앙에 있는 지휘관 정보 가져오기
+        // 1. 현재 중앙에 있는 지휘관의 CommanderInfo 컴포넌트를 가져옵니다.
         CommanderInfo selectedCommander = commanderInfos[centerIndex];
 
-        // 2. PlayerStats에 선택된 지휘관의 특성을 설정해달라고 요청
-        if (PlayerStats.Instance != null)
+        // 2. PlayerStats가 존재하는지 확인합니다.
+        if (PlayerStats.Instance == null)
         {
-            PlayerStats.Instance.SetCommanderTrait(selectedCommander.trait);
-        }
-        else
-        {
-            Debug.LogError("PlayerStats 인스턴스가 없어 특성을 설정할 수 없습니다!");
+            Debug.LogError("PlayerStats 인스턴스를 찾을 수 없습니다! 게임 시작이 불가능합니다.");
             return;
         }
 
-        Debug.Log($"{selectedCommander.gameObject.name} 지휘관으로 게임을 시작합니다. (특성: '{selectedCommander.trait}')");
-
-        // 3. 이후 실제 게임 시작 로직 호출
-        // 예: GameManager.Instance.StartGame();
-        // 예: SceneManager.LoadScene("MainGameScene");
+        // 3. PlayerStats에 선택된 지휘관 정보를 설정해달라고 요청합니다.
+        //    이제 이 안에서 "지휘관 활성화" 로그가 떠야 합니다.
+        PlayerStats.Instance.SetActiveCommander(selectedCommander);
+        
+        // 4. GameManager에게 실제 게임 시작을 지시합니다. (이 부분은 프로젝트의 GameManager 이름에 맞게 수정)
+        //    이후 GameManager가 PlayerStats.InitializeStats()를 호출해야 합니다.
+        // GameManager.Instance.StartNewGame(); 
+        Debug.Log($"<color=green>{selectedCommander.gameObject.name} 지휘관으로 게임 시작 절차를 진행합니다.</color>");
     }
+    private void ShowCantSelectPopup()
+    {
+        if (cantSelectPopup == null) return;
+
+        // 1. 만약 이전에 실행되던 팝업 시퀀스가 있다면 즉시 중지하고 파괴합니다.
+        if (popupSequence != null && popupSequence.IsActive())
+        {
+            popupSequence.Kill();
+        }
+
+        // 2. 팝업 오브젝트를 활성화하고, 새로운 시퀀스를 생성하여 변수에 저장합니다.
+        cantSelectPopup.gameObject.SetActive(true);
+        popupSequence = DOTween.Sequence();
+
+        // 3. 페이드 인 -> 대기 -> 페이드 아웃 순서로 애니메이션을 구성합니다.
+        popupSequence.Append(cantSelectPopup.DOFade(1f, 0.25f))      // 0.25초 동안 페이드 인
+                     .AppendInterval(popupDuration)                  // 설정된 시간(0.5초)만큼 대기
+                     .Append(cantSelectPopup.DOFade(0f, 0.25f))      // 0.25초 동안 페이드 아웃
+                     .OnComplete(() => {
+                         // 모든 애니메이션이 끝나면 팝업을 비활성화합니다.
+                         cantSelectPopup.gameObject.SetActive(false);
+                     });
+    }
+
+    private void HideCantSelectPopup()
+    {
+        if (cantSelectPopup == null) return;
+
+        // 1. 실행 중인 팝업 시퀀스가 있다면 즉시 중지하고 파괴합니다.
+        if (popupSequence != null && popupSequence.IsActive())
+        {
+            popupSequence.Kill();
+        }
+
+        // 2. 팝업을 즉시 투명하게 만들고 비활성화합니다.
+        cantSelectPopup.alpha = 0f;
+        cantSelectPopup.gameObject.SetActive(false);
+    }
+
+
 }

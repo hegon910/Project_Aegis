@@ -165,19 +165,19 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 
         if (currentParameterEventData != null)
         {
-            // 파라미터 이벤트 결과 처리
             var choice = isRightChoice ? currentParameterEventData.rightChoice : currentParameterEventData.leftChoice;
-            // 성공 여부는 이제 SuccessCondition이 판단
-            bool success = choice.condition.Evaluate(PlayerStats.Instance, PlaythroughHistory.Instance); // TODO: PlaythroughHistory 주입 필요
+            bool success = choice.condition.Evaluate(PlayerStats.Instance, PlaythroughHistory.Instance);
             var outcome = success ? choice.successOutcome : choice.failOutcome;
 
-            currentParameterEventData.IsConditionSuccess = success;
-            DataManager.Instance.eventDataDict[currentParameterEventData.eventName].IsConditionSuccess = success;
+            // 1. 이벤트 결과로 나온 '원본' 변경안 리스트를 복사합니다.
+            List<ParameterChange> finalChanges = new List<ParameterChange>(outcome.parameterChanges);
 
-            if (outcome.parameterChanges != null && PlayerStats.Instance != null)
-            {
-                PlayerStats.Instance.ApplyChanges(outcome.parameterChanges);
-            }
+            // 2. 활성화된 지휘관의 Trait에게 최종 변경안을 '가공'하라고 지시합니다.
+            PlayerStats.Instance.ActiveCommander?.traitLogic?.ProcessEventOutcome(success, finalChanges);
+
+            // 3. 모든 가공이 끝난 최종본을 PlayerStats에 넘겨 적용시킵니다.
+            PlayerStats.Instance.ApplyChanges(finalChanges);
+
             StartCoroutine(TransitionToNextEvent(outcome.outcomeText));
         }
         else if (currentSubEventData != null)
