@@ -12,8 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d692a8991c36ebb4eb1aaf299865ca9e, type: 3}
   m_Name: BoobyTrap
   m_EditorClassIdentifier: 
-  skillID: 
-  skillName: 
-  description: 
-  cooltime: 0
+  skillID: BoobyTrap
+  skillName: "\uBD80\uBE44\uD2B8\uB7A9"
+  description: "\uB2E4\uC74C \uC218\uBE44 \uD589\uB3D9\uC73C\uB85C \uC218\uBE44\uC5D0
+    \uC131\uACF5\uD558\uBA74 \uC801\uAD70\uC5D0\uAC8C 1\uC758 \uD53C\uD574\uB97C
+    \uC90D\uB2C8\uB2E4"
+  cooltime: 3
   damageOnSuccess: 1

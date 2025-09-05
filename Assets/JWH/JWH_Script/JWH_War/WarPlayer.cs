@@ -19,6 +19,7 @@ public class WarPlayer : MonoBehaviour
     [System.NonSerialized] public int enhancedAttackStacks = 0;
     [System.NonSerialized] public bool ThornsBuff = false;
     [System.NonSerialized] public bool KnockbackBuff = false;
+    [System.NonSerialized] public bool GoGoBuff = false;
 
     public int Shield => currentShield; 
     public WarController Ctrl => controller;
@@ -32,7 +33,19 @@ public class WarPlayer : MonoBehaviour
         LoadSkillFromID();
     }
 
-    public void Act(WarAction action) => controller.DoAction(action);
+    public void Act(WarAction action)
+    {
+        int extraForward = 0;
+        // 행동이 공격이고 돌진 버프가 있다면
+        if (action == WarAction.Attack && GoGoBuff)
+        {
+            Debug.Log("돌진 버프 효과 발동! 4칸 더 전진합니다.");
+            extraForward = 4; // 추가 전진 거리 설정
+            GoGoBuff = false; // 버프는 1회용이므로 사용 후 제거
+        }
+        // controller.DoAction 호출 시 추가 거리를 전달
+        controller.DoAction(action, extraForward);
+    }
     public bool IsBusy => controller != null && controller.IsBusy;
 
     public void TakeDamage(int amount)

@@ -12,10 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9045f73c4d531e64a93f3c758052e697, type: 3}
   m_Name: Kamikaze
   m_EditorClassIdentifier: 
-  skillID: 
-  skillName: 
-  description: 
-  cooltime: 0
+  skillID: Kamikaze
+  skillName: "\uCE74\uBBF8\uCE74\uC81C"
+  description: "\uC801\uAD70\uACFC\uC758 \uAC70\uB9AC\uAC00 3\uCE78 \uC774\uD558\uC77C\uB54C
+    \uBC1C\uB3D9\uAC00\uB2A5 \uC544\uAD70\uC758 \uCCB4\uB825\uC744 1 \uC18C\uBAA8\uD558\uACE0
+    \uC801\uAD70\uC5D0\uAC8C 3\uC758 \uD53C\uD574\uB97C \uC90D\uB2C8\uB2E4"
+  cooltime: 3
   activationDistance: 3
   damage: 3
   selfDamage: 1
