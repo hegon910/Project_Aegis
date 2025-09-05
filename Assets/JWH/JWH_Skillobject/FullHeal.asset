@@ -9,8 +9,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c29e8bf574ae0ef4b9a5fde1c2354ed6, type: 3}
-  m_Name: SkillDatabase
+  m_Script: {fileID: 11500000, guid: a8d71181d3eb8f445922544d0ae3a764, type: 3}
+  m_Name: FullHeal
   m_EditorClassIdentifier: 
-  allSkills:
-  - {fileID: 11400000, guid: 301e92562969d6f4db18fdada1537497, type: 2}
+  skillID: FullHeal
+  skillName: "\uC758\uB8CC\uD488\uBCF4\uAE09"
+  description: "\uCCB4\uB825\uC744 \uC804\uBD80 \uD68C\uBCF5\uD569\uB2C8\uB2E4"
+  cooltime: 3

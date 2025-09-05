@@ -41,7 +41,7 @@ public class WarTurnManager : MonoBehaviour
         if (player != null && player.currentSkill != null)
         {
             skillCooldownTimer = player.currentSkill.cooltime;
-            Debug.Log($"전투 시작! '{player.currentSkill.skillName}' 스킬의 초기 쿨타임({skillCooldownTimer}턴)이 적용됩니다.");
+            Debug.Log($"전투 시작! '{player.currentSkill.skillName}' 스킬의 초기 쿨타임({skillCooldownTimer}턴)이 적용");
         }
     }
 
@@ -72,6 +72,19 @@ public class WarTurnManager : MonoBehaviour
             Debug.Log($"턴 제한({maxTurns})에 도달 전투를 종료");
             return;
         }
+        if (player.AttackShieldBuff)
+        {
+            if (playerAction == WarAction.Attack)
+            {
+                player.GainShield(1);
+                Debug.Log("공격 강화 버프 효과 발동! 쉴드를 1 획득");
+            }
+            else
+            {
+                Debug.Log("공격을 선택하지 않아 버프가 소멸");
+            }
+            player.AttackShieldBuff = false;//버프 1턴 사용후 제거
+        }
         if (skillCooldownTimer > 0)
         {
             skillCooldownTimer--;
@@ -87,6 +100,17 @@ public class WarTurnManager : MonoBehaviour
     {
         if (battleEnded) return;
         battleEnded = true;
+        bool isWin = resultLog.Contains("승리");
+        //var changes = new List<ParameterChange>//파라미터 관련 추가부분
+        //{
+        //    new ParameterChange
+        //    {
+        //    parameterType = ParameterType.전황,
+        //    valueChange = isWin ? +20 : -20
+        //    }
+        //};
+        //PlayerStats.Instance.ApplyChanges(changes); // 전황 파라미터 변경 적용
+        Debug.Log(resultLog);
         Debug.Log("전투 종료");
         OnBattleEnd?.Invoke(resultLog);
     }

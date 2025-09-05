@@ -43,13 +43,13 @@ public class WarController : MonoBehaviour
         Debug.Log($"{gameObject.name}이(가) {amount} 데미지를 받아 HP가 {currentHp}이(가) 됨");
     }
 
-    public void DoAction(WarAction action)
+    public void DoAction(WarAction action, int extraForwardDist = 0)
     {
         int intendedIndex = currentIndex;
         switch (action)
         {
             case WarAction.Attack:
-                intendedIndex = currentIndex + direction * forwardDist;
+                intendedIndex = currentIndex + direction * (forwardDist + extraForwardDist);
                 break;
             case WarAction.Defend:
                 intendedIndex = currentIndex - direction * backwardDist;
