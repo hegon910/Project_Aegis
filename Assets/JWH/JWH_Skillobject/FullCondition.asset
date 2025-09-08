@@ -14,5 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   skillID: FullCondition
   skillName: "\uD480\uCEE8\uB514\uC158\uC561\uD2F0\uBE0C"
+  skillRank: 5
   description: "\uCCB4\uB825\uC744 \uC804\uBD80 \uD68C\uBCF5\uD569\uB2C8\uB2E4"
   cooltime: 1
+  isSingleUsePerCombat: 1

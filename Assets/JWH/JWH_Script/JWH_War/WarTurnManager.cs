@@ -14,6 +14,8 @@ public class WarTurnManager : MonoBehaviour
     bool battleEnded = false;
     bool turnRunning;
 
+    private HashSet<SkillData> usedSingleUseSkills = new HashSet<SkillData>();
+
     [Header("Character Start Positions")]
     [SerializeField] int playerStartIndex = 6;
     [SerializeField] int enemyStartIndex = 9;
@@ -52,6 +54,7 @@ public class WarTurnManager : MonoBehaviour
         currentTurn = 0;
         battleEnded = false;
         turnRunning = false;
+        usedSingleUseSkills.Clear();
         if (player != null && player.currentSkill != null)
         {
             skillCooldownTimer = player.currentSkill.cooltime;
@@ -214,10 +217,18 @@ public class WarTurnManager : MonoBehaviour
         }
 
         SkillData usedSkill = player.currentSkill;
+        if (usedSkill.isSingleUsePerCombat && usedSingleUseSkills.Contains(usedSkill))
+        {
+            Debug.LogWarning($"'{usedSkill.skillName}' 스킬은 이번 전투에서 이미 사용했습니다");
+            return;
+        }
         Debug.Log($"WarTurnManager 모든 조건 통과. '{usedSkill.skillName}' 스킬 사용 시도");
 
         player.UseSkill(enemy, this);
-
+        if (usedSkill.isSingleUsePerCombat)
+        {
+            usedSingleUseSkills.Add(usedSkill);
+        }
         skillCooldownTimer = usedSkill.cooltime;
         Debug.Log($"WarTurnManager 스킬 쿨타임 {skillCooldownTimer}턴으로 설정");
 

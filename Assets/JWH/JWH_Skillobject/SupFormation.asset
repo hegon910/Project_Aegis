@@ -14,7 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   skillID: SupFormation
   skillName: "\uC9C4\uC555\uD3EC\uBA54\uC774\uC158"
+  skillRank: 1
   description: "\uB2E4\uC74C \uACF5\uACA9 \uD589\uB3D9\uC5D0 \uB9DE\uC740 \uC801\uC740
-    \uCD94\uAC00\uB85C \uB4A4\uB85C 1\uCE78 \uBC00\uB824\uB0A9\uB2C8\uB2E4"
+    \uCD94\uAC00\uB85C \uB4A4\uB85C 2\uCE78 \uBC00\uB824\uB0A9\uB2C8\uB2E4"
   cooltime: 1
-  extraKnockback: 1
+  isSingleUsePerCombat: 0
+  extraKnockback: 2

@@ -14,8 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   skillID: Overdrive
   skillName: "\uBE44\uC0C1\uC6A9 \uACFC\uBD80\uD654 \uBAA8\uB4DC"
+  skillRank: 2
   description: "\uC544\uAD70 \uCCB4\uB825\uC774 2\uC774\uD558\uC77C \uB54C \uBC1C\uB3D9\uAC00\uB2A5
     \uC2E4\uB4DC 2\uAC1C\uB97C \uD68D\uB4DD\uD569\uB2C8\uB2E4"
   cooltime: 1
+  isSingleUsePerCombat: 1
   activationHpThreshold: 2
   shieldToGain: 2
