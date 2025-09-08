@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 using Firebase;
 using Firebase.Auth;
-//using Firebase.Database;
+using Firebase.Database;
 using Firebase.Extensions;
 using GooglePlayGames;
 using GooglePlayGames.BasicApi;
@@ -20,7 +20,7 @@ public class FirebaseManager : MonoBehaviour
 {
     public static FirebaseManager Instance { get; private set; }
     public static FirebaseAuth Auth { get; private set; }
-    //public static FirebaseDatabase Database { get; private set; }
+    public static FirebaseDatabase Database { get; private set; }
     public static FirebaseUser User { get; private set; }
 
 
@@ -66,7 +66,7 @@ public class FirebaseManager : MonoBehaviour
            {
                Debug.Log("파이어베이스 설정 성공");
                Auth = FirebaseAuth.DefaultInstance;
-               //Database = FirebaseDatabase.DefaultInstance;
+               Database = FirebaseDatabase.DefaultInstance;
            }
        });
     }
@@ -137,7 +137,7 @@ public class FirebaseManager : MonoBehaviour
         if (status == SignInStatus.Success)
         {
             Debug.Log("GPGS 로그인 성공, 서버인증코드 요청");
-            //GetServerAuthCodeAndSignInFirebase();
+            GetServerAuthCodeAndSignInFirebase();
         }
         else
         {
