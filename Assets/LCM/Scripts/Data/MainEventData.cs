@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 using System;
 using UnityEngine;
 
@@ -39,29 +38,3 @@ public class NewMainEventData
     public NewEventChoice leftChoice;
     public NewEventChoice rightChoice;
 }
-=======
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-public class MainEventData
-{
-    public int ID;
-    public string MainStoryPac;
-    public int LoopNum;
-    public int StoryNum;
-    public string EndingString;
-    public int AnswerLeftID;    // AnswerID.csv의 ID를 참조
-    public int AnswerRightID;   // AnswerID.csv의 ID를 참조
-    public int BG_ID;
-    public int SFX_ID;
-    public string CharacterName;
-    public string Text_kr;
-    public string Text_en;
-    public int CharacterImg_ID;
-    public int Font_Direction;
-}
-
-
-
->>>>>>> Stashed changes
