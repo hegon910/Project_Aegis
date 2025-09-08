@@ -111,19 +111,7 @@ public class GameManager : MonoBehaviour
         menuPanel.SetActive(true);
         if (Application.platform == RuntimePlatform.Android)
         {
-            PlayGamesPlatform.Instance.Authenticate(OnAuthenticated);
-        }
-    }
-
-    private void OnAuthenticated(SignInStatus status)
-    {
-        if (status == SignInStatus.Success)
-        {
-            Debug.Log("구글 플레이 게임 서비스 로그인 성공");
-        }
-        else
-        {
-            Debug.LogError("구글 플레이 게임 서비스 로그인 실패: " + status);
+            FirebaseManager.Instance.GPGSLogin();
         }
     }
 
