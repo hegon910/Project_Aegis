@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
-using UnityEditor.PackageManager;
 
 public enum EventManagerState
 {
@@ -129,11 +128,11 @@ public class EventManager : MonoBehaviour
         Debug.Log("이전 이벤트 선택 완료. **이벤트 종료 시점 저장**");
         DataManager.Instance.SaveGame();
 
-        if (currentState == EventManagerState.InSubEvent)
-        {
-            Debug.Log("서브 이벤트 진행 중... 유저의 선택을 기다립니다.");
-            return;
-        }
+        //if (currentState == EventManagerState.InSubEvent)
+        //{
+        //    Debug.Log("서브 이벤트 진행 중... 유저의 선택을 기다립니다.");
+        //    return;
+        //}
 
         if (currentState == EventManagerState.InCycle)
         {
@@ -151,7 +150,7 @@ public class EventManager : MonoBehaviour
 
             if (eventId < 10000)
             {
-                currentState = EventManagerState.InSubEvent;
+               // currentState = EventManagerState.InSubEvent;
                 DisplaySubEvent(eventId);
             }
             else

@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System;
-using System.Collections;
 using DG.Tweening;
 
 public class ChapterResultController : MonoBehaviour
