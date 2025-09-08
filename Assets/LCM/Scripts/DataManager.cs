@@ -5,7 +5,6 @@ using System.Linq;
 using Cysharp.Threading.Tasks;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
-using static DataManager;
 
 public class DataManager : MonoBehaviour
 {
@@ -16,6 +15,26 @@ public class DataManager : MonoBehaviour
 
     public List<SubEventData> SubEvents { get; private set; }
 
+<<<<<<< Updated upstream
+    //메인 이벤트 
+    public Dictionary<int, MainEventData> mainEventDataDict;
+    public Dictionary<int, AnswerData> answerDataDict;
+    //메인 룩업 테이블
+    private Dictionary<int, MainCharacterData> CharacterDataDict;
+    private Dictionary<long, BGData> bgDataDict;
+    private Dictionary<long, SFXData> sfxDataDict;
+    private Dictionary<long, MainCharacterImgData> characterImgDataDict;
+    //파라미터 이벤트
+=======
+    //메인 이벤트 데이터
+
+
+    public Dictionary<int, MainEventData> mainEventDict;
+    public Dictionary<int, AnswerIDData> answerIDDict;
+
+
+    //파라미터 이벤트 
+>>>>>>> Stashed changes
     public Dictionary<int, ParameterEventData> eventDataDict;
     public Dictionary<int, ParameterEventStringData> eventStringDataDict;
     public Dictionary<int, ParameterRewardData> rewardDataDict;
@@ -41,6 +60,7 @@ public class DataManager : MonoBehaviour
 
     public async UniTask InitializeDataAsync()
     {
+        await MainEventInitializeDataAsync();
         try
         {
             Debug.Log("이벤트 데이터 로딩 시작");
@@ -86,6 +106,106 @@ public class DataManager : MonoBehaviour
         }
     }
 
+<<<<<<< Updated upstream
+    public async UniTask MainEventInitializeDataAsync()
+    {
+        try
+        {
+            Debug.Log("이벤트 데이터 로딩 시작");
+
+            // MainEventData11.csv와 AnswerID.csv를 비동기로 로드합니다.
+            var mainEventTask = Csvparser.ParseAsync<MainEventData>("MainEventData");
+            var answerTask = Csvparser.ParseAsync<AnswerData>("MainAnswerID");
+            //룩업 테이블 로딩
+            var bgDataTask = Csvparser.ParseAsync<BGData>("MainBGData");
+            var sfxDataTask = Csvparser.ParseAsync<SFXData>("MainSFXData");
+            var characterDataTask = Csvparser.ParseAsync<MainCharacterData>("MainCharacterData");
+            var characterImgDataTask = Csvparser.ParseAsync<MainCharacterImgData>("MainCharacterImgData");
+
+            var (mainEventList, answerList, characterList ,bgList, sfxList, characterImgList) =
+            await UniTask.WhenAll(mainEventTask, answerTask, characterDataTask , bgDataTask, sfxDataTask, characterImgDataTask);
+
+            Debug.Log("모든 파일 로딩 완료");
+
+            // 새로운 딕셔너리로 데이터를 구성합니다.
+            mainEventDataDict = mainEventList.ToDictionary(e => e.ID, e => e);
+            answerDataDict = answerList.ToDictionary(a => a.AnswerID, a => a);
+            //룩업 데이터 구성
+            CharacterDataDict = characterList.ToDictionary(e => e.Chr_ID, e => e);  
+            bgDataDict = bgList.ToDictionary(bg => bg.BG_ID, bg => bg);
+            sfxDataDict = sfxList.ToDictionary(sfx => sfx.SFX_ID, sfx => sfx);
+            characterImgDataDict = characterImgList.ToDictionary(c => c.CharacterImg_ID, c => c);
+
+
+            _isReady.TrySetResult(true);
+            Debug.Log("모든 이벤트 데이터가 성공적으로 로드되었습니다.");
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"데이터 로드 실패: {ex.Message}");
+            _isReady.TrySetException(ex);
+        }
+    }
+
+=======
+
+    // 메인 이벤트 데이터 
+    public async UniTask LoadMainEventDataAsync()
+    {
+        try
+        {
+            Debug.Log("메인 이벤트 데이터 로딩 시작");
+            var mainEventTask = Csvparser.ParseAsync<MainEventData>("MainEventData11");
+            var answerIDTask = Csvparser.ParseAsync<AnswerIDData>("AnswerID");
+
+            var (mainEventList, answerIDList) = await UniTask.WhenAll(mainEventTask, answerIDTask);
+
+            // Dictionary로 변환하여 메모리에 저장
+            mainEventDict = mainEventList.ToDictionary(e => e.ID, e => e);
+            answerIDDict = answerIDList.ToDictionary(a => a.AnswerID, a => a);
+
+            Debug.Log("메인 이벤트 및 선택지 데이터 로딩 완료");
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"메인 이벤트 데이터 로드 실패: {ex.Message}");
+        }
+    }
+
+    public MainEventData GetMainEventDataById(int id)
+    {
+        if (mainEventDict.TryGetValue(id, out MainEventData data))
+        {
+            return data;
+        }
+        else
+        {
+            Debug.LogError($"MainEventData with ID {id} not found.");
+            return null;
+        }
+    }
+
+    // AnswerIDData를 ID로 찾아 반환하는 메서드
+    public AnswerIDData GetAnswerIDDataById(int id)
+    {
+        if (answerIDDict.TryGetValue(id, out AnswerIDData data))
+        {
+            return data;
+        }
+        else
+        {
+            Debug.LogError($"AnswerIDData with ID {id} not found.");
+            return null;
+        }
+    }
+
+    private void LoadAllData()
+    {
+        mainEventDict = new Dictionary<int, MainEventData>();
+        answerIDDict = new Dictionary<int, AnswerIDData>();
+    }
+
+>>>>>>> Stashed changes
     public async UniTask SubIntializeDataAsync()
     {
         await LoadSubAllDataAsync();
@@ -176,6 +296,93 @@ public class DataManager : MonoBehaviour
         }
     }
 
+    // ID를 통해 메인 이벤트 데이터 구성 및 반환
+    public NewMainEventData GetMainEventDataById(int eventID)
+    {
+        if (!mainEventDataDict.TryGetValue(eventID, out var rawData))
+        {
+            Debug.LogError($"[DataManager] ID {eventID}에 해당하는 이벤트 데이터를 찾을 수 없습니다.");
+            return null;
+        }
+
+        var fullEventData = new NewMainEventData
+        {
+            id = rawData.ID,
+            dialogue = rawData.Text_kr, 
+        };
+
+        //Chr_ID를 사용하여 캐릭터 이름 할당
+        if(CharacterDataDict.TryGetValue(rawData.CharacterName, out var characterData))
+        {
+            fullEventData.characterData = characterData;
+        }
+
+        // BG_ID를 사용하여 BG 데이터를 직접 찾아서 할당합니다.
+        if (bgDataDict.TryGetValue(rawData.BG_ID, out var bgData))
+        {
+            fullEventData.bgData = bgData;
+        }
+
+        // SFX_ID를 사용하여 SFX 데이터를 직접 찾아서 할당합니다.
+        if (sfxDataDict.TryGetValue(rawData.SFX_ID, out var sfxData))
+        {
+            fullEventData.sfxData = sfxData;
+        }
+
+        // CharacterImg_ID를 사용하여 캐릭터 이미지 데이터를 직접 찾아서 할당합니다.
+        if (characterImgDataDict.TryGetValue(rawData.CharacterImg_ID, out var characterImgData))
+        {
+            fullEventData.characterImgData = characterImgData;
+        }
+
+        // 왼쪽 및 오른쪽 선택지 구성
+        fullEventData.leftChoice = CreateMainChoice(rawData.AnswerLeftID);
+        fullEventData.rightChoice = CreateMainChoice(rawData.AnswerRightID);
+
+        Debug.Log($"--- 이벤트 데이터 로드: ID {fullEventData.id} ---");
+        Debug.Log($"Dialogue: {fullEventData.dialogue}");
+        Debug.Log($"BG: {fullEventData.bgData.BGName}, Character: {fullEventData.characterData.Chr_Name} ({fullEventData.characterImgData.IMGName})");
+
+        if (fullEventData.leftChoice != null)
+        {
+            Debug.Log($"- Left Choice: {fullEventData.leftChoice.choiceText}");
+            Debug.Log($"  Next Event ID: {fullEventData.leftChoice.nextEventID}");
+            Debug.Log($"  Outcome Changes: {fullEventData.leftChoice.outcome.parameterChanges.Count} 개");
+        }
+
+        if (fullEventData.rightChoice != null)
+        {
+            Debug.Log($"- Right Choice: {fullEventData.rightChoice.choiceText}");
+            Debug.Log($"  Next Event ID: {fullEventData.rightChoice.nextEventID}");
+            Debug.Log($"  Outcome Changes: {fullEventData.rightChoice.outcome.parameterChanges.Count} 개");
+        }
+
+        return fullEventData;
+    }
+
+    private NewEventChoice CreateMainChoice(int answerID)
+    {
+        var choice = new NewEventChoice();
+
+        choice.outcome = new ChoiceOutcome
+        {
+            parameterChanges = new List<ParameterChange>()
+        };
+
+        if (answerDataDict.TryGetValue(answerID, out var answerData))
+        {
+            choice.choiceText = answerData.Text_KR;
+            choice.nextEventID = answerData.NextTextID;
+            //선택지 보상치 적용 단
+        }
+        else
+        {
+            choice.choiceText = "선택지 데이터를 찾을 수 없습니다.";
+        }
+
+        return choice;
+    }
+
 
 
     // ID를 통해 파라미터 이벤트 데이터를 구성하고 반환하는 함수
@@ -194,7 +401,7 @@ public class DataManager : MonoBehaviour
         var fullEventData = new EventData
         {
             id = eventID,
-            eventName = $"Event_{eventID}" // 임시 이름
+            //eventName = $"Event_{eventID}" // 임시 이름
         };
 
 
