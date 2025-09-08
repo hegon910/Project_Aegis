@@ -25,6 +25,8 @@ public class NewMainEventData
 {
     // CSV의 ID와 매핑되는 필드
     public int id;
+    public int MainStoryPac;
+    public int LoopNum;
     public string dialogue;
     public string CharacterName;
 
@@ -35,6 +37,6 @@ public class NewMainEventData
     public MainCharacterImgData characterImgData;
 
     // 선택지 데이터
-    public NewEventChoice leftChoice;
-    public NewEventChoice rightChoice;
+    public MainEventChoice leftChoice;
+    public MainEventChoice rightChoice;
 }
