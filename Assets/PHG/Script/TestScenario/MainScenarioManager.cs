@@ -105,7 +105,7 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
     {
         IsScenarioRunning = false;
         mainStoryUI.panelRoot.SetActive(false);
-        if (PlayerStats.Instance.playthroughCount == 1)
+        if (DataManager.Instance.PlayerData.playthroughCount == 1)
         {
             GameManager.instance.StartEventFlow();
         }

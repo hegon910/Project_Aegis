@@ -1,27 +1,29 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System;
-using System.Linq;
 
 public class PlayerStats : MonoBehaviour
 {
     public static PlayerStats Instance { get; private set; }
+
+    // private Dictionary<ParameterType, int> stats = new Dictionary<ParameterType, int>();
+    // public int playthroughCount { get; set; } = 1;
+    // public List<int> completedEventIds { get; private set; } = new List<int>();
+
+
     public static event Action<ParameterType, int, int> OnStatChanged;
-
-    private Dictionary<ParameterType, int> stats = new Dictionary<ParameterType, int>();
-
     public CommanderInfo ActiveCommander { get; private set; }
-    public CommanderTrait ActiveTrait { get; private set; } = CommanderTrait.Devost;
-    public int playthroughCount { get; set; } = 1;
-    public List<int> completedEventIds { get; private set; } = new List<int>();
-
-#if UNITY_EDITOR
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void EditorReset()
+    public CommanderTrait ActiveTrait
     {
-        Instance = null;
+        get
+        {
+            if (DataManager.Instance?.PlayerData != null)
+            {
+                return DataManager.Instance.PlayerData.activeTrait;
+            }
+            return CommanderTrait.Devost; // 데이터가 없을 경우 기본값 반환
+        }
     }
-#endif
 
     void Awake()
     {
@@ -29,11 +31,6 @@ public class PlayerStats : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-#if UNITY_EDITOR
-            // 에디터에서 테스트할 때만 자동으로 초기화합니다.
-            // 실제 빌드에서는 메뉴에서 '새 게임'을 눌렀을 때 초기화해야 합니다.
-          //  InitializeStats();
-#endif
         }
         else
         {
@@ -41,158 +38,123 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
-    public void InitializeStats()
+    /// <summary>
+    /// DataManager로부터 데이터를 받아와 게임 상태를 설정합니다.
+    /// </summary>
+    public void ApplyLoadedData(GameData data)
     {
-        stats.Clear();
-        stats[ParameterType.정치력] = 50;
-        stats[ParameterType.병력] = 50;
-        stats[ParameterType.물자] = 50;
-        stats[ParameterType.리더십] = 50;
-        stats[ParameterType.전황] = 50;
-        stats[ParameterType.카르마] = 50;
-
-        playthroughCount = 1;
-        completedEventIds.Clear();
-
-        if (ActiveCommander == null)
-        {
-            Debug.LogError("InitializeStats 호출 시점에 ActiveCommander가 null입니다!");
-        }
-        else
-        {
-            Debug.Log($"ActiveCommander는 {ActiveCommander.gameObject.name}입니다. initialStatAdjustments 리스트의 항목 개수는 {ActiveCommander.initialStatAdjustments.Count}개 입니다.");
-        }
-        //--------------------------
-
-        if (ActiveCommander != null && ActiveCommander.initialStatAdjustments.Count > 0)
-        {
-            Debug.Log($"<color=yellow>[{ActiveCommander.gameObject.name}] 지휘관의 초기 스탯 보너스를 적용합니다.</color>");
-            ApplyChanges(ActiveCommander.initialStatAdjustments);
-        }
+        // 데이터 적용 시 로그 추가
+        Debug.Log($"[PlayerStats] 로드된 데이터 적용 시작. 회차: {data.playthroughCount}, 챕터: {data.currentChapter}");
     }
 
+    /// <summary>
+    /// 현재 활성화된 지휘관 정보를 설정합니다.
+    /// </summary>
     public void SetActiveCommander(CommanderInfo commanderInfo)
     {
         ActiveCommander = commanderInfo;
-        // 개선안을 적용했다면 Trait Logic에서 enum을 가져옵니다.
-        if (commanderInfo.traitLogic != null)
-        {
-            ActiveTrait = commanderInfo.traitLogic.identifier;
-        }
-        else // Trait Logic이 없는 기본 지휘관(데보스트)의 경우
-        {
-            ActiveTrait = CommanderTrait.Devost;
-        }
-        Debug.Log($"<color=lime>지휘관 활성화: {ActiveCommander.gameObject.name}</color>");
-    }
-    public void ApplyImmediateBonus(ParameterType type, int amount)
-    {
-        if (stats.ContainsKey(type))
-        {
-            Debug.Log($"<color=cyan>[특성 보너스] {type}에 {amount}만큼 즉시 적용!</color>");
-            int oldValue = stats[type];
-            stats[type] = Mathf.Clamp(oldValue + amount, 0, 100);
-            OnStatChanged?.Invoke(type, stats[type] - oldValue, stats[type]);
-            GameManager.instance.CheckGameOverConditions();
-        }
-    }
-    public int GetStat(ParameterType type)
-    {
-        return stats.ContainsKey(type) ? stats[type] : 0;
-    }
 
-    public void ApplyChanges(List<ParameterChange> changes)
-    {
-
-
-        foreach (var change in changes)
+        // [복구] 지휘관이 선택되면, DataManager에 해당 지휘관의 Trait을 기록합니다.
+        if (DataManager.Instance?.PlayerData != null)
         {
-            if (stats.ContainsKey(change.parameterType))
+            if (commanderInfo.traitLogic != null)
             {
-                stats[change.parameterType] += change.valueChange;
-                Debug.Log($"<color=cyan>스탯 변경: {change.parameterType}이(가) {change.valueChange}만큼 변경되어 현재 {stats[change.parameterType]}입니다.</color>");
-                OnStatChanged?.Invoke(change.parameterType, change.valueChange, stats[change.parameterType]);
-
-                // [수정] 불필요한 중간 메서드 대신 게임오버 조건을 직접 확인하도록 변경
-                // GameManager.instance.OnParameterChanged(); (기존 코드)
-                GameManager.instance.CheckGameOverConditions(); // (수정된 코드)
+                DataManager.Instance.PlayerData.activeTrait = commanderInfo.traitLogic.identifier;
             }
-        }
-    }
-
-    public void StartNewPlaythrough()
-    {
-        playthroughCount++;
-
-        stats.Clear();
-        stats[ParameterType.정치력] = 50;
-        stats[ParameterType.병력] = 50;
-        stats[ParameterType.물자] = 50;
-        stats[ParameterType.리더십] = 50;
-        stats[ParameterType.전황] = 50;
-        stats[ParameterType.카르마] = 50;
-        
-        Debug.Log($"({playthroughCount})회차를 시작합니다. 스탯이 초기화되었습니다.");
-       
-    }
-
-    public void AddCompletedEvent(int eventId)
-    {
-        if (!completedEventIds.Contains(eventId))
-        {
-            completedEventIds.Add(eventId);
+            else
+            {
+                DataManager.Instance.PlayerData.activeTrait = CommanderTrait.Devost;
+            }
+            Debug.Log($"<color=lime>지휘관 특성 활성화: {DataManager.Instance.PlayerData.activeTrait}</color>");
         }
     }
 
     /// <summary>
-    /// 특정 파라미터의 값을 지정된 수치로 즉시 설정합니다. (치트용)
+    /// 특정 스탯의 현재 값을 가져옵니다. DataManager의 데이터를 직접 참조합니다.
+    /// </summary>
+    public int GetStat(ParameterType type)
+    {
+        if (DataManager.Instance?.PlayerData == null) return 0;
+
+        switch (type)
+        {
+            case ParameterType.정치력: return DataManager.Instance.PlayerData.politics;
+            case ParameterType.병력: return DataManager.Instance.PlayerData.militaryPower;
+            case ParameterType.물자: return DataManager.Instance.PlayerData.supplies;
+            case ParameterType.리더십: return DataManager.Instance.PlayerData.leadership;
+            case ParameterType.전황: return DataManager.Instance.PlayerData.warSituation;
+            case ParameterType.카르마: return DataManager.Instance.PlayerData.karma;
+            default: return 0;
+        }
+    }
+
+    /// <summary>
+    /// 파라미터 변경 사항들을 적용합니다.
+    /// </summary>
+    public void ApplyChanges(List<ParameterChange> changes)
+    {
+        if (DataManager.Instance?.PlayerData == null) return;
+
+        foreach (var change in changes)
+        {
+            int oldValue = GetStat(change.parameterType);
+            int newValue = 0;
+
+            switch (change.parameterType)
+            {
+                case ParameterType.정치력:
+                    newValue = DataManager.Instance.PlayerData.politics = Mathf.Clamp(oldValue + change.valueChange, 0, 100);
+                    break;
+                case ParameterType.병력:
+                    newValue = DataManager.Instance.PlayerData.militaryPower = Mathf.Clamp(oldValue + change.valueChange, 0, 100);
+                    break;
+                // ... (다른 파라미터들도 동일하게 추가)
+                case ParameterType.물자:
+                    newValue = DataManager.Instance.PlayerData.supplies = Mathf.Clamp(oldValue + change.valueChange, 0, 100);
+                    break;
+                case ParameterType.리더십:
+                    newValue = DataManager.Instance.PlayerData.leadership = Mathf.Clamp(oldValue + change.valueChange, 0, 100);
+                    break;
+                case ParameterType.전황:
+                    newValue = DataManager.Instance.PlayerData.warSituation = Mathf.Clamp(oldValue + change.valueChange, 0, 100);
+                    break;
+                case ParameterType.카르마:
+                    newValue = DataManager.Instance.PlayerData.karma = Mathf.Clamp(oldValue + change.valueChange, 0, 100);
+                    break;
+            }
+            Debug.Log($"<color=cyan>스탯 변경: {change.parameterType}이(가) {change.valueChange}만큼 변경되어 현재 {newValue}입니다.</color>");
+            OnStatChanged?.Invoke(change.parameterType, change.valueChange, newValue);
+        }
+        // 모든 변경 적용 후 게임 오버 체크 및 저장
+        GameManager.instance.CheckGameOverConditions();
+    }
+    /// <summary>
+    /// 특정 파라미터의 값을 지정된 수치로 즉시 설정합니다.
     /// </summary>
     public void SetStat(ParameterType type, int value)
     {
-        if (stats.ContainsKey(type))
+        if (DataManager.Instance?.PlayerData == null) return;
+
+        int oldValue = GetStat(type);
+        int clampedValue = Mathf.Clamp(value, 0, 100);
+
+        switch (type)
         {
-            int oldValue = stats[type];
-            // 값의 범위를 0~100 사이로 제한
-            stats[type] = Mathf.Clamp(value, 0, 100);
-
-            int changeAmount = stats[type] - oldValue;
-
-            Debug.Log($"<color=orange>[치트] 스탯 설정: {type}을(를) {stats[type]}(으)로 설정.</color>");
-
-            // UI가 변경사항을 인지하도록 OnStatChanged 이벤트를 호출합니다.
-            // changeAmount가 0이어도 UI 즉시 업데이트를 위해 이벤트를 호출하도록 합니다.
-            OnStatChanged?.Invoke(type, changeAmount, stats[type]);
-
-            // 게임 오버 조건도 확인합니다.
-            GameManager.instance.CheckGameOverConditions();
+            case ParameterType.정치력: DataManager.Instance.PlayerData.politics = clampedValue; break;
+            case ParameterType.병력: DataManager.Instance.PlayerData.militaryPower = clampedValue; break;
+            case ParameterType.물자: DataManager.Instance.PlayerData.supplies = clampedValue; break;
+            case ParameterType.리더십: DataManager.Instance.PlayerData.leadership = clampedValue; break;
+            case ParameterType.전황: DataManager.Instance.PlayerData.warSituation = clampedValue; break;
+            case ParameterType.카르마: DataManager.Instance.PlayerData.karma = clampedValue; break;
         }
-    }
-    public void SetCommanderTrait(CommanderTrait trait)
-    {
-        ActiveTrait = trait;
-        Debug.Log($"커맨더 특성 설정: {trait}");
-        Debug.Log($"<color=lime>지휘관 특성 활성화 완료: {ActiveTrait}</color>");
+
+        OnStatChanged?.Invoke(type, clampedValue - oldValue, clampedValue);
+        GameManager.instance.CheckGameOverConditions();
     }
 }
-
 public enum CommanderTrait
 {
     Devost,
     Wille,
     Risard
 }
-
-
-// ParameterType enum은 EventData.cs에 정의되어 있을 것으로 예상됩니다.
-// 만약 없다면 아래 코드를 PlayerStats.cs 파일 하단에 추가해주세요.
-/*
-public enum ParameterType
-{
-    정치력,
-    병력,
-    물자,
-    리더십,
-    전세,
-    카르마
-}
-*/

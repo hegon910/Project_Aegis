@@ -12,4 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 87203a20bcbaa35419a7b50ee400e58a, type: 3}
   m_Name: Risard_Gambler
   m_EditorClassIdentifier: 
+  identifier: 2
   bonusValue: 5

@@ -68,7 +68,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 
     private void HandleParameterEvent(int eventId)
     {
-        if (PlayerStats.Instance.playthroughCount == 1 &&
+        if (DataManager.Instance.PlayerData.playthroughCount == 1 &&
           GameManager.instance.CurrentChapter == 1 &&
           !hasShownChapter1ParameterTutorial)
         {

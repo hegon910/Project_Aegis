@@ -12,4 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fab78bd871a10ac41a90cbb829889d70, type: 3}
   m_Name: Wille_PoliticalTies
   m_EditorClassIdentifier: 
+  identifier: 1
   supplyBonus: 5

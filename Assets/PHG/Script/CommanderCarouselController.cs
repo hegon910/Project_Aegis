@@ -436,10 +436,10 @@ public class CommanderCarouselController : MonoBehaviour
             return;
         }
 
-        // 3. PlayerStats에 선택된 지휘관 정보를 설정해달라고 요청합니다.
+        // 3. GameManager에 선택된 지휘관 정보를 설정해달라고 요청합니다.
         //    이제 이 안에서 "지휘관 활성화" 로그가 떠야 합니다.
-        PlayerStats.Instance.SetActiveCommander(selectedCommander);
-        
+        GameManager.instance.OnCommanderSelected(centerIndex);
+
         // 4. GameManager에게 실제 게임 시작을 지시합니다. (이 부분은 프로젝트의 GameManager 이름에 맞게 수정)
         //    이후 GameManager가 PlayerStats.InitializeStats()를 호출해야 합니다.
         // GameManager.Instance.StartNewGame(); 
