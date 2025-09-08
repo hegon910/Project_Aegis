@@ -194,7 +194,7 @@ public class DataManager : MonoBehaviour
         var fullEventData = new EventData
         {
             id = eventID,
-            eventName = $"Event_{eventID}" // 임시 이름
+           // eventName = $"Event_{eventID}" // 임시 이름
         };
 
 
