@@ -1,10 +1,15 @@
 fileFormatVersion: 2
+<<<<<<< Updated upstream
+guid: 5e8ad7946f9e0df448d681543278198a
+folderAsset: yes
+=======
 <<<<<<<< Updated upstream:Assets/LHK/Scenes/lhk_Test.unity.meta
 guid: fc9832c9ffaba6646846dd131c348562
 ========
 guid: 7a754a4b4c4cddb479031266cae03a8c
 folderAsset: yes
 >>>>>>>> Stashed changes:Assets/LCM/Scripts/Data.meta
+>>>>>>> Stashed changes
 DefaultImporter:
   externalObjects: {}
   userData: 

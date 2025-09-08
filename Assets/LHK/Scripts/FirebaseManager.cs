@@ -137,7 +137,7 @@ public class FirebaseManager : MonoBehaviour
         if (status == SignInStatus.Success)
         {
             Debug.Log("GPGS 로그인 성공, 서버인증코드 요청");
-            //GetServerAuthCodeAndSignInFirebase();
+            GetServerAuthCodeAndSignInFirebase();
         }
         else
         {
