@@ -171,12 +171,6 @@ public class EventManager : MonoBehaviour
         {
             OnSubEventReady?.Invoke(data);
             Debug.Log($"서브 이벤트 표시: (Index: {data.Index})");
-
-            if (data.IsFinish)
-            {
-                Debug.Log("서브 이벤트 체인 종료.");
-                currentState = EventManagerState.InCycle;
-            }
         }
     }
 
@@ -189,6 +183,15 @@ public class EventManager : MonoBehaviour
 
         DataManager.Instance.PlayerData.completedEventIds.Add(currentSubEventIndex);
 
+        // 현재 이벤트가 '종료' 이벤트인지 확인
+        if (currentData.IsFinish)
+        {
+            Debug.Log($"서브 이벤트 체인의 마지막 카드(Index: {currentData.Index})를 선택했습니다. 다음 턴으로 넘어갑니다.");
+            currentState = EventManagerState.InCycle;
+            PlayNextTurn();
+            return; 
+        }
+
         int nextIndex = -1;
         string nextIndexStr = isLeftChoice ? currentData.NextLeftSelectString : currentData.NextRightSelectString;
         int.TryParse(nextIndexStr, out nextIndex);
@@ -199,8 +202,9 @@ public class EventManager : MonoBehaviour
         }
         else
         {
-            Debug.Log("서브 이벤트의 마지막입니다.");
+            Debug.Log($"다음 서브 이벤트가 없습니다(nextIndex: {nextIndex}) 서브 이벤트 체인을 종료하고 다음 턴으로 넘어갑니다.");
             currentState = EventManagerState.InCycle;
+            PlayNextTurn();
         }
     }
 
