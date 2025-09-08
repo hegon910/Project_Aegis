@@ -34,26 +34,14 @@ public class WarEnemy : MonoBehaviour
         Debug.LogWarning("기본 충돌 로직");
     }
 
-    //public void TakeDamage(int amount)
-    //{
-    //    int fromShield = Mathf.Min(shield, amount);
-    //    shield -= fromShield;
-    //    int remain = amount - fromShield;
-    //    if (remain > 0) hp = Mathf.Max(0, hp - remain);
+   
 
-    //    Debug.Log($"Enemy HP -> {hp}, Shield -> {shield}");
-    //}
+    public void KillByRingOut()
+    {
+        if (controller.CurrentHP <= 0) return;
+        controller.CurrentHP = 0;
+        Debug.Log("적군 링아웃");
+    }
 
-    //public void KillByRingOut()
-    //{
-    //    if (hp <= 0) return;
-    //    hp = 0;
-    //    Debug.Log("적군 링아웃");
-    //}
-
-    //public void ResetStatus(int hpInit = 5, int shieldInit = 0)
-    //{
-    //    hp = Mathf.Max(0, hpInit);
-    //    shield = Mathf.Clamp(shieldInit, 0, 3);
-    //}
+    
 }

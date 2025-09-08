@@ -101,15 +101,15 @@ public class WarTurnManager : MonoBehaviour
         if (battleEnded) return;
         battleEnded = true;
         bool isWin = resultLog.Contains("승리");
-        //var changes = new List<ParameterChange>//파라미터 관련 추가부분
-        //{
-        //    new ParameterChange
-        //    {
-        //    parameterType = ParameterType.전황,
-        //    valueChange = isWin ? +20 : -20
-        //    }
-        //};
-        //PlayerStats.Instance.ApplyChanges(changes); // 전황 파라미터 변경 적용
+        var changes = new List<ParameterChange>//파라미터 관련 추가부분
+        {
+            new ParameterChange
+            {
+            parameterType = ParameterType.전황,
+            valueChange = isWin ? +20 : -20
+            }
+        };
+        PlayerStats.Instance.ApplyChanges(changes); // 전황 파라미터 변경 적용
         Debug.Log(resultLog);
         Debug.Log("전투 종료");
         OnBattleEnd?.Invoke(resultLog);
@@ -139,23 +139,23 @@ public class WarTurnManager : MonoBehaviour
 
     void CheckRingOutStatus()
     {
-        //if (player == null || enemy == null) return;
+        if (player == null || enemy == null) return;
 
-        //int lastIndex = ground.LaneLength - 1; // 15
+        int lastIndex = ground.LaneLength - 1; // 15
 
-        //// 플레이어 위치 확인
-        //if (player.Ctrl.CurrentIndex == 0 || player.Ctrl.CurrentIndex == lastIndex)
-        //{
-        //    player.KillByRingOut();
-        //    Debug.Log("플레이어 장외!");
-        //}
+        // 플레이어 위치 확인
+        if (player.Ctrl.CurrentIndex == 0 || player.Ctrl.CurrentIndex == lastIndex)
+        {
+            player.KillByRingOut();
+            Debug.Log("플레이어 장외!");
+        }
 
-        //// 적 위치 확인
-        //if (enemy.Ctrl.CurrentIndex == 0 || enemy.Ctrl.CurrentIndex == lastIndex)
-        //{
-        //    enemy.KillByRingOut();
-        //    Debug.Log("적 장외!");
-        //}
+        // 적 위치 확인
+        if (enemy.Ctrl.CurrentIndex == 0 || enemy.Ctrl.CurrentIndex == lastIndex)
+        {
+            enemy.KillByRingOut();
+            Debug.Log("적 장외!");
+        }
     }
 
     IEnumerator Co_Turn(WarAction playerAction)
@@ -182,7 +182,7 @@ public class WarTurnManager : MonoBehaviour
                 enemy.HandleCollision(player, playerAction, enemyAction);
 
                 Debug.Log($"--- Turn {currentTurn} Collision --- Player Index: {player.Ctrl.CurrentIndex}, Enemy Index: {enemy.Ctrl.CurrentIndex}");
-
+                CheckRingOutStatus();
                 CheckWinLoseDrawAfterTurn();
                 if (!battleEnded && currentTurn >= maxTurns) EndBattle("무승부 - 턴 제한 소진");
 
@@ -193,7 +193,7 @@ public class WarTurnManager : MonoBehaviour
         }
 
         Debug.Log($"Turn {currentTurn} End / Player Index: {player.Ctrl.CurrentIndex}, Enemy Index: {enemy.Ctrl.CurrentIndex}");
-
+        CheckRingOutStatus();
         CheckWinLoseDrawAfterTurn();
         if (!battleEnded && currentTurn >= maxTurns) EndBattle("무승부 - 턴 제한 소진");
 

@@ -10,8 +10,9 @@ public class CollisionOutcome
     [Tooltip("플레이어가 밀려나는 칸 수 (뒤로 밀림)")]
     public int playerKnockback = 0;
 
-    [Tooltip("적이 입는 기본 피해량 (플레이어 공격력에 더해짐)")]
+    [Tooltip("적이 입는 피해량 0이 기본값 준수필요 (플레이어 공격력에 더해짐)")]
     public int enemyBaseDamage = 0;
+
     [Tooltip("적이 밀려나는 칸 수 (뒤로 밀림)")]
     public int enemyKnockback = 0;
 }
@@ -66,24 +67,27 @@ public class CustomEnemy : WarEnemy
         // 결정된 결과를 적용
         if (outcome != null)
         {
-            ApplyOutcome(player, outcome, playerAction);
+            ApplyOutcome(player, outcome, playerAction, myAction);
         }
     }
 
     // 결과를 실제로 적용하는 함수
-    private void ApplyOutcome(WarPlayer player, CollisionOutcome outcome, WarAction playerAction)
+    private void ApplyOutcome(WarPlayer player, CollisionOutcome outcome, WarAction playerAction, WarAction myAction)
     {
         // 데미지 적용 로직 (기존과 동일)
-        int finalDamage = player.AttackPower + outcome.enemyBaseDamage;
-        finalDamage = Mathf.Max(0, finalDamage);
-        if (player.enhancedAttackStacks > 0)
+        if (playerAction == WarAction.Attack && myAction != WarAction.Defend)
         {
-            finalDamage += 1;
-            player.enhancedAttackStacks--;
-        }
-        if (finalDamage > 0)
-        {
-            this.TakeDamage(finalDamage);
+            int finalDamage = player.AttackPower + outcome.enemyBaseDamage;
+            finalDamage = Mathf.Max(0, finalDamage);
+            if (player.enhancedAttackStacks > 0)
+            {
+                finalDamage += 1;
+                player.enhancedAttackStacks--;
+            }
+            if (finalDamage > 0)
+            {
+                this.TakeDamage(finalDamage);
+            }
         }
         if (outcome.playerDamage > 0)
         {
@@ -99,8 +103,8 @@ public class CustomEnemy : WarEnemy
         if (playerAction == WarAction.Attack && player.KnockbackBuff)
         {
             Debug.Log("밀치기 강화 버프 효과 발동! 적을 1칸 더 밀어낸다");
-            finalEnemyKnockback += 1; // 최종 밀치기 값에 1을 더함
-            player.KnockbackBuff = false; // 버프 사용 후 제거
+            finalEnemyKnockback += 1;
+            player.KnockbackBuff = false;
         }
 
         if (finalEnemyKnockback > 0)
