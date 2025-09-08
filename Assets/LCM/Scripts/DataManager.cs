@@ -5,7 +5,6 @@ using System.Linq;
 using Cysharp.Threading.Tasks;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
-using static DataManager;
 
 public class DataManager : MonoBehaviour
 {
@@ -16,6 +15,7 @@ public class DataManager : MonoBehaviour
 
     public List<SubEventData> SubEvents { get; private set; }
 
+<<<<<<< Updated upstream
     //메인 이벤트 
     public Dictionary<int, MainEventData> mainEventDataDict;
     public Dictionary<int, AnswerData> answerDataDict;
@@ -25,6 +25,16 @@ public class DataManager : MonoBehaviour
     private Dictionary<long, SFXData> sfxDataDict;
     private Dictionary<long, MainCharacterImgData> characterImgDataDict;
     //파라미터 이벤트
+=======
+    //메인 이벤트 데이터
+
+
+    public Dictionary<int, MainEventData> mainEventDict;
+    public Dictionary<int, AnswerIDData> answerIDDict;
+
+
+    //파라미터 이벤트 
+>>>>>>> Stashed changes
     public Dictionary<int, ParameterEventData> eventDataDict;
     public Dictionary<int, ParameterEventStringData> eventStringDataDict;
     public Dictionary<int, ParameterRewardData> rewardDataDict;
@@ -96,6 +106,7 @@ public class DataManager : MonoBehaviour
         }
     }
 
+<<<<<<< Updated upstream
     public async UniTask MainEventInitializeDataAsync()
     {
         try
@@ -136,6 +147,65 @@ public class DataManager : MonoBehaviour
         }
     }
 
+=======
+
+    // 메인 이벤트 데이터 
+    public async UniTask LoadMainEventDataAsync()
+    {
+        try
+        {
+            Debug.Log("메인 이벤트 데이터 로딩 시작");
+            var mainEventTask = Csvparser.ParseAsync<MainEventData>("MainEventData11");
+            var answerIDTask = Csvparser.ParseAsync<AnswerIDData>("AnswerID");
+
+            var (mainEventList, answerIDList) = await UniTask.WhenAll(mainEventTask, answerIDTask);
+
+            // Dictionary로 변환하여 메모리에 저장
+            mainEventDict = mainEventList.ToDictionary(e => e.ID, e => e);
+            answerIDDict = answerIDList.ToDictionary(a => a.AnswerID, a => a);
+
+            Debug.Log("메인 이벤트 및 선택지 데이터 로딩 완료");
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"메인 이벤트 데이터 로드 실패: {ex.Message}");
+        }
+    }
+
+    public MainEventData GetMainEventDataById(int id)
+    {
+        if (mainEventDict.TryGetValue(id, out MainEventData data))
+        {
+            return data;
+        }
+        else
+        {
+            Debug.LogError($"MainEventData with ID {id} not found.");
+            return null;
+        }
+    }
+
+    // AnswerIDData를 ID로 찾아 반환하는 메서드
+    public AnswerIDData GetAnswerIDDataById(int id)
+    {
+        if (answerIDDict.TryGetValue(id, out AnswerIDData data))
+        {
+            return data;
+        }
+        else
+        {
+            Debug.LogError($"AnswerIDData with ID {id} not found.");
+            return null;
+        }
+    }
+
+    private void LoadAllData()
+    {
+        mainEventDict = new Dictionary<int, MainEventData>();
+        answerIDDict = new Dictionary<int, AnswerIDData>();
+    }
+
+>>>>>>> Stashed changes
     public async UniTask SubIntializeDataAsync()
     {
         await LoadSubAllDataAsync();
