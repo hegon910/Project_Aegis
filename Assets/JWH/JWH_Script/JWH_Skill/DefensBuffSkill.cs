@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "새로운 반격 스킬", menuName = "Skills/버프/수비 반격")]
-public class DefenseThornSkill : SkillData
+public class DefenseBuffSkill : SkillData
 {
     [Header("버프 설정")]
     public int damageOnSuccess = 1; // 수비 성공 시 줄 피해량

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "새로운 공격 강화 스킬", menuName = "Skills/버프/공격 강화")]
-public class EnhancedAttackSkill : SkillData
+public class AttackBuffSkill : SkillData
 {
     [Header("버프 설정")]
     public int attackStacks = 3; // 턴수

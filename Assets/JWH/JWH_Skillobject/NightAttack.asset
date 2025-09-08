@@ -14,10 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   skillID: NightAttack
   skillName: "\uC554\uC2B5"
+  skillRank: 3
   description: "\uC801\uAD70\uACFC\uC758 \uAC70\uB9AC\uAC00 2\uCE78 \uC774\uD558\uC77C\uB54C
     \uBC1C\uB3D9 \uAC00\uB2A5 \uC801\uAD70\uC5D0\uAC8C 2\uC758 \uD53C\uD574\uB97C
     \uC90D\uB2C8\uB2E4"
-  cooltime: 3
+  cooltime: 1
+  isSingleUsePerCombat: 0
   activationDistance: 2
   damage: 2
   selfDamage: 0
