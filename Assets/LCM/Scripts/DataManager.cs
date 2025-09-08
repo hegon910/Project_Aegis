@@ -23,14 +23,9 @@ public class DataManager : MonoBehaviour
     private Dictionary<long, BGData> bgDataDict;
     private Dictionary<long, SFXData> sfxDataDict;
     private Dictionary<long, MainCharacterImgData> characterImgDataDict;
-    //파라미터 이벤트
-    //메인 이벤트 데이터
-
-
-    public Dictionary<int, MainEventData> mainEventDict;
-    public Dictionary<int, AnswerIDData> answerIDDict;
-
-
+    //엔딩 이벤트
+    private Dictionary<long, EndingEventData> endingEventDataDict;
+    private Dictionary<long, EndingCutScene> endingCutSceneDict;
     //파라미터 이벤트 
     public Dictionary<int, ParameterEventData> eventDataDict;
     public Dictionary<int, ParameterEventStringData> eventStringDataDict;
@@ -117,9 +112,11 @@ public class DataManager : MonoBehaviour
             var sfxDataTask = Csvparser.ParseAsync<SFXData>("MainSFXData");
             var characterDataTask = Csvparser.ParseAsync<MainCharacterData>("MainCharacterData");
             var characterImgDataTask = Csvparser.ParseAsync<MainCharacterImgData>("MainCharacterImgData");
+            var endingEventDataTask = Csvparser.ParseAsync<EndingEventData>("EndingEventData");
+            var endingCutSceneTask = Csvparser.ParseAsync<EndingCutScene>("EndingEventCutScene");
 
-            var (mainEventList, answerList, characterList ,bgList, sfxList, characterImgList) =
-            await UniTask.WhenAll(mainEventTask, answerTask, characterDataTask , bgDataTask, sfxDataTask, characterImgDataTask);
+            var (mainEventList, answerList, characterList, bgList, sfxList, characterImgList, endingEventList, endingCutSceneList) =
+            await UniTask.WhenAll(mainEventTask, answerTask, characterDataTask, bgDataTask, sfxDataTask, characterImgDataTask, endingEventDataTask, endingCutSceneTask);
 
             Debug.Log("모든 파일 로딩 완료");
 
@@ -131,6 +128,9 @@ public class DataManager : MonoBehaviour
             bgDataDict = bgList.ToDictionary(bg => bg.BG_ID, bg => bg);
             sfxDataDict = sfxList.ToDictionary(sfx => sfx.SFX_ID, sfx => sfx);
             characterImgDataDict = characterImgList.ToDictionary(c => c.CharacterImg_ID, c => c);
+            endingEventDataDict = endingEventList.ToDictionary(e => e.ID, e => e);
+            endingCutSceneDict = endingCutSceneList.ToDictionary(c => c.EndingCutScene_ID, c => c);
+
 
 
             _isReady.TrySetResult(true);
@@ -141,36 +141,6 @@ public class DataManager : MonoBehaviour
             Debug.LogError($"데이터 로드 실패: {ex.Message}");
             _isReady.TrySetException(ex);
         }
-    }
-
-
-    // 메인 이벤트 데이터 
-    public async UniTask LoadMainEventDataAsync()
-    {
-        try
-        {
-            Debug.Log("메인 이벤트 데이터 로딩 시작");
-            var mainEventTask = Csvparser.ParseAsync<MainEventData>("MainEventData11");
-            var answerIDTask = Csvparser.ParseAsync<AnswerIDData>("AnswerID");
-
-            var (mainEventList, answerIDList) = await UniTask.WhenAll(mainEventTask, answerIDTask);
-
-            // Dictionary로 변환하여 메모리에 저장
-            mainEventDict = mainEventList.ToDictionary(e => e.ID, e => e);
-            answerIDDict = answerIDList.ToDictionary(a => a.AnswerID, a => a);
-
-            Debug.Log("메인 이벤트 및 선택지 데이터 로딩 완료");
-        }
-        catch (System.Exception ex)
-        {
-            Debug.LogError($"메인 이벤트 데이터 로드 실패: {ex.Message}");
-        }
-    }
-
-    private void LoadAllData()
-    {
-        mainEventDict = new Dictionary<int, MainEventData>();
-        answerIDDict = new Dictionary<int, AnswerIDData>();
     }
 
     public async UniTask SubIntializeDataAsync()
@@ -275,7 +245,10 @@ public class DataManager : MonoBehaviour
         var fullEventData = new NewMainEventData
         {
             id = rawData.ID,
+            MainStoryPac = rawData.MainStoryPac,
+            LoopNum = rawData.LoopNum,
             dialogue = rawData.Text_kr, 
+
         };
 
         //Chr_ID를 사용하여 캐릭터 이름 할당
@@ -306,30 +279,12 @@ public class DataManager : MonoBehaviour
         fullEventData.leftChoice = CreateMainChoice(rawData.AnswerLeftID);
         fullEventData.rightChoice = CreateMainChoice(rawData.AnswerRightID);
 
-        Debug.Log($"--- 이벤트 데이터 로드: ID {fullEventData.id} ---");
-        Debug.Log($"Dialogue: {fullEventData.dialogue}");
-        Debug.Log($"BG: {fullEventData.bgData.BGName}, Character: {fullEventData.characterData.Chr_Name} ({fullEventData.characterImgData.IMGName})");
-
-        if (fullEventData.leftChoice != null)
-        {
-            Debug.Log($"- Left Choice: {fullEventData.leftChoice.choiceText}");
-            Debug.Log($"  Next Event ID: {fullEventData.leftChoice.nextEventID}");
-            Debug.Log($"  Outcome Changes: {fullEventData.leftChoice.outcome.parameterChanges.Count} 개");
-        }
-
-        if (fullEventData.rightChoice != null)
-        {
-            Debug.Log($"- Right Choice: {fullEventData.rightChoice.choiceText}");
-            Debug.Log($"  Next Event ID: {fullEventData.rightChoice.nextEventID}");
-            Debug.Log($"  Outcome Changes: {fullEventData.rightChoice.outcome.parameterChanges.Count} 개");
-        }
-
         return fullEventData;
     }
 
-    private NewEventChoice CreateMainChoice(int answerID)
+    private MainEventChoice CreateMainChoice(int answerID)
     {
-        var choice = new NewEventChoice();
+        var choice = new MainEventChoice();
 
         choice.outcome = new ChoiceOutcome
         {
@@ -348,6 +303,42 @@ public class DataManager : MonoBehaviour
         }
 
         return choice;
+    }
+
+    public FullEndingData GetEndingData(long endingID)
+    {
+        if (!endingEventDataDict.TryGetValue(endingID, out var rawData))
+        {
+            Debug.LogError($"[DataManager] ID {endingID}에 해당하는 엔딩 데이터를 찾을 수 없습니다.");
+            return null;
+        }
+
+        var fullEndingData = new FullEndingData
+        {
+            ID = rawData.ID,
+            EndingString = rawData.EndingString,
+            Karma_Rate = rawData.Karma_Rate,
+            Text_Kr = rawData.Text_Kr,
+            Text_En = rawData.Text_En,
+            Direction = rawData.Direction,
+            Fade_Out_Color = rawData.Fade_Out_Color
+        };
+        if (bgDataDict.TryGetValue(rawData.BG_ID, out var bgData))
+        {
+            fullEndingData.bgData = bgData;
+        }
+
+        if (sfxDataDict.TryGetValue(rawData.SFX_ID, out var sfxData))
+        {
+            fullEndingData.sfxData = sfxData;
+        }
+
+        if (endingCutSceneDict.TryGetValue(rawData.EndingCutScene_ID, out var cutSceneData))
+        {
+            fullEndingData.cutSceneData = cutSceneData;
+        }
+
+        return fullEndingData;
     }
 
 
