@@ -19,7 +19,7 @@ public class TestData : MonoBehaviour
         //    DataManager.Instance.GetEventDataById(eventID);
         //}
 
-        DataManager.Instance.GetEventDataById(1000006);
+        DataManager.Instance.GetMainEventDataById(10001);
         Debug.Log("--- 모든 이벤트 데이터 로드 완료 ---");
 
     }
