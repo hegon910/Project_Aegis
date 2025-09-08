@@ -17,5 +17,5 @@ MonoBehaviour:
   description: "\uB2E4\uC74C \uC218\uBE44 \uD589\uB3D9\uC73C\uB85C \uC218\uBE44\uC5D0
     \uC131\uACF5\uD558\uBA74 \uC801\uAD70\uC5D0\uAC8C 1\uC758 \uD53C\uD574\uB97C
     \uC90D\uB2C8\uB2E4"
-  cooltime: 3
+  cooltime: 1
   damageOnSuccess: 1

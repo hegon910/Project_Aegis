@@ -421,16 +421,36 @@ PrefabInstance:
       value: -245
       objectReference: {fileID: 0}
     - target: {fileID: 1998703644467061465, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: attackChance
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1998703644467061465, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: playerAttackVsEnemyDefend.enemyBaseDamage
-      value: -1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2387749592704131571, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: m_SizeDelta.x
       value: 800
       objectReference: {fileID: 0}
+    - target: {fileID: 5262811965899116410, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: maxHp
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 5262811965899116410, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: currentHp
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 5409619987361007447, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: direction
       value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5939541314283381738, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: maxHp
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 5939541314283381738, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: currentHp
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 6633850379817137101, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: m_AnchorMax.y
@@ -438,7 +458,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7831991435369316234, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: equippedSkillID
-      value: UpAttack
+      value: GoGo
       objectReference: {fileID: 0}
     - target: {fileID: 7966315032008839688, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: m_Name

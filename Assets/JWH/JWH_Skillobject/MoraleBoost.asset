@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 37038db7703d0014aa06ec871022934b, type: 3}
-  m_Name: GoGo
+  m_Name: MoraleBoost
   m_EditorClassIdentifier: 
-  skillID: GoGo
-  skillName: "\uB3CC\uC9C4\uAC15\uD654"
+  skillID: MoraleBoost
+  skillName: "\uC0AC\uAE30\uC99D\uC9C4"
   description: "\uB2E4\uC74C \uACF5\uACA9 \uD589\uB3D9\uC774 4\uCE78 \uB354 \uC804\uC9C4\uD569\uB2C8\uB2E4"
-  cooltime: 3
+  cooltime: 1
   extraDistance: 4
