@@ -10,19 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a7832f6b0ca3b254a8e71b533f64b48d, type: 3}
-  m_Name: Chapter1_Opening
+  m_Name: Chpater1_BattleCutScene
   m_EditorClassIdentifier: 
   steps:
-  - stepName: TestOpening
+  - stepName: Chapter1_BattleCutscene
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 4eddf07d6b27d804ea5a0ff7a700e9b5, type: 3}
-      fadeDuration: 1
+      image: {fileID: 21300000, guid: 7698b3d878ad457479be1fa5568ae066, type: 3}
+      fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
-      dialogue: "\uC774\uAC83\uC740 \uD14C\uC2A4\uD2B8 \uC624\uD504\uB2DD\uC785\uB2C8\uB2E4.
-        \uC774 \uBB38\uC7A5\uC774 \uBCF4\uC774\uBA74 \uC791\uB3D9\uC911\uC778\uAC81\uB2C8\uB2E4."
-      typewriterSpeed: 0.2
+      dialogue: "\uC801\uB4E4\uC774 \uCCD0\uB4E4\uC5B4\uC628\uB2E4"
+      typewriterSpeed: 0.1
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
@@ -32,8 +31,8 @@ MonoBehaviour:
       waitForCompletion: 0
     enableDayTextEffect: 1
     dayTextData:
-      text: "1943\uB144, -1\uC7A5- \uC624\uD504\uB2DD"
-      animationDuration: 1
+      text: "1\uC7A5 -\uC804\uD22C-"
+      animationDuration: 3
       holdDuration: 10
     waitTime: 10
     waitForClick: 1

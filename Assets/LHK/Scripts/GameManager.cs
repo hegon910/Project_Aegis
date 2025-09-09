@@ -1,49 +1,63 @@
 ﻿using GooglePlayGames;
 using GooglePlayGames.BasicApi;
+using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using TMPro; // TextMeshPro를 사용하기 위해 추가
 using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
-using UnityEngine.SceneManagement;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
+public enum GameState
+{
+    Title,
+    Login,
+    MainMenu,
+    CommanderSelection,
+    PlayingOpeningCutscene,
+    InEventCycle,
+    InStory,
+    PlayingChapterEndCutscene,
+    InBattle,
+    InBattleResult,
+    InChapterResult,
+    PlayingEndingCutscene,
+    GamePaused
+}
 public class GameManager : MonoBehaviour
 {
     public static GameManager instance { get; private set; }
+    public GameState currentGameState { get; private set; }
 
     [Header("UI 참조")]
+    [SerializeField] private Button continueButton;
     [SerializeField] private GameObject titlePanel;
     [SerializeField] private GameObject titleCanvas;
-    [SerializeField] private GameObject loginPanel;
     [SerializeField] private GameObject menuPanel;
-    [SerializeField] private GameObject overwriteWarningPanel;
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private GameObject mainGameCanvas;
     [SerializeField] private GameObject commanderSelectionCanvas;
     [SerializeField] private GameObject storyPanel;
     [SerializeField] private GameObject battlePanel;
+    // <<<<<<< [추가 2] BattleResultPanel 참조 추가
     [SerializeField] private GameObject battleResultPanel;
-    [SerializeField] private TMPro.TextMeshProUGUI battleResultText;
+    [SerializeField] private TextMeshProUGUI battleResultText; // 승리/패배 텍스트 표시용
     [SerializeField] private GameObject InGameUIPanel;
-    [SerializeField] private Button testPlayerButton;
     [SerializeField] private GameObject optionCanvas;
-    [SerializeField] private Button exitButton;
+    [SerializeField] private GameObject tutorialPanel;
+    [SerializeField] private GameObject loginPanel;
 
     [Header("컷신 시스템")]
     [SerializeField] private CutsceneManager cutsceneManager;
     [SerializeField] private CutsceneData chapter1OpeningCutscene;
-    // 필요한 만큼 엔딩 컷신 데이터 추가
+    [SerializeField] private List<CutsceneData> chapterMidCutscenes;
     [SerializeField] private List<CutsceneData> chapterEndingCutscenes;
-
-    [Header("튜토리얼")]
-    [SerializeField] private GameObject tutorialPanel;
-    [SerializeField] private GameObject swipeTutorialImage;
-    [SerializeField] private GameObject parameterTutoText;
+    [SerializeField] private CutsceneData finalEndingCutscene;
 
     [Header("챕터 결산 연출")]
     [SerializeField] private ChapterResultController chapterEndController;
     [SerializeField] private List<ChapterResultData> chapterEndDataList;
-    [SerializeField] private GameObject chapterResultPanel;
+    [SerializeField] private GameObject chapterResultPanel; // ChapterResultCanvas의 패널
     public int CurrentChapter => DataManager.Instance?.PlayerData != null ? DataManager.Instance.PlayerData.currentChapter : 1;
 
     [Header("범용 확인 창")]
@@ -54,19 +68,18 @@ public class GameManager : MonoBehaviour
     [SerializeField] private UIFlowSimulator uiFlowSimulator;
     [SerializeField] private BattleTurnManager battleTurnManager;
     [SerializeField] private MainScenarioManager mainScenarioManager;
+    [SerializeField] private UIPanelAnimator uiPanelAnimator;
+
 
     [Header("지휘관 선택")]
     [SerializeField] private Button Commander1Button;
     [SerializeField] private Button Commander2Button;
     [SerializeField] private Button Commander3Button;
 
-    [Header("디버그")]
-    [SerializeField] private Button forceGameOverButton;
-
-    private bool hasSaveData = false;
     private UnityAction onConfirmAction;
     private bool isReturningToTitle = false;
     private int selectedPackNumber = 1001;
+    private bool isTransitioningState = false;
 
     private void Awake()
     {
@@ -79,399 +92,246 @@ public class GameManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
-        ChapterResultController.OnSequenceComplete += OnChapterEndSequenceComplete;
-        EventManager.OnEventCycleCompleted += HandleEventCycleCompleted;
-    }
-    private void OnEnable()
-    {
-       // ChapterResultController.OnSequenceComplete += OnChapterEndSequenceComplete;
-       // EventManager.OnEventCycleCompleted += HandleEventCycleCompleted;
     }
 
-    private void OnDisable()
+    private void OnEnable() { }
+    private void OnDisable() { }
+
+    private async void Start()
     {
-        if (instance == this)
-        {
-            ChapterResultController.OnSequenceComplete -= OnChapterEndSequenceComplete;
-            EventManager.OnEventCycleCompleted -= HandleEventCycleCompleted;
-        }
+        await InitializeGameAndLoadData();
     }
 
-    private void Start()
-    {
-        InitializeGameAndLoadData();
-    }
-
-    private async void InitializeGameAndLoadData()
+    private async Task InitializeGameAndLoadData()
     {
         await DataManager.Instance.InitializeDataAsync();
         await DataManager.Instance.SubIntializeDataAsync();
         DataManager.Instance.LoadGame();
 
-        titlePanel.SetActive(true);
-        loginPanel.SetActive(false);
-        menuPanel.SetActive(false);
+        ChangeState(GameState.Title);
+    }
+
+    public void OnStateFinished()
+    {
+        StartCoroutine(AdvanceGameStateCoroutine());
+    }
+
+    private IEnumerator AdvanceGameStateCoroutine()
+    {
+        if (isTransitioningState) yield break;
+        isTransitioningState = true;
+
+        yield return new WaitForEndOfFrame();
+
+        GameState nextState = currentGameState;
+        switch (currentGameState)
+        {
+            case GameState.CommanderSelection: nextState = GameState.PlayingOpeningCutscene; break;
+            case GameState.PlayingOpeningCutscene: nextState = GameState.InStory; break;
+            case GameState.InStory:
+                nextState = (CurrentChapter == 1) ? GameState.InEventCycle : GameState.PlayingChapterEndCutscene;
+                break;
+            case GameState.InEventCycle:
+                nextState = (CurrentChapter == 1 || CurrentChapter == 6) ? GameState.PlayingChapterEndCutscene : GameState.InStory;
+                break;
+            case GameState.PlayingChapterEndCutscene: nextState = GameState.InBattle; break;
+            case GameState.InBattle: nextState = GameState.InBattleResult; break;
+            case GameState.InBattleResult: nextState = GameState.InChapterResult; break;
+            case GameState.InChapterResult:
+                DataManager.Instance.PlayerData.currentChapter++;
+
+                // 6챕터(5회차 완료 후)가 되면 엔딩으로, 그 전까지는 이벤트 사이클로 돌아가 반복
+                if (DataManager.Instance.PlayerData.currentChapter > 6)
+                {
+                    nextState = GameState.PlayingEndingCutscene;
+                }
+                else
+                {
+                    EventManager.Instance.StartNewCycle();
+                    // 6챕터 시작 시에는 스토리 먼저, 그 외에는 이벤트 사이클 먼저
+                    nextState = (DataManager.Instance.PlayerData.currentChapter == 6) ? GameState.InStory : GameState.InEventCycle;
+                }
+                break;
+            case GameState.PlayingEndingCutscene:
+                DataManager.Instance.PlayerData.playthroughCount++;
+                DataManager.Instance.PlayerData.currentChapter = 1;
+                EventManager.Instance.ResetEventManagerState();
+                nextState = GameState.MainMenu;
+                break;
+        }
+
+        if (nextState != currentGameState)
+        {
+            ChangeState(nextState);
+        }
+
+        isTransitioningState = false;
+    }
+
+    private void SetUIForState(GameState newState)
+    {
+        titleCanvas.SetActive(newState == GameState.Title || newState == GameState.Login || newState == GameState.MainMenu);
+        titlePanel.SetActive(newState == GameState.Title);
+        loginPanel.SetActive(newState == GameState.Login);
+        menuPanel.SetActive(newState == GameState.MainMenu);
+
+        mainGameCanvas.SetActive(
+            newState != GameState.Title &&
+            newState != GameState.Login &&
+            newState != GameState.MainMenu &&
+            newState != GameState.CommanderSelection);
+
+        commanderSelectionCanvas.SetActive(newState == GameState.CommanderSelection);
+        storyPanel.SetActive(newState == GameState.InStory);
+        InGameUIPanel.SetActive(newState == GameState.InEventCycle || newState == GameState.InStory);
+        battlePanel.SetActive(newState == GameState.InBattle);
+        battleResultPanel.SetActive(newState == GameState.InBattleResult);
+        chapterResultPanel.SetActive(newState == GameState.InChapterResult);
+        optionCanvas.SetActive(newState == GameState.GamePaused);
         gameOverPanel.SetActive(false);
-        mainGameCanvas.SetActive(false);
-        commanderSelectionCanvas.SetActive(false);
-        optionCanvas.SetActive(false);
-        confirmationPanel.SetActive(false);
-    }
 
-    public void OnTitlePanelTouched()
-    {
-        titlePanel.SetActive(false);
-        menuPanel.SetActive(true);
-        if (Application.platform == RuntimePlatform.Android)
+        if (newState == GameState.InStory && CurrentChapter == 1 && DataManager.Instance.PlayerData.playthroughCount == 1)
         {
-            PlayGamesPlatform.Instance.Authenticate(OnAuthenticated);
+            if (tutorialPanel != null) tutorialPanel.SetActive(true);
         }
     }
 
-    private void OnAuthenticated(SignInStatus status)
+    private void ChangeState(GameState newState)
     {
-        if (status != SignInStatus.Success)
+        UnsubscribeFromCurrentStateEvent();
+
+        currentGameState = newState;
+        Debug.Log($"[게임 상태 변경] -> {newState}");
+
+        SetUIForState(newState);
+
+        switch (newState)
         {
-            Debug.LogError("구글 플레이 게임 서비스 로그인 실패: " + status);
-            FirebaseManager.Instance.GPGSLogin();
-        }
-    }
-
-    public void OnNewGameButtonClicked()
-    {
-        if (hasSaveData)
-        {
-            overwriteWarningPanel.SetActive(true);
-        }
-        else
-        {
-            StartNewGame();
-        }
-    }
-
-    public void StartNewGame()
-    {
-        isReturningToTitle = false;
-        DataManager.Instance.StartNewGame();
-        ResetAllGameData();
-
-        menuPanel.SetActive(false);
-        titleCanvas.SetActive(false);
-        commanderSelectionCanvas.SetActive(true);
-    }
-
-    public void ShowConfirmation(string message, UnityAction confirmAction)
-    {
-        confirmationText.text = message;
-        onConfirmAction = confirmAction;
-        confirmationPanel.SetActive(true);
-    }
-
-    public void OnConfirm()
-    {
-        onConfirmAction?.Invoke();
-        confirmationPanel.SetActive(false);
-        onConfirmAction = null;
-    }
-
-    public void OnCancel()
-    {
-        confirmationPanel.SetActive(false);
-        onConfirmAction = null;
-    }
-
-    // [수정] 기존의 (int commanderIndex) 방식을 그대로 유지합니다.
-    public async void OnCommanderSelected(int commanderIndex)
-    {
-        CommanderInfo selectedCommander = null;
-
-        // [복구] 보내주신 기존 플로우대로, int 값에 따라 버튼 변수에서 CommanderInfo를 가져옵니다.
-        //        (새로운 리스트가 필요 없습니다.)
-        switch (commanderIndex)
-        {
-            case 0:
-                selectedCommander = Commander1Button.GetComponent<CommanderInfo>();
+            case GameState.Login:
+                if (Application.platform == RuntimePlatform.Android) PlayGamesPlatform.Instance.Authenticate(OnAuthenticated);
+                else OnAuthenticated(SignInStatus.Success);
                 break;
-            case 1:
-                selectedCommander = Commander2Button.GetComponent<CommanderInfo>();
+            case GameState.PlayingOpeningCutscene:
+                CutsceneManager.OnCutsceneFinished += OnStateFinished;
+                cutsceneManager.StartCutscene(chapter1OpeningCutscene);
                 break;
-            case 2:
-                selectedCommander = Commander3Button.GetComponent<CommanderInfo>();
-                break;
-            default:
-                Debug.LogError($"잘못된 지휘관 인덱스입니다: {commanderIndex}");
-                return;
-        }
-
-        if (selectedCommander == null)
-        {
-            Debug.LogError($"지휘관 버튼에 CommanderInfo 컴포넌트가 없습니다! Index: {commanderIndex}");
-            return;
-        }
-
-        // [복구] 유실되었던 기능 (해금 확인, 스탯 적용, 저장)을 이 함수 안에서 처리합니다.
-        if (!UnlockManager.IsUnlocked(selectedCommander.traitEnum))
-        {
-            Debug.LogWarning($"[시스템] 잠겨있는 지휘관({selectedCommander.name})은 선택할 수 없습니다.");
-            return;
-        }
-
-        PlayerStats.Instance.SetActiveCommander(selectedCommander);
-
-        if (selectedCommander.initialStatAdjustments.Count > 0)
-        {
-            PlayerStats.Instance.ApplyChanges(selectedCommander.initialStatAdjustments);
-        }
-
-        DataManager.Instance.SaveGame();
-
-
-        if (DataManager.Instance.PlayerData.playthroughCount == 1 && chapter1OpeningCutscene != null)
-        {
-            // 컷신이 끝나면 게임을 시작하도록 이벤트 구독
-            CutsceneManager.OnCutsceneFinished += StartGameAfterOpening;
-            cutsceneManager.StartCutscene(chapter1OpeningCutscene);
-        }
-        else
-        {
-            // 컷신이 없으면 바로 게임 시작
-            await StartGameFlow();
-        }
-    }
-
-    private async void StartGameAfterOpening()
-    {
-        // 이벤트 구독 해제 (중요!)
-        CutsceneManager.OnCutsceneFinished -= StartGameAfterOpening;
-        await StartGameFlow();
-    }
-
-    private async System.Threading.Tasks.Task StartGameFlow()
-    {
-        if (EventManager.Instance != null)
-        {
-            await EventManager.Instance.StartNewGame(selectedPackNumber);
-        }
-        else
-        {
-            Debug.LogError("EventManager 인스턴스를 찾을 수 없습니다!");
-            return;
-        }
-
-        commanderSelectionCanvas.SetActive(false);
-        mainGameCanvas.SetActive(true);
-        InGameUIPanel.SetActive(true);
-
-        if (DataManager.Instance.PlayerData.playthroughCount == 1)
-        {
-            GoToStoryPanel();
-        }
-        else
-        {
-            if (uiFlowSimulator != null)
-            {
+            case GameState.InEventCycle:
+                EventManager.OnEventCycleCompleted += OnStateFinished;
+                if (uiFlowSimulator != null)
+                {
+                    uiFlowSimulator.BeginFlow();
+                }
                 uiFlowSimulator.BeginFlow();
-            }
-        }
-    }
-
-    public void StartEventFlow()
-    {
-        if (uiFlowSimulator != null)
-        {
-            uiFlowSimulator.BeginFlow();
-        }
-    }
-
-    public void GoToStoryPanel()
-    {
-        if (mainScenarioManager != null && mainScenarioManager.IsScenarioRunning) return;
-
-        if (DataManager.Instance.PlayerData.playthroughCount == 1 && tutorialPanel != null)
-        {
-            tutorialPanel.SetActive(true);
-            if (swipeTutorialImage != null) swipeTutorialImage.SetActive(true);
-            if (parameterTutoText != null) parameterTutoText.SetActive(false);
-        }
-        if (storyPanel != null)
-        {
-            storyPanel.SetActive(true);
-            if (mainScenarioManager != null) mainScenarioManager.BeginScenarioFromStart();
-        }
-        else
-        {
-            GoToBattlePanel();
-        }
-    }
-
-    public void HideTutorial()
-    {
-        tutorialPanel.SetActive(false);
-    }
-
-    public void GoToBattlePanel()
-    {
-        if (storyPanel != null) storyPanel.SetActive(false);
-        if (InGameUIPanel != null) InGameUIPanel.SetActive(false);
-        if (battlePanel != null)
-        {
-            battlePanel.SetActive(true);
-            if (battleTurnManager != null)
-            {
+                break;
+            case GameState.InStory:
+                if (uiPanelAnimator != null) uiPanelAnimator.ShowMainStoryView();
+                MainScenarioManager.OnScenarioFinished += OnStateFinished;
+                mainScenarioManager.BeginScenarioFromStart();
+                break;
+            case GameState.PlayingChapterEndCutscene:
+                CutsceneManager.OnCutsceneFinished += OnStateFinished;
+                int chapterIndex = CurrentChapter - 1;
+                if (chapterMidCutscenes != null && chapterIndex < chapterMidCutscenes.Count && chapterMidCutscenes[chapterIndex] != null)
+                    cutsceneManager.StartCutscene(chapterMidCutscenes[chapterIndex]);
+                else
+                    OnStateFinished();
+                break;
+            case GameState.InBattle:
                 battleTurnManager.OnBattleEnd += HandleBattleEnd;
-            }
+                break;
+            // <<<<<<< [추가 5] InBattleResult 상태에 대한 로직 추가 (현재는 UI 표시 외에 특별한 동작 없음)
+            case GameState.InBattleResult:
+                // 이 상태는 UI 버튼 클릭을 통해 다음 상태로 진행되므로, 여기서는 대기합니다.
+                break;
+            case GameState.InChapterResult:
+             //   ChapterResultController.OnSequenceComplete += OnStateFinished;
+                StartDetailedResultSequence();
+                break;
+            case GameState.PlayingEndingCutscene:
+                CutsceneManager.OnCutsceneFinished += OnStateFinished;
+                cutsceneManager.StartCutscene(finalEndingCutscene);
+                break;
         }
-        else
+
+        if (DataManager.Instance.PlayerData != null)
         {
-            GoToBattleResultPanel("전투 패널 없음");
+            DataManager.Instance.PlayerData.currentGameState = currentGameState;
+            DataManager.Instance.SaveGame();
         }
     }
 
+    private void UnsubscribeFromCurrentStateEvent()
+    {
+        switch (currentGameState)
+        {
+            case GameState.PlayingOpeningCutscene:
+            case GameState.PlayingChapterEndCutscene:
+            case GameState.PlayingEndingCutscene:
+                CutsceneManager.OnCutsceneFinished -= OnStateFinished;
+                break;
+            case GameState.InEventCycle:
+                EventManager.OnEventCycleCompleted -= OnStateFinished;
+                break;
+            case GameState.InStory:
+                if (uiPanelAnimator != null) uiPanelAnimator.ShowDefaultView();
+                MainScenarioManager.OnScenarioFinished -= OnStateFinished;
+                break;
+            case GameState.InBattle:
+                battleTurnManager.OnBattleEnd -= HandleBattleEnd;
+                break;
+            case GameState.InChapterResult:
+              //  ChapterResultController.OnSequenceComplete -= OnStateFinished;
+                break;
+        }
+    }
+
+    // <<<<<<< [수정 6] 전투 종료 시 호출되는 함수 변경
     private void HandleBattleEnd(string resultLog)
     {
-        GoToBattleResultPanel(resultLog);
-        if (battleTurnManager != null)
+        // 결과 텍스트 설정
+        if (battleResultText != null)
         {
-            battleTurnManager.OnBattleEnd -= HandleBattleEnd;
-        }
-    }
-
-    public void GoToBattleResultPanel(string battleResult)
-    {
-        if (battleResultPanel != null)
-        {
-            battleResultPanel.SetActive(true);
-            if (battleResult.Contains("승리")) PlayerStats.Instance.SetStat(ParameterType.전황, 90);
-            else if (battleResult.Contains("패배")) PlayerStats.Instance.SetStat(ParameterType.전황, 10);
-            else PlayerStats.Instance.SetStat(ParameterType.전황, 50);
-        }
-        else
-        {
-            ShowResultPanel();
-        }
-    }
-
-    public void ShowResultPanel()
-    {
-        if (battleResultPanel != null) battleResultPanel.SetActive(false);
-        mainGameCanvas.SetActive(false);
-        StartDetailedResultSequence();
-    }
-
-    private void StartDetailedResultSequence()
-    {
-        if (chapterEndController == null)
-        {
-            OnChapterEndSequenceComplete();
-            return;
+            battleResultText.text = resultLog; // BattleTurnManager에서 "승리" 또는 "패배" 텍스트를 넘겨주는 것을 가정
         }
 
-        chapterEndController.gameObject.SetActive(true);
-        chapterResultPanel.SetActive(true);
+        // 스탯 설정
+        if (resultLog.Contains("승리")) PlayerStats.Instance.SetStat(ParameterType.전황, 90);
+        else if (resultLog.Contains("패배")) PlayerStats.Instance.SetStat(ParameterType.전황, 10);
+        else PlayerStats.Instance.SetStat(ParameterType.전황, 50);
 
-        int warSituation = PlayerStats.Instance.GetStat(ParameterType.전황);
-        GameOutcome outcome;
-
-        if (warSituation <= 19) outcome = GameOutcome.Defeat;
-        else if (warSituation >= 81) outcome = GameOutcome.Victory;
-        else outcome = GameOutcome.Draw;
-
-        int chapterIndex = CurrentChapter - 1;
-        if (chapterIndex < chapterEndDataList.Count && chapterEndDataList[chapterIndex] != null)
-        {
-            chapterEndController.StartChapterEndSequence(chapterEndDataList[chapterIndex], outcome);
-        }
-        else
-        {
-            OnChapterEndSequenceComplete();
-        }
+        // OnStateFinished()를 바로 호출하는 대신, InBattleResult 상태로 직접 변경
+        ChangeState(GameState.InBattleResult);
     }
 
-    private void OnChapterEndSequenceComplete()
+    // <<<<<<< [추가 7] BattleResultPanel의 버튼이 호출할 공개 함수
+    public void OnBattleResultConfirmed()
     {
-        if (isReturningToTitle) return;
-
-        DataManager.Instance.PlayerData.currentChapter++;
-        DataManager.Instance.SaveGame();
-
-        mainGameCanvas.SetActive(true);
-        if (uiFlowSimulator != null) uiFlowSimulator.BeginFlow();
+        // OnClick 이벤트가 발생하면 다음 상태(InChapterResult)로 진행
+        OnStateFinished();
     }
 
-    public void CheckGameOverConditions()
+    public void OnChapterResultConfirmed()
     {
-        if (PlayerStats.Instance.GetStat(ParameterType.정치력) <= 0 ||
-            PlayerStats.Instance.GetStat(ParameterType.병력) <= 0 ||
-            PlayerStats.Instance.GetStat(ParameterType.물자) <= 0 ||
-            PlayerStats.Instance.GetStat(ParameterType.리더십) <= 0)
-        {
-            GameOver();
-        }
+        // OnClick 이벤트가 발생하면 다음 상태(다음 챕터)로 진행시킵니다.
+        OnStateFinished();
     }
 
-    public void GameOver()
-    {
-        gameOverPanel.SetActive(true);
-    }
-
-    public void OnGameOverPanelTouched()
-    {
-        gameOverPanel.SetActive(false);
-        DataManager.Instance.StartNewGame();
-        ResetAllGameData();
-        mainGameCanvas.SetActive(true);
-        if (uiFlowSimulator != null) uiFlowSimulator.BeginFlow();
-    }
-
-    public void ShowOptionsPanel()
-    {
-        if (optionCanvas != null) optionCanvas.SetActive(true);
-    }
-
-    public void HideOptionsPanel()
-    {
-        if (optionCanvas != null) optionCanvas.SetActive(false);
-    }
-
-    public void StartNextPlaythrough()
-    {
-        DataManager.Instance.PlayerData.playthroughCount++;
-        EventManager.Instance.ResetEventManagerState();
-        DataManager.Instance.SaveGame();
-
-        if (battleResultPanel != null) battleResultPanel.SetActive(false);
-        if (gameOverPanel != null) gameOverPanel.SetActive(false);
-        mainGameCanvas.SetActive(true);
-        InGameUIPanel.SetActive(true);
-
-        StartEventFlow();
-    }
-
-    public void ResetAllGameData()
-    {
-        if (EventManager.Instance != null) EventManager.Instance.ResetEventManagerState();
-        if (battleTurnManager != null) battleTurnManager.ResetForNewBattle();
-        if (mainScenarioManager != null) mainScenarioManager.ResetScenarioState();
-        if (DataManager.PlaythroughHistory.Instance != null) DataManager.PlaythroughHistory.Instance.ClearHistory();
-    }
-
-    public void GoToTitleScreen()
-    {
-        isReturningToTitle = true;
-        StopAllCoroutines();
-        ResetAllGameData();
-
-        mainGameCanvas.SetActive(false);
-        commanderSelectionCanvas.SetActive(false);
-        gameOverPanel.SetActive(false);
-        optionCanvas.SetActive(false);
-        confirmationPanel.SetActive(false);
-
-        titleCanvas.SetActive(true);
-        titlePanel.SetActive(true);
-        menuPanel.SetActive(false);
-    }
-
+    public void HideTutorial() { if (tutorialPanel != null && tutorialPanel.activeSelf) { tutorialPanel.SetActive(false); } }
+    private void RestoreGameState(GameState stateToRestore) { Debug.Log($"[게임 상태 복원] -> {stateToRestore}"); currentGameState = stateToRestore; SetUIForState(stateToRestore); switch (stateToRestore) { case GameState.InEventCycle: uiFlowSimulator.BeginFlow(); break; case GameState.InStory: mainScenarioManager.BeginScenarioFromStart(); break; case GameState.InBattle: battleTurnManager.OnBattleEnd += HandleBattleEnd; break; } }
+    public void OnClickNewGameFromScratch() { ShowConfirmation("모든 진행 상황이 삭제됩니다. 정말 새로 시작하시겠습니까?", () => { DataManager.Instance.DeleteLocalSaveData(); DataManager.Instance.StartNewGame(); ResetAllGameData(); UnlockManager.ResetAllUnlocks(); ChangeState(GameState.CommanderSelection); }); }
+    public void OnClickContinueGame() { if (DataManager.Instance.PlayerData != null) { RestoreGameState(DataManager.Instance.PlayerData.currentGameState); } }
+    public void SaveAndReturnToTitle() { ShowConfirmation("진행 상황을 저장하고 타이틀로 돌아가시겠습니까?", () => { isReturningToTitle = true; if (DataManager.Instance.PlayerData != null) { DataManager.Instance.PlayerData.currentGameState = this.currentGameState; DataManager.Instance.SaveGame(); } ChangeState(GameState.MainMenu); isReturningToTitle = false; }); }
+    public void OnTitlePanelTouched() { ChangeState(GameState.Login); titlePanel.SetActive(false); menuPanel.SetActive(true); if (Application.platform == RuntimePlatform.Android) { PlayGamesPlatform.Instance.Authenticate(OnAuthenticated); } else { OnAuthenticated(SignInStatus.Success); } }
+    private void OnAuthenticated(SignInStatus status) { ChangeState(GameState.MainMenu); continueButton.interactable = DataManager.Instance.CheckIfSaveDataExists(); if (status == SignInStatus.Success) { Debug.Log("구글 플레이 게임 서비스 로그인 성공!"); } else { Debug.LogError("구글 플레이 게임 서비스 로그인 실패: " + status); if (FirebaseManager.Instance != null) FirebaseManager.Instance.GPGSLogin(); } }
+    public async void OnCommanderSelected(int commanderIndex) { CommanderInfo selectedCommander = null; switch (commanderIndex) { case 0: selectedCommander = Commander1Button.GetComponent<CommanderInfo>(); break; case 1: selectedCommander = Commander2Button.GetComponent<CommanderInfo>(); break; case 2: selectedCommander = Commander3Button.GetComponent<CommanderInfo>(); break; default: Debug.LogError($"잘못된 지휘관 인덱스입니다: {commanderIndex}"); return; } if (!UnlockManager.IsUnlocked(selectedCommander.traitEnum)) { Debug.LogWarning($"[시스템] 잠겨있는 지휘관({selectedCommander.name})은 선택할 수 없습니다."); return; } PlayerStats.Instance.SetActiveCommander(selectedCommander); if (selectedCommander.initialStatAdjustments.Count > 0) { PlayerStats.Instance.ApplyChanges(selectedCommander.initialStatAdjustments); } await EventManager.Instance.StartNewGame(selectedPackNumber); OnStateFinished(); }
+    private void StartDetailedResultSequence() { int warSituation = PlayerStats.Instance.GetStat(ParameterType.전황); GameOutcome outcome = (warSituation <= 19) ? GameOutcome.Defeat : (warSituation >= 81) ? GameOutcome.Victory : GameOutcome.Draw; int chapterIndex = CurrentChapter - 1; if (chapterIndex < chapterEndDataList.Count && chapterEndDataList[chapterIndex] != null) { chapterEndController.StartChapterEndSequence(chapterEndDataList[chapterIndex], outcome); } else { OnStateFinished(); } }
+    public void GameOver() { gameOverPanel.SetActive(true); }
+    public void OnGameOverPanelTouched() { DataManager.Instance.StartNewGame(); ResetAllGameData(); ChangeState(GameState.CommanderSelection); }
+    public void CheckGameOverConditions() { if (PlayerStats.Instance.GetStat(ParameterType.정치력) <= 0 || PlayerStats.Instance.GetStat(ParameterType.병력) <= 0 || PlayerStats.Instance.GetStat(ParameterType.물자) <= 0 || PlayerStats.Instance.GetStat(ParameterType.리더십) <= 0) { GameOver(); } }
+    public void ResetAllGameData() { EventManager.Instance.ResetEventManagerState(); battleTurnManager.ResetForNewBattle(); mainScenarioManager.ResetScenarioState(); }
+    public void ShowConfirmation(string message, UnityAction confirmAction) { confirmationText.text = message; onConfirmAction = confirmAction; confirmationPanel.SetActive(true); }
+    public void OnConfirm() { onConfirmAction?.Invoke(); confirmationPanel.SetActive(false); onConfirmAction = null; }
+    public void OnCancel() { confirmationPanel.SetActive(false); onConfirmAction = null; }
     public void ExitGame()
     {
         ShowConfirmation("게임을 종료하시겠습니까?", () =>
@@ -480,57 +340,8 @@ public class GameManager : MonoBehaviour
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
 #else
-            Application.Quit();
+    Application.Quit();
 #endif
         });
     }
-
-
-
-    private void HandleEventCycleCompleted()
-    {
-        if (DataManager.Instance?.PlayerData == null) return;
-
-        int currentPlaythrough = DataManager.Instance.PlayerData.playthroughCount;
-
-        int chapterIndex = CurrentChapter - 1;
-        // 현재 챕터에 해당하는 엔딩 컷신이 있는지 확인
-        if (chapterEndingCutscenes != null && chapterIndex < chapterEndingCutscenes.Count && chapterEndingCutscenes[chapterIndex] != null)
-        {
-            // 컷신이 끝나면 원래 로직을 실행하도록 이벤트 구독
-            CutsceneManager.OnCutsceneFinished += ProceedAfterChapterEndCutscene;
-            cutsceneManager.StartCutscene(chapterEndingCutscenes[chapterIndex]);
-        }
-        else
-        {
-            // 컷신이 없으면 바로 다음 진행
-            ProceedAfterChapterEndCutscene();
-        }
-    }
-    private void ProceedAfterChapterEndCutscene()
-    {
-        // 이벤트 구독 해제!
-        CutsceneManager.OnCutsceneFinished -= ProceedAfterChapterEndCutscene;
-
-        int currentPlaythrough = DataManager.Instance.PlayerData.playthroughCount;
-
-        if (currentPlaythrough == 1) GoToBattlePanel();
-        else GoToStoryPanel();
-    }
-
-#if UNITY_EDITOR
-    public void OnForceGameOverButtonClicked()
-    {
-        ForceGameOver();
-    }
-
-    public void ForceGameOver()
-    {
-        List<ParameterChange> changes = new List<ParameterChange>
-        {
-            new ParameterChange { parameterType = ParameterType.정치력, valueChange = -100 },
-        };
-        PlayerStats.Instance.ApplyChanges(changes);
-    }
-#endif
 }

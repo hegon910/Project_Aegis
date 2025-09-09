@@ -42,6 +42,13 @@ public class DataManager : MonoBehaviour
     public Dictionary<int, string> roundTypeDict; // 라운드타입 룩업
     public Dictionary<int, string> pageTypeDict; //페이지타입 룩업
 
+    [Header("메인 스토리 데이터")]
+    public List<MainEventData> MainStoryEvents;
+    public Dictionary<int, string> MainStoryAnswers;
+    public Dictionary<int, string> MainStoryCharacters;
+    public Dictionary<int, string> MainStoryDialogues; // Dialogue CSV를 위한 Dictionary
+    public Dictionary<int, Sprite> MainStoryCharacterImages; // 이미지 리소스를 위한 Dictionary
+    public Dictionary<int, Sprite> MainStoryBGs; // 배경 리소스를 위한 Dictionary
     private void Awake()
     {
         if (Instance == null)
@@ -71,7 +78,7 @@ public class DataManager : MonoBehaviour
     /// <summary>
     /// 파일에서 플레이어 데이터를 불러옵니다. 파일이 없으면 새 게임 데이터가 생성됩니다.
     /// </summary>
-    public void LoadGame()
+    public bool LoadGame() // void -> bool로 변경
     {
         if (File.Exists(_playerDataSavePath))
         {
@@ -84,22 +91,45 @@ public class DataManager : MonoBehaviour
                 {
                     Debug.LogWarning("세이브 파일이 손상되어 새 게임을 시작합니다.");
                     StartNewGame();
+                    return false; // 로드 실패
                 }
                 else
                 {
                     Debug.Log($"게임 데이터 로드 완료. (회차: {PlayerData.playthroughCount}, 챕터: {PlayerData.currentChapter})");
+                    return true; // 로드 성공
                 }
             }
             catch (System.Exception e)
             {
                 Debug.LogError($"세이브 파일 로드 실패: {e.Message}. 새 게임을 시작합니다.");
                 StartNewGame();
+                return false; // 로드 실패
             }
         }
         else
         {
             Debug.Log("세이브 파일이 없어 새 게임을 시작합니다.");
             StartNewGame();
+            return false; // 파일 없음
+        }
+    }
+    /// <summary>
+    /// 세이브 파일이 존재하는지 확인합니다.
+    /// </summary>
+    public bool CheckIfSaveDataExists()
+    {
+        return File.Exists(_playerDataSavePath);
+    }
+
+    /// <summary>
+    /// 로컬 세이브 파일을 삭제합니다.
+    /// </summary>
+    public void DeleteLocalSaveData()
+    {
+        if (File.Exists(_playerDataSavePath))
+        {
+            File.Delete(_playerDataSavePath);
+            Debug.Log($"세이브 파일 삭제 완료: {_playerDataSavePath}");
         }
     }
     /// <summary>

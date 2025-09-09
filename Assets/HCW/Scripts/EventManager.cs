@@ -113,7 +113,7 @@ public class EventManager : MonoBehaviour
 
         DataManager.Instance.PlayerData.currentPlaylist = DataManager.Instance.PlayerData.currentPlaylist.OrderBy(x => Guid.NewGuid()).ToList();
         DataManager.Instance.PlayerData.eventPlaylistIndex = 0;
-
+        currentState = EventManagerState.InCycle;
         // [추가] 새 사이클(챕터)이 구성되었으므로 이 상태를 저장합니다.
         DataManager.Instance.SaveGame();
 
@@ -155,6 +155,7 @@ public class EventManager : MonoBehaviour
             }
             else
             {
+                Debug.Log($"[EventManager] 신호 보내기 직전. ID: {eventId} 파라미터 이벤트를 UIFlowSimulator로 보냅니다.");
                 Debug.Log($"파라미터 이벤트(ID: {eventId}) 발생.");
                 OnParameterEventReady?.Invoke(eventId);
                 DataManager.Instance.PlayerData.completedEventIds.Add(eventId); // 완료 기록은 PlayerStats를 통해 DataManager에 추가

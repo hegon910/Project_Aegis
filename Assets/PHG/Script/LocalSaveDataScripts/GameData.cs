@@ -14,6 +14,7 @@ public class GameSettings
 public class GameData
 {
     // --- 진행 상태 ---
+     public GameState currentGameState;
     public int playthroughCount;        // 현재 회차 (PlayerStats)
     public CommanderTrait activeTrait;
     public int currentChapter;          // 현재 챕터 (GameManager)
