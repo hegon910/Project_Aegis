@@ -33,6 +33,8 @@ public class DataManager : MonoBehaviour
     private Dictionary<long, BGData> bgDataDict;
     private Dictionary<long, SFXData> sfxDataDict;
     private Dictionary<long, MainCharacterImgData> characterImgDataDict;
+    //전투 결과 이벤트
+    public Dictionary<int, BattleResultData> battleResultDataDict;
     //엔딩 이벤트
     private Dictionary<long, EndingEventData> endingEventDataDict;
     private Dictionary<long, EndingCutScene> endingCutSceneDict;
@@ -279,15 +281,18 @@ public class DataManager : MonoBehaviour
             var characterImgDataTask = Csvparser.ParseAsync<MainCharacterImgData>("MainCharacterImgData");
             var endingEventDataTask = Csvparser.ParseAsync<EndingEventData>("EndingEventData");
             var endingCutSceneTask = Csvparser.ParseAsync<EndingCutScene>("EndingEventCutScene");
+            var battleResultTask = Csvparser.ParseAsync<BattleResultData>("BattleResultTextData"); 
 
-            var (mainEventList, answerList, characterList, bgList, sfxList, characterImgList, endingEventList, endingCutSceneList) =
-            await UniTask.WhenAll(mainEventTask, answerTask, characterDataTask, bgDataTask, sfxDataTask, characterImgDataTask, endingEventDataTask, endingCutSceneTask);
+            var (mainEventList, answerList, characterList, bgList, sfxList, characterImgList, endingEventList, endingCutSceneList, battleResultList) =
+                await UniTask.WhenAll(mainEventTask, answerTask, characterDataTask, bgDataTask, sfxDataTask, characterImgDataTask, endingEventDataTask, endingCutSceneTask, battleResultTask);
 
             Debug.Log("모든 파일 로딩 완료");
 
             // 새로운 딕셔너리로 데이터를 구성합니다.
             mainEventDataDict = mainEventList.ToDictionary(e => e.ID, e => e);
             answerDataDict = answerList.ToDictionary(a => a.AnswerID, a => a);
+            //배틀 이벤트 데이터
+            battleResultDataDict = battleResultList.ToDictionary(r => r.ResultID, r => r);
             //룩업 데이터 구성
             CharacterDataDict = characterList.ToDictionary(e => e.Chr_ID, e => e);
             bgDataDict = bgList.ToDictionary(bg => bg.BG_ID, bg => bg);
@@ -468,6 +473,17 @@ public class DataManager : MonoBehaviour
         }
 
         return choice;
+    }
+
+    public BattleResultData GetBattleResultDataById(int resultID)
+    {
+        if (battleResultDataDict.TryGetValue(resultID, out var data))
+        {
+            return data;
+        }
+
+        Debug.LogError($"[DataManager] ID {resultID}에 해당하는 전투 결과 데이터를 찾을 수 없습니다.");
+        return null;
     }
 
     public FullEndingData GetEndingData(long endingID)

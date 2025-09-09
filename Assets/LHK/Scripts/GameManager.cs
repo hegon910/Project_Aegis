@@ -29,6 +29,12 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject optionCanvas;
     [SerializeField] private Button exitButton;
 
+    [Header("컷신 시스템")]
+    [SerializeField] private CutsceneManager cutsceneManager;
+    [SerializeField] private CutsceneData chapter1OpeningCutscene;
+    // 필요한 만큼 엔딩 컷신 데이터 추가
+    [SerializeField] private List<CutsceneData> chapterEndingCutscenes;
+
     [Header("튜토리얼")]
     [SerializeField] private GameObject tutorialPanel;
     [SerializeField] private GameObject swipeTutorialImage;
@@ -73,17 +79,22 @@ public class GameManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+        ChapterResultController.OnSequenceComplete += OnChapterEndSequenceComplete;
+        EventManager.OnEventCycleCompleted += HandleEventCycleCompleted;
     }
     private void OnEnable()
     {
-        ChapterResultController.OnSequenceComplete += OnChapterEndSequenceComplete;
-        EventManager.OnEventCycleCompleted += HandleEventCycleCompleted;
+       // ChapterResultController.OnSequenceComplete += OnChapterEndSequenceComplete;
+       // EventManager.OnEventCycleCompleted += HandleEventCycleCompleted;
     }
 
     private void OnDisable()
     {
-        ChapterResultController.OnSequenceComplete -= OnChapterEndSequenceComplete;
-        EventManager.OnEventCycleCompleted -= HandleEventCycleCompleted;
+        if (instance == this)
+        {
+            ChapterResultController.OnSequenceComplete -= OnChapterEndSequenceComplete;
+            EventManager.OnEventCycleCompleted -= HandleEventCycleCompleted;
+        }
     }
 
     private void Start()
@@ -168,6 +179,12 @@ public class GameManager : MonoBehaviour
         confirmationPanel.SetActive(false);
         onConfirmAction = null;
     }
+    // 팩 선택 온 클릭 이벤트
+    public void SelectStoryPack(int packNumber)
+    {
+        selectedPackNumber = packNumber;
+        Debug.Log($"[GameManager] 서브 스토리 팩 {packNumber}번이 선택되었습니다.");
+    }
 
     // [수정] 기존의 (int commanderIndex) 방식을 그대로 유지합니다.
     public async void OnCommanderSelected(int commanderIndex)
@@ -214,7 +231,29 @@ public class GameManager : MonoBehaviour
 
         DataManager.Instance.SaveLocal();
 
-        // [복구] 이후 로직은 원래 플로우 그대로 진행합니다.
+
+        if (DataManager.Instance.PlayerData.playthroughCount == 1 && chapter1OpeningCutscene != null)
+        {
+            // 컷신이 끝나면 게임을 시작하도록 이벤트 구독
+            CutsceneManager.OnCutsceneFinished += StartGameAfterOpening;
+            cutsceneManager.StartCutscene(chapter1OpeningCutscene);
+        }
+        else
+        {
+            // 컷신이 없으면 바로 게임 시작
+            await StartGameFlow();
+        }
+    }
+
+    private async void StartGameAfterOpening()
+    {
+        // 이벤트 구독 해제 (중요!)
+        CutsceneManager.OnCutsceneFinished -= StartGameAfterOpening;
+        await StartGameFlow();
+    }
+
+    private async System.Threading.Tasks.Task StartGameFlow()
+    {
         if (EventManager.Instance != null)
         {
             await EventManager.Instance.StartNewGame(selectedPackNumber);
@@ -314,11 +353,11 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            ReturnToMainGameCanvas();
+            ShowResultPanel();
         }
     }
 
-    public void ReturnToMainGameCanvas()
+    public void ShowResultPanel()
     {
         if (battleResultPanel != null) battleResultPanel.SetActive(false);
         mainGameCanvas.SetActive(false);
@@ -457,6 +496,27 @@ public class GameManager : MonoBehaviour
     private void HandleEventCycleCompleted()
     {
         if (DataManager.Instance?.PlayerData == null) return;
+
+        int currentPlaythrough = DataManager.Instance.PlayerData.playthroughCount;
+
+        int chapterIndex = CurrentChapter - 1;
+        // 현재 챕터에 해당하는 엔딩 컷신이 있는지 확인
+        if (chapterEndingCutscenes != null && chapterIndex < chapterEndingCutscenes.Count && chapterEndingCutscenes[chapterIndex] != null)
+        {
+            // 컷신이 끝나면 원래 로직을 실행하도록 이벤트 구독
+            CutsceneManager.OnCutsceneFinished += ProceedAfterChapterEndCutscene;
+            cutsceneManager.StartCutscene(chapterEndingCutscenes[chapterIndex]);
+        }
+        else
+        {
+            // 컷신이 없으면 바로 다음 진행
+            ProceedAfterChapterEndCutscene();
+        }
+    }
+    private void ProceedAfterChapterEndCutscene()
+    {
+        // 이벤트 구독 해제!
+        CutsceneManager.OnCutsceneFinished -= ProceedAfterChapterEndCutscene;
 
         int currentPlaythrough = DataManager.Instance.PlayerData.playthroughCount;
 
