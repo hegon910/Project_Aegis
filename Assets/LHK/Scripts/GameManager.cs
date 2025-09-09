@@ -122,6 +122,7 @@ public class GameManager : MonoBehaviour
         if (status != SignInStatus.Success)
         {
             Debug.LogError("구글 플레이 게임 서비스 로그인 실패: " + status);
+            FirebaseManager.Instance.GPGSLogin();
         }
     }
 

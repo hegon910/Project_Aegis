@@ -7,9 +7,12 @@ public abstract class SkillData : ScriptableObject
     [Header("공통 정보")]
     public string skillID; // 저장에 사용할 ID
     public string skillName;
+    public int skillRank;
     [TextArea(3, 5)]
     public string description;
     public int cooltime; // 스킬 쿨타임 턴 수
+    [Header("전투 당 1회용 스킬 여부")]
+    public bool isSingleUsePerCombat;
 
     public virtual bool CanUse(WarPlayer player, WarEnemy enemy)
     {

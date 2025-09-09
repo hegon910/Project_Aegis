@@ -67,7 +67,7 @@ public class WarPlayer : MonoBehaviour
         currentShield = Mathf.Clamp(currentShield + amount, 0, maxShield);
         Debug.Log($"Player Shield +{amount} => {currentShield}");
     }
-    
+
 
     // 현재 체력 변경해야 함
     //public void Heal(int amount)
@@ -76,12 +76,12 @@ public class WarPlayer : MonoBehaviour
     //    Debug.Log($"Player HP +{amount} => {hp}");
     //}
 
-    //public void KillByRingOut()
-    //{
-    //    if (hp <= 0) return;
-    //    hp = 0;
-    //    Debug.Log("플레이어 링아웃");
-    //}
+    public void KillByRingOut()
+    {
+        if (Ctrl.CurrentHP <= 0) return;
+        Ctrl.CurrentHP = 0;
+        Debug.Log("플레이어 링아웃");
+    }
     //public void ResetStatus(int hpInit = 5, int shieldInit = 0)//포기화용
     //{
     //    hp = Mathf.Max(0, hpInit);

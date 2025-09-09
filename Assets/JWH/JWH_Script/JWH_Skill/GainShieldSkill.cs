@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "새로운 비상 스킬", menuName = "Skills/회복/긴급 방어")]
-public class EmergencyShieldSkill : SkillData
+public class GainShieldSkill : SkillData
 {
     [Header("스킬 설정")]
     [Tooltip("스킬 발동이 가능한 체력")]
