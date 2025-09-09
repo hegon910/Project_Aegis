@@ -61,6 +61,25 @@ public class CheatManager : MonoBehaviour
         {
             PlayerStats.Instance.SetStat(ParameterType.전황, 90);
         }
+
+        // ']' 키를 누르면 다음 이벤트로 넘어갑니다.
+        if (Input.GetKeyDown(KeyCode.RightBracket))
+        {
+            Debug.Log("치트 키: 다음 이벤트로 스킵합니다.");
+
+            // 메인 시나리오가 실행 중인지 먼저 확인
+            var mainScenarioManager = FindObjectOfType<MainScenarioManager>();
+            if (mainScenarioManager != null && mainScenarioManager.IsScenarioRunning)
+            {
+                mainScenarioManager.SkipToNextNode();
+            }
+            // 그렇지 않으면 일반 이벤트(파라미터/서브) 스킵 시도
+            else if (EventManager.Instance != null)
+            {
+                // 현재 UI 전환 효과 등을 무시하고 즉시 다음 턴을 호출합니다.
+                EventManager.Instance.PlayNextTurn();
+            }
+        }
     }
 #endif
 }
