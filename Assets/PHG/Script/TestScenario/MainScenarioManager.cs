@@ -105,7 +105,7 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
     {
         IsScenarioRunning = false;
         mainStoryUI.panelRoot.SetActive(false);
-        if (PlayerStats.Instance.playthroughCount == 1)
+        if (DataManager.Instance.PlayerData.playthroughCount == 1)
         {
             GameManager.instance.StartEventFlow();
         }
@@ -133,7 +133,42 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
             lastClickTime = Time.time;
         }
     }
+    public void SkipToNextNode()
+    {
+        Debug.Log($"[치트] 현재 노드 '{currentNode.name}'를 스킵하고 다음으로 진행합니다.");
 
+        // 진행 중인 텍스트 타이핑이나 다른 코루틴을 중지
+        if (IsTyping)
+        {
+            StopCoroutine(typingCoroutine);
+            typingCoroutine = null;
+        }
+        // 자동 전환 대기 등 다른 코루틴도 중지
+        StopAllCoroutines();
+
+        if (currentNode == null)
+        {
+            EndScenario();
+            return;
+        }
+
+        // 다음 노드를 결정 (선택지가 있으면 첫 번째, 없으면 null)
+        StoryNode nextNode = null;
+        if (currentNode.choices != null && currentNode.choices.Count > 0)
+        {
+            // 분기점이 있는 경우, 첫 번째 선택지로 강제 진행
+            nextNode = currentNode.choices[0].nextNode;
+        }
+
+        // 선택지 카드가 활성화되어 있었다면 비활성화
+        if (cardController != null && cardController.gameObject.activeSelf)
+        {
+            cardController.gameObject.SetActive(false);
+        }
+
+        // 다음 노드를 표시 (nextNode가 null이면 시나리오 종료)
+        DisplayNode(nextNode);
+    }
     public void UpdateChoicePreview(string text, Color color)
     {
         if (mainStoryUI.choicePreviewImage != null)

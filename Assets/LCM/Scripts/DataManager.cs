@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
+using System.Text;
 using System.Linq;
 using Cysharp.Threading.Tasks;
 using System.Threading.Tasks;
@@ -9,6 +11,9 @@ using JetBrains.Annotations;
 public class DataManager : MonoBehaviour
 {
     public static DataManager Instance { get; private set; }
+
+    public GameData PlayerData { get; private set; }
+    private string _playerDataSavePath;
 
     private UniTaskCompletionSource<bool> _isReady = new UniTaskCompletionSource<bool>();
     public UniTask IsReady => _isReady.Task;
@@ -50,7 +55,89 @@ public class DataManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+
+        // 플레이어 데이터 저장 경로 설정
+        _playerDataSavePath = Path.Combine(Application.persistentDataPath, "playerdata.json");
     }
+
+    /// <summary>
+    /// 새 게임을 시작할 때 호출됩니다.
+    /// </summary>
+    public void StartNewGame()
+    {
+        PlayerData = new GameData();
+        SaveGame();
+        Debug.Log("새로운 게임 데이터 생성 및 저장 완료.");
+    }
+
+    /// <summary>
+    /// 파일에서 플레이어 데이터를 불러옵니다. 파일이 없으면 새 게임 데이터가 생성됩니다.
+    /// </summary>
+    public void LoadGame()
+    {
+        if (File.Exists(_playerDataSavePath))
+        {
+            try
+            {
+                string json = File.ReadAllText(_playerDataSavePath, Encoding.UTF8);
+                PlayerData = JsonUtility.FromJson<GameData>(json);
+
+                if (PlayerData == null)
+                {
+                    Debug.LogWarning("세이브 파일이 손상되어 새 게임을 시작합니다.");
+                    StartNewGame();
+                }
+                else
+                {
+                    Debug.Log($"게임 데이터 로드 완료. (회차: {PlayerData.playthroughCount}, 챕터: {PlayerData.currentChapter})");
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"세이브 파일 로드 실패: {e.Message}. 새 게임을 시작합니다.");
+                StartNewGame();
+            }
+        }
+        else
+        {
+            Debug.Log("세이브 파일이 없어 새 게임을 시작합니다.");
+            StartNewGame();
+        }
+    }
+    /// <summary>
+    /// 현재 플레이어 데이터를 파일에 저장합니다.
+    /// </summary>
+    public void SaveGame()
+    {
+        if (PlayerData == null)
+        {
+            Debug.LogError("저장할 플레이어 데이터가 없습니다.");
+            return;
+        }
+
+        try
+        {
+            string json = JsonUtility.ToJson(PlayerData, true);
+            File.WriteAllText(_playerDataSavePath, json, Encoding.UTF8);
+            Debug.Log($"플레이어 데이터 저장 완료: {_playerDataSavePath}");
+
+            // TODO: 향후 이곳에 GPGS 또는 Firebase 클라우드 저장 로직을 호출합니다.
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"세이브 파일 저장 실패: {e.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 게임이 종료될 때 자동으로 데이터를 저장합니다.
+    /// </summary>
+    private void OnApplicationQuit()
+    {
+        SaveGame();
+    }
+
+
 
     public async UniTask InitializeDataAsync()
     {

@@ -9,8 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 87203a20bcbaa35419a7b50ee400e58a, type: 3}
-  m_Name: Risard_Gambler
+  m_Script: {fileID: 11500000, guid: a7832f6b0ca3b254a8e71b533f64b48d, type: 3}
+  m_Name: Chapter1_Opening
   m_EditorClassIdentifier: 
-  identifier: 2
-  bonusValue: 5
+  steps: []

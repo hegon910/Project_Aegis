@@ -22,18 +22,17 @@ public class EventManager : MonoBehaviour
     [Header("설정")]
     [SerializeField] private int totalEventsPerCycle = 24;
 
-
-    // 상태 변수
+    // [수정] 상태 변수들이 이제 DataManager의 PlayerData와 동기화됩니다.
     private EventManagerState currentState = EventManagerState.Idle;
-    private int currentChapter = 1; 
     private int selectedPackNumber;
 
-    // 이벤트 풀 및 재생 목록
-    private List<int> playedSubEventGroups = new List<int>();
-    private List<int> currentCyclePlaylist = new List<int>();
-    private int playlistIndex = 0;
-    private int currentSubEventIndex;
+    // [제거] 아래 변수들은 이제 DataManager.Instance.PlayerData에 저장되므로 제거합니다.
+    // private int currentChapter = 1; 
+    // private List<int> playedSubEventGroups = new List<int>();
+    // private List<int> currentCyclePlaylist = new List<int>();
+    // private int playlistIndex = 0;
 
+    private int currentSubEventIndex;
 
     private void Awake()
     {
@@ -48,132 +47,121 @@ public class EventManager : MonoBehaviour
         }
     }
 
-
     public async UniTask StartNewGame(int packNumber)
     {
         selectedPackNumber = packNumber;
-        currentChapter = 1;
-        playedSubEventGroups.Clear();
 
-        // DataManager가 여기서 초기화된다고 가정
-        await DataManager.Instance.InitializeDataAsync();
-        await DataManager.Instance.SubIntializeDataAsync();
-        
+        // [수정] DataManager의 새 게임 데이터에 기반하여 초기화합니다.
+        DataManager.Instance.PlayerData.currentChapter = 1;
+        DataManager.Instance.PlayerData.playedSubEventGroups.Clear();
+
+        // DataManager의 CSV 데이터 초기화는 GameManager에서 이미 수행했으므로 여기서는 호출하지 않습니다.
+        // await DataManager.Instance.InitializeDataAsync();
+        // await DataManager.Instance.SubIntializeDataAsync();
+
         StartNewCycle();
         currentState = EventManagerState.InCycle;
-        Debug.Log($"새 게임 시작. 팩: {selectedPackNumber}, 챕터: {currentChapter}");
-        
-        // PlayNextTurn(); 
+        Debug.Log($"새 게임 시작. 팩: {selectedPackNumber}, 챕터: {DataManager.Instance.PlayerData.currentChapter}");
     }
 
     public void StartNewCycle()
     {
-        currentCyclePlaylist.Clear();
+        // [수정] DataManager의 플레이리스트를 비웁니다.
+        DataManager.Instance.PlayerData.currentPlaylist.Clear();
         List<int> tutorialEvents = new List<int>();
 
-        // 1회차일 경우 튜토리얼 이벤트를 모두 포함
-        if (PlayerStats.Instance.playthroughCount == 1)
+        // [수정] PlayerStats 대신 DataManager에서 회차 정보와 완료 이벤트 목록을 가져옵니다.
+        if (DataManager.Instance.PlayerData.playthroughCount == 1)
         {
+            var completedIds = new HashSet<int>(DataManager.Instance.PlayerData.completedEventIds);
             tutorialEvents = DataManager.Instance.eventDataDict.Values
-                .Where(d => d.PageType == 1 && !PlayerStats.Instance.completedEventIds.Contains(d.ID))
+                .Where(d => d.PageType == 1 && !completedIds.Contains(d.ID))
                 .Select(d => d.ID)
                 .ToList();
-            currentCyclePlaylist.AddRange(tutorialEvents);
+            DataManager.Instance.PlayerData.currentPlaylist.AddRange(tutorialEvents);
         }
-        
-        Debug.Log($"[EventManager] 튜토리얼 이벤트 추가 후: {currentCyclePlaylist.Count}개");
 
-        // 남은 슬롯 계산
-        int remainingSlots = totalEventsPerCycle - currentCyclePlaylist.Count;
-        Debug.Log($"[EventManager] 남은 슬롯 계산: {totalEventsPerCycle} - {currentCyclePlaylist.Count} = {remainingSlots}개");
+        Debug.Log($"[EventManager] 튜토리얼 이벤트 추가 후: {DataManager.Instance.PlayerData.currentPlaylist.Count}개");
+
+        int remainingSlots = totalEventsPerCycle - DataManager.Instance.PlayerData.currentPlaylist.Count;
 
         if (remainingSlots > 0)
         {
-            // 서브 이벤트 추가 (1개 그룹)
-            var availableGroups = GetSubEventGroupsForPack(selectedPackNumber).Except(playedSubEventGroups).ToList();
+            // [수정] DataManager의 playedSubEventGroups를 참조합니다.
+            var availableGroups = GetSubEventGroupsForPack(selectedPackNumber)
+                .Except(DataManager.Instance.PlayerData.playedSubEventGroups).ToList();
+
             if (availableGroups.Count > 0)
             {
                 int selectedGroup = availableGroups[UnityEngine.Random.Range(0, availableGroups.Count)];
                 var subEventChain = GetSubEventChain(selectedPackNumber, selectedGroup);
-                Debug.Log($"[EventManager] 서브 이벤트 그룹 {selectedGroup} 선택, 체인 길이: {subEventChain.Count}턴");
 
-                // 서브 이벤트 체인 전체가 들어갈 자리가 있는지 확인
                 if (subEventChain.Count > 0 && subEventChain.Count <= remainingSlots)
                 {
-                    playedSubEventGroups.Add(selectedGroup); // 확정되면 추가
-                    currentCyclePlaylist.Add(subEventChain.First().Index);
+                    DataManager.Instance.PlayerData.playedSubEventGroups.Add(selectedGroup); // 확정되면 추가
+                    DataManager.Instance.PlayerData.currentPlaylist.Add(subEventChain.First().Index);
                     remainingSlots -= subEventChain.Count;
-                    Debug.Log($"[EventManager] 서브 이벤트 추가 후 플레이리스트: {currentCyclePlaylist.Count}개, 남은 슬롯: {remainingSlots}개");
                 }
-                else
-                {
-                    Debug.Log($"[EventManager] 서브 이벤트를 추가하지 않음 (체인 길이: {subEventChain.Count}, 남은 슬롯: {remainingSlots})");
-                }
-            }
-            else
-            {
-                Debug.Log("[EventManager] 추가할 수 있는 서브 이벤트 그룹 없음.");
             }
 
-            // 나머지 슬롯을 공용 파라미터 이벤트로 채움
             if (remainingSlots > 0)
             {
-                Debug.Log($"[EventManager] {remainingSlots}개의 공용 파라미터 이벤트를 추가");
                 var commonParameterEvents = GetCommonParameterEvents();
-                currentCyclePlaylist.AddRange(commonParameterEvents.OrderBy(x => Guid.NewGuid()).Take(remainingSlots));
+                DataManager.Instance.PlayerData.currentPlaylist.AddRange(commonParameterEvents.OrderBy(x => Guid.NewGuid()).Take(remainingSlots));
             }
         }
 
-        // 최종 재생 목록 셔플
-        currentCyclePlaylist = currentCyclePlaylist.OrderBy(x => Guid.NewGuid()).ToList();
-        playlistIndex = 0;
-        
-        Debug.Log($"사이클 시작 (회차: {PlayerStats.Instance.playthroughCount}). 총 이벤트: {currentCyclePlaylist.Count}개 (튜토리얼: {tutorialEvents.Count}개)");
+        DataManager.Instance.PlayerData.currentPlaylist = DataManager.Instance.PlayerData.currentPlaylist.OrderBy(x => Guid.NewGuid()).ToList();
+        DataManager.Instance.PlayerData.eventPlaylistIndex = 0;
+
+        // [추가] 새 사이클(챕터)이 구성되었으므로 이 상태를 저장합니다.
+        DataManager.Instance.SaveGame();
+
+        Debug.Log($"사이클 시작 (회차: {DataManager.Instance.PlayerData.playthroughCount}). 총 이벤트: {DataManager.Instance.PlayerData.currentPlaylist.Count}개");
     }
 
     public void PlayNextTurn()
     {
         if (currentState == EventManagerState.Idle) return;
 
-        if (currentState == EventManagerState.InSubEvent)
-        {
-            Debug.Log("서브 이벤트 진행 중... 유저의 선택을 기다립니다.");
-            return;
-        }
-        
+        // [추가] 다음 턴을 시작하기 전에(즉, 이전 이벤트 선택 직후) 게임을 저장합니다. (요구사항 1)
+        Debug.Log("이전 이벤트 선택 완료. **이벤트 종료 시점 저장**");
+        DataManager.Instance.SaveGame();
+
+        //if (currentState == EventManagerState.InSubEvent)
+        //{
+        //    Debug.Log("서브 이벤트 진행 중... 유저의 선택을 기다립니다.");
+        //    return;
+        //}
+
         if (currentState == EventManagerState.InCycle)
         {
-            if (playlistIndex >= currentCyclePlaylist.Count)
+            // [수정] DataManager의 플레이리스트 인덱스를 사용합니다.
+            if (DataManager.Instance.PlayerData.eventPlaylistIndex >= DataManager.Instance.PlayerData.currentPlaylist.Count)
             {
                 Debug.Log("현재 사이클(챕터)의 모든 이벤트를 완료했습니다.");
-                currentState = EventManagerState.Idle; // 사이클이 끝났으므로 상태를 Idle로 변경
-                OnEventCycleCompleted?.Invoke(); // 사이클 종료 이벤트 호출
-
-                currentChapter++; 
-                Debug.Log($"다음 챕터({currentChapter}) 준비 완료. 외부에서 StartNewCycle()을 호출해야 시작합니다.");
-                return; // 다음 턴을 바로 진행하지 않고 여기서 멈춤
+                currentState = EventManagerState.Idle;
+                OnEventCycleCompleted?.Invoke();
+                return;
             }
 
-            int eventId = currentCyclePlaylist[playlistIndex++];
-            
-            // ID가 10000 미만이면 서브 이벤트의 Index로 이상이면 파라미터 이벤트의 ID로 간주
-            if (eventId < 10000) 
+            // [수정] DataManager에서 이벤트 ID를 가져오고 인덱스를 증가시킵니다.
+            int eventId = DataManager.Instance.PlayerData.currentPlaylist[DataManager.Instance.PlayerData.eventPlaylistIndex++];
+
+            if (eventId < 10000)
             {
-                currentState = EventManagerState.InSubEvent;
+               // currentState = EventManagerState.InSubEvent;
                 DisplaySubEvent(eventId);
             }
-            else 
+            else
             {
-                Debug.Log($"파라미터 이벤트(ID: {eventId})발생");
+                Debug.Log($"파라미터 이벤트(ID: {eventId}) 발생.");
                 OnParameterEventReady?.Invoke(eventId);
-                PlayerStats.Instance.AddCompletedEvent(eventId);
+                DataManager.Instance.PlayerData.completedEventIds.Add(eventId); // 완료 기록은 PlayerStats를 통해 DataManager에 추가
             }
         }
     }
 
-    /// <summary>
-    /// 서브 이벤트를 화면에 표시합니다.
-    /// </summary>
     private void DisplaySubEvent(int index)
     {
         currentSubEventIndex = index;
@@ -186,15 +174,11 @@ public class EventManager : MonoBehaviour
             if (data.IsFinish)
             {
                 Debug.Log("서브 이벤트 체인 종료.");
-                // 여기서 바로 다음 턴으로 넘어가지 않고 유저의 확인 후 다음 턴이 진행되도록 UI 플로우에 맡김
-                currentState = EventManagerState.InCycle; 
+                currentState = EventManagerState.InCycle;
             }
         }
     }
-    
-    /// <summary>
-    /// 유저가 서브 이벤트 선택지를 골랐을 때 호출됩니다.
-    /// </summary>
+
     public void OnSubEventChoiceSelected(bool isLeftChoice)
     {
         if (currentState != EventManagerState.InSubEvent) return;
@@ -202,14 +186,13 @@ public class EventManager : MonoBehaviour
         var currentData = DataManager.Instance.SubEvents.FirstOrDefault(e => e.Index == currentSubEventIndex);
         if (currentData == null) return;
 
-        // 사용한 서브 이벤트는 완료 목록에 추가 (체인 시작점 기준)
-        PlayerStats.Instance.AddCompletedEvent(currentSubEventIndex);
+        DataManager.Instance.PlayerData.completedEventIds.Add(currentSubEventIndex);
 
         int nextIndex = -1;
         string nextIndexStr = isLeftChoice ? currentData.NextLeftSelectString : currentData.NextRightSelectString;
         int.TryParse(nextIndexStr, out nextIndex);
 
-        if(nextIndex > 0)
+        if (nextIndex > 0)
         {
             DisplaySubEvent(nextIndex);
         }
@@ -217,18 +200,22 @@ public class EventManager : MonoBehaviour
         {
             Debug.Log("서브 이벤트의 마지막입니다.");
             currentState = EventManagerState.InCycle;
-            // 여기서도 바로 다음 턴으로 넘어가지 않고 UI 플로우(결과 연출 등)가 끝난 후 PlayNextTurn이 호출되도록 기다림
         }
     }
 
     public void ResetEventManagerState()
     {
         currentState = EventManagerState.Idle;
-        currentChapter = 1;
         selectedPackNumber = 0;
-        playedSubEventGroups.Clear();
-        currentCyclePlaylist.Clear();
-        playlistIndex = 0;
+
+        // [수정] DataManager의 관련 데이터만 초기화하면 됩니다.
+        if (DataManager.Instance?.PlayerData != null)
+        {
+            DataManager.Instance.PlayerData.playedSubEventGroups.Clear();
+            DataManager.Instance.PlayerData.currentPlaylist.Clear();
+            DataManager.Instance.PlayerData.eventPlaylistIndex = 0;
+        }
+
         Debug.Log("EventManager 상태가 초기화되었습니다.");
     }
 
@@ -253,9 +240,9 @@ public class EventManager : MonoBehaviour
 
     private List<int> GetCommonParameterEvents()
     {
-        if (DataManager.Instance?.eventDataDict.Values == null || PlayerStats.Instance == null) return new List<int>();
-    
-        var completedIds = new HashSet<int>(PlayerStats.Instance.completedEventIds);
+        if (DataManager.Instance?.eventDataDict.Values == null || DataManager.Instance.PlayerData == null) return new List<int>();
+
+        var completedIds = new HashSet<int>(DataManager.Instance.PlayerData.completedEventIds);
 
         return DataManager.Instance.eventDataDict.Values
             .Where(d => d.PageType == 0 && !completedIds.Contains(d.ID))

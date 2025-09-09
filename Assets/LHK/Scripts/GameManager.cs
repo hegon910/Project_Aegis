@@ -29,17 +29,22 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject optionCanvas;
     [SerializeField] private Button exitButton;
 
+    [Header("컷신 시스템")]
+    [SerializeField] private CutsceneManager cutsceneManager;
+    [SerializeField] private CutsceneData chapter1OpeningCutscene;
+    // 필요한 만큼 엔딩 컷신 데이터 추가
+    [SerializeField] private List<CutsceneData> chapterEndingCutscenes;
+
     [Header("튜토리얼")]
     [SerializeField] private GameObject tutorialPanel;
     [SerializeField] private GameObject swipeTutorialImage;
     [SerializeField] private GameObject parameterTutoText;
 
     [Header("챕터 결산 연출")]
-    [SerializeField] private ChapterResultController chapterEndController; // 새로 만든 컨트롤러 연결
-    [SerializeField] private List<ChapterResultData> chapterEndDataList;   // 챕터별 데이터 에셋 목록 연결
-    private int currentChapter = 1; // 현재 챕터를 추적하기 위한 변수
+    [SerializeField] private ChapterResultController chapterEndController;
+    [SerializeField] private List<ChapterResultData> chapterEndDataList;
     [SerializeField] private GameObject chapterResultPanel;
-    public int CurrentChapter => currentChapter;
+    public int CurrentChapter => DataManager.Instance?.PlayerData != null ? DataManager.Instance.PlayerData.currentChapter : 1;
 
     [Header("범용 확인 창")]
     [SerializeField] private GameObject confirmationPanel;
@@ -58,10 +63,11 @@ public class GameManager : MonoBehaviour
     [Header("디버그")]
     [SerializeField] private Button forceGameOverButton;
 
-    private bool hasSaveDate = false;
+    private bool hasSaveData = false;
     private UnityAction onConfirmAction;
     private bool isReturningToTitle = false;
-    private int selectedPackNumber = 1001; // 기본 팩 번호
+    private int selectedPackNumber = 1001;
+
     private void Awake()
     {
         if (instance == null)
@@ -73,28 +79,35 @@ public class GameManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+        ChapterResultController.OnSequenceComplete += OnChapterEndSequenceComplete;
+        EventManager.OnEventCycleCompleted += HandleEventCycleCompleted;
     }
     private void OnEnable()
     {
-        ChapterResultController.OnSequenceComplete += OnChapterEndSequenceComplete;
-        EventManager.OnEventCycleCompleted += HandleEventCycleCompleted;
+       // ChapterResultController.OnSequenceComplete += OnChapterEndSequenceComplete;
+       // EventManager.OnEventCycleCompleted += HandleEventCycleCompleted;
     }
 
     private void OnDisable()
     {
-        ChapterResultController.OnSequenceComplete -= OnChapterEndSequenceComplete;
-        EventManager.OnEventCycleCompleted -= HandleEventCycleCompleted;
+        if (instance == this)
+        {
+            ChapterResultController.OnSequenceComplete -= OnChapterEndSequenceComplete;
+            EventManager.OnEventCycleCompleted -= HandleEventCycleCompleted;
+        }
     }
 
     private void Start()
     {
-        Debug.Log("====게임 매니저가 초기화=====");
-        InitializeGame();
+        InitializeGameAndLoadData();
     }
 
-    private void InitializeGame()
+    private async void InitializeGameAndLoadData()
     {
-        PlayerStats.Instance.InitializeStats();
+        await DataManager.Instance.InitializeDataAsync();
+        await DataManager.Instance.SubIntializeDataAsync();
+        DataManager.Instance.LoadGame();
+
         titlePanel.SetActive(true);
         loginPanel.SetActive(false);
         menuPanel.SetActive(false);
@@ -111,14 +124,22 @@ public class GameManager : MonoBehaviour
         menuPanel.SetActive(true);
         if (Application.platform == RuntimePlatform.Android)
         {
+            PlayGamesPlatform.Instance.Authenticate(OnAuthenticated);
+        }
+    }
+
+    private void OnAuthenticated(SignInStatus status)
+    {
+        if (status != SignInStatus.Success)
+        {
+            Debug.LogError("구글 플레이 게임 서비스 로그인 실패: " + status);
             FirebaseManager.Instance.GPGSLogin();
         }
     }
 
     public void OnNewGameButtonClicked()
     {
-        Debug.Log("새 게임 버튼 클릭됨");
-        if (hasSaveDate)
+        if (hasSaveData)
         {
             overwriteWarningPanel.SetActive(true);
         }
@@ -131,7 +152,9 @@ public class GameManager : MonoBehaviour
     public void StartNewGame()
     {
         isReturningToTitle = false;
+        DataManager.Instance.StartNewGame();
         ResetAllGameData();
+
         menuPanel.SetActive(false);
         titleCanvas.SetActive(false);
         commanderSelectionCanvas.SetActive(true);
@@ -139,43 +162,94 @@ public class GameManager : MonoBehaviour
 
     public void ShowConfirmation(string message, UnityAction confirmAction)
     {
-        if (confirmationPanel != null)
-        {
-            confirmationText.text = message;
-            onConfirmAction = confirmAction;
-            confirmationPanel.SetActive(true);
-        }
-        else
-        {
-            Debug.LogWarning("Confirmation Panel이 Inspector에 할당되지 않았습니다!");
-        }
+        confirmationText.text = message;
+        onConfirmAction = confirmAction;
+        confirmationPanel.SetActive(true);
     }
 
     public void OnConfirm()
     {
         onConfirmAction?.Invoke();
-        if (confirmationPanel != null)
-        {
-            confirmationPanel.SetActive(false);
-        }
+        confirmationPanel.SetActive(false);
         onConfirmAction = null;
     }
 
     public void OnCancel()
     {
-        if (confirmationPanel != null)
-        {
-            confirmationPanel.SetActive(false);
-        }
+        confirmationPanel.SetActive(false);
         onConfirmAction = null;
     }
 
+    // [수정] 기존의 (int commanderIndex) 방식을 그대로 유지합니다.
     public async void OnCommanderSelected(int commanderIndex)
     {
-        // 지휘관 선택 시 이벤트 매니저를 초기화하고 새 게임 시작
+        CommanderInfo selectedCommander = null;
+
+        // [복구] 보내주신 기존 플로우대로, int 값에 따라 버튼 변수에서 CommanderInfo를 가져옵니다.
+        //        (새로운 리스트가 필요 없습니다.)
+        switch (commanderIndex)
+        {
+            case 0:
+                selectedCommander = Commander1Button.GetComponent<CommanderInfo>();
+                break;
+            case 1:
+                selectedCommander = Commander2Button.GetComponent<CommanderInfo>();
+                break;
+            case 2:
+                selectedCommander = Commander3Button.GetComponent<CommanderInfo>();
+                break;
+            default:
+                Debug.LogError($"잘못된 지휘관 인덱스입니다: {commanderIndex}");
+                return;
+        }
+
+        if (selectedCommander == null)
+        {
+            Debug.LogError($"지휘관 버튼에 CommanderInfo 컴포넌트가 없습니다! Index: {commanderIndex}");
+            return;
+        }
+
+        // [복구] 유실되었던 기능 (해금 확인, 스탯 적용, 저장)을 이 함수 안에서 처리합니다.
+        if (!UnlockManager.IsUnlocked(selectedCommander.traitEnum))
+        {
+            Debug.LogWarning($"[시스템] 잠겨있는 지휘관({selectedCommander.name})은 선택할 수 없습니다.");
+            return;
+        }
+
+        PlayerStats.Instance.SetActiveCommander(selectedCommander);
+
+        if (selectedCommander.initialStatAdjustments.Count > 0)
+        {
+            PlayerStats.Instance.ApplyChanges(selectedCommander.initialStatAdjustments);
+        }
+
+        DataManager.Instance.SaveGame();
+
+
+        if (DataManager.Instance.PlayerData.playthroughCount == 1 && chapter1OpeningCutscene != null)
+        {
+            // 컷신이 끝나면 게임을 시작하도록 이벤트 구독
+            CutsceneManager.OnCutsceneFinished += StartGameAfterOpening;
+            cutsceneManager.StartCutscene(chapter1OpeningCutscene);
+        }
+        else
+        {
+            // 컷신이 없으면 바로 게임 시작
+            await StartGameFlow();
+        }
+    }
+
+    private async void StartGameAfterOpening()
+    {
+        // 이벤트 구독 해제 (중요!)
+        CutsceneManager.OnCutsceneFinished -= StartGameAfterOpening;
+        await StartGameFlow();
+    }
+
+    private async System.Threading.Tasks.Task StartGameFlow()
+    {
         if (EventManager.Instance != null)
         {
-            // commanderIndex 대신, 메뉴에서 선택했던 selectedPackNumber를 사용
             await EventManager.Instance.StartNewGame(selectedPackNumber);
         }
         else
@@ -188,20 +262,15 @@ public class GameManager : MonoBehaviour
         mainGameCanvas.SetActive(true);
         InGameUIPanel.SetActive(true);
 
-        if (PlayerStats.Instance.playthroughCount == 1)
+        if (DataManager.Instance.PlayerData.playthroughCount == 1)
         {
             GoToStoryPanel();
-            PlayerStats.Instance.InitializeStats();
         }
         else
         {
             if (uiFlowSimulator != null)
             {
                 uiFlowSimulator.BeginFlow();
-            }
-            else
-            {
-                Debug.LogError("UIFlowSimulator가 GameManager에 할당되지 않았습니다!");
             }
         }
     }
@@ -212,20 +281,13 @@ public class GameManager : MonoBehaviour
         {
             uiFlowSimulator.BeginFlow();
         }
-        else
-        {
-            Debug.LogError("UIFlowSimulator가 GameManager에 할당되지 않았습니다!");
-        }
     }
 
     public void GoToStoryPanel()
     {
-        if (mainScenarioManager != null && mainScenarioManager.IsScenarioRunning)
-        {
-            Debug.Log("[GM] 시나리오가 이미 진행 중이므로 새로운 시작 요청을 무시합니다.");
-            return;
-        }
-        if (PlayerStats.Instance.playthroughCount == 1 && tutorialPanel != null)
+        if (mainScenarioManager != null && mainScenarioManager.IsScenarioRunning) return;
+
+        if (DataManager.Instance.PlayerData.playthroughCount == 1 && tutorialPanel != null)
         {
             tutorialPanel.SetActive(true);
             if (swipeTutorialImage != null) swipeTutorialImage.SetActive(true);
@@ -234,18 +296,10 @@ public class GameManager : MonoBehaviour
         if (storyPanel != null)
         {
             storyPanel.SetActive(true);
-            if (mainScenarioManager != null)
-            {
-                mainScenarioManager.BeginScenarioFromStart();
-            }
-            else
-            {
-                Debug.LogError("MainScenarioManager가 GameManager에 할당되지 않았습니다!");
-            }
+            if (mainScenarioManager != null) mainScenarioManager.BeginScenarioFromStart();
         }
         else
         {
-            Debug.LogWarning("Story Panel이 할당되지 않아 전투 페이즈로 바로 넘어갑니다.");
             GoToBattlePanel();
         }
     }
@@ -266,14 +320,9 @@ public class GameManager : MonoBehaviour
             {
                 battleTurnManager.OnBattleEnd += HandleBattleEnd;
             }
-            else
-            {
-                Debug.LogError("BattleTurnManager가 GameManager에 할당되지 않았습니다!");
-            }
         }
         else
         {
-            Debug.LogWarning("Battle Panel이 할당되지 않아 결과 페이즈로 바로 넘어갑니다.");
             GoToBattleResultPanel("전투 패널 없음");
         }
     }
@@ -292,58 +341,34 @@ public class GameManager : MonoBehaviour
         if (battleResultPanel != null)
         {
             battleResultPanel.SetActive(true);
-            if (battleResult.Contains("승리"))
-            {
-                //PlayerStat에 전황을 90으로 바꾸기
-                PlayerStats.Instance.SetStat(ParameterType.전황, 90);
-                battleResultText.text = "전투에서 승리하였다. 전쟁에서의 승리도 가까워졌기를.";
-            }
-            else if (battleResult.Contains("패배"))
-            {
-                //PlayerStat에 전황을 10으로 바꾸기
-                PlayerStats.Instance.SetStat(ParameterType.전황, 10);
-                battleResultText.text = "어쩔 수 없군 이번 전투에서는 패배를 받아드리지... 후퇴하라.";
-            }
-            else
-            {
-                //PlayerStat에 전황을 50으로 바꾸기
-                PlayerStats.Instance.SetStat(ParameterType.전황, 50);
-                battleResultText.text = "무승부라고? 결판을 짓지 못하다니...";
-            }
+            if (battleResult.Contains("승리")) PlayerStats.Instance.SetStat(ParameterType.전황, 90);
+            else if (battleResult.Contains("패배")) PlayerStats.Instance.SetStat(ParameterType.전황, 10);
+            else PlayerStats.Instance.SetStat(ParameterType.전황, 50);
         }
         else
         {
-            Debug.LogWarning("Battle Result Panel이 할당되지 않아 메인 캔버스로 바로 돌아갑니다.");
-            ReturnToMainGameCanvas();
+            ShowResultPanel();
         }
     }
 
-    public void ReturnToMainGameCanvas()
+    public void ShowResultPanel()
     {
         if (battleResultPanel != null) battleResultPanel.SetActive(false);
         mainGameCanvas.SetActive(false);
-        //  바로 다음 이벤트로 가는 대신, '상세 결과 연출'을 시작합니다.
         StartDetailedResultSequence();
-        //if (battleResultPanel != null) battleResultPanel.SetActive(false);
-        //mainGameCanvas.SetActive(true);
-        //if (uiFlowSimulator != null)
-        //{
-        //    uiFlowSimulator.BeginFlow();
-        //}
     }
+
     private void StartDetailedResultSequence()
     {
-        if (chapterEndController != null)
+        if (chapterEndController == null)
         {
-            chapterEndController.gameObject.SetActive(true);
-            chapterResultPanel.SetActive(true);
-        }
-        else
-        {
-            Debug.LogError("ChapterEndController가 할당되지 않았습니다! 연출 시퀀스를 건너뜁니다.");
-            OnChapterEndSequenceComplete(); // 컨트롤러가 없으면 바로 다음 단계로 넘어갑니다.
+            OnChapterEndSequenceComplete();
             return;
         }
+
+        chapterEndController.gameObject.SetActive(true);
+        chapterResultPanel.SetActive(true);
+
         int warSituation = PlayerStats.Instance.GetStat(ParameterType.전황);
         GameOutcome outcome;
 
@@ -351,36 +376,147 @@ public class GameManager : MonoBehaviour
         else if (warSituation >= 81) outcome = GameOutcome.Victory;
         else outcome = GameOutcome.Draw;
 
-        int chapterIndex = currentChapter - 1;
+        int chapterIndex = CurrentChapter - 1;
         if (chapterIndex < chapterEndDataList.Count && chapterEndDataList[chapterIndex] != null)
         {
             chapterEndController.StartChapterEndSequence(chapterEndDataList[chapterIndex], outcome);
         }
         else
         {
-            Debug.LogError($"챕터 {currentChapter}에 대한 ChapterEndData가 없습니다! 연출을 건너뜁니다.");
             OnChapterEndSequenceComplete();
         }
     }
+
     private void OnChapterEndSequenceComplete()
     {
-        if (isReturningToTitle)
-        {
-            return;
-        }
-        Debug.Log("모든 결과 연출 종료. 다음 이벤트 사이클을 시작합니다.");
+        if (isReturningToTitle) return;
 
-        currentChapter++;
+        DataManager.Instance.PlayerData.currentChapter++;
+        DataManager.Instance.SaveGame();
 
-        //  여기서 메인 캔버스를 켜고 다음 이벤트 흐름을 시작
         mainGameCanvas.SetActive(true);
-        if (uiFlowSimulator != null)
+        if (uiFlowSimulator != null) uiFlowSimulator.BeginFlow();
+    }
+
+    public void CheckGameOverConditions()
+    {
+        if (PlayerStats.Instance.GetStat(ParameterType.정치력) <= 0 ||
+            PlayerStats.Instance.GetStat(ParameterType.병력) <= 0 ||
+            PlayerStats.Instance.GetStat(ParameterType.물자) <= 0 ||
+            PlayerStats.Instance.GetStat(ParameterType.리더십) <= 0)
         {
-            uiFlowSimulator.BeginFlow();
+            GameOver();
         }
     }
-    // [제거] 이벤트 핸들러는 더 이상 사용하지 않음
-    // private void OnStatChanged_CheckGameOver(...) ...
+
+    public void GameOver()
+    {
+        gameOverPanel.SetActive(true);
+    }
+
+    public void OnGameOverPanelTouched()
+    {
+        gameOverPanel.SetActive(false);
+        DataManager.Instance.StartNewGame();
+        ResetAllGameData();
+        mainGameCanvas.SetActive(true);
+        if (uiFlowSimulator != null) uiFlowSimulator.BeginFlow();
+    }
+
+    public void ShowOptionsPanel()
+    {
+        if (optionCanvas != null) optionCanvas.SetActive(true);
+    }
+
+    public void HideOptionsPanel()
+    {
+        if (optionCanvas != null) optionCanvas.SetActive(false);
+    }
+
+    public void StartNextPlaythrough()
+    {
+        DataManager.Instance.PlayerData.playthroughCount++;
+        EventManager.Instance.ResetEventManagerState();
+        DataManager.Instance.SaveGame();
+
+        if (battleResultPanel != null) battleResultPanel.SetActive(false);
+        if (gameOverPanel != null) gameOverPanel.SetActive(false);
+        mainGameCanvas.SetActive(true);
+        InGameUIPanel.SetActive(true);
+
+        StartEventFlow();
+    }
+
+    public void ResetAllGameData()
+    {
+        if (EventManager.Instance != null) EventManager.Instance.ResetEventManagerState();
+        if (battleTurnManager != null) battleTurnManager.ResetForNewBattle();
+        if (mainScenarioManager != null) mainScenarioManager.ResetScenarioState();
+        if (DataManager.PlaythroughHistory.Instance != null) DataManager.PlaythroughHistory.Instance.ClearHistory();
+    }
+
+    public void GoToTitleScreen()
+    {
+        isReturningToTitle = true;
+        StopAllCoroutines();
+        ResetAllGameData();
+
+        mainGameCanvas.SetActive(false);
+        commanderSelectionCanvas.SetActive(false);
+        gameOverPanel.SetActive(false);
+        optionCanvas.SetActive(false);
+        confirmationPanel.SetActive(false);
+
+        titleCanvas.SetActive(true);
+        titlePanel.SetActive(true);
+        menuPanel.SetActive(false);
+    }
+
+    public void ExitGame()
+    {
+        ShowConfirmation("게임을 종료하시겠습니까?", () =>
+        {
+            DataManager.Instance.SaveGame();
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
+        });
+    }
+
+
+
+    private void HandleEventCycleCompleted()
+    {
+        if (DataManager.Instance?.PlayerData == null) return;
+
+        int currentPlaythrough = DataManager.Instance.PlayerData.playthroughCount;
+
+        int chapterIndex = CurrentChapter - 1;
+        // 현재 챕터에 해당하는 엔딩 컷신이 있는지 확인
+        if (chapterEndingCutscenes != null && chapterIndex < chapterEndingCutscenes.Count && chapterEndingCutscenes[chapterIndex] != null)
+        {
+            // 컷신이 끝나면 원래 로직을 실행하도록 이벤트 구독
+            CutsceneManager.OnCutsceneFinished += ProceedAfterChapterEndCutscene;
+            cutsceneManager.StartCutscene(chapterEndingCutscenes[chapterIndex]);
+        }
+        else
+        {
+            // 컷신이 없으면 바로 다음 진행
+            ProceedAfterChapterEndCutscene();
+        }
+    }
+    private void ProceedAfterChapterEndCutscene()
+    {
+        // 이벤트 구독 해제!
+        CutsceneManager.OnCutsceneFinished -= ProceedAfterChapterEndCutscene;
+
+        int currentPlaythrough = DataManager.Instance.PlayerData.playthroughCount;
+
+        if (currentPlaythrough == 1) GoToBattlePanel();
+        else GoToStoryPanel();
+    }
 
 #if UNITY_EDITOR
     public void OnForceGameOverButtonClicked()
@@ -393,184 +529,8 @@ public class GameManager : MonoBehaviour
         List<ParameterChange> changes = new List<ParameterChange>
         {
             new ParameterChange { parameterType = ParameterType.정치력, valueChange = -100 },
-            new ParameterChange { parameterType = ParameterType.병력, valueChange = -100 },
-            new ParameterChange { parameterType = ParameterType.물자, valueChange = -100 },
-            new ParameterChange { parameterType = ParameterType.리더십, valueChange = -100 }
         };
-        Debug.Log("<color=red>디버그: GameManager에서 파라미터 변경을 직접 호출하여 게임오버 유발.</color>");
         PlayerStats.Instance.ApplyChanges(changes);
     }
 #endif
-
-    // [제거] CheckGameOverConditions()로 역할이 통합되었으므로 불필요
-    // public void OnParameterChanged() ...
-
-    public void CheckGameOverConditions()
-    {
-        if (PlayerStats.Instance.GetStat(ParameterType.정치력) <= 0 ||
-            PlayerStats.Instance.GetStat(ParameterType.병력) <= 0 ||
-            PlayerStats.Instance.GetStat(ParameterType.물자) <= 0 ||
-            PlayerStats.Instance.GetStat(ParameterType.리더십) <= 0)
-        {
-            GameOver();
-            Debug.Log("게임 오버 조건 충족");
-        }
-    }
-
-    public void GameOver()
-    {
-        gameOverPanel.SetActive(true);
-        Debug.Log("게임 오버");
-        // 여기에 게임 조작을 막는 로직 추가 가능
-    }
-
-    public void OnGameOverPanelTouched()
-    {
-        Debug.Log("게임을 재시작합니다.");
-        gameOverPanel.SetActive(false);
-        Debug.Log("게임오버 패널 비활성화");
-
-        ResetAllGameData();
-        Debug.Log("초기화");
-
-        mainGameCanvas.SetActive(true);
-
-        // [수정] 리셋 후 UI Flow를 다시 시작하도록 명령
-        if (uiFlowSimulator != null)
-        {
-            uiFlowSimulator.BeginFlow();
-        }
-        else
-        {
-            Debug.LogError("UIFlowSimulator 참조가 없어 게임 흐름을 다시 시작할 수 없습니다!");
-        }
-    }
-
-    public void ShowOptionsPanel()
-    {
-        if (optionCanvas != null)
-        {
-            optionCanvas.SetActive(true);
-        }
-    }
-
-    public void HideOptionsPanel()
-    {
-        if (optionCanvas != null)
-        {
-            optionCanvas.SetActive(false);
-        }
-    }
-
-    public void StartNextPlaythrough()
-    {
-        Debug.Log("다음 회차를 시작합니다.");
-
-        // 회차 정보 갱신
-        PlayerStats.Instance.StartNewPlaythrough();
-
-        // 다음 사이클을 위해 이벤트 매니저 리셋
-        EventManager.Instance.ResetEventManagerState();
-
-        // UI 패널 리셋
-        if (battleResultPanel != null) battleResultPanel.SetActive(false);
-        if (gameOverPanel != null) gameOverPanel.SetActive(false);
-        mainGameCanvas.SetActive(true);
-        InGameUIPanel.SetActive(true);
-
-        // 새로운 이벤트 흐름 시작
-        StartEventFlow();
-    }
-
-    public void ResetAllGameData()
-    {
-        Debug.Log("==== 모든 게임 데이터 초기화를 시작합니다 ====");
-        if (PlayerStats.Instance != null)
-        {
-            PlayerStats.Instance.InitializeStats();
-            Debug.Log("PlayerStats가 초기화되었습니다.");
-        }
-        if (EventManager.Instance != null)
-        {
-            EventManager.Instance.ResetEventManagerState();
-            Debug.Log("EventManager가 초기화되었습니다.");
-        }
-        if (battleTurnManager != null)
-        {
-            battleTurnManager.ResetForNewBattle();
-            Debug.Log("BattleTurnManager가 초기화되었습니다.");
-        }
-        if (mainScenarioManager != null)
-        {
-            Debug.Log("[GM] Requesting MainScenarioManager to reset state...");
-            mainScenarioManager.ResetScenarioState();
-        }
-
-        if (DataManager.PlaythroughHistory.Instance != null)
-        {
-            DataManager.PlaythroughHistory.Instance.ClearHistory();
-            Debug.Log("PlaythroughHistory가 초기화되었습니다.");
-        }
-    }
-
-    //임시 타이틀 화면 복귀용
-    public void GoToTitleScreen()
-    {
-        isReturningToTitle = true;
-        StopAllCoroutines();
-        Debug.Log("==== 타이틀 화면으로 돌아갑니다. 모든 데이터를 초기화합니다. ====");
-
-        // 1. 모든 게임 관련 데이터(스탯, 이벤트 매니저 등)를 리셋합니다.
-        ResetAllGameData();
-
-        // 2. 모든 UI 패널을 끈 후, 타이틀 화면 관련 UI만 다시 켭니다.
-        // (게임 플레이 중에 활성화될 수 있는 모든 패널을 비활성화)
-        mainGameCanvas.SetActive(false);
-        commanderSelectionCanvas.SetActive(false);
-        gameOverPanel.SetActive(false);
-        optionCanvas.SetActive(false);
-        confirmationPanel.SetActive(false);
-
-        // 타이틀 화면 활성화
-        titleCanvas.SetActive(true);
-        titlePanel.SetActive(true);
-        menuPanel.SetActive(false); // 메뉴 패널은 타이틀 터치 후에 나오도록 비활성화
-        mainGameCanvas.SetActive(false);
-    }
-    public void ExitGame()
-    {
-        ShowConfirmation("게임을 종료하시겠습니까?", () =>
-        {
-            Debug.Log("게임 종료 확인됨");
-#if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
-#else
-            Application.Quit();
-#endif
-        });
-    }
-
-    private void HandleEventCycleCompleted()
-    {
-        Debug.Log("GameManager: 이벤트 사이클 완료");
-        if (PlayerStats.Instance == null)
-        {
-            Debug.LogError("GameManager: 이벤트 사이클이 완료되었지만 PlayerStats.Instance가 비었습니다.");
-            return;
-        }
-        Debug.Log($"GameManager: 현재 회차 = {PlayerStats.Instance.playthroughCount}");
-
-        if (PlayerStats.Instance.playthroughCount == 1)
-        {
-            // 1회차에는 이벤트 사이클 후 전투
-            Debug.Log("GameManager: 1회차. 전투 패널로 이동합니다.");
-            GoToBattlePanel();
-        }
-        else
-        {
-            // 2회차부터는 이벤트 사이클 후 메인 스토리
-            Debug.Log("GameManager: 2회차 이상. 스토리 패널로 이동합니다.");
-            GoToStoryPanel();
-        }
-    }
 }

@@ -68,7 +68,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 
     private void HandleParameterEvent(int eventId)
     {
-        if (PlayerStats.Instance.playthroughCount == 1 &&
+        if (DataManager.Instance.PlayerData.playthroughCount == 1 &&
           GameManager.instance.CurrentChapter == 1 &&
           !hasShownChapter1ParameterTutorial)
         {
@@ -184,6 +184,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         {
             // 서브 이벤트 선택 처리
             EventManager.Instance.OnSubEventChoiceSelected(isRightChoice);
+            StartCoroutine(TransitionToNextEvent("선택지가 처리되었습니다.")); // 서브 이벤트에는 결과 텍스트가 없으므로 임시 텍스트 사용
         }
     }
 
@@ -196,6 +197,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         yield return new WaitUntil(() => !situationCardController.gameObject.activeInHierarchy);
 
         // EventManager에게 다음 이벤트를 달라고 요청
+        Debug.Log("UIFlowSimulator: 다음 턴을 시작하도록 EventManager에 요청합니다.");
         EventManager.Instance.PlayNextTurn();
     }
 
