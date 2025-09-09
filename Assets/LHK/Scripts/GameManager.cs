@@ -179,6 +179,12 @@ public class GameManager : MonoBehaviour
         confirmationPanel.SetActive(false);
         onConfirmAction = null;
     }
+    // 팩 선택 온 클릭 이벤트
+    public void SelectStoryPack(int packNumber)
+    {
+        selectedPackNumber = packNumber;
+        Debug.Log($"[GameManager] 서브 스토리 팩 {packNumber}번이 선택되었습니다.");
+    }
 
     // [수정] 기존의 (int commanderIndex) 방식을 그대로 유지합니다.
     public async void OnCommanderSelected(int commanderIndex)
