@@ -1,12 +1,16 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using System;
 using System.IO;
 using System.Text;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 using System.Linq;
 using Cysharp.Threading.Tasks;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
+using Firebase.Database;
+using Firebase.Auth;
+using Firebase.Extensions;
 
 public class DataManager : MonoBehaviour
 {
@@ -14,6 +18,7 @@ public class DataManager : MonoBehaviour
 
     public GameData PlayerData { get; private set; }
     private string _playerDataSavePath;
+    private bool _hasSyncedWithServer; // 9.9. 이학권 추가
 
     private UniTaskCompletionSource<bool> _isReady = new UniTaskCompletionSource<bool>();
     public UniTask IsReady => _isReady.Task;
@@ -60,18 +65,41 @@ public class DataManager : MonoBehaviour
         _playerDataSavePath = Path.Combine(Application.persistentDataPath, "playerdata.json");
     }
 
+    private void Start() /// 9.9. 이학권 추가
+    {
+        LoadGame();
+        FirebaseAuth.DefaultInstance.StateChanged += OnAuthStateChanged;
+        TrySyncIfLoggedIn();
+    }
+
+    private void OnAuthStateChanged(object sender, System.EventArgs e)
+    {
+        TrySyncIfLoggedIn();
+    }
+
+    private void TrySyncIfLoggedIn() /// 9.9. 이학권 추가
+    {
+        var user = FirebaseAuth.DefaultInstance.CurrentUser;
+        if (user != null && !_hasSyncedWithServer)
+        {
+            _hasSyncedWithServer = true;
+            StartCoroutine(SyncWithServer(user.UserId));
+        }
+    }
+
     /// <summary>
     /// 새 게임을 시작할 때 호출됩니다.
     /// </summary>
     public void StartNewGame()
     {
         PlayerData = new GameData();
-        SaveGame();
+        SaveLocal();
         Debug.Log("새로운 게임 데이터 생성 및 저장 완료.");
     }
 
     /// <summary>
     /// 파일에서 플레이어 데이터를 불러옵니다. 파일이 없으면 새 게임 데이터가 생성됩니다.
+    /// 9.9. 이학권 변경
     /// </summary>
     public void LoadGame()
     {
@@ -81,52 +109,102 @@ public class DataManager : MonoBehaviour
             {
                 string json = File.ReadAllText(_playerDataSavePath, Encoding.UTF8);
                 PlayerData = JsonUtility.FromJson<GameData>(json);
-
-                if (PlayerData == null)
-                {
-                    Debug.LogWarning("세이브 파일이 손상되어 새 게임을 시작합니다.");
-                    StartNewGame();
-                }
-                else
-                {
-                    Debug.Log($"게임 데이터 로드 완료. (회차: {PlayerData.playthroughCount}, 챕터: {PlayerData.currentChapter})");
-                }
+                if (PlayerData == null) throw new Exception("파싱 실패");
+                Debug.Log($"로컬 로드 완료 (Chapter: {PlayerData.currentChapter})");
             }
-            catch (System.Exception e)
+            catch (Exception ex)
             {
-                Debug.LogError($"세이브 파일 로드 실패: {e.Message}. 새 게임을 시작합니다.");
+                Debug.LogWarning($"로컬 로드 실패 ({ex.Message}), 새 게임 시작");
                 StartNewGame();
             }
         }
         else
         {
-            Debug.Log("세이브 파일이 없어 새 게임을 시작합니다.");
+            Debug.Log("로컬 데이터 없음, 새 게임 시작");
             StartNewGame();
         }
     }
+
     /// <summary>
-    /// 현재 플레이어 데이터를 파일에 저장합니다.
+    /// 현재 플레이어 데이터를 로컬파일에 저장합니다.
+    /// 9.9. 이학권 변경
     /// </summary>
-    public void SaveGame()
+    public void SaveLocal()
     {
-        if (PlayerData == null)
+        if (PlayerData == null) return;
+        PlayerData.lastUpdated = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        string json = JsonUtility.ToJson(PlayerData, true);
+        File.WriteAllText(_playerDataSavePath, json, Encoding.UTF8);
+        Debug.Log($"로컬 저장 완료: {_playerDataSavePath}");
+    }
+
+
+    /// <summary>
+    /// 서버와 로컬데이터 동기화
+    /// 9.9. 이학권 추가
+    /// </summary>
+    private IEnumerator SyncWithServer(string uid)
+    {
+        // 1) 서버에서 데이터 읽기
+        var dbRef = FirebaseDatabase.DefaultInstance
+            .GetReference($"users/{uid}/playerData");
+
+        var fetchTask = dbRef.GetValueAsync();
+        yield return new WaitUntil(() => fetchTask.IsCompleted);
+
+        if (fetchTask.IsFaulted)
         {
-            Debug.LogError("저장할 플레이어 데이터가 없습니다.");
-            return;
+            Debug.LogError("서버 데이터 가져오기 실패: " + fetchTask.Exception);
+            yield break;
         }
 
-        try
+        DataSnapshot snapshot = fetchTask.Result;
+        if (snapshot.Exists)
         {
-            string json = JsonUtility.ToJson(PlayerData, true);
-            File.WriteAllText(_playerDataSavePath, json, Encoding.UTF8);
-            Debug.Log($"플레이어 데이터 저장 완료: {_playerDataSavePath}");
+            // 2) 서버 JSON → GameData
+            string serverJson = snapshot.GetRawJsonValue();
+            var serverData = JsonUtility.FromJson<GameData>(serverJson);
 
-            // TODO: 향후 이곳에 GPGS 또는 Firebase 클라우드 저장 로직을 호출합니다.
+            // 3) 타임스탬프 비교
+            if (serverData.lastUpdated > PlayerData.lastUpdated)
+            {
+                // 서버가 더 최신 → 로컬 덮어쓰기
+                PlayerData = serverData;
+                SaveLocal();
+                Debug.Log("서버 데이터가 최신, 로컬 업데이트 완료.");
+            }
+            else if (serverData.lastUpdated < PlayerData.lastUpdated)
+            {
+                // 로컬이 더 최신 → 서버에 덮어쓰기
+                yield return UploadToServer(dbRef);
+                Debug.Log("로컬 데이터가 최신, 서버 업데이트 완료.");
+            }
+            else
+            {
+                Debug.Log("로컬·서버 데이터 동일.");
+            }
         }
-        catch (System.Exception e)
+        else
         {
-            Debug.LogError($"세이브 파일 저장 실패: {e.Message}");
+            // 서버에 데이터 없음 → 로컬 업로드
+            yield return UploadToServer(dbRef);
+            Debug.Log("서버 데이터 없음, 로컬 업로드 완료.");
         }
+    }
+
+    /// <summary>
+    /// 서버에 로컬 세이브파일을 업로드 
+    /// 9.9. 이학권 추가
+    /// </summary>
+    private IEnumerator UploadToServer(DatabaseReference dbRef)
+    {
+        SaveLocal(); // lastUpdated 갱신
+        string json = JsonUtility.ToJson(PlayerData, true);
+        var uploadTask = dbRef.SetRawJsonValueAsync(json);
+        yield return new WaitUntil(() => uploadTask.IsCompleted);
+
+        if (uploadTask.IsFaulted)
+            Debug.LogError("서버 업로드 실패" + uploadTask.Exception);
     }
 
     /// <summary>
@@ -134,7 +212,7 @@ public class DataManager : MonoBehaviour
     /// </summary>
     private void OnApplicationQuit()
     {
-        SaveGame();
+        SaveLocal();
     }
 
 
@@ -216,7 +294,7 @@ public class DataManager : MonoBehaviour
             //배틀 이벤트 데이터
             battleResultDataDict = battleResultList.ToDictionary(r => r.ResultID, r => r);
             //룩업 데이터 구성
-            CharacterDataDict = characterList.ToDictionary(e => e.Chr_ID, e => e);  
+            CharacterDataDict = characterList.ToDictionary(e => e.Chr_ID, e => e);
             bgDataDict = bgList.ToDictionary(bg => bg.BG_ID, bg => bg);
             sfxDataDict = sfxList.ToDictionary(sfx => sfx.SFX_ID, sfx => sfx);
             characterImgDataDict = characterImgList.ToDictionary(c => c.CharacterImg_ID, c => c);
@@ -339,12 +417,12 @@ public class DataManager : MonoBehaviour
             id = rawData.ID,
             MainStoryPac = rawData.MainStoryPac,
             LoopNum = rawData.LoopNum,
-            dialogue = rawData.Text_kr, 
+            dialogue = rawData.Text_kr,
 
         };
 
         //Chr_ID를 사용하여 캐릭터 이름 할당
-        if(CharacterDataDict.TryGetValue(rawData.CharacterName, out var characterData))
+        if (CharacterDataDict.TryGetValue(rawData.CharacterName, out var characterData))
         {
             fullEventData.characterData = characterData;
         }
@@ -513,19 +591,19 @@ public class DataManager : MonoBehaviour
         var choice = new EventChoice();
 
         // 선택지 텍스트, 성공/실패 결과 ID, 보상 ID 등을 분기 및 좌/우에 따라 결정
-        int choiceTextId      = isLeft ? (isBranch ? rawData.AnotherLeftString : rawData.LeftString)
+        int choiceTextId = isLeft ? (isBranch ? rawData.AnotherLeftString : rawData.LeftString)
                                        : (isBranch ? rawData.AnotherRightString : rawData.RightString);
-        int successStringId   = isLeft ? (isBranch ? rawData.AnotherAcceptString1 : rawData.AcceptString1)
+        int successStringId = isLeft ? (isBranch ? rawData.AnotherAcceptString1 : rawData.AcceptString1)
                                        : (isBranch ? rawData.AnotherAcceptString2 : rawData.AcceptString2);
-        int failStringId      = isLeft ? (isBranch ? rawData.AnotherDenyString1 : rawData.DenyString1)
+        int failStringId = isLeft ? (isBranch ? rawData.AnotherDenyString1 : rawData.DenyString1)
                                        : (isBranch ? rawData.AnotherDenyString2 : rawData.DenyString2);
-        int successRewardId   = isLeft ? (isBranch ? rawData.AnotherAcceptReward1 : rawData.AcceptReward1)
+        int successRewardId = isLeft ? (isBranch ? rawData.AnotherAcceptReward1 : rawData.AcceptReward1)
                                        : (isBranch ? rawData.AnotherAcceptReward2 : rawData.AcceptReward2);
-        int failRewardId      = isLeft ? (isBranch ? rawData.AnotherDenyReward1 : rawData.DenyReward1)
+        int failRewardId = isLeft ? (isBranch ? rawData.AnotherDenyReward1 : rawData.DenyReward1)
                                        : (isBranch ? rawData.AnotherDenyReward2 : rawData.DenyReward2);
-        int needType          = isLeft ? (isBranch ? rawData.AnotherNeedType1 : rawData.NeedType1)
+        int needType = isLeft ? (isBranch ? rawData.AnotherNeedType1 : rawData.NeedType1)
                                        : (isBranch ? rawData.AnotherNeedType2 : rawData.NeedType2);
-        int needValue         = isLeft ? (isBranch ? rawData.AnotehrNeedValue1 : rawData.NeedValue1) // 'Anotehr' 오타 대응
+        int needValue = isLeft ? (isBranch ? rawData.AnotehrNeedValue1 : rawData.NeedValue1) // 'Anotehr' 오타 대응
                                        : (isBranch ? rawData.AnotherNeedValue2 : rawData.NeedValue2);
 
         // 선택지 텍스트 설정
