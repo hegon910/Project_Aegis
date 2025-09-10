@@ -36,6 +36,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private List<int> chapterStartStoryNums;
 
     [Header("UI 참조")]
+    [SerializeField] private GameObject loadingPanel;
     [SerializeField] private Button continueButton;
     [SerializeField] private GameObject titlePanel;
     [SerializeField] private GameObject titleCanvas;
@@ -52,6 +53,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject optionCanvas;
     [SerializeField] private GameObject tutorialPanel;
     [SerializeField] private GameObject loginPanel;
+    [SerializeField] private GameObject subEventSelectPanel;
+    [SerializeField] private TMPro.TextMeshProUGUI subEventSelectedText;
 
     [Header("컷신 시스템")]
     [SerializeField] private CutsceneManager cutsceneManager;
@@ -85,8 +88,9 @@ public class GameManager : MonoBehaviour
 
     private UnityAction onConfirmAction;
     private bool isReturningToTitle = false;
-    private int selectedPackNumber = 1001;
+    private int selectedPackNumber = -1;
     private bool isTransitioningState = false;
+    private bool subEventsEnabled = false;
 
     private void Awake()
     {
@@ -117,6 +121,12 @@ public class GameManager : MonoBehaviour
         
 
         await DataManager.Instance.IsReady;
+        // 모든 데이터 로딩이 완료되었습니다.
+        if (loadingPanel != null)
+        {
+            loadingPanel.SetActive(false); // 로딩 패널을 숨깁니다.
+        }
+
 
         ChangeState(GameState.Title);
     }
@@ -141,6 +151,42 @@ public class GameManager : MonoBehaviour
         StartCoroutine(AdvanceGameStateCoroutine());
     }
 
+    //서브이벤트 패널을 열고 닫을 함수
+    public void ToggleSubEventPanel(bool isOpen)
+    {
+        
+
+        if (subEventSelectPanel != null)
+        {
+            subEventSelectPanel.SetActive(isOpen);
+            //서브 이벤트 팩이 활성화 되있는 상태라면 텍스트 표시
+            if (isOpen && EventManager.Instance != null)
+            {
+                int selectedPack = EventManager.Instance.GetCurrentSubEventPackID();
+                if (selectedPack != -1)
+                {
+                    subEventSelectedText.gameObject.SetActive(true);
+                    subEventSelectedText.text = $"선택된 서브 이벤트 팩: {selectedPack}";
+                }
+                else
+                {
+
+                    subEventSelectedText.text = "선택된 서브 이벤트 팩이 없습니다.";
+                }
+                if (subEventsEnabled)
+                {
+                    Debug.Log("서브이벤트 모드가 활성화되었습니다.");
+                    // 예: UI 텍스트 변경 -> subEventModeText.text = "ON";
+                }
+                else
+                {
+                //    EventManager.Instance.ResetEventManagerState();
+                    Debug.Log("서브이벤트 모드가 비활성화되었습니다.");
+                    // 예: UI 텍스트 변경 -> subEventModeText.text = "OFF";
+                }
+            }
+        }
+    }
     private IEnumerator AdvanceGameStateCoroutine()
     {
         if (isTransitioningState) yield break;
@@ -223,8 +269,32 @@ public class GameManager : MonoBehaviour
     // 팩 선택 온 클릭 이벤트
     public void SelectStoryPack(int packNumber)
     {
-        selectedPackNumber = packNumber;
-        Debug.Log($"[GameManager] 서브 스토리 팩 {packNumber}번이 선택되었습니다.");
+        // 1. 만약 지금 클릭한 팩이 이미 선택되어 있는 팩이라면
+        if (selectedPackNumber == packNumber)
+        {
+            // 2. 선택을 취소합니다 (기본값인 -1로 되돌립니다).
+            selectedPackNumber = -1;
+            Debug.Log($"[GameManager] 서브 스토리 팩 {packNumber}번 선택이 취소되었습니다.");
+
+            // 3. UI 텍스트도 초기 상태로 변경합니다.
+            if (subEventSelectedText != null)
+            {
+                subEventSelectedText.text = "선택된 서브 이벤트 팩이 없습니다.";
+            }
+        }
+        // 4. 그렇지 않다면 (다른 팩을 선택했거나 아무것도 선택되지 않은 상태라면)
+        else
+        {
+            // 5. 새로 클릭한 팩을 선택합니다.
+            selectedPackNumber = packNumber;
+            Debug.Log($"[GameManager] 서브 스토리 팩 {packNumber}번이 선택되었습니다.");
+
+            // 6. UI 텍스트에 선택된 팩 번호를 표시합니다.
+            if (subEventSelectedText != null)
+            {
+                subEventSelectedText.text = $"선택된 서브 이벤트 팩: {packNumber}";
+            }
+        }
     }
     private void ChangeState(GameState newState)
     {
@@ -251,11 +321,13 @@ public class GameManager : MonoBehaviour
             case GameState.InEventCycle:
                 if (cardController != null) cardController.choiceHandler = uiFlowSimulator;
                 EventManager.OnEventCycleCompleted += OnStateFinished;
+
+                // [핵심 수정] 새로운 이벤트 사이클이므로, 첫 턴을 바로 시작하라고(true) 지시합니다.
+                // 중복 호출되던 부분도 하나로 정리했습니다.
                 if (uiFlowSimulator != null)
                 {
-                    uiFlowSimulator.BeginFlow();
+                    uiFlowSimulator.BeginFlow(true);
                 }
-                uiFlowSimulator.BeginFlow();
                 break;
             case GameState.InStory:
                 if (cardController != null) cardController.choiceHandler = mainScenarioManager;
@@ -288,7 +360,7 @@ public class GameManager : MonoBehaviour
                 break;
         }
 
-        if (DataManager.Instance.PlayerData != null)
+        if (DataManager.Instance.PlayerData != null && !isReturningToTitle)
         {
             DataManager.Instance.PlayerData.currentGameState = currentGameState;
             DataManager.Instance.SaveLocal();
@@ -351,9 +423,36 @@ public class GameManager : MonoBehaviour
         OnStateFinished();
  
     }
+    private void RestoreGameState(GameState stateToRestore)
+    {
+        Debug.Log($"[게임 상태 복원] -> {stateToRestore}");
+        currentGameState = stateToRestore;
+        SetUIForState(stateToRestore);
 
+        switch (stateToRestore)
+        {
+            case GameState.InEventCycle:
+                //  "이벤트 사이클 완료" 신호를 GameManager가 받을 수 있도록 여기서도 연결해줍니다.
+                EventManager.OnEventCycleCompleted += OnStateFinished;
+
+                // 아래는 기존에 작업했던 올바른 코드입니다.
+                EventManager.Instance.InitializeEventManager();
+                uiFlowSimulator.BeginFlow(false);
+                break;
+
+            case GameState.InStory:
+                // [추가] 스토리 이어하기 시에도 완료 신호를 연결해줍니다.
+                MainScenarioManager.OnScenarioFinished += OnStateFinished;
+                mainScenarioManager.BeginScenarioFromStart();
+                break;
+
+            case GameState.InBattle:
+                battleTurnManager.OnBattleEnd += HandleBattleEnd;
+                break;
+        }
+    }
     public void HideTutorial() { if (tutorialPanel != null && tutorialPanel.activeSelf) { tutorialPanel.SetActive(false); } }
-    private void RestoreGameState(GameState stateToRestore) { Debug.Log($"[게임 상태 복원] -> {stateToRestore}"); currentGameState = stateToRestore; SetUIForState(stateToRestore); switch (stateToRestore) { case GameState.InEventCycle: uiFlowSimulator.BeginFlow(); break; case GameState.InStory: mainScenarioManager.BeginScenarioFromStart(); break; case GameState.InBattle: battleTurnManager.OnBattleEnd += HandleBattleEnd; break; } }
+
     public void OnClickNewGameFromScratch() { ShowConfirmation("모든 진행 상황이 삭제됩니다. 정말 새로 시작하시겠습니까?", () => { DataManager.Instance.DeleteLocalSaveData(); DataManager.Instance.StartNewGame(); ResetAllGameData(); UnlockManager.ResetAllUnlocks(); ChangeState(GameState.CommanderSelection); }); }
     public void OnClickContinueGame() { if (DataManager.Instance.PlayerData != null) { RestoreGameState(DataManager.Instance.PlayerData.currentGameState); } }
     public void SaveAndReturnToTitle() { ShowConfirmation("진행 상황을 저장하고 타이틀로 돌아가시겠습니까?", () => { isReturningToTitle = true; if (DataManager.Instance.PlayerData != null) { DataManager.Instance.PlayerData.currentGameState = this.currentGameState; DataManager.Instance.SaveLocal(); } ChangeState(GameState.MainMenu); isReturningToTitle = false; }); }
@@ -368,6 +467,13 @@ public class GameManager : MonoBehaviour
     public void ShowConfirmation(string message, UnityAction confirmAction) { confirmationText.text = message; onConfirmAction = confirmAction; confirmationPanel.SetActive(true); }
     public void OnConfirm() { onConfirmAction?.Invoke(); confirmationPanel.SetActive(false); onConfirmAction = null; }
     public void OnCancel() { confirmationPanel.SetActive(false); onConfirmAction = null; }
+    public void ClosePanel(GameObject panelToClose)
+    {
+        if (panelToClose != null)
+        {
+            panelToClose.SetActive(false);
+        }
+    }
     public void ExitGame()
     {
         ShowConfirmation("게임을 종료하시겠습니까?", () =>

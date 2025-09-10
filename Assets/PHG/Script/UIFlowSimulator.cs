@@ -53,7 +53,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     }
 
     // <<<<<<< [핵심 복원 2] 원본의 BeginFlow 함수 로직을 그대로 사용합니다.
-    public void BeginFlow()
+    public void BeginFlow(bool startFirstTurn = true)
     {
         if (parameterUIController != null)
         {
@@ -63,15 +63,18 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         // UI 초기화
         if (uiPanelController != null) uiPanelController.gameObject.SetActive(false);
         if (situationCardController != null) situationCardController.gameObject.SetActive(false);
-      //  if (cardController != null)
-      //  {
-      //      cardController.gameObject.SetActive(false);
-      //      cardController.choiceHandler = this;
-      //  }
         if (dimmerPanel != null) dimmerPanel.color = Color.clear;
 
-        // EventManager에게 첫 턴 시작을 요청
-        EventManager.Instance.PlayNextTurn();
+        // startFirstTurn이 true일 때만 다음 턴을 시작하도록 수정
+        if (startFirstTurn)
+        {
+            Debug.Log("[UIFlowSimulator] 새로운 사이클 시작. 첫 턴을 진행합니다.");
+            EventManager.Instance.PlayNextTurn();
+        }
+        else
+        {
+            Debug.Log("[UIFlowSimulator] UI 준비 완료. 플레이어 입력을 기다립니다.");
+        }
     }
 
     private void HandleParameterEvent(int eventId)
