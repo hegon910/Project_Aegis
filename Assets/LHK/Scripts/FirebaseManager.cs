@@ -99,7 +99,7 @@ public class FirebaseManager : MonoBehaviour
                 Debug.Log("Î°úÍ∑∏?ù∏ ?Ñ±Í≥?");
                 User = task.Result.User;
                 loginPanel.SetActive(false);
-                GameManager.instance.StartNewGame();
+                DataManager.Instance.StartNewGame();
             });
     }
 #endif

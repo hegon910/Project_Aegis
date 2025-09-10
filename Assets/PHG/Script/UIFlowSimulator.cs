@@ -63,11 +63,11 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         // UI 초기화
         if (uiPanelController != null) uiPanelController.gameObject.SetActive(false);
         if (situationCardController != null) situationCardController.gameObject.SetActive(false);
-        if (cardController != null)
-        {
-            cardController.gameObject.SetActive(false);
-            cardController.choiceHandler = this;
-        }
+      //  if (cardController != null)
+      //  {
+      //      cardController.gameObject.SetActive(false);
+      //      cardController.choiceHandler = this;
+      //  }
         if (dimmerPanel != null) dimmerPanel.color = Color.clear;
 
         // EventManager에게 첫 턴 시작을 요청

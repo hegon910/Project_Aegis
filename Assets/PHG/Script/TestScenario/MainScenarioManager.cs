@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
@@ -19,15 +18,9 @@ public class MainStoryUI
     [Header("선택지 미리보기")]
     public Image choicePreviewImage;
     public TextMeshProUGUI choicePreviewText;
+    [Header("메인 스토리 전용 Dimmer")]
+    public Image mainStoryDimmerPanel;
 }
-
-[System.Serializable]
-public class ChapterStory
-{
-    public int chapterNumber;
-    public StoryNode startingNode;
-}
-
 
 public class MainScenarioManager : MonoBehaviour, IChoiceHandler
 {
@@ -38,24 +31,26 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
     [Header("UI 컨트롤러 참조")]
     [SerializeField] private CardController cardController;
     [SerializeField] private ParameterUIController parameterUIController;
-    [SerializeField] private Image dimmerPanel;
+   // [SerializeField] private Image dimmerPanel;
 
     [Header("메인 스토리 전용 UI")]
     [SerializeField] private MainStoryUI mainStoryUI;
     [SerializeField] private float typingSpeed = 0.05f;
 
-    [Header("챕터별 시나리오 시작점")]
-    [SerializeField] private List<ChapterStory> chapterStories;
 
-    private StoryNode currentNode;
+
+    // StoryNode 대신 DataManager에서 받아오는 NewMainEventData를 사용
+    private NewMainEventData currentNode;
     private Coroutine typingCoroutine;
+    private int currentStoryNum;
+
     private bool IsTyping => typingCoroutine != null;
     public bool CanMakeChoice => !IsTyping;
 
     void Start()
     {
-        if (cardController != null) cardController.choiceHandler = this;
-        if (dimmerPanel != null) dimmerPanel.color = Color.clear;
+       // if (cardController != null) cardController.choiceHandler = this;
+       // if (dimmerPanel != null) dimmerPanel.color = Color.clear;
     }
 
     public void ResetScenarioState()
@@ -71,19 +66,33 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
     public void BeginScenarioFromStart()
     {
         int currentChapter = GameManager.instance.CurrentChapter;
-        ChapterStory storyToPlay = chapterStories.FirstOrDefault(story => story.chapterNumber == currentChapter);
+        int startStoryNum = GameManager.instance.GetCurrentChapterStartStoryNum();
 
-        if (storyToPlay != null && storyToPlay.startingNode != null)
+        if (startStoryNum > 0)
         {
-            Debug.Log($"[MainScenarioManager] {currentChapter}챕터 스토리를 시작합니다.");
-            uiAnimator.ShowMainStoryView();
-            IsScenarioRunning = true;
-            mainStoryUI.panelRoot.SetActive(true);
-            DisplayNode(storyToPlay.startingNode);
+            // 1. StoryNum으로 첫 번째 데이터 노드를 찾아옵니다.
+            NewMainEventData firstNode = DataManager.Instance.GetMainEventDataByStoryNum(startStoryNum);
+
+            // 2. 찾아온 노드가 유효하고, 그 노드의 ID가 있다면
+            if (firstNode != null && firstNode.id > 0)
+            {
+                Debug.Log($"[MainScenarioManager] {currentChapter}챕터 스토리를 시작합니다. (시작 StoryNum: {startStoryNum}, 시작 ID: {firstNode.id})");
+                uiAnimator.ShowMainStoryView();
+                IsScenarioRunning = true;
+                mainStoryUI.panelRoot.SetActive(true);
+
+                // 3. DisplayNode에는 StoryNum이 아닌, 실제 데이터의 ID를 전달합니다.
+                DisplayNode(firstNode.id);
+            }
+            else
+            {
+                Debug.LogWarning($"[MainScenarioManager] StoryNum {startStoryNum}에 해당하는 데이터를 찾았으나, 유효한 ID가 없습니다. 스토리 단계를 건너뜁니다.");
+                EndScenario();
+            }
         }
         else
         {
-            Debug.LogWarning($"[MainScenarioManager] {currentChapter}챕터에 해당하는 스토리가 없습니다. 스토리 단계를 건너뜁니다.");
+            Debug.LogWarning($"[MainScenarioManager] {currentChapter}챕터에 해당하는 시작 StoryNum을 찾을 수 없습니다. 스토리 단계를 건너뜁니다.");
             EndScenario();
         }
     }
@@ -107,52 +116,88 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
             {
                 StopCoroutine(typingCoroutine);
                 typingCoroutine = null;
-                mainStoryUI.dialogueText.text = currentNode.storyText;
+                mainStoryUI.dialogueText.text = currentNode.dialogue;
             }
-            // 2. 타이핑이 끝났고, 선택지가 없는 노드라면 다음으로 자동 진행
-            else if (currentNode.choices == null || currentNode.choices.Count == 0)
+            // 2. 타이핑이 끝났고, 다음 노드가 정해진 경우
+            else
             {
+                bool hasLeftChoice = currentNode.leftChoice != null && currentNode.leftChoice.nextEventID > 0;
+                bool hasRightChoice = currentNode.rightChoice != null && currentNode.rightChoice.nextEventID > 0;
+
+                // 선택지가 2개인 경우 CardController가 처리하므로 대기
+                if (hasLeftChoice && hasRightChoice)
+                {
+                    // 아무것도 하지 않음
+                }
+                // 선택지가 1개인 선형 진행
+                else if (hasLeftChoice)
+                {
+                    DisplayNode(currentNode.leftChoice.nextEventID);
+                }
+                else if (hasRightChoice)
+                {
+                    DisplayNode(currentNode.rightChoice.nextEventID);
+                }
                 // 다음 노드가 없으므로 시나리오 종료
-                DisplayNode(null);
+                else
+                {
+                    DisplayNode(0);
+                }
             }
-            else if (currentNode.choices.Count == 1)
-            {
-                // 다음 노드가 하나뿐인 선형 진행
-                DisplayNode(currentNode.choices[0].nextNode);
-            }
-            // (선택지가 2개 이상인 경우는 CardController가 처리하므로 여기서는 반응하지 않음)
         }
     }
 
-    private void DisplayNode(StoryNode node)
+    private void DisplayNode(int nodeID)
     {
-        if (node == null)
+        if (nodeID <= 0)
         {
             EndScenario();
             return;
         }
+        // 항상 StoryNum이 아닌 'ID'로 데이터를 찾습니다. ★★★
+        currentNode = DataManager.Instance.GetMainEventDataById(nodeID);
 
-        currentNode = node;
-        mainStoryUI.characterNameText.text = currentNode.characterName;
-
-        if (currentNode.characterSprite != null)
+        if (currentNode == null)
         {
-            mainStoryUI.characterImage.sprite = currentNode.characterSprite;
-            mainStoryUI.characterImage.color = Color.white;
+            // 로그 메시지는 그대로 유지합니다. 이제 ID를 못 찾는 경우에만 이 로그가 뜹니다.
+            Debug.LogError($"[MainScenarioManager] ID({nodeID})에 해당하는 이벤트 데이터를 가져오지 못했습니다. 시나리오를 종료합니다.");
+            EndScenario();
+            return;
+        }
+
+        mainStoryUI.characterNameText.text = currentNode.characterData?.Chr_Name ?? "";
+
+        if (currentNode.characterImgData != null && !string.IsNullOrEmpty(currentNode.characterImgData.CharacterImg_path))
+        {
+            Sprite charSprite = Resources.Load<Sprite>(currentNode.characterImgData.CharacterImg_path);
+            if (charSprite != null)
+            {
+                mainStoryUI.characterImage.sprite = charSprite;
+                mainStoryUI.characterImage.color = Color.white;
+            }
+            else
+            {
+                Debug.LogWarning($"캐릭터 스프라이트를 찾을 수 없습니다: {currentNode.characterImgData.CharacterImg_path}");
+                mainStoryUI.characterImage.sprite = null;
+                mainStoryUI.characterImage.color = Color.clear;
+            }
         }
         else
         {
+            mainStoryUI.characterImage.sprite = null;
             mainStoryUI.characterImage.color = Color.clear;
         }
 
         if (typingCoroutine != null) StopCoroutine(typingCoroutine);
-        typingCoroutine = StartCoroutine(TypeText(currentNode.storyText));
+        typingCoroutine = StartCoroutine(TypeText(currentNode.dialogue));
 
-        // 선택지 UI 처리
-        if (currentNode.choices != null && currentNode.choices.Count >= 2)
+        bool hasLeftChoice = currentNode.leftChoice != null && !string.IsNullOrEmpty(currentNode.leftChoice.choiceText) && currentNode.leftChoice.nextEventID > 0;
+        bool hasRightChoice = currentNode.rightChoice != null && !string.IsNullOrEmpty(currentNode.rightChoice.choiceText) && currentNode.rightChoice.nextEventID > 0;
+
+        if (hasLeftChoice && hasRightChoice)
         {
             cardController.gameObject.SetActive(true);
-            cardController.SetChoiceTexts(currentNode.choices[0].choiceText, currentNode.choices[1].choiceText);
+            cardController.SetChoiceTexts(currentNode.leftChoice.choiceText, currentNode.rightChoice.choiceText);
             cardController.ResetCardState();
         }
         else
@@ -163,24 +208,37 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
 
     public void HandleChoice(bool isRightChoice)
     {
-        if (IsTyping || currentNode.choices.Count < 2) return;
-
-        int choiceIndex = isRightChoice ? 1 : 0;
-        Choice selectedChoice = currentNode.choices[choiceIndex];
-
-        if (selectedChoice.parameterChanges != null)
+        Debug.Log($"[MainScenarioManager] HandleChoice 호출됨! isRightChoice: {isRightChoice}");
+        if (IsTyping || currentNode == null)
         {
-            PlayerStats.Instance.ApplyChanges(selectedChoice.parameterChanges);
+            return;
         }
 
-        StartCoroutine(TransitionToNextNode(selectedChoice.nextNode));
+
+        bool hasLeftChoice = currentNode.leftChoice != null && currentNode.leftChoice.nextEventID > 0;
+        bool hasRightChoice = currentNode.rightChoice != null && currentNode.rightChoice.nextEventID > 0;
+        if (!hasLeftChoice || !hasRightChoice)
+        {
+            return;
+        }
+
+
+        MainEventChoice selectedChoice = isRightChoice ? currentNode.rightChoice : currentNode.leftChoice;
+        Debug.Log($"[MainScenarioManager] 선택지 처리 시작. 선택된 다음 노드 ID: {selectedChoice.nextEventID}");
+        if (selectedChoice.outcome?.parameterChanges != null)
+        {
+            PlayerStats.Instance.ApplyChanges(selectedChoice.outcome.parameterChanges);
+        }
+
+        StartCoroutine(TransitionToNextNode(selectedChoice.nextEventID));
     }
 
-    private IEnumerator TransitionToNextNode(StoryNode nextNode)
+    private IEnumerator TransitionToNextNode(int nextNodeID)
     {
-        cardController.gameObject.SetActive(false);
+
+       // cardController.gameObject.SetActive(false);
         yield return new WaitForSeconds(0.5f); // 전환 대기 시간
-        DisplayNode(nextNode);
+        DisplayNode(nextNodeID);
     }
 
     private IEnumerator TypeText(string text)
@@ -197,13 +255,16 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
     // IChoiceHandler 인터페이스의 나머지 함수들
     public void PreviewAffectedParameters(bool isRightChoice)
     {
-        if (currentNode == null || currentNode.choices == null || currentNode.choices.Count < 2) return;
+        if (currentNode == null) return;
 
-        Choice choiceToPreview = currentNode.choices[isRightChoice ? 1 : 0];
-        if (parameterUIController != null && choiceToPreview.parameterChanges != null)
+        bool hasLeftChoice = currentNode.leftChoice != null;
+        bool hasRightChoice = currentNode.rightChoice != null;
+        if (!hasLeftChoice || !hasRightChoice) return;
+
+        MainEventChoice choiceToPreview = isRightChoice ? currentNode.rightChoice : currentNode.leftChoice;
+        if (parameterUIController != null && choiceToPreview.outcome?.parameterChanges != null)
         {
-            // <<<<<<< [수정] 리스트 내 null 항목이 있어도 오류가 나지 않도록 c != null 조건을 추가합니다.
-            var previewChanges = choiceToPreview.parameterChanges.Where(c => c != null && c.valueChange != 0).ToList();
+            var previewChanges = choiceToPreview.outcome.parameterChanges.Where(c => c != null && c.valueChange != 0).ToList();
             parameterUIController.UpdateAffectedToggles(previewChanges);
         }
     }
@@ -215,7 +276,10 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
 
     public void UpdateDimmer(float alpha)
     {
-        if (dimmerPanel != null) dimmerPanel.color = new Color(0, 0, 0, alpha);
+           if (mainStoryUI.mainStoryDimmerPanel != null)
+        {
+            mainStoryUI.mainStoryDimmerPanel.color = new Color(0, 0, 0, alpha);
+        }
     }
 
     public void UpdateChoicePreview(string text, Color color)
@@ -233,10 +297,9 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
         }
     }
 
-
     public void SkipToNextNode()
     {
-        Debug.Log($"[치트] 현재 노드 '{currentNode.name}'를 스킵하고 다음으로 진행합니다.");
+        Debug.Log($"[치트] 현재 노드 ID '{currentNode?.id}'를 스킵하고 다음으로 진행합니다.");
 
         // 진행 중인 텍스트 타이핑이나 다른 코루틴을 중지
         if (IsTyping)
@@ -252,14 +315,18 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
             return;
         }
 
-        // 다음 노드를 결정 (선택지가 있으면 첫 번째, 없으면 null)
-        StoryNode nextNode = null;
-        if (currentNode.choices != null && currentNode.choices.Count > 0)
+        // 다음 노드를 결정 (첫 번째 유효한 선택지를 따름)
+        int nextNodeID = 0;
+        if (currentNode.leftChoice != null && currentNode.leftChoice.nextEventID > 0)
         {
-            nextNode = currentNode.choices[0].nextNode;
+            nextNodeID = currentNode.leftChoice.nextEventID;
+        }
+        else if (currentNode.rightChoice != null && currentNode.rightChoice.nextEventID > 0)
+        {
+            nextNodeID = currentNode.rightChoice.nextEventID;
         }
 
-        // 다음 노드를 표시 (nextNode가 null이면 시나리오 종료)
-        DisplayNode(nextNode);
+        // 다음 노드를 표시 (nextNodeID가 0이면 시나리오 종료)
+        DisplayNode(nextNodeID);
     }
 }

@@ -29,6 +29,12 @@ public class GameManager : MonoBehaviour
     public static GameManager instance { get; private set; }
     public GameState currentGameState { get; private set; }
 
+    [Header("메인 스토리 정보")]
+    [Tooltip("모든 메인 스토리 CSV 파일에 사용되는 MainStoryPac ID")]
+    [SerializeField] private int mainStoryPacID = 1000001;
+    [Tooltip("게임 챕터 순서대로, 각 챕터가 시작하는 StoryNum을 입력")]
+    [SerializeField] private List<int> chapterStartStoryNums;
+
     [Header("UI 참조")]
     [SerializeField] private Button continueButton;
     [SerializeField] private GameObject titlePanel;
@@ -69,6 +75,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private BattleTurnManager battleTurnManager;
     [SerializeField] private MainScenarioManager mainScenarioManager;
     [SerializeField] private UIPanelAnimator uiPanelAnimator;
+    [SerializeField] private CardController cardController;
 
 
     [Header("지휘관 선택")]
@@ -104,13 +111,31 @@ public class GameManager : MonoBehaviour
 
     private async Task InitializeGameAndLoadData()
     {
+        DataManager.Instance.LoadGame();
         await DataManager.Instance.InitializeDataAsync();
         await DataManager.Instance.SubIntializeDataAsync();
-        DataManager.Instance.LoadGame();
+        
+
+        await DataManager.Instance.IsReady;
 
         ChangeState(GameState.Title);
     }
+    public int GetCurrentChapterPacID()
+    {
+        return mainStoryPacID;
+    }
 
+    public int GetCurrentChapterStartStoryNum()
+    {
+        if (DataManager.Instance?.PlayerData == null) return 0;
+
+        int chapterIndex = DataManager.Instance.PlayerData.currentChapter - 1;
+        if (chapterIndex >= 0 && chapterIndex < chapterStartStoryNums.Count)
+        {
+            return chapterStartStoryNums[chapterIndex];
+        }
+        return 0; // 해당 챕터의 시작 StoryNum이 없음
+    }
     public void OnStateFinished()
     {
         StartCoroutine(AdvanceGameStateCoroutine());
@@ -216,7 +241,7 @@ public class GameManager : MonoBehaviour
                 if (Application.platform == RuntimePlatform.Android) PlayGamesPlatform.Instance.Authenticate(OnAuthenticated);
                 else OnAuthenticated(SignInStatus.Success);
 
-            Debug.LogError("구글 플레이 게임 서비스 로그인 실패: " + status);
+            Debug.LogError("구글 플레이 게임 서비스 로그인 실패: ");
             FirebaseManager.Instance.GPGSLogin();
                 break;
             case GameState.PlayingOpeningCutscene:
@@ -224,6 +249,7 @@ public class GameManager : MonoBehaviour
                 cutsceneManager.StartCutscene(chapter1OpeningCutscene);
                 break;
             case GameState.InEventCycle:
+                if (cardController != null) cardController.choiceHandler = uiFlowSimulator;
                 EventManager.OnEventCycleCompleted += OnStateFinished;
                 if (uiFlowSimulator != null)
                 {
@@ -232,6 +258,7 @@ public class GameManager : MonoBehaviour
                 uiFlowSimulator.BeginFlow();
                 break;
             case GameState.InStory:
+                if (cardController != null) cardController.choiceHandler = mainScenarioManager;
                 if (uiPanelAnimator != null) uiPanelAnimator.ShowMainStoryView();
                 MainScenarioManager.OnScenarioFinished += OnStateFinished;
                 mainScenarioManager.BeginScenarioFromStart();
@@ -264,7 +291,7 @@ public class GameManager : MonoBehaviour
         if (DataManager.Instance.PlayerData != null)
         {
             DataManager.Instance.PlayerData.currentGameState = currentGameState;
-            DataManager.Instance.SaveGame();
+            DataManager.Instance.SaveLocal();
         }
     }
 
@@ -329,7 +356,7 @@ public class GameManager : MonoBehaviour
     private void RestoreGameState(GameState stateToRestore) { Debug.Log($"[게임 상태 복원] -> {stateToRestore}"); currentGameState = stateToRestore; SetUIForState(stateToRestore); switch (stateToRestore) { case GameState.InEventCycle: uiFlowSimulator.BeginFlow(); break; case GameState.InStory: mainScenarioManager.BeginScenarioFromStart(); break; case GameState.InBattle: battleTurnManager.OnBattleEnd += HandleBattleEnd; break; } }
     public void OnClickNewGameFromScratch() { ShowConfirmation("모든 진행 상황이 삭제됩니다. 정말 새로 시작하시겠습니까?", () => { DataManager.Instance.DeleteLocalSaveData(); DataManager.Instance.StartNewGame(); ResetAllGameData(); UnlockManager.ResetAllUnlocks(); ChangeState(GameState.CommanderSelection); }); }
     public void OnClickContinueGame() { if (DataManager.Instance.PlayerData != null) { RestoreGameState(DataManager.Instance.PlayerData.currentGameState); } }
-    public void SaveAndReturnToTitle() { ShowConfirmation("진행 상황을 저장하고 타이틀로 돌아가시겠습니까?", () => { isReturningToTitle = true; if (DataManager.Instance.PlayerData != null) { DataManager.Instance.PlayerData.currentGameState = this.currentGameState; DataManager.Instance.SaveGame(); } ChangeState(GameState.MainMenu); isReturningToTitle = false; }); }
+    public void SaveAndReturnToTitle() { ShowConfirmation("진행 상황을 저장하고 타이틀로 돌아가시겠습니까?", () => { isReturningToTitle = true; if (DataManager.Instance.PlayerData != null) { DataManager.Instance.PlayerData.currentGameState = this.currentGameState; DataManager.Instance.SaveLocal(); } ChangeState(GameState.MainMenu); isReturningToTitle = false; }); }
     public void OnTitlePanelTouched() { ChangeState(GameState.Login); titlePanel.SetActive(false); menuPanel.SetActive(true); if (Application.platform == RuntimePlatform.Android) { PlayGamesPlatform.Instance.Authenticate(OnAuthenticated); } else { OnAuthenticated(SignInStatus.Success); } }
     private void OnAuthenticated(SignInStatus status) { ChangeState(GameState.MainMenu); continueButton.interactable = DataManager.Instance.CheckIfSaveDataExists(); if (status == SignInStatus.Success) { Debug.Log("구글 플레이 게임 서비스 로그인 성공!"); } else { Debug.LogError("구글 플레이 게임 서비스 로그인 실패: " + status); if (FirebaseManager.Instance != null) FirebaseManager.Instance.GPGSLogin(); } }
     public async void OnCommanderSelected(int commanderIndex) { CommanderInfo selectedCommander = null; switch (commanderIndex) { case 0: selectedCommander = Commander1Button.GetComponent<CommanderInfo>(); break; case 1: selectedCommander = Commander2Button.GetComponent<CommanderInfo>(); break; case 2: selectedCommander = Commander3Button.GetComponent<CommanderInfo>(); break; default: Debug.LogError($"잘못된 지휘관 인덱스입니다: {commanderIndex}"); return; } if (!UnlockManager.IsUnlocked(selectedCommander.traitEnum)) { Debug.LogWarning($"[시스템] 잠겨있는 지휘관({selectedCommander.name})은 선택할 수 없습니다."); return; } PlayerStats.Instance.SetActiveCommander(selectedCommander); if (selectedCommander.initialStatAdjustments.Count > 0) { PlayerStats.Instance.ApplyChanges(selectedCommander.initialStatAdjustments); } await EventManager.Instance.StartNewGame(selectedPackNumber); OnStateFinished(); }

@@ -56,6 +56,8 @@ public class DataManager : MonoBehaviour
     public Dictionary<int, string> MainStoryDialogues; // Dialogue CSV를 위한 Dictionary
     public Dictionary<int, Sprite> MainStoryCharacterImages; // 이미지 리소스를 위한 Dictionary
     public Dictionary<int, Sprite> MainStoryBGs; // 배경 리소스를 위한 Dictionary
+    private Dictionary<int, NewMainEventData> mainEventData = new Dictionary<int, NewMainEventData>();
+
     private void Awake()
     {
         if (Instance == null)
@@ -335,10 +337,39 @@ public class DataManager : MonoBehaviour
             CharacterDataDict = characterList.ToDictionary(e => e.Chr_ID, e => e);
             bgDataDict = bgList.ToDictionary(bg => bg.BG_ID, bg => bg);
             sfxDataDict = sfxList.ToDictionary(sfx => sfx.SFX_ID, sfx => sfx);
-            characterImgDataDict = characterImgList.ToDictionary(c => c.CharacterImg_ID, c => c);
+            characterImgDataDict = characterImgList.ToDictionary(c => (long)c.CharacterImg_ID, c => c);
             endingEventDataDict = endingEventList.ToDictionary(e => e.ID, e => e);
             endingCutSceneDict = endingCutSceneList.ToDictionary(c => c.EndingCutScene_ID, c => c);
 
+            // 모든 원본 데이터 로딩이 끝난 후, NewMainEventData 딕셔너리를 채웁니다.
+            mainEventData.Clear(); // 혹시 모를 이전 데이터 삭제
+
+            Debug.Log("---------- [DataManager] 데이터 가공 시작 ----------");
+            // mainEventDataDict에 로드된 모든 원본 데이터를 순회합니다.
+            foreach (var rawData in mainEventDataDict.Values.OrderBy(d => d.ID)) // ID 순서대로 확인
+            {
+                NewMainEventData processedData = GetMainEventDataById(rawData.ID);
+
+                // rawData.ID가 10140 근처일 때 특히 주의 깊게 보세요.
+                if (processedData != null)
+                {
+                    if (!mainEventData.ContainsKey(processedData.id))
+                    {
+                        mainEventData.Add(processedData.id, processedData);
+                        // 어떤 데이터가 성공적으로 추가되었는지 로그로 확인
+                        if (rawData.ID > 10010 && rawData.ID < 10020) // Chapter 2 시작 부근 로그 확인
+                        {
+                            Debug.Log($"[성공] ID: {rawData.ID}, StoryNum: {rawData.StoryNum} -> 가공 완료 및 추가 성공.");
+                        }
+                    }
+                }
+                else
+                {
+                    // 어떤 데이터가 가공에 실패했는지 로그로 확인
+                    Debug.LogError($"[실패] ID: {rawData.ID}, StoryNum: {rawData.StoryNum} -> 가공 중 Null 반환됨. 이 데이터나 관련 데이터(BG, 캐릭터 등)에 문제가 있을 수 있습니다.");
+                }
+            }
+                Debug.Log($"[DataManager] {mainEventData.Count}개의 메인 스토리 데이터를 가공하여 최종 준비했습니다.");
 
 
             _isReady.TrySetResult(true);
@@ -454,6 +485,7 @@ public class DataManager : MonoBehaviour
         {
             id = rawData.ID,
             MainStoryPac = rawData.MainStoryPac,
+            StoryNum = rawData.StoryNum,
             LoopNum = rawData.LoopNum,
             dialogue = rawData.Text_kr,
 
@@ -489,7 +521,22 @@ public class DataManager : MonoBehaviour
 
         return fullEventData;
     }
+    public NewMainEventData GetMainEventDataByStoryNum(int storyNum)
+    {
+        // mainEventData 딕셔너리의 모든 값들 중에서
+        // StoryNum이 일치하는 데이터를 찾되, ID가 가장 낮은(가장 먼저 나오는) 데이터를 반환합니다.
+        var foundData = mainEventData.Values
+                                     .Where(data => data.StoryNum == storyNum)
+                                     .OrderBy(data => data.id) // ID 순으로 정렬
+                                     .FirstOrDefault(); // 그 중 첫 번째 것을 선택
 
+        if (foundData == null)
+        {
+            Debug.LogError($"[DataManager] StoryNum {storyNum}에 해당하는 이벤트 데이터를 찾을 수 없습니다.");
+        }
+
+        return foundData;
+    }
     private MainEventChoice CreateMainChoice(int answerID)
     {
         var choice = new MainEventChoice();
@@ -498,15 +545,19 @@ public class DataManager : MonoBehaviour
         {
             parameterChanges = new List<ParameterChange>()
         };
+        Debug.Log($"[DataManager] 선택지를 생성합니다. AnswerID: {answerID}를 찾습니다...");
 
         if (answerDataDict.TryGetValue(answerID, out var answerData))
         {
+            Debug.Log($"[DataManager] -> <color=green>성공!</color> AnswerID: {answerID}를 찾았습니다. 텍스트: '{answerData.Text_KR}', 다음 이벤트 ID: {answerData.NextTextID}");
             choice.choiceText = answerData.Text_KR;
             choice.nextEventID = answerData.NextTextID;
             //선택지 보상치 적용 단
         }
         else
         {
+            Debug.LogError($"[DataManager] -> <color=red>실패!</color> AnswerID: {answerID}에 해당하는 데이터를 'answerDataDict'에서 찾을 수 없습니다. MainAnswerID.csv 파일을 확인해주세요.");
+
             choice.choiceText = "선택지 데이터를 찾을 수 없습니다.";
         }
 
