@@ -115,7 +115,7 @@ public class EventManager : MonoBehaviour
         DataManager.Instance.PlayerData.eventPlaylistIndex = 0;
         currentState = EventManagerState.InCycle;
         // [추가] 새 사이클(챕터)이 구성되었으므로 이 상태를 저장합니다.
-        DataManager.Instance.SaveGame();
+        DataManager.Instance.SaveLocal();
 
         Debug.Log($"사이클 시작 (회차: {DataManager.Instance.PlayerData.playthroughCount}). 총 이벤트: {DataManager.Instance.PlayerData.currentPlaylist.Count}개");
     }
@@ -126,7 +126,7 @@ public class EventManager : MonoBehaviour
 
         // [추가] 다음 턴을 시작하기 전에(즉, 이전 이벤트 선택 직후) 게임을 저장합니다. (요구사항 1)
         Debug.Log("이전 이벤트 선택 완료. **이벤트 종료 시점 저장**");
-        DataManager.Instance.SaveGame();
+        DataManager.Instance.SaveLocal();
 
         //if (currentState == EventManagerState.InSubEvent)
         //{

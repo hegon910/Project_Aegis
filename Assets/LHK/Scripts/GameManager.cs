@@ -195,7 +195,12 @@ public class GameManager : MonoBehaviour
             if (tutorialPanel != null) tutorialPanel.SetActive(true);
         }
     }
-
+    // 팩 선택 온 클릭 이벤트
+    public void SelectStoryPack(int packNumber)
+    {
+        selectedPackNumber = packNumber;
+        Debug.Log($"[GameManager] 서브 스토리 팩 {packNumber}번이 선택되었습니다.");
+    }
     private void ChangeState(GameState newState)
     {
         UnsubscribeFromCurrentStateEvent();
@@ -210,6 +215,9 @@ public class GameManager : MonoBehaviour
             case GameState.Login:
                 if (Application.platform == RuntimePlatform.Android) PlayGamesPlatform.Instance.Authenticate(OnAuthenticated);
                 else OnAuthenticated(SignInStatus.Success);
+
+            Debug.LogError("구글 플레이 게임 서비스 로그인 실패: " + status);
+            FirebaseManager.Instance.GPGSLogin();
                 break;
             case GameState.PlayingOpeningCutscene:
                 CutsceneManager.OnCutsceneFinished += OnStateFinished;
@@ -314,6 +322,7 @@ public class GameManager : MonoBehaviour
     {
         // OnClick 이벤트가 발생하면 다음 상태(다음 챕터)로 진행시킵니다.
         OnStateFinished();
+ 
     }
 
     public void HideTutorial() { if (tutorialPanel != null && tutorialPanel.activeSelf) { tutorialPanel.SetActive(false); } }
@@ -336,7 +345,7 @@ public class GameManager : MonoBehaviour
     {
         ShowConfirmation("게임을 종료하시겠습니까?", () =>
         {
-            DataManager.Instance.SaveGame();
+            DataManager.Instance.SaveLocal();
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
 #else
