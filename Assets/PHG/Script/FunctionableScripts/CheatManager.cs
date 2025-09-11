@@ -3,9 +3,29 @@ using UnityEngine;
 
 public class CheatManager : MonoBehaviour
 {
+    public static CheatManager Instance { get; private set; }
+    [Header("치트 활성화")]
+    [SerializeField] private bool enableCheats = true;
     // [Header("설정")]
     // [Tooltip("이 스크립트는 에디터와 개발 빌드에서만 동작합니다.")]
     // public bool enableCheats = true;
+
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+        if (Input.GetKeyDown(KeyCode.N))
+        {
+            SkipCurrentState();
+        }
+    }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     void Update()
@@ -79,6 +99,19 @@ public class CheatManager : MonoBehaviour
                 // 현재 UI 전환 효과 등을 무시하고 즉시 다음 턴을 호출합니다.
                 EventManager.Instance.PlayNextTurn();
             }
+        }
+    }
+    private void SkipCurrentState()
+    {
+        if (GameManager.instance != null)
+        {
+            Debug.LogWarning("[CHEAT] 현재 상태를 스킵하고 다음으로 진행합니다.");
+            GameManager.instance.ForceResetTransitionFlag();
+            GameManager.instance.OnStateFinished();
+        }
+        else
+        {
+            Debug.LogError("[CHEAT] GameManager 인스턴스를 찾을 수 없어 스킵할 수 없습니다.");
         }
     }
 #endif

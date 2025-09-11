@@ -4861,7 +4861,7 @@ MonoBehaviour:
   onSwipeLeft:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 2875224704326393334}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: BattleTurnManager, Assembly-CSharp
         m_MethodName: OnClick_PlayerAttack
         m_Mode: 1
@@ -4876,7 +4876,7 @@ MonoBehaviour:
   onSwipeRight:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 2875224704326393334}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: BattleTurnManager, Assembly-CSharp
         m_MethodName: OnClick_PlayerDefend
         m_Mode: 1
@@ -4903,7 +4903,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0dedd3930b756d41aed62180968b815, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  turnMgr: {fileID: 2875224704326393334}
+  turnMgr: {fileID: 0}
   swipe: {fileID: 5492420856486623760}
 --- !u!1 &3755934747122799261
 GameObject:
@@ -7022,7 +7022,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 99bb5b1bd14060b439f60e1c6545e1f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  turnMgr: {fileID: 2875224704326393334}
+  turnMgr: {fileID: 0}
   player: {fileID: 0}
   enemy: {fileID: 0}
   turnTxt: {fileID: 4261804789484305344}
@@ -10047,7 +10047,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 462091177589946342}
-  - component: {fileID: 2875224704326393334}
   m_Layer: 0
   m_Name: BattleTurnManager
   m_TagString: Untagged
@@ -10070,27 +10069,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 3030616878479094290}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2875224704326393334
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8116391949286720058}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2a0dfacaae6b0794b8fda83b3aac85bf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ground: {fileID: 0}
-  player: {fileID: 0}
-  enemy: {fileID: 0}
-  maxTurns: 30
-  initialPlayerHP: 5
-  initialPlayerShield: 0
-  initialEnemyHP: 5
-  initialEnemyShield: 0
-  playerStartIndex: 0
 --- !u!1 &8135756998420766584
 GameObject:
   m_ObjectHideFlags: 0

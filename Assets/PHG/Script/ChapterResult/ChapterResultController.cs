@@ -113,7 +113,7 @@ public class ChapterResultController : MonoBehaviour
             dateText.text = currentDate.ToString("yyyy년 M월 d일");
 
             // 1초 대기
-            yield return new WaitForSeconds(1.0f);
+            yield return new WaitForSeconds(0.5f);
 
             // 날짜를 1개월 뒤로 이동
             currentDate = currentDate.AddMonths(1);

@@ -139,10 +139,7 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
                     DisplayNode(currentNode.rightChoice.nextEventID);
                 }
                 // 다음 노드가 없으므로 시나리오 종료
-                else
-                {
-                    DisplayNode(0);
-                }
+               
             }
         }
     }
@@ -154,7 +151,7 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
             EndScenario();
             return;
         }
-        // 항상 StoryNum이 아닌 'ID'로 데이터를 찾습니다. ★★★
+        // 항상 StoryNum이 아닌 'ID'로 데이터를 찾습니다. 
         currentNode = DataManager.Instance.GetMainEventDataById(nodeID);
 
         if (currentNode == null)
@@ -191,8 +188,8 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
         if (typingCoroutine != null) StopCoroutine(typingCoroutine);
         typingCoroutine = StartCoroutine(TypeText(currentNode.dialogue));
 
-        bool hasLeftChoice = currentNode.leftChoice != null && !string.IsNullOrEmpty(currentNode.leftChoice.choiceText) && currentNode.leftChoice.nextEventID > 0;
-        bool hasRightChoice = currentNode.rightChoice != null && !string.IsNullOrEmpty(currentNode.rightChoice.choiceText) && currentNode.rightChoice.nextEventID > 0;
+        bool hasLeftChoice = currentNode.leftChoice != null && !string.IsNullOrEmpty(currentNode.leftChoice.choiceText);
+        bool hasRightChoice = currentNode.rightChoice != null && !string.IsNullOrEmpty(currentNode.rightChoice.choiceText);
 
         if (hasLeftChoice && hasRightChoice)
         {
@@ -214,10 +211,7 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
             return;
         }
 
-
-        bool hasLeftChoice = currentNode.leftChoice != null && currentNode.leftChoice.nextEventID > 0;
-        bool hasRightChoice = currentNode.rightChoice != null && currentNode.rightChoice.nextEventID > 0;
-        if (!hasLeftChoice || !hasRightChoice)
+        if (currentNode.leftChoice == null || currentNode.rightChoice == null)
         {
             return;
         }

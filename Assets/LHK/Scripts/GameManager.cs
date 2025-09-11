@@ -75,7 +75,7 @@ public class GameManager : MonoBehaviour
 
     [Header("코어 시스템 참조")]
     [SerializeField] private UIFlowSimulator uiFlowSimulator;
-    [SerializeField] private BattleTurnManager battleTurnManager;
+    [SerializeField] private WarTurnManager battleTurnManager;
     [SerializeField] private MainScenarioManager mainScenarioManager;
     [SerializeField] private UIPanelAnimator uiPanelAnimator;
     [SerializeField] private CardController cardController;
@@ -150,7 +150,10 @@ public class GameManager : MonoBehaviour
     {
         StartCoroutine(AdvanceGameStateCoroutine());
     }
-
+    public void ForceResetTransitionFlag()
+    {
+        isTransitioningState = false;
+    }
     //서브이벤트 패널을 열고 닫을 함수
     public void ToggleSubEventPanel(bool isOpen)
     {
@@ -200,10 +203,29 @@ public class GameManager : MonoBehaviour
             case GameState.CommanderSelection: nextState = GameState.PlayingOpeningCutscene; break;
             case GameState.PlayingOpeningCutscene: nextState = GameState.InStory; break;
             case GameState.InStory:
-                nextState = (CurrentChapter == 1) ? GameState.InEventCycle : GameState.PlayingChapterEndCutscene;
+                // 1장과 6장은 스토리가 먼저이므로, 다음은 이벤트 사이클입니다.
+                if (CurrentChapter == 1 || CurrentChapter == 6)
+                {
+                    nextState = GameState.InEventCycle;
+                }
+                // 2-5장은 이벤트 사이클 다음이 스토리이므로, 스토리 다음은 컷신입니다.
+                else
+                {
+                    nextState = GameState.PlayingChapterEndCutscene;
+                }
                 break;
+
             case GameState.InEventCycle:
-                nextState = (CurrentChapter == 1 || CurrentChapter == 6) ? GameState.PlayingChapterEndCutscene : GameState.InStory;
+                // 2-5장은 이벤트 사이클이 먼저이므로, 다음은 스토리입니다.
+                if (CurrentChapter >= 2 && CurrentChapter <= 5)
+                {
+                    nextState = GameState.InStory;
+                }
+                // 1장과 6장은 스토리 다음이 이벤트 사이클이므로, 이벤트 사이클 다음은 컷신입니다.
+                else
+                {
+                    nextState = GameState.PlayingChapterEndCutscene;
+                }
                 break;
             case GameState.PlayingChapterEndCutscene: nextState = GameState.InBattle; break;
             case GameState.InBattle: nextState = GameState.InBattleResult; break;
@@ -305,6 +327,11 @@ public class GameManager : MonoBehaviour
 
         SetUIForState(newState);
 
+        if (newState == GameState.InBattle)
+        {
+            Debug.Log(battleTurnManager == null ? "오류: battleTurnManager 참조가 없습니다!" : "1단계 OK: battleTurnManager 참조 정상");
+        }
+        Debug.Log($"[GameManager] 가 바라보는 WarTurnManager ID: {battleTurnManager.GetInstanceID()}");
         switch (newState)
         {
             case GameState.Login:
@@ -344,7 +371,9 @@ public class GameManager : MonoBehaviour
                     OnStateFinished();
                 break;
             case GameState.InBattle:
+                battleTurnManager.ResetForNewBattle();
                 battleTurnManager.OnBattleEnd += HandleBattleEnd;
+                Debug.Log("2단계 OK: GameManager가 OnBattleEnd 신호를 구독했습니다.");
                 break;
             // <<<<<<< [추가 5] InBattleResult 상태에 대한 로직 추가 (현재는 UI 표시 외에 특별한 동작 없음)
             case GameState.InBattleResult:

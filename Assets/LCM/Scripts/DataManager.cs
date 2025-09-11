@@ -492,7 +492,6 @@ public class DataManager : MonoBehaviour
             MainStoryPac = rawData.MainStoryPac,
             StoryNum = rawData.StoryNum,
             LoopNum = rawData.LoopNum,
-            StoryNum = rawData.StoryNum, // 추가
             dialogue = rawData.Text_kr, 
 
         };
