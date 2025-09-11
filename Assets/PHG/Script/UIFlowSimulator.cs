@@ -167,6 +167,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         {
             var choice = isRightChoice ? currentParameterEventData.rightChoice : currentParameterEventData.leftChoice;
             bool success = choice.condition.Evaluate(PlayerStats.Instance, PlaythroughHistory.Instance);
+            PlaythroughHistory.Instance.RecordEventOutcome(currentParameterEventData.id, success);
             var outcome = success ? choice.successOutcome : choice.failOutcome;
 
             // 1. 이벤트 결과로 나온 '원본' 변경안 리스트를 복사합니다.

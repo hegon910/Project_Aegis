@@ -99,6 +99,7 @@ public class EventManager : MonoBehaviour
                 if (subEventChain.Count > 0 && subEventChain.Count <= remainingSlots)
                 {
                     DataManager.Instance.PlayerData.playedSubEventGroups.Add(selectedGroup); // 확정되면 추가
+                    PlaythroughHistory.Instance.RecordSubEventGroup(selectedGroup); // 다음 회차 분기를 위해 영구 기록
                     DataManager.Instance.PlayerData.currentPlaylist.Add(subEventChain.First().Index);
                     remainingSlots -= subEventChain.Count;
                 }
