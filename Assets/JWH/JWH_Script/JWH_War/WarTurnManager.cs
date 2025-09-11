@@ -231,8 +231,15 @@ public class WarTurnManager : MonoBehaviour
         }
         skillCooldownTimer = usedSkill.cooltime;
         Debug.Log($"WarTurnManager 스킬 쿨타임 {skillCooldownTimer}턴으로 설정");
+    }
 
-
+    public string GetSkillName()
+    {
+        if (player != null && player.currentSkill != null)
+        {
+            return player.currentSkill.skillName;
+        }
+        return null;
     }
 
     //외부로 턴 정보 넘길예정 아마 승패쪽에서
