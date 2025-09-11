@@ -80,3 +80,5 @@ Imports/
 Firebase/
 ExternalDependencyManager/
 GooglePlayGames/
+Assets/google-services.json
+Assets/Plugins/Android/FirebaseApp.androidlib/res/values/google-services.xml

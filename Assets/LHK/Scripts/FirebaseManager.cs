@@ -50,16 +50,14 @@ public class FirebaseManager : MonoBehaviour
         {
             if (task.IsCanceled || task.IsFaulted)
             {
-                Debug.LogError("?ŒŒ?´?–´ë² ì´?Š¤ ?„¤? • ?‹¤?Œ¨ " + task.Exception);
                 return;
             }
 
-            Debug.Log("?ŒŒ?´?–´ë² ì´?Š¤ ?„¤? • ?„±ê³?");
             Auth = FirebaseAuth.DefaultInstance;
             Database = FirebaseDatabase.DefaultInstance;
 
 #if !UNITY_EDITOR
-            // v2.1.0?—?„œ?Š” Activateë§? ?˜¸ì¶œí•˜ë©? ?¨
+            
             PlayGamesPlatform.Activate();
 #endif
         });
@@ -74,11 +72,9 @@ public class FirebaseManager : MonoBehaviour
 
     public void EmailLogin()
     {
-        Debug.Log("?´ë©”ì¼ ë¡œê·¸?¸ ë²„íŠ¼ ?´ë¦??¨");
 
         if (string.IsNullOrEmpty(idInput.text) || string.IsNullOrEmpty(passwordInput.text))
         {
-            Debug.Log("?•„?´?”” ?˜?Š” ë¹„ë??ë²ˆí˜¸ê°? ?…? ¥?˜ì§? ?•Š?Œ");
             return;
         }
 
@@ -87,16 +83,13 @@ public class FirebaseManager : MonoBehaviour
             {
                 if (task.IsCanceled)
                 {
-                    Debug.LogError("ë¡œê·¸?¸ ì·¨ì†Œ?¨");
                     return;
                 }
                 if (task.IsFaulted)
                 {
-                    Debug.LogError("ë¡œê·¸?¸ ?‹¤?Œ¨" + task.Exception);
                     return;
                 }
 
-                Debug.Log("ë¡œê·¸?¸ ?„±ê³?");
                 User = task.Result.User;
                 loginPanel.SetActive(false);
                 GameManager.instance.StartNewGame();
@@ -104,25 +97,22 @@ public class FirebaseManager : MonoBehaviour
     }
 #endif
 
-    // ---------------------------
-    // GPGS + Firebase ë¡œê·¸?¸ ë¶?ë¶?
-    // ---------------------------
+
 
     public void GPGSLogin()
     {
 #if UNITY_EDITOR
-        Debug.LogWarning("?—?””?„°?—?„œ?Š” GPGS ë¡œê·¸?¸ ë¶ˆê??");
+        Debug.LogWarning("ì—ë””í„°ì—ì„œëŠ” gpgs ë¡œê·¸ì¸ ë¶ˆê°€ëŠ¥");
 #else
         PlayGamesPlatform.Instance.Authenticate(status =>
         {
             if (status == SignInStatus.Success)
             {
-                Debug.Log("GPGS ë¡œê·¸?¸ ?„±ê³?");
                 RequestAuthCodeAndSignInFirebase();
             }
             else
             {
-                Debug.LogError("GPGS ë¡œê·¸?¸ ?‹¤?Œ¨: " + status);
+                Debug.LogError("GPGS ë¡œê·¸ì¸ ì‹¤íŒ¨ ì›ì¸:" + status);
             }
         });
 #endif
@@ -134,31 +124,31 @@ public class FirebaseManager : MonoBehaviour
         {
             if (!string.IsNullOrEmpty(authCode))
             {
-                Debug.Log("?„œë²? ?¸ì¦? ì½”ë“œ: " + authCode);
+                Debug.Log("ì¸ì¦ì½”ë“œ ë°œê¸‰:" + authCode);
 
                 var credential = PlayGamesAuthProvider.GetCredential(authCode);
                 Auth.SignInWithCredentialAsync(credential).ContinueWithOnMainThread(task =>
                 {
                     if (task.IsCanceled)
                     {
-                        Debug.LogError("Firebase ë¡œê·¸?¸ ì·¨ì†Œ?¨");
+                        Debug.LogError("Firebase ì¸ì¦ ì·¨ì†Œë¨");
                         return;
                     }
                     if (task.IsFaulted)
                     {
-                        Debug.LogError("Firebase ë¡œê·¸?¸ ?‹¤?Œ¨: " + task.Exception);
+                        Debug.LogError("Firebase ì¸ì¦ ì‹¤íŒ¨: " + task.Exception);
                         return;
                     }
 
                     User = task.Result;
-                    Debug.Log($"Firebase ë¡œê·¸?¸ ?„±ê³?: {User.DisplayName} ({User.UserId})");
+                    Debug.Log($"Firebase ì¸ì¦ì™„ë£Œ: {User.DisplayName} ({User.UserId})");
 
                     GameManager.instance.OnTitlePanelTouched();
                 });
             }
             else
             {
-                Debug.LogError("?„œë²? ?¸ì¦? ì½”ë“œ ë°œê¸‰ ?‹¤?Œ¨");
+                Debug.LogError("ì¸ì¦ì½”ë“œ ë°œê¸‰ì‹¤íŒ¨");
             }
         });
     }

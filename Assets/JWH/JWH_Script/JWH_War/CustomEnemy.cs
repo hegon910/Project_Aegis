@@ -44,12 +44,12 @@ public class CustomEnemy : WarEnemy
                 break;
 
             case (WarAction.Attack, WarAction.Defend):
-                Debug.Log("충돌: 플레이어 공격 vs 자신 방어");
+                Debug.Log("충돌: 플레이어 공격 vs 적 방어");
                 outcome = playerAttackVsEnemyDefend;
                 break;
 
             case (WarAction.Defend, WarAction.Attack):
-                Debug.Log("충돌: 플레이어 방어 vs 자신 공격");
+                Debug.Log("충돌: 플레이어 방어 vs 적 공격");
                 outcome = playerDefendVsEnemyAttack;
 
                 player.GainShield(1);// 내가 플레이어한테 쉴드 얻는걸 줬던거 같은데 맞나?
