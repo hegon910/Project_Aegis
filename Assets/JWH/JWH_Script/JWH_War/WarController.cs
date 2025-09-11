@@ -36,12 +36,14 @@ public class WarController : MonoBehaviour
         currentIndex = startIndex;
         GetComponent<RectTransform>().anchoredPosition = ground.GetGroundPos(currentIndex);
     }
+
     public void ResetState(WarGround ground, int startIndex)
     {
         currentHp = maxHp;
         Init(ground, startIndex);
         Debug.Log($"{gameObject.name}의 상태가 초기화되었습니다. (HP: {currentHp}, 위치: {startIndex})");
     }
+
     public void TakeDamage(int amount)
     {
         currentHp = Mathf.Max(0, currentHp - amount);

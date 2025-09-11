@@ -39,8 +39,8 @@ public class WarHUD : MonoBehaviour
         }
         if (player)
         {
-            pHpTxt.text = $"HP: {player.Ctrl.CurrentHP} / {player.Ctrl.MaxHP}";
-            pShieldTxt.text = $"Shield: {player.Shield}";
+            pHpTxt.text = $"{player.Ctrl.CurrentHP}";
+            pShieldTxt.text = $"{player.Shield}";
         }
         if (enemy)
         {
@@ -48,7 +48,7 @@ public class WarHUD : MonoBehaviour
             {
                 eNameTxt.text = enemy.name;
             }
-            eHpTxt.text = $"HP: {enemy.Ctrl.CurrentHP} / {enemy.Ctrl.MaxHP}";
+            eHpTxt.text = $"{enemy.Ctrl.CurrentHP}";
         }
         UpdateWarSlider();
         UpdateSkillUI();
