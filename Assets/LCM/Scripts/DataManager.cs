@@ -439,9 +439,29 @@ public class DataManager : MonoBehaviour
             return null;
         }
 
-
-        // 분기 조건 확인: ChangeCondition 이벤트가 과거에 성공적으로 완료되었는지 여부
-        bool isBranchTriggered = rawData.ConditionType == 1 && PlaythroughHistory.Instance.HasCompletedEvent(rawData.ChangeCondition);
+        bool isBranchTriggered = false;
+        switch (rawData.ConditionType)
+        {
+            case 1: // 특정 파라미터 이벤트 경험
+                if (PlaythroughHistory.Instance.GetEventOutcome(rawData.ChangeCondition, out bool success))
+                {
+                    isBranchTriggered = (success == (rawData.IsConditionSuccess == 1));
+                }
+                break;
+            case 2: // 특정 서브 이벤트 그룹 경험
+                isBranchTriggered = PlaythroughHistory.Instance.HasPlayedSubEventGroup(rawData.ChangeCondition);
+                break;
+            case 3: // 특정 전투 결과 경험
+                // 가정: ChangeCondition 값이 BattleOutcome enum(Win=0, Draw=1, Lose=2) 로 가정
+                isBranchTriggered = (int)PlaythroughHistory.Instance.GetLastBattleResult() == rawData.ChangeCondition;
+                break;
+            case 4: // 특정 엔딩 경험
+                isBranchTriggered = PlaythroughHistory.Instance.HasCompletedEnding(rawData.ChangeCondition);
+                break;
+            default: // 조건 없음
+                isBranchTriggered = false;
+                break;
+        }
 
         var fullEventData = new EventData
         {
@@ -509,7 +529,7 @@ public class DataManager : MonoBehaviour
                                        : (isBranch ? rawData.AnotherDenyReward2 : rawData.DenyReward2);
         int needType          = isLeft ? (isBranch ? rawData.AnotherNeedType1 : rawData.NeedType1)
                                        : (isBranch ? rawData.AnotherNeedType2 : rawData.NeedType2);
-        int needValue         = isLeft ? (isBranch ? rawData.AnotehrNeedValue1 : rawData.NeedValue1) // 'Anotehr' 오타 대응
+        int needValue         = isLeft ? (isBranch ? rawData.AnotherNeedValue1 : rawData.NeedValue1)
                                        : (isBranch ? rawData.AnotherNeedValue2 : rawData.NeedValue2);
 
         // 선택지 텍스트 설정
@@ -652,7 +672,7 @@ public class DataManager : MonoBehaviour
         public int AnotherEventQuestion { get; set; }
         public int AnotherLeftString { get; set; }
         public int AnotherNeedType1 { get; set; }
-        public int AnotehrNeedValue1 { get; set; }
+        public int AnotherNeedValue1 { get; set; }
         public int AnotherAcceptReward1 { get; set; }
         public int AnotherDenyReward1 { get; set; }
         public int AnotherAcceptString1 { get; set; }
@@ -787,63 +807,5 @@ public class DataManager : MonoBehaviour
         public string RightSelectString { get; set; }
         public string CharacterName { get; set; }
         public string End_Text { get; set; }
-    }
-
-    // PlayerPrefs를 사용하여 회차 기록을 관리하는 클래스
-    public class PlaythroughHistory
-    {
-        public static PlaythroughHistory Instance { get; private set; } = new PlaythroughHistory();
-
-        private const string CompletedEventsKey = "CompletedEvents";
-        private HashSet<int> completedEvents;
-
-        // 생성자에서 데이터 로드
-        private PlaythroughHistory()
-        {
-            Load();
-        }
-
-        private void Load()
-        {
-            completedEvents = new HashSet<int>();
-            string savedEvents = PlayerPrefs.GetString(CompletedEventsKey, "");
-            if (!string.IsNullOrEmpty(savedEvents))
-            {
-                foreach (var idStr in savedEvents.Split(','))
-                {
-                    if (int.TryParse(idStr, out int id))
-                    {
-                        completedEvents.Add(id);
-                    }
-                }
-            }
-            Debug.Log($"[PlaythroughHistory] 로드 완료. 완료된 이벤트 {completedEvents.Count}개");
-        }
-
-        private void Save()
-        {
-            string eventIds = string.Join(",", completedEvents);
-            PlayerPrefs.SetString(CompletedEventsKey, eventIds);
-            PlayerPrefs.Save(); // 확실한 저장을 위해 호출
-            Debug.Log($"[PlaythroughHistory] 저장 완료. 현재 완료된 이벤트: {eventIds}");
-        }
-
-        public bool HasCompletedEvent(int eventId) => completedEvents.Contains(eventId);
-
-        public void AddCompletedEvent(int eventId)
-        {
-            if (completedEvents.Add(eventId)) // 새로운 이벤트일 경우에만 저장
-            {
-                Save();
-            }
-        }
-
-        public void ClearHistory()
-        {
-            completedEvents.Clear();
-            PlayerPrefs.DeleteKey(CompletedEventsKey);
-            PlayerPrefs.Save();
-            Debug.Log("[PlaythroughHistory] 모든 기록이 삭제되었습니다.");
-        }
     }
 }

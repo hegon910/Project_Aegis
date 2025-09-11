@@ -138,7 +138,7 @@ public class HistorySuccessCondition : SuccessCondition
     public override bool Evaluate(PlayerStats playerStats, PlaythroughHistory playthroughHistory)
     {
         if (playthroughHistory == null) return false;
-        return playthroughHistory.HasCompletedEvent(requiredEventID);
+        return playthroughHistory.GetEventOutcome(requiredEventID, out _);
     }
 }
 

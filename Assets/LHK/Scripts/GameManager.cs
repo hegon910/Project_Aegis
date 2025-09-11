@@ -458,7 +458,7 @@ public class GameManager : MonoBehaviour
         if (EventManager.Instance != null) EventManager.Instance.ResetEventManagerState();
         if (battleTurnManager != null) battleTurnManager.ResetForNewBattle();
         if (mainScenarioManager != null) mainScenarioManager.ResetScenarioState();
-        if (DataManager.PlaythroughHistory.Instance != null) DataManager.PlaythroughHistory.Instance.ClearHistory();
+        if (PlaythroughHistory.Instance != null) PlaythroughHistory.Instance.ClearHistory();
     }
 
     public void GoToTitleScreen()
