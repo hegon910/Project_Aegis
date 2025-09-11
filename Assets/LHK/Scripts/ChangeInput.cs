@@ -45,7 +45,6 @@ public class ChangeInput : MonoBehaviour
                         {
                             button.Select();
                             button.onClick.Invoke();
-                            Debug.Log("버튼눌림");
                         }
                     }
                 }
@@ -53,7 +52,6 @@ public class ChangeInput : MonoBehaviour
                 {
                     button.Select();
                     button.onClick.Invoke();
-                    Debug.Log("버튼눌림");
                 }
             }
         }
