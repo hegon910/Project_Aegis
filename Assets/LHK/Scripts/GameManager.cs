@@ -42,6 +42,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject titleCanvas;
     [SerializeField] private GameObject menuPanel;
     [SerializeField] private GameObject gameOverPanel;
+    [SerializeField] private TextMeshProUGUI gameOverText;
     [SerializeField] private GameObject mainGameCanvas;
     [SerializeField] private GameObject commanderSelectionCanvas;
     [SerializeField] private GameObject storyPanel;
@@ -509,9 +510,34 @@ public class GameManager : MonoBehaviour
     private void OnAuthenticated(SignInStatus status) { ChangeState(GameState.MainMenu); continueButton.interactable = DataManager.Instance.CheckIfSaveDataExists(); if (status == SignInStatus.Success) { Debug.Log("구글 플레이 게임 서비스 로그인 성공!"); } else { Debug.LogError("구글 플레이 게임 서비스 로그인 실패: " + status); if (FirebaseManager.Instance != null) FirebaseManager.Instance.GPGSLogin(); } }
     public async void OnCommanderSelected(int commanderIndex) { CommanderInfo selectedCommander = null; switch (commanderIndex) { case 0: selectedCommander = Commander1Button.GetComponent<CommanderInfo>(); break; case 1: selectedCommander = Commander2Button.GetComponent<CommanderInfo>(); break; case 2: selectedCommander = Commander3Button.GetComponent<CommanderInfo>(); break; default: Debug.LogError($"잘못된 지휘관 인덱스입니다: {commanderIndex}"); return; } if (!UnlockManager.IsUnlocked(selectedCommander.traitEnum)) { Debug.LogWarning($"[시스템] 잠겨있는 지휘관({selectedCommander.name})은 선택할 수 없습니다."); return; } PlayerStats.Instance.SetActiveCommander(selectedCommander); if (selectedCommander.initialStatAdjustments.Count > 0) { PlayerStats.Instance.ApplyChanges(selectedCommander.initialStatAdjustments); } await EventManager.Instance.StartNewGame(selectedPackNumber); OnStateFinished(); }
     private void StartDetailedResultSequence() { int warSituation = PlayerStats.Instance.GetStat(ParameterType.전황); GameOutcome outcome = (warSituation <= 19) ? GameOutcome.Defeat : (warSituation >= 81) ? GameOutcome.Victory : GameOutcome.Draw; int chapterIndex = CurrentChapter - 1; if (chapterIndex < chapterEndDataList.Count && chapterEndDataList[chapterIndex] != null) { chapterEndController.StartChapterEndSequence(chapterEndDataList[chapterIndex], outcome); } else { OnStateFinished(); } }
-    public void GameOver() { gameOverPanel.SetActive(true); }
+    public void GameOver(string reason)
+    {
+        if (gameOverText != null)
+        {
+            gameOverText.text = reason;
+        }
+        gameOverPanel.SetActive(true);
+    }
     public void OnGameOverPanelTouched() { DataManager.Instance.StartNewGame(); ResetAllGameData(); ChangeState(GameState.CommanderSelection); }
-    public void CheckGameOverConditions() { if (PlayerStats.Instance.GetStat(ParameterType.정치력) <= 0 || PlayerStats.Instance.GetStat(ParameterType.병력) <= 0 || PlayerStats.Instance.GetStat(ParameterType.물자) <= 0 || PlayerStats.Instance.GetStat(ParameterType.리더십) <= 0) { GameOver(); } }
+    public void CheckGameOverConditions()
+    {
+        if (PlayerStats.Instance.GetStat(ParameterType.정치력) <= 0)
+        {
+            GameOver("정치력이 0이 되어 통치 기반을 잃었습니다.");
+        }
+        else if (PlayerStats.Instance.GetStat(ParameterType.병력) <= 0)
+        {
+            GameOver("병력이 0이 되어 전선을 유지할 수 없습니다.");
+        }
+        else if (PlayerStats.Instance.GetStat(ParameterType.물자) <= 0)
+        {
+            GameOver("물자가 0이 되어 부대를 운용할 수 없습니다.");
+        }
+        else if (PlayerStats.Instance.GetStat(ParameterType.리더십) <= 0)
+        {
+            GameOver("리더십이 0이 되어 병사들이 따르지 않습니다.");
+        }
+    }
     public void ResetAllGameData() { EventManager.Instance.ResetEventManagerState(); battleTurnManager.ResetForNewBattle(); mainScenarioManager.ResetScenarioState(); }
     public void ShowConfirmation(string message, UnityAction confirmAction) { confirmationText.text = message; onConfirmAction = confirmAction; confirmationPanel.SetActive(true); }
     public void OnConfirm() { onConfirmAction?.Invoke(); confirmationPanel.SetActive(false); onConfirmAction = null; }
