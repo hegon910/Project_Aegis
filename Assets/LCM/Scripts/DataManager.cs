@@ -88,7 +88,8 @@ public class DataManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 새 게임을 시작할 때 호출됩니다.
+    /// 새 게임을 시작할 때 호출
+    /// 새로운 플레이어데이터를 생성하고, 로컬에 저장
     /// </summary>
     public void StartNewGame()
     {
@@ -98,7 +99,7 @@ public class DataManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 파일에서 플레이어 데이터를 불러옵니다. 파일이 없으면 새 게임 데이터가 생성됩니다.
+    /// 로컬파일에서 플레이어 데이터를 불러옵니다. 파일이 없으면 새 게임으로 시작.
     /// 9.9. 이학권 변경
     /// </summary>
     public void LoadGame()
@@ -110,7 +111,7 @@ public class DataManager : MonoBehaviour
                 string json = File.ReadAllText(_playerDataSavePath, Encoding.UTF8);
                 PlayerData = JsonUtility.FromJson<GameData>(json);
                 if (PlayerData == null) throw new Exception("파싱 실패");
-                Debug.Log($"로컬 로드 완료 (Chapter: {PlayerData.currentChapter})");
+                Debug.Log("로컬 로드 완료");
             }
             catch (Exception ex)
             {
