@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using Firebase;
 using Firebase.Auth;
-using Firebase.Database;
+//using Firebase.Database;
 using Firebase.Extensions;
 using GooglePlayGames;
 using GooglePlayGames.BasicApi;
@@ -12,7 +12,7 @@ public class FirebaseManager : MonoBehaviour
 {
     public static FirebaseManager Instance { get; private set; }
     public static FirebaseAuth Auth { get; private set; }
-    public static FirebaseDatabase Database { get; private set; }
+    //public static FirebaseDatabase Database { get; private set; }
     public static FirebaseUser User { get; private set; }
 
 #if UNITY_EDITOR
@@ -56,7 +56,7 @@ public class FirebaseManager : MonoBehaviour
 
             Debug.Log("파이어베이스 설정 성공");
             Auth = FirebaseAuth.DefaultInstance;
-            Database = FirebaseDatabase.DefaultInstance;
+            //Database = FirebaseDatabase.DefaultInstance;
 
 #if !UNITY_EDITOR
             // v2.1.0에서는 Activate만 호출하면 됨
