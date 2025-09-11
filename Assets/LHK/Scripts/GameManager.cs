@@ -478,7 +478,6 @@ public class GameManager : MonoBehaviour
     {
         ShowConfirmation("게임을 종료하시겠습니까?", () =>
         {
-            DataManager.Instance.SaveLocal();
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
 #else

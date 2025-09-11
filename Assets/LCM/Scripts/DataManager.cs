@@ -72,18 +72,23 @@ public class DataManager : MonoBehaviour
 
         // 플레이어 데이터 저장 경로 설정
         _playerDataSavePath = Path.Combine(Application.persistentDataPath, "playerdata.json");
+        LoadGame();
+        if (PlayerData == null)
+        {
+            Debug.Log("저장된 데이터를 찾을 수 없어 새 게임 데이터를 생성합니다.");
+            StartNewGame(); // 혹은 PlayerData = new GameData(); 로 직접 생성
+        }
     }
 
     private void Start() /// 9.9. 이학권 추가
     {
-        LoadGame();
         FirebaseAuth.DefaultInstance.StateChanged += OnAuthStateChanged;
         TrySyncIfLoggedIn();
     }
 
     private void OnAuthStateChanged(object sender, System.EventArgs e)
     {
-        TrySyncIfLoggedIn();
+       TrySyncIfLoggedIn();
     }
 
     private void TrySyncIfLoggedIn() /// 9.9. 이학권 추가
@@ -250,10 +255,10 @@ public class DataManager : MonoBehaviour
     /// <summary>
     /// 게임이 종료될 때 자동으로 데이터를 저장합니다.
     /// </summary>
-    private void OnApplicationQuit()
-    {
-        SaveLocal();
-    }
+   // private void OnApplicationQuit()
+   // {
+   //     SaveLocal();
+   // }
 
 
 
