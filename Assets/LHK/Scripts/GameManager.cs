@@ -179,6 +179,12 @@ public class GameManager : MonoBehaviour
         confirmationPanel.SetActive(false);
         onConfirmAction = null;
     }
+    // 팩 선택 온 클릭 이벤트
+    public void SelectStoryPack(int packNumber)
+    {
+        selectedPackNumber = packNumber;
+        Debug.Log($"[GameManager] 서브 스토리 팩 {packNumber}번이 선택되었습니다.");
+    }
 
     // [수정] 기존의 (int commanderIndex) 방식을 그대로 유지합니다.
     public async void OnCommanderSelected(int commanderIndex)
@@ -223,7 +229,7 @@ public class GameManager : MonoBehaviour
             PlayerStats.Instance.ApplyChanges(selectedCommander.initialStatAdjustments);
         }
 
-        DataManager.Instance.SaveGame();
+        DataManager.Instance.SaveLocal();
 
 
         if (DataManager.Instance.PlayerData.playthroughCount == 1 && chapter1OpeningCutscene != null)
@@ -392,7 +398,7 @@ public class GameManager : MonoBehaviour
         if (isReturningToTitle) return;
 
         DataManager.Instance.PlayerData.currentChapter++;
-        DataManager.Instance.SaveGame();
+        DataManager.Instance.SaveLocal();
 
         mainGameCanvas.SetActive(true);
         if (uiFlowSimulator != null) uiFlowSimulator.BeginFlow();
@@ -437,7 +443,7 @@ public class GameManager : MonoBehaviour
     {
         DataManager.Instance.PlayerData.playthroughCount++;
         EventManager.Instance.ResetEventManagerState();
-        DataManager.Instance.SaveGame();
+        DataManager.Instance.SaveLocal();
 
         if (battleResultPanel != null) battleResultPanel.SetActive(false);
         if (gameOverPanel != null) gameOverPanel.SetActive(false);
@@ -476,7 +482,7 @@ public class GameManager : MonoBehaviour
     {
         ShowConfirmation("게임을 종료하시겠습니까?", () =>
         {
-            DataManager.Instance.SaveGame();
+            DataManager.Instance.SaveLocal();
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
 #else

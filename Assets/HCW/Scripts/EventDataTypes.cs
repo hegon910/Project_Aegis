@@ -97,13 +97,28 @@ public class ParameterSuccessCondition : SuccessCondition
 
     public override bool Evaluate(PlayerStats playerStats, PlaythroughHistory playthroughHistory)
     {
-        if (playerStats == null || requiredValue <= 0)
+        if (playerStats == null)
         {
-            return false; // 요구 값이 0 이하면 실패 처리
+            Debug.LogError("[ParameterSuccessCondition] PlayerStats가 null입니다.");
+            return false;
+        }
+
+        // 요구치가 0 이하면 항상 성공
+        if (requiredValue <= 0)
+        {
+            return true;
         }
 
         float playerValue = playerStats.GetStat(targetParameter);
-        float successRate = Mathf.Clamp01(playerValue / requiredValue);
+
+        // 플레이어의 스탯이 요구치보다 높거나 같으면 무조건 성공
+        if (playerValue >= requiredValue)
+        { 
+            return true;
+        }
+
+        // 플레이어의 스탯이 요구치보다 낮으면 확률 계산
+        float successRate = playerValue / requiredValue;
 
         return Random.value < successRate;
     }
