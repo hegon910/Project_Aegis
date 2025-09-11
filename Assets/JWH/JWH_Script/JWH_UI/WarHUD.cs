@@ -14,9 +14,12 @@ public class WarHUD : MonoBehaviour
     [SerializeField] TMP_Text turnTxt;     
     
     [SerializeField] TMP_Text pHpTxt;      
-    [SerializeField] TMP_Text pShieldTxt; 
-    
+    [SerializeField] TMP_Text pShieldTxt;
+
+    [SerializeField] TMP_Text eNameTxt;
     [SerializeField] TMP_Text eHpTxt;
+
+    [SerializeField] TMP_Text skillNameText;
     [SerializeField] TMP_Text skillCooldownText;
 
     [Header("War Status Slider")]
@@ -41,8 +44,11 @@ public class WarHUD : MonoBehaviour
         }
         if (enemy)
         {
+            if (eNameTxt != null)
+            {
+                eNameTxt.text = enemy.name;
+            }
             eHpTxt.text = $"HP: {enemy.Ctrl.CurrentHP} / {enemy.Ctrl.MaxHP}";
-
         }
         UpdateWarSlider();
         UpdateSkillUI();
@@ -69,13 +75,24 @@ public class WarHUD : MonoBehaviour
 
     void UpdateSkillUI()
     {
-        int cooldown = turnMgr.GetSkillCooldown();
-        if (cooldown > 0)
+        if (turnMgr == null) return;
+        string currentSkillName = turnMgr.GetSkillName();
+        if (!string.IsNullOrEmpty(currentSkillName))
         {
-            skillCooldownText.text = cooldown.ToString();
+            skillNameText.text = currentSkillName;
+            int cooldown = turnMgr.GetSkillCooldown();
+            if (cooldown > 0)
+            {
+                skillCooldownText.text = cooldown.ToString();
+            }
+            else
+            {
+                skillCooldownText.text = "사용 가능";
+            }
         }
         else
         {
+            skillNameText.text = "스킬 없음";
             skillCooldownText.text = "";
         }
     }
