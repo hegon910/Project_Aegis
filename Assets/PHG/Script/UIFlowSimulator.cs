@@ -192,7 +192,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     private IEnumerator TransitionToNextEvent(string resultText)
     {
         situationCardController.UpdateText(resultText);
-        yield return new WaitForSeconds(3f);
+        yield return new WaitForSeconds(1.5f);
         uiPanelController.Hide();
         situationCardController.Hide();
         yield return new WaitUntil(() => !situationCardController.gameObject.activeInHierarchy);

@@ -18,10 +18,9 @@ MonoBehaviour:
     imageData:
       image: {fileID: 21300000, guid: 4eddf07d6b27d804ea5a0ff7a700e9b5, type: 3}
       fadeDuration: 1
-    enableDialogueEffect: 1
+    enableDialogueEffect: 0
     dialogueData:
-      dialogue: "\uC774\uAC83\uC740 \uD14C\uC2A4\uD2B8 \uC624\uD504\uB2DD\uC785\uB2C8\uB2E4.
-        \uC774 \uBB38\uC7A5\uC774 \uBCF4\uC774\uBA74 \uC791\uB3D9\uC911\uC778\uAC81\uB2C8\uB2E4."
+      dialogue: 
       typewriterSpeed: 0.2
     enableSoundEffect: 0
     soundData:
@@ -32,7 +31,7 @@ MonoBehaviour:
       waitForCompletion: 0
     enableDayTextEffect: 1
     dayTextData:
-      text: "1943\uB144, -1\uC7A5- \uC624\uD504\uB2DD"
+      text: "1943\uB144 6\uC6D4"
       animationDuration: 1
       holdDuration: 10
     waitTime: 10

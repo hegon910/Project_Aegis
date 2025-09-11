@@ -21,10 +21,7 @@ public class CheatManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
-        if (Input.GetKeyDown(KeyCode.N))
-        {
-            SkipCurrentState();
-        }
+
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -100,8 +97,12 @@ public class CheatManager : MonoBehaviour
                 EventManager.Instance.PlayNextTurn();
             }
         }
+        if (Input.GetKeyDown(KeyCode.N))
+        {
+            SkipCurrentState();
+        }
     }
-    private void SkipCurrentState()
+    public void SkipCurrentState()
     {
         if (GameManager.instance != null)
         {

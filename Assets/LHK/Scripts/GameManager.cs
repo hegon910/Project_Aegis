@@ -103,6 +103,7 @@ public class GameManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+        subEventSelectedText.text = "선택된 서브 이벤트 팩이 없습니다.";
     }
 
     private void OnEnable() { }
@@ -118,7 +119,7 @@ public class GameManager : MonoBehaviour
         DataManager.Instance.LoadGame();
         await DataManager.Instance.InitializeDataAsync();
         await DataManager.Instance.SubIntializeDataAsync();
-        
+
 
         await DataManager.Instance.IsReady;
         // 모든 데이터 로딩이 완료되었습니다.
@@ -157,7 +158,7 @@ public class GameManager : MonoBehaviour
     //서브이벤트 패널을 열고 닫을 함수
     public void ToggleSubEventPanel(bool isOpen)
     {
-        
+        subEventSelectedText.text = "선택된 서브 이벤트 팩이 없습니다.";
 
         if (subEventSelectPanel != null)
         {
@@ -183,7 +184,7 @@ public class GameManager : MonoBehaviour
                 }
                 else
                 {
-                //    EventManager.Instance.ResetEventManagerState();
+                    //    EventManager.Instance.ResetEventManagerState();
                     Debug.Log("서브이벤트 모드가 비활성화되었습니다.");
                     // 예: UI 텍스트 변경 -> subEventModeText.text = "OFF";
                 }
@@ -204,7 +205,7 @@ public class GameManager : MonoBehaviour
             case GameState.PlayingOpeningCutscene: nextState = GameState.InStory; break;
             case GameState.InStory:
                 // 1장과 6장은 스토리가 먼저이므로, 다음은 이벤트 사이클입니다.
-                if (CurrentChapter == 1 || CurrentChapter == 6)
+                if (CurrentChapter == 1)
                 {
                     nextState = GameState.InEventCycle;
                 }
@@ -216,12 +217,12 @@ public class GameManager : MonoBehaviour
                 break;
 
             case GameState.InEventCycle:
-                // 2-5장은 이벤트 사이클이 먼저이므로, 다음은 스토리입니다.
-                if (CurrentChapter >= 2 && CurrentChapter <= 5)
+                // 2-6장은 이벤트 사이클이 먼저이므로, 다음은 스토리입니다.
+                if (CurrentChapter >= 2 && CurrentChapter <= 6)
                 {
                     nextState = GameState.InStory;
                 }
-                // 1장과 6장은 스토리 다음이 이벤트 사이클이므로, 이벤트 사이클 다음은 컷신입니다.
+                // 1장은 스토리 다음이 이벤트 사이클이므로, 이벤트 사이클 다음은 컷신입니다.
                 else
                 {
                     nextState = GameState.PlayingChapterEndCutscene;
@@ -242,7 +243,7 @@ public class GameManager : MonoBehaviour
                 {
                     EventManager.Instance.StartNewCycle();
                     // 6챕터 시작 시에는 스토리 먼저, 그 외에는 이벤트 사이클 먼저
-                    nextState = (DataManager.Instance.PlayerData.currentChapter == 6) ? GameState.InStory : GameState.InEventCycle;
+                    nextState = GameState.InEventCycle;
                 }
                 break;
             case GameState.PlayingEndingCutscene:
@@ -291,6 +292,8 @@ public class GameManager : MonoBehaviour
     // 팩 선택 온 클릭 이벤트
     public void SelectStoryPack(int packNumber)
     {
+        subEventSelectedText.gameObject.SetActive(true);
+        subEventSelectedText.text = "서브이벤트가 비활성화 상태입니다.";
         // 1. 만약 지금 클릭한 팩이 이미 선택되어 있는 팩이라면
         if (selectedPackNumber == packNumber)
         {
@@ -314,7 +317,7 @@ public class GameManager : MonoBehaviour
             // 6. UI 텍스트에 선택된 팩 번호를 표시합니다.
             if (subEventSelectedText != null)
             {
-                subEventSelectedText.text = $"선택된 서브 이벤트 팩: {packNumber}";
+                subEventSelectedText.text = $"서브 이벤트 팩: {packNumber}이 활성화 되었습니다.";
             }
         }
     }
@@ -338,8 +341,8 @@ public class GameManager : MonoBehaviour
                 if (Application.platform == RuntimePlatform.Android) PlayGamesPlatform.Instance.Authenticate(OnAuthenticated);
                 else OnAuthenticated(SignInStatus.Success);
 
-            Debug.LogError("구글 플레이 게임 서비스 로그인 실패: ");
-            FirebaseManager.Instance.GPGSLogin();
+                Debug.LogError("구글 플레이 게임 서비스 로그인 실패: ");
+                FirebaseManager.Instance.GPGSLogin();
                 break;
             case GameState.PlayingOpeningCutscene:
                 CutsceneManager.OnCutsceneFinished += OnStateFinished;
@@ -380,7 +383,7 @@ public class GameManager : MonoBehaviour
                 // 이 상태는 UI 버튼 클릭을 통해 다음 상태로 진행되므로, 여기서는 대기합니다.
                 break;
             case GameState.InChapterResult:
-             //   ChapterResultController.OnSequenceComplete += OnStateFinished;
+                //   ChapterResultController.OnSequenceComplete += OnStateFinished;
                 StartDetailedResultSequence();
                 break;
             case GameState.PlayingEndingCutscene:
@@ -395,7 +398,24 @@ public class GameManager : MonoBehaviour
             DataManager.Instance.SaveLocal();
         }
     }
+    public void OnclickSkip()
+    {
 
+
+        // 메인 시나리오가 실행 중인지 먼저 확인
+        var mainScenarioManager = FindObjectOfType<MainScenarioManager>();
+        if (mainScenarioManager != null && mainScenarioManager.IsScenarioRunning)
+        {
+            mainScenarioManager.SkipToNextNode();
+        }
+        // 그렇지 않으면 일반 이벤트(파라미터/서브) 스킵 시도
+        else if (EventManager.Instance != null)
+        {
+            // 현재 UI 전환 효과 등을 무시하고 즉시 다음 턴을 호출합니다.
+            EventManager.Instance.PlayNextTurn();
+        }
+
+    }
     private void UnsubscribeFromCurrentStateEvent()
     {
         switch (currentGameState)
@@ -416,7 +436,7 @@ public class GameManager : MonoBehaviour
                 battleTurnManager.OnBattleEnd -= HandleBattleEnd;
                 break;
             case GameState.InChapterResult:
-              //  ChapterResultController.OnSequenceComplete -= OnStateFinished;
+                //  ChapterResultController.OnSequenceComplete -= OnStateFinished;
                 break;
         }
     }
@@ -430,10 +450,10 @@ public class GameManager : MonoBehaviour
             battleResultText.text = resultLog; // BattleTurnManager에서 "승리" 또는 "패배" 텍스트를 넘겨주는 것을 가정
         }
 
-        // 스탯 설정
-        if (resultLog.Contains("승리")) PlayerStats.Instance.SetStat(ParameterType.전황, 90);
-        else if (resultLog.Contains("패배")) PlayerStats.Instance.SetStat(ParameterType.전황, 10);
-        else PlayerStats.Instance.SetStat(ParameterType.전황, 50);
+        // 스탯을 추가 혹은 감소 조정하는 것으로 변경
+        // if (resultLog.Contains("승리")) PlayerStats.Instance.ApplyChanges(new List<ParameterChange> { new ParameterChange { parameterType = ParameterType.전황, valueChange = +20 } });
+        // else if (resultLog.Contains("패배")) PlayerStats.Instance.ApplyChanges(new List<ParameterChange> { new ParameterChange { parameterType = ParameterType.전황, valueChange = -20 } });
+        // else PlayerStats.Instance.ApplyChanges(new List<ParameterChange> { new ParameterChange { parameterType = ParameterType.전황, valueChange = 0 } });
 
         // OnStateFinished()를 바로 호출하는 대신, InBattleResult 상태로 직접 변경
         ChangeState(GameState.InBattleResult);
@@ -450,7 +470,7 @@ public class GameManager : MonoBehaviour
     {
         // OnClick 이벤트가 발생하면 다음 상태(다음 챕터)로 진행시킵니다.
         OnStateFinished();
- 
+
     }
     private void RestoreGameState(GameState stateToRestore)
     {

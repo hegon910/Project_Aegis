@@ -45,6 +45,9 @@ public class CommanderCarouselController : MonoBehaviour
     private float[] itemBaseAngles;
     private bool isDragging = false;
     private bool isTweening = false;
+    private int clickCount = 0;
+    private float lastClickTime = 0f;
+    private const float tripleClickThreshold = 0.4f;
     public int centerIndex { get; private set; }
     private Sequence popupSequence;
 
@@ -181,6 +184,28 @@ public class CommanderCarouselController : MonoBehaviour
         }
 
     }
+    private void ToggleCenterCommanderLockState()
+    {
+        // 1. 현재 중앙에 있는 사령관 정보를 가져옵니다.
+        CommanderInfo centerCommander = commanderInfos[centerIndex];
+
+        // 2. 해당 사령관이 현재 잠금 해제되어 있는지 확인합니다.
+        bool isCurrentlyUnlocked = UnlockManager.IsUnlocked(centerCommander.traitEnum);
+
+        // 3. 현재 상태에 따라 적절한 함수를 호출합니다.
+        if (isCurrentlyUnlocked)
+        {
+            // 이미 잠금 해제 상태라면 -> 잠급니다.
+            LockCenterCommander();
+            Debug.Log($"'{centerCommander.name}' Commander Locked by Toggle.");
+        }
+        else
+        {
+            // 잠겨있는 상태라면 -> 잠금 해제합니다.
+            UnlockCenterCommander();
+            Debug.Log($"'{centerCommander.name}' Commander Unlocked by Toggle.");
+        }
+    }
     private void RefreshUIState()
     {
         UpdateAllLockOverlays(); // 모든 카드의 자물쇠 아이콘 업데이트
@@ -249,59 +274,31 @@ public class CommanderCarouselController : MonoBehaviour
     }
     // --- 입력 처리 함수들 ---
 
-    // [복원 및 수정] 짧은 클릭을 처리하는 함수
+
     private void HandleClick(Vector2 clickPosition)
     {
-        Debug.Log("--- HandleClick Start ---");
-
-        // --- 추가된 안전장치 ---
-        // 클릭 이벤트가 수신되면, 이전에 끝내지 못한 드래그 상태를 강제로 종료시킵니다.
-        // 이는 InputManager가 micro-drag 후 OnDragEnd를 호출하지 않는 문제에 대한 방어 코드입니다.
-        if (isDragging)
-        {
-            Debug.LogWarning("isDragging was 'true' at the start of a click. Forcing it to 'false'.");
-            isDragging = false;
-        }
-        // --- 안전장치 끝 ---
-
-        if (isTweening)
-        {
-            Debug.Log("Action skipped: Tweening is in progress.");
-            return;
-        }
+        if (isTweening || isDragging) return;
 
         PointerEventData pointerData = new PointerEventData(EventSystem.current) { position = clickPosition };
         List<RaycastResult> results = new List<RaycastResult>();
         EventSystem.current.RaycastAll(pointerData, results);
 
-        if (results.Count == 0)
+        if (results.Count > 0)
         {
-            Debug.LogWarning("Raycast did not hit ANY UI elements. Check 'Raycast Target' on your images.");
-        }
-        else
-        {
-            Debug.Log($"Raycast hit {results.Count} object(s). Checking for a match...");
-            bool foundMatch = false;
-            foreach (var result in results)
+            var info = commanderInfos.FirstOrDefault(c => c.transform == results[0].gameObject.transform);
+            if (info != null)
             {
-                Debug.Log("-> Hit object: " + result.gameObject.name);
+                // 클릭된 카드가 무엇이든 OnCommanderClicked에게 넘겨서 처리하도록 합니다.
+                OnCommanderClicked(info.transform);
 
-                var info = commanderInfos.FirstOrDefault(c => c.transform == result.gameObject.transform);
-                if (info != null)
+                // 중앙이 아닌 카드를 클릭하면 clickCount를 초기화해야 합니다.
+                // OnCommanderClicked 내부에서 이미 centerIndex가 아니면 clickCount를 초기화하지 않으므로, 여기서 처리해줍니다.
+                if (commanderInfos.IndexOf(info) != centerIndex)
                 {
-                    Debug.Log($"SUCCESS! Found matching commander '{info.gameObject.name}'. Calling OnCommanderClicked.");
-                    OnCommanderClicked(info.transform);
-                    foundMatch = true;
-                    break;
+                    clickCount = 0;
                 }
             }
-
-            if (!foundMatch)
-            {
-                Debug.LogWarning("Raycast hit UI, but none of the hit objects matched the commander list.");
-            }
         }
-        Debug.Log("--- HandleClick End ---");
     }
 
     public void HandleDragStart(Vector2 dragStartPosition)
@@ -365,8 +362,21 @@ public class CommanderCarouselController : MonoBehaviour
         }
         else
         {
-            // 4. 원래 있던 기능: 중앙 카드를 클릭했다면 로그를 표시합니다.
-            Debug.Log($"{clickedButton.name}의 능력치 또는 정보를 표시합니다.");
+            if (Time.time - lastClickTime > tripleClickThreshold)
+            {
+                clickCount = 1;
+            }
+            else
+            {
+                clickCount++;
+            }
+            lastClickTime = Time.time;
+
+            if (clickCount >= 3)
+            {
+                ToggleCenterCommanderLockState();
+                clickCount = 0; // 카운트 초기화
+            }
         }
     }
 

@@ -108,6 +108,11 @@ public class EventManager : MonoBehaviour
                     remainingSlots -= subEventChain.Count;
                 }
             }
+            else
+            {
+                // [추가] 사용 가능한 서브 이벤트 그룹이 없을 때 경고 로그 출력
+                Debug.LogWarning($"[EventManager] 팩 번호({selectedPackNumber})에 더 이상 진행할 수 있는 새 서브 이벤트 그룹이 없습니다.");
+            }
         }
 
         if (remainingSlots > 0)
@@ -151,7 +156,8 @@ public class EventManager : MonoBehaviour
     }
    public void PlayNextTurn()
 {
-    if (currentState == EventManagerState.Idle) return;
+        Debug.Log($"[PlayNextTurn] 호출됨. 현재 상태: {currentState}, 진행도: {DataManager.Instance.PlayerData.eventPlaylistIndex}/{DataManager.Instance.PlayerData.currentPlaylist.Count}");
+        if (currentState == EventManagerState.Idle) return;
 
     if (currentState == EventManagerState.InCycle)
     {
@@ -268,10 +274,19 @@ public class EventManager : MonoBehaviour
         if (DataManager.Instance?.eventDataDict.Values == null || DataManager.Instance.PlayerData == null) return new List<int>();
 
         var completedIds = new HashSet<int>(DataManager.Instance.PlayerData.completedEventIds);
+        var newEvents = DataManager.Instance.eventDataDict.Values
+       .Where(d => d.PageType == 0 && !completedIds.Contains(d.ID))
+       .Select(d => d.ID)
+       .ToList();
+        if (newEvents.Count < totalEventsPerCycle)
+        {
+            Debug.LogWarning("[EventManager] 사용 가능한 신규 공용 이벤트가 부족하여, 봤던 이벤트를 포함하여 다시 목록을 만듭니다.");
+            return DataManager.Instance.eventDataDict.Values
+                .Where(d => d.PageType == 0) // <-- 'completedIds' 필터링을 제거한 것이 핵심!
+                .Select(d => d.ID)
+                .ToList();
+        }
 
-        return DataManager.Instance.eventDataDict.Values
-            .Where(d => d.PageType == 0 && !completedIds.Contains(d.ID))
-            .Select(d => d.ID)
-            .ToList();
+        return newEvents;
     }
 }

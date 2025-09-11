@@ -15,15 +15,14 @@ MonoBehaviour:
   victoryImage: {fileID: 21300000, guid: c1152581a5ef4734d9561856ab7f079f, type: 3}
   drawImage: {fileID: 21300000, guid: 7015d3d4eb3b6c04f818062713e437a3, type: 3}
   defeatImage: {fileID: 21300000, guid: 7698b3d878ad457479be1fa5568ae066, type: 3}
-  startYear: 1942
-  startMonth: 5
-  startDay: 1
-  endYear: 1942
-  endMonth: 11
-  endDay: 1
-  victorySummary: "Chapter_4 : \uC2B9\uB9AC\uD55C \uC0C1\uD669\uC5D0\uC11C\uC758
-    \uC694\uC57D \uD14D\uC2A4\uD2B8"
-  drawSummary: "Chapter_4 : \uBB34\uC2B9\uBD80\uC778 \uC0C1\uD669\uC5D0\uC11C\uC758
-    \uC694\uC57D \uD14D\uC2A4\uD2B8"
-  defeatSummary: "Chapter_4 : \uD328\uBC30\uD55C \uC0C1\uD669\uC5D0\uC11C\uC758 \uC694\uC57D
-    \uD14D\uC2A4\uD2B8"
+  startYear: 1944
+  startMonth: 12
+  endYear: 1945
+  endMonth: 6
+  victorySummary: "\uD3EC\uB85C\uB4E4\uC5D0\uAC8C\uC11C \uC5BB\uC5B4\uB0B8 \uC815\uBCF4\uB355\uC5D0
+    \uC804\uD22C\uC758 \uC6B0\uC704\uB97C \uCC28\uC9C0 \uD560 \uC218 \uC788\uC5C8\uB2E4."
+  drawSummary: "\uC880 \uB354 \uBE60\uB974\uAC8C \uC815\uBCF4\uB97C \uC5BB\uC5B4\uB0BC
+    \uC218 \uC788\uC5C8\uB2E4\uBA74..\n\uC6B0\uC704\uB97C \uCC28\uC9C0 \uD588\uC744
+    \uAC83\uC774\uB2E4."
+  defeatSummary: "\uAC04\uBC1C\uC758 \uCC28\uB85C \uD328\uBC30\uD588\uB2E4.. \uC815\uBCF4\uC804\uC758
+    \uC18C\uC911\uD568\uC744 \uC54C\uAC8C\uB41C \uAC83 \uAC19\uB2E4."

@@ -20,7 +20,10 @@ MonoBehaviour:
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
-      dialogue: "6\uC7A5\uC758 \uC804\uD22C"
+      dialogue: "\uC804\uC7C1\uC758 \uB05D\uC774 \uB2E4\uAC00\uC654\uB2E4. \uC801\uC758
+        \uACF5\uC138\uAC00 \uAC15\uD574\uC84C\uB2E4.\n\uC624\uC2A4\uD2F0\uB808\uC544
+        \u2018\uC774\uD130 \uC131\u2019\uC744 \uB450\uACE0 \uC77C\uC5B4\uB0A0 \uC804\uD22C\uB97C
+        \uC704\uD574 \uCD9C\uC815 \uC900\uBE44\uB97C \uD55C\uB2E4."
       typewriterSpeed: 0.1
     enableSoundEffect: 0
     soundData:
@@ -31,7 +34,7 @@ MonoBehaviour:
       waitForCompletion: 0
     enableDayTextEffect: 1
     dayTextData:
-      text: "6\uC7A5 -\uC804\uD22C-"
+      text: "1945\uB144 12\uC6D4 "
       animationDuration: 0
       holdDuration: 10
     waitTime: 10
