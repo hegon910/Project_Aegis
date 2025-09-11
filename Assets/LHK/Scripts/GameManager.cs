@@ -130,9 +130,9 @@ public class GameManager : MonoBehaviour
 
     private void OnAuthenticated(SignInStatus status)
     {
-        if (status != SignInStatus.Success)
+        if (status == SignInStatus.Success)
         {
-            Debug.LogError("구글 플레이 게임 서비스 로그인 실패: " + status);
+            
             FirebaseManager.Instance.GPGSLogin();
         }
     }
@@ -229,7 +229,7 @@ public class GameManager : MonoBehaviour
             PlayerStats.Instance.ApplyChanges(selectedCommander.initialStatAdjustments);
         }
 
-        DataManager.Instance.SaveGame();
+        DataManager.Instance.SaveLocal();
 
 
         if (DataManager.Instance.PlayerData.playthroughCount == 1 && chapter1OpeningCutscene != null)
@@ -398,7 +398,7 @@ public class GameManager : MonoBehaviour
         if (isReturningToTitle) return;
 
         DataManager.Instance.PlayerData.currentChapter++;
-        DataManager.Instance.SaveGame();
+        DataManager.Instance.SaveLocal();
 
         mainGameCanvas.SetActive(true);
         if (uiFlowSimulator != null) uiFlowSimulator.BeginFlow();
@@ -443,7 +443,7 @@ public class GameManager : MonoBehaviour
     {
         DataManager.Instance.PlayerData.playthroughCount++;
         EventManager.Instance.ResetEventManagerState();
-        DataManager.Instance.SaveGame();
+        DataManager.Instance.SaveLocal();
 
         if (battleResultPanel != null) battleResultPanel.SetActive(false);
         if (gameOverPanel != null) gameOverPanel.SetActive(false);
@@ -482,7 +482,7 @@ public class GameManager : MonoBehaviour
     {
         ShowConfirmation("게임을 종료하시겠습니까?", () =>
         {
-            DataManager.Instance.SaveGame();
+            DataManager.Instance.SaveLocal();
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
 #else

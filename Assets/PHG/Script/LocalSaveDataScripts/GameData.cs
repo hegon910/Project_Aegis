@@ -39,6 +39,9 @@ public class GameData
     public float totalPlayTime;         // 총 플레이 시간
     public GameSettings settings;       // 환경 설정
 
+    // --- 세이브파일 최신화 비교용 지표 -- 9.9. 이학권 추가
+    public long lastUpdated;
+
     /// <summary>
     /// 새 게임 시작 시 기본값 설정
     /// </summary>
@@ -66,5 +69,8 @@ public class GameData
         isTutorialFinished = false;
         totalPlayTime = 0f;
         settings = new GameSettings();
+
+        // 생성시점 기준 지표 9.9. 이학권 추가
+        lastUpdated = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
     }
 }

@@ -50,16 +50,14 @@ public class FirebaseManager : MonoBehaviour
         {
             if (task.IsCanceled || task.IsFaulted)
             {
-                Debug.LogError("파이어베이스 설정 실패 " + task.Exception);
                 return;
             }
 
-            Debug.Log("파이어베이스 설정 성공");
             Auth = FirebaseAuth.DefaultInstance;
             Database = FirebaseDatabase.DefaultInstance;
 
 #if !UNITY_EDITOR
-            // v2.1.0에서는 Activate만 호출하면 됨
+            
             PlayGamesPlatform.Activate();
 #endif
         });
@@ -74,11 +72,9 @@ public class FirebaseManager : MonoBehaviour
 
     public void EmailLogin()
     {
-        Debug.Log("이메일 로그인 버튼 클릭됨");
 
         if (string.IsNullOrEmpty(idInput.text) || string.IsNullOrEmpty(passwordInput.text))
         {
-            Debug.Log("아이디 또는 비밀번호가 입력되지 않음");
             return;
         }
 
@@ -87,42 +83,36 @@ public class FirebaseManager : MonoBehaviour
             {
                 if (task.IsCanceled)
                 {
-                    Debug.LogError("로그인 취소됨");
                     return;
                 }
                 if (task.IsFaulted)
                 {
-                    Debug.LogError("로그인 실패" + task.Exception);
                     return;
                 }
 
-                Debug.Log("로그인 성공");
                 User = task.Result.User;
                 loginPanel.SetActive(false);
-                GameManager.instance.OnTitlePanelTouched();
+                GameManager.instance.StartNewGame();
             });
     }
 #endif
 
-    // ---------------------------
-    // GPGS + Firebase 로그인 부분
-    // ---------------------------
+
 
     public void GPGSLogin()
     {
 #if UNITY_EDITOR
-        Debug.LogWarning("에디터에서는 GPGS 로그인 불가");
+        Debug.LogWarning("에디터에서는 gpgs 로그인 불가능");
 #else
         PlayGamesPlatform.Instance.Authenticate(status =>
         {
             if (status == SignInStatus.Success)
             {
-                Debug.Log("GPGS 로그인 성공");
                 RequestAuthCodeAndSignInFirebase();
             }
             else
             {
-                Debug.LogError("GPGS 로그인 실패: " + status);
+                Debug.LogError("GPGS 로그인 실패 원인:" + status);
             }
         });
 #endif
@@ -134,31 +124,31 @@ public class FirebaseManager : MonoBehaviour
         {
             if (!string.IsNullOrEmpty(authCode))
             {
-                Debug.Log("서버 인증 코드: " + authCode);
+                Debug.Log("인증코드 발급:" + authCode);
 
                 var credential = PlayGamesAuthProvider.GetCredential(authCode);
                 Auth.SignInWithCredentialAsync(credential).ContinueWithOnMainThread(task =>
                 {
                     if (task.IsCanceled)
                     {
-                        Debug.LogError("Firebase 로그인 취소됨");
+                        Debug.LogError("Firebase 인증 취소됨");
                         return;
                     }
                     if (task.IsFaulted)
                     {
-                        Debug.LogError("Firebase 로그인 실패: " + task.Exception);
+                        Debug.LogError("Firebase 인증 실패: " + task.Exception);
                         return;
                     }
 
                     User = task.Result;
-                    Debug.Log($"Firebase 로그인 성공: {User.DisplayName} ({User.UserId})");
+                    Debug.Log($"Firebase 인증완료: {User.DisplayName} ({User.UserId})");
 
                     GameManager.instance.OnTitlePanelTouched();
                 });
             }
             else
             {
-                Debug.LogError("서버 인증 코드 발급 실패");
+                Debug.LogError("인증코드 발급실패");
             }
         });
     }
