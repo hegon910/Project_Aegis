@@ -33,6 +33,22 @@ public class WarPlayer : MonoBehaviour
         LoadSkillFromID();
     }
 
+    public void ResetState(WarGround ground, int startIndex)
+    {
+        currentShield = 0;
+        AttackShieldBuff = false;
+        enhancedAttackStacks = 0;
+        ThornsBuff = false;
+        KnockbackBuff = false;
+        GoGoBuff = false;
+
+        if (controller != null)
+        {
+            controller.ResetState(ground, startIndex);
+        }
+        Debug.Log("플레이어의 모든 버프와 실드가 초기화되었습니다.");
+    }
+
     public void Act(WarAction action)
     {
         int extraForward = 0;

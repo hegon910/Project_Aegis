@@ -50,11 +50,15 @@ public class WarTurnManager : MonoBehaviour
 
     public void ResetForNewBattle(int newMaxTurns = 30)
     {
-        maxTurns = newMaxTurns;
-        currentTurn = 0;
-        battleEnded = false;
-        turnRunning = false;
-        usedSingleUseSkills.Clear();
+        if (player != null)
+        {
+            player.ResetState(ground, playerStartIndex);
+        }
+        if (enemy != null)
+        {
+            enemy.Ctrl.ResetState(ground, enemyStartIndex); // WarEnemy는 별도 버프가 없으므로 컨트롤러만 초기화
+        }
+
         if (player != null && player.currentSkill != null)
         {
             skillCooldownTimer = player.currentSkill.cooltime;
@@ -64,8 +68,6 @@ public class WarTurnManager : MonoBehaviour
         {
             skillCooldownTimer = 0; // 스킬이 없는 경우 0으로 초기화
         }
-
-        Debug.Log("전투 및 캐릭터 상태 초기화 완료");
     }
     void GoStartTurn(WarAction playerAction)
     {
