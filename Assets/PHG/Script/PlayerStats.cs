@@ -12,7 +12,6 @@ public class PlayerStats : MonoBehaviour
 
 
     public static event Action<ParameterType, int, int> OnStatChanged;
-    public static event Action OnActiveCommanderChanged;
     public CommanderInfo ActiveCommander { get; private set; }
     public CommanderTrait ActiveTrait
     {
@@ -68,7 +67,6 @@ public class PlayerStats : MonoBehaviour
             }
             Debug.Log($"<color=lime>지휘관 특성 활성화: {DataManager.Instance.PlayerData.activeTrait}</color>");
         }
-        OnActiveCommanderChanged?.Invoke();
     }
 
     /// <summary>

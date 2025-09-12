@@ -92,7 +92,7 @@ public class FirebaseManager : MonoBehaviour
 
                 User = task.Result.User;
                 loginPanel.SetActive(false);
-                DataManager.Instance.StartNewGame();
+                GameManager.instance.StartNewGame();
             });
     }
 #endif

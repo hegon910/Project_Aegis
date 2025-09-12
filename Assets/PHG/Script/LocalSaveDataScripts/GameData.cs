@@ -1,12 +1,19 @@
 using System;
 using System.Collections.Generic;
 
+[Serializable]
+public class GameSettings
+{
+    // 향후 추가될 사운드, 언어 등 환경설정 값을 여기에 추가합니다.
+    public float masterVolume = 1.0f;
+    public float bgmVolume = 1.0f;
+    public float sfxVolume = 1.0f;
+}
 
 [Serializable]
 public class GameData
 {
     // --- 진행 상태 ---
-     public GameState currentGameState;
     public int playthroughCount;        // 현재 회차 (PlayerStats)
     public CommanderTrait activeTrait;
     public int currentChapter;          // 현재 챕터 (GameManager)
@@ -61,7 +68,7 @@ public class GameData
 
         isTutorialFinished = false;
         totalPlayTime = 0f;
-   //     settings = new GameSettings();
+        settings = new GameSettings();
 
         // 생성시점 기준 지표 9.9. 이학권 추가
         lastUpdated = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
