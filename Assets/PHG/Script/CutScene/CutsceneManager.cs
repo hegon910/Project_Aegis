@@ -24,16 +24,17 @@ public class CutsceneManager : MonoBehaviour
     private CutsceneData currentCutscene;
     private int currentStepIndex;
 
-    // --- 스킵 및 상태 관리를 위한 변수들 ---
-    private bool isStepActive = false;      // 현재 스텝이 진행 중인지 (클릭 입력을 받을지)
-    private bool isSkippable = false;     // 현재 스텝의 '연출'을 스킵할 수 있는지
-    private bool isVideoPlaying = false;    // 비디오가 재생중인지 (비디오는 별도 스킵 로직 필요)
-    private Coroutine stepProcessCoroutine; // 현재 진행 중인 스텝 코루틴의 참조
+    private bool isStepActive = false;
+    private bool isSkippable = false;
+    private bool isVideoPlaying = false;
+    private Coroutine stepProcessCoroutine;
     private bool isCutsceneActive = false;
+
+    // <<<<<<< [수정 1] 실행 중인 모든 자식(연출) 코루틴을 추적하기 위한 리스트
+    private List<Coroutine> runningEffectCoroutines = new List<Coroutine>();
 
     private void Awake()
     {
-        // 게임이 시작될 때 자신의 이름과 위치를 콘솔에 알립니다.
         Debug.Log("CutsceneManager가 여기서 깨어났습니다!", this.gameObject);
     }
     private void Start()
@@ -66,22 +67,17 @@ public class CutsceneManager : MonoBehaviour
 
     private void Update()
     {
-        // 클릭 인디케이터는 스텝이 활성화되어 유저의 입력을 기다릴 때 항상 표시
         if (clickIndicator != null)
         {
-            // 비디오 재생 중에는 인디케이터를 숨깁니다.
             clickIndicator.SetActive(isStepActive && !isVideoPlaying);
         }
 
-        // 스텝이 활성화된 상태 & 비디오 재생 중이 아닐 때만 클릭 감지
         if (isStepActive && !isVideoPlaying && Input.GetMouseButtonDown(0))
         {
-            // 스킵 가능한 상태(연출 진행 중)라면 -> 연출 스킵
             if (isSkippable)
             {
                 SkipCurrentStepEffects();
             }
-            // 스킵 불가능한 상태(연출 완료)라면 -> 다음 스텝으로
             else
             {
                 PlayNextStep();
@@ -89,13 +85,31 @@ public class CutsceneManager : MonoBehaviour
         }
     }
 
-    private void PlayNextStep()
+    // <<<<<<< [수정 2] 모든 실행 중인 코루틴(부모+자식)을 확실히 정리하는 헬퍼 함수
+    private void StopAllRunningCoroutines()
     {
-        // 이전에 실행되던 스텝 코루틴이 있다면 확실히 중지
+        // 메인 스텝 코루틴 중지
         if (stepProcessCoroutine != null)
         {
             StopCoroutine(stepProcessCoroutine);
+            stepProcessCoroutine = null;
         }
+
+        // 모든 개별 효과(자식) 코루틴들 중지
+        foreach (var coroutine in runningEffectCoroutines)
+        {
+            if (coroutine != null)
+            {
+                StopCoroutine(coroutine);
+            }
+        }
+        runningEffectCoroutines.Clear();
+    }
+
+    private void PlayNextStep()
+    {
+        // 다음 스텝으로 가기 전, 모든 코루틴을 확실히 정리
+        StopAllRunningCoroutines();
 
         currentStepIndex++;
 
@@ -105,21 +119,18 @@ public class CutsceneManager : MonoBehaviour
             return;
         }
 
-        // 새로운 스텝 처리 코루틴을 시작하고 참조를 저장
         stepProcessCoroutine = StartCoroutine(ProcessStep(currentCutscene.steps[currentStepIndex]));
     }
 
     private void SkipCurrentStepEffects()
     {
-        if (stepProcessCoroutine != null)
-        {
-            StopCoroutine(stepProcessCoroutine);
-        }
+        // <<<<<<< [수정 3] 스킵 시에도 모든 코루틴을 정리하도록 변경
+        StopAllRunningCoroutines();
 
         // 현재 스텝의 최종 상태를 즉시 적용
         ApplyFinalState(currentCutscene.steps[currentStepIndex]);
 
-        isSkippable = false; // 스킵했으므로 더 이상 스킵 가능한 상태가 아님
+        isSkippable = false;
     }
 
     private void ApplyFinalState(CutsceneStep step)
@@ -127,7 +138,7 @@ public class CutsceneManager : MonoBehaviour
         if (step.enableImageEffect)
         {
             backgroundImage.sprite = step.imageData.image;
-            backgroundImage.color = Color.white;
+            backgroundImage.color = new Color(1, 1, 1, 0.4f);
             backgroundImage.gameObject.SetActive(true);
         }
         if (step.enableDialogueEffect)
@@ -145,7 +156,6 @@ public class CutsceneManager : MonoBehaviour
         {
             if (dayText != null)
             {
-                // 숨기는 대신, 최종 상태로 즉시 표시합니다.
                 dayText.text = step.dayTextData.text;
                 dayText.color = new Color(dayText.color.r, dayText.color.g, dayText.color.b, 1);
                 dayText.gameObject.SetActive(true);
@@ -157,29 +167,31 @@ public class CutsceneManager : MonoBehaviour
     {
         isStepActive = true;
         isSkippable = true;
+
+        // <<<<<<< [수정 4] 새로운 스텝 시작 전, 추적 리스트를 초기화
+        runningEffectCoroutines.Clear();
+
         if (dayText != null)
         {
             dayText.gameObject.SetActive(false);
         }
-        List<Coroutine> runningCoroutines = new List<Coroutine>();
 
-        if (step.enableImageEffect) runningCoroutines.Add(StartCoroutine(ImageEffectCoroutine(step.imageData)));
-        if (step.enableDialogueEffect) runningCoroutines.Add(StartCoroutine(DialogueEffectCoroutine(step.dialogueData)));
-        if (step.enableSoundEffect) StartCoroutine(SoundEffectCoroutine(step.soundData));
+        // <<<<<<< [수정 5] 자식 코루틴들을 시작하고, 추적 리스트에 추가
+        if (step.enableImageEffect) runningEffectCoroutines.Add(StartCoroutine(ImageEffectCoroutine(step.imageData)));
+        if (step.enableDialogueEffect) runningEffectCoroutines.Add(StartCoroutine(DialogueEffectCoroutine(step.dialogueData)));
+        if (step.enableSoundEffect) runningEffectCoroutines.Add(StartCoroutine(SoundEffectCoroutine(step.soundData)));
         if (step.enableVideoEffect)
         {
             var videoCoroutine = StartCoroutine(VideoEffectCoroutine(step.videoData));
-            if (step.videoData.waitForCompletion)
-            {
-                runningCoroutines.Add(videoCoroutine);
-            }
+            runningEffectCoroutines.Add(videoCoroutine); // 비디오 코루틴도 추적
         }
         if (step.enableDayTextEffect)
         {
-            runningCoroutines.Add(StartCoroutine(DayTextEffectCoroutine(step.dayTextData)));
+            runningEffectCoroutines.Add(StartCoroutine(DayTextEffectCoroutine(step.dayTextData)));
         }
 
-        foreach (var coroutine in runningCoroutines)
+        // 모든 자식 코루틴이 끝날 때까지 기다립니다.
+        foreach (var coroutine in runningEffectCoroutines)
         {
             yield return coroutine;
         }
@@ -208,9 +220,12 @@ public class CutsceneManager : MonoBehaviour
         dialoguePanel.SetActive(false);
         videoPlayerScreen.gameObject.SetActive(false);
         cutsceneCanvas.SetActive(false);
-        OnCutsceneFinished?.Invoke();
 
-        isCutsceneActive = false;
+        if (isCutsceneActive)
+        {
+            isCutsceneActive = false;
+            OnCutsceneFinished?.Invoke();
+        }
     }
 
     private void OnVideoFinished(VideoPlayer vp)
@@ -218,8 +233,7 @@ public class CutsceneManager : MonoBehaviour
         isVideoPlaying = false;
     }
 
-    // --- 각 효과를 처리하는 코루틴들 ---
-
+    // --- 각 효과를 처리하는 코루틴들 (이하 변경 없음) ---
     private IEnumerator ImageEffectCoroutine(ImageEffectData data)
     {
         backgroundImage.sprite = data.image;
@@ -297,13 +311,16 @@ public class CutsceneManager : MonoBehaviour
 
         isVideoPlaying = true;
 
-        while (isVideoPlaying)
+        // 비디오 재생이 끝날 때까지 기다림
+        while (videoPlayer.isPlaying)
         {
             yield return null;
         }
 
+        isVideoPlaying = false;
         videoPlayerScreen.gameObject.SetActive(false);
     }
+
     private IEnumerator DayTextEffectCoroutine(DayTextEffectData data)
     {
         if (dayText == null)
@@ -320,7 +337,6 @@ public class CutsceneManager : MonoBehaviour
         Color startColor = new Color(dayText.color.r, dayText.color.g, dayText.color.b, 0);
         Color endColor = new Color(dayText.color.r, dayText.color.g, dayText.color.b, 1);
 
-        // --- 1. 페이드 인 ---
         timer = 0f;
         while (timer < halfDuration)
         {
@@ -330,10 +346,8 @@ public class CutsceneManager : MonoBehaviour
         }
         dayText.color = endColor;
 
-        // --- 2. 대기 ---
         yield return new WaitForSeconds(data.holdDuration);
 
-        // --- 3. 페이드 아웃 ---
         timer = 0f;
         while (timer < halfDuration)
         {
