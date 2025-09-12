@@ -175,8 +175,14 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             var outcome = success ? choice.successOutcome : choice.failOutcome;
 
             List<ParameterChange> finalChanges = new List<ParameterChange>(outcome.parameterChanges);
-
-            PlayerStats.Instance.ActiveCommander?.traitLogic?.ProcessEventOutcome(success, finalChanges);
+            // 현재 활성화된 특성이 '리사드'이고, 선택지에 '확정 성공'이 아닌 판정 조건이 있었을 경우에만 특성 로직을 실행합니다.
+            if (PlayerStats.Instance.ActiveTrait == CommanderTrait.Risard &&
+                !(choice.condition is GuaranteedSuccessCondition))
+            {
+                // '리사드' 특성 로직을 호출하여 finalChanges 목록에 성공/실패에 따른 보정치를 추가합니다.
+                PlayerStats.Instance.ActiveCommander?.traitLogic?.ProcessEventOutcome(success, finalChanges);
+            }
+            // '리사드'가 아니거나 '확정 성공' 이벤트인 경우, 위 if문을 건너뛰고 원래 결과만 사용하게 됩니다.
 
             PlayerStats.Instance.ApplyChanges(finalChanges);
 

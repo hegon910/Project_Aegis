@@ -24,8 +24,7 @@ public class EventManager : MonoBehaviour
 
     // 상태 변수들이 이제 DataManager의 PlayerData와 동기화됩니다.
     private EventManagerState currentState = EventManagerState.Idle;
-    private int selectedPackNumber = -1;
-
+    private List<int> selectedPackNumbers = new List<int>();
     // [제거] 아래 변수들은 이제 DataManager.Instance.PlayerData에 저장되므로 제거합니다.
     // private int currentChapter = 1; 
     // private List<int> playedSubEventGroups = new List<int>();
@@ -46,25 +45,31 @@ public class EventManager : MonoBehaviour
             Destroy(gameObject);
         }
     }
-   
+
     public int GetCurrentSubEventPackID()
     {
-        return selectedPackNumber;
+        if (selectedPackNumbers != null && selectedPackNumbers.Count > 0)
+        {
+            return selectedPackNumbers[0];
+        }
+        return -1;
     }
 
-    public async UniTask StartNewGame(int packNumber)
+    public async UniTask StartNewGame(List<int> packNumbers)
     {
-        selectedPackNumber = packNumber;
+        // 전달받은 팩 ID 리스트를 저장합니다.
+        selectedPackNumbers = new List<int>(packNumbers ?? new List<int>());
 
         DataManager.Instance.PlayerData.currentChapter = 1;
         DataManager.Instance.PlayerData.playedSubEventGroups.Clear();
-        DataManager.Instance.PlayerData.currentPlaylist.Clear(); // 플레이리스트도 확실하게 비워줍니다.
+        DataManager.Instance.PlayerData.currentPlaylist.Clear();
         DataManager.Instance.PlayerData.eventPlaylistIndex = 0;
 
-        // InitializeEventManager가 새 사이클을 만들어 줄 것이므로 직접 호출할 필요가 없습니다.
         InitializeEventManager();
 
-        Debug.Log($"새 게임 시작. 팩: {selectedPackNumber}, 챕터: {DataManager.Instance.PlayerData.currentChapter}");
+        // 로그 메시지를 수정하여 여러 팩이 선택되었음을 표시합니다.
+        string packsString = selectedPackNumbers.Count > 0 ? string.Join(", ", selectedPackNumbers) : "없음";
+        Debug.Log($"새 게임 시작. 팩: [{packsString}], 챕터: {DataManager.Instance.PlayerData.currentChapter}");
     }
 
     public void StartNewCycle()
@@ -91,30 +96,41 @@ public class EventManager : MonoBehaviour
 
         // 아래의 if문으로 서브이벤트 추가 로직 전체를 감싸줍니다.
         // 선택된 팩이 있을 경우에만 (-1이 아닐 경우) 서브이벤트를 추가하도록 변경합니다.
-        if (remainingSlots > 0 && selectedPackNumber != -1)
+        if (remainingSlots > 0 && selectedPackNumbers != null && selectedPackNumbers.Count > 0)
         {
-            var availableGroups = GetSubEventGroupsForPack(selectedPackNumber)
-                .Except(DataManager.Instance.PlayerData.playedSubEventGroups).ToList();
+            // 모든 선택된 팩에서 플레이 가능한 그룹들을 (팩 ID, 그룹 ID) 쌍으로 수집합니다.
+            var allAvailableGroups = new List<(int packId, int groupId)>();
+            foreach (var packNumber in selectedPackNumbers)
+            {
+                var groupsFromPack = GetSubEventGroupsForPack(packNumber)
+                    .Select(group => (packId: packNumber, groupId: group));
+                allAvailableGroups.AddRange(groupsFromPack);
+            }
+
+            // 이미 플레이한 그룹은 제외합니다.
+            var availableGroups = allAvailableGroups
+                .Where(pg => !DataManager.Instance.PlayerData.playedSubEventGroups.Contains(pg.groupId))
+                .ToList();
 
             if (availableGroups.Count > 0)
             {
-                int selectedGroup = availableGroups[UnityEngine.Random.Range(0, availableGroups.Count)];
-                var subEventChain = GetSubEventChain(selectedPackNumber, selectedGroup);
+                // 플레이 가능한 모든 그룹 중에서 무작위로 하나를 선택합니다.
+                var selectedPackAndGroup = availableGroups[UnityEngine.Random.Range(0, availableGroups.Count)];
+                var subEventChain = GetSubEventChain(selectedPackAndGroup.packId, selectedPackAndGroup.groupId);
 
                 if (subEventChain.Count > 0 && subEventChain.Count <= remainingSlots)
                 {
-                    DataManager.Instance.PlayerData.playedSubEventGroups.Add(selectedGroup);
+                    DataManager.Instance.PlayerData.playedSubEventGroups.Add(selectedPackAndGroup.groupId);
                     DataManager.Instance.PlayerData.currentPlaylist.Add(subEventChain.First().Index);
                     remainingSlots -= subEventChain.Count;
+                    Debug.Log($"[EventManager] 서브 이벤트 체인 추가: 팩 {selectedPackAndGroup.packId}, 그룹 {selectedPackAndGroup.groupId}");
                 }
             }
             else
             {
-                // [추가] 사용 가능한 서브 이벤트 그룹이 없을 때 경고 로그 출력
-                Debug.LogWarning($"[EventManager] 팩 번호({selectedPackNumber})에 더 이상 진행할 수 있는 새 서브 이벤트 그룹이 없습니다.");
+                Debug.LogWarning($"[EventManager] 선택된 팩 [{string.Join(", ", selectedPackNumbers)}]에 더 이상 진행할 수 있는 새 서브 이벤트 그룹이 없습니다.");
             }
         }
-
         if (remainingSlots > 0)
             {
                 var commonParameterEvents = GetCommonParameterEvents();
@@ -237,9 +253,9 @@ public class EventManager : MonoBehaviour
     public void ResetEventManagerState()
     {
         currentState = EventManagerState.Idle;
-        selectedPackNumber = -1;
+        // [변경] int 변수 대신 리스트를 초기화합니다.
+        selectedPackNumbers.Clear();
 
-        // [수정] DataManager의 관련 데이터만 초기화하면 됩니다.
         if (DataManager.Instance?.PlayerData != null)
         {
             DataManager.Instance.PlayerData.playedSubEventGroups.Clear();
@@ -288,5 +304,39 @@ public class EventManager : MonoBehaviour
         }
 
         return newEvents;
+    }
+
+    /// <summary>
+    /// [신규] 저장된 상태를 이어할 때, 현재 인덱스의 이벤트를 상태 변경 없이 그대로 다시 보여줍니다.
+    /// </summary>
+    public void RestoreCurrentEvent()
+    {
+        if (currentState != EventManagerState.InCycle)
+        {
+            Debug.LogWarning("[EventManager] 사이클 진행 중이 아닐 때 RestoreCurrentEvent가 호출되었습니다.");
+            return;
+        }
+
+        if (DataManager.Instance.PlayerData.eventPlaylistIndex >= DataManager.Instance.PlayerData.currentPlaylist.Count)
+        {
+            Debug.LogWarning("[EventManager] 저장된 이벤트 인덱스가 플레이리스트 범위를 벗어났습니다. 사이클을 종료합니다.");
+            currentState = EventManagerState.Idle;
+            OnEventCycleCompleted?.Invoke();
+            return;
+        }
+
+        // 현재 인덱스의 이벤트 ID를 가져와서, 인덱스 변경이나 저장 없이 즉시 이벤트를 발생시킵니다.
+        int eventId = DataManager.Instance.PlayerData.currentPlaylist[DataManager.Instance.PlayerData.eventPlaylistIndex];
+
+        Debug.Log($"[EventManager] 저장된 이벤트(ID: {eventId})를 복원합니다.");
+
+        if (eventId < 10000)
+        {
+            DisplaySubEvent(eventId);
+        }
+        else
+        {
+            OnParameterEventReady?.Invoke(eventId);
+        }
     }
 }

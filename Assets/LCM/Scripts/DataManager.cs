@@ -11,13 +11,16 @@ using JetBrains.Annotations;
 using Firebase.Database;
 using Firebase.Auth;
 using Firebase.Extensions;
+using UnityEditor;
 
 public class DataManager : MonoBehaviour
 {
     public static DataManager Instance { get; private set; }
 
     public GameData PlayerData { get; private set; }
+    public SettingsData PlayerSettings { get; private set; }
     private string _playerDataSavePath;
+    private string _settingsSavePath;
     private bool _hasSyncedWithServer; // 9.9. 이학권 추가
 
     private UniTaskCompletionSource<bool> _isReady = new UniTaskCompletionSource<bool>();
@@ -72,6 +75,8 @@ public class DataManager : MonoBehaviour
 
         // 플레이어 데이터 저장 경로 설정
         _playerDataSavePath = Path.Combine(Application.persistentDataPath, "playerdata.json");
+        _settingsSavePath = Path.Combine(Application.persistentDataPath, "settings.json");
+        LoadSettings();
         LoadGame();
         if (PlayerData == null)
         {
@@ -107,7 +112,7 @@ public class DataManager : MonoBehaviour
     public void StartNewGame()
     {
         PlayerData = new GameData();
-        SaveLocal();
+     //   SaveLocal();
         Debug.Log("새로운 게임 데이터 생성 및 저장 완료.");
     }
 
@@ -151,6 +156,46 @@ public class DataManager : MonoBehaviour
         }
     }
     /// <summary>
+    /// [신규] 설정 데이터를 로컬 파일에서 불러옵니다.
+    /// </summary>
+    public void LoadSettings()
+    {
+        if (File.Exists(_settingsSavePath))
+        {
+            try
+            {
+                string json = File.ReadAllText(_settingsSavePath, Encoding.UTF8);
+                PlayerSettings = JsonUtility.FromJson<SettingsData>(json);
+                if (PlayerSettings == null)
+                {
+                    Debug.LogWarning("설정 파일이 손상되어 기본 설정을 생성합니다.");
+                    PlayerSettings = new SettingsData();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"설정 로드 실패: {ex.Message}. 기본 설정으로 재설정합니다.");
+                PlayerSettings = new SettingsData();
+            }
+        }
+        else
+        {
+            Debug.Log("설정 파일 없음, 기본 설정 생성.");
+            PlayerSettings = new SettingsData();
+        }
+    }
+    /// <summary>
+    /// [신규] 현재 '설정'을 로컬파일에 저장합니다.
+    /// </summary>
+    public void SaveSettings()
+    {
+        if (PlayerSettings == null) return;
+        string json = JsonUtility.ToJson(PlayerSettings, true);
+        File.WriteAllText(_settingsSavePath, json, Encoding.UTF8);
+        Debug.Log($"설정 저장 완료: {_settingsSavePath}");
+    }
+
+    /// <summary>
     /// 세이브 파일이 존재하는지 확인합니다.
     /// </summary>
     public bool CheckIfSaveDataExists()
@@ -182,6 +227,31 @@ public class DataManager : MonoBehaviour
         File.WriteAllText(_playerDataSavePath, json, Encoding.UTF8);
         Debug.Log($"로컬 저장 완료: {_playerDataSavePath}");
     }
+    /// <summary>
+    /// [신규] 모든 로컬 데이터(진행도, 설정, PlayerPrefs)를 삭제합니다.
+    /// </summary>
+    public void DeleteAllLocalData()
+    {
+        // 1. 게임 진행도 파일 삭제
+        if (File.Exists(_playerDataSavePath))
+        {
+            File.Delete(_playerDataSavePath);
+            Debug.Log($"게임 진행도 파일 삭제 완료: {_playerDataSavePath}");
+        }
+
+        // 2. 설정 파일 삭제
+        if (File.Exists(_settingsSavePath))
+        {
+            File.Delete(_settingsSavePath);
+            Debug.Log($"설정 파일 삭제 완료: {_settingsSavePath}");
+        }
+
+        // 3. PlaythroughHistory가 사용하는 PlayerPrefs 기록 삭제
+        PlaythroughHistory.Instance.ClearHistory();
+
+        Debug.LogWarning("[DataManager] 모든 로컬 데이터가 초기화되었습니다.");
+    }
+
 
 
     /// <summary>
@@ -255,11 +325,15 @@ public class DataManager : MonoBehaviour
     /// <summary>
     /// 게임이 종료될 때 자동으로 데이터를 저장합니다.
     /// </summary>
-   // private void OnApplicationQuit()
-   // {
-   //     SaveLocal();
-   // }
-
+    private void OnApplicationQuit()
+    {
+        // [수정] 게임 종료 시 현재 진행 상황을 저장하도록 OnApplicationQuit 로직을 활성화합니다.
+        // PlayerData가 null이 아닐 때만 저장 로직을 실행하여 예외를 방지합니다.
+        if (PlayerData != null)
+        {
+            SaveLocal();
+        }
+    }
 
 
     public async UniTask InitializeDataAsync()

@@ -47,7 +47,6 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject commanderSelectionCanvas;
     [SerializeField] private GameObject storyPanel;
     [SerializeField] private GameObject battlePanel;
-    // <<<<<<< [추가 2] BattleResultPanel 참조 추가
     [SerializeField] private GameObject battleResultPanel;
     [SerializeField] private TextMeshProUGUI battleResultText; // 승리/패배 텍스트 표시용
     [SerializeField] private GameObject InGameUIPanel;
@@ -89,7 +88,7 @@ public class GameManager : MonoBehaviour
 
     private UnityAction onConfirmAction;
     private bool isReturningToTitle = false;
-    private int selectedPackNumber = -1;
+   // private int selectedPackNumber = -1;
     private bool isTransitioningState = false;
     private bool subEventsEnabled = false;
 
@@ -118,11 +117,14 @@ public class GameManager : MonoBehaviour
     private async Task InitializeGameAndLoadData()
     {
         DataManager.Instance.LoadGame();
+
+
         await DataManager.Instance.InitializeDataAsync();
         await DataManager.Instance.SubIntializeDataAsync();
 
-
         await DataManager.Instance.IsReady;
+
+        EventManager.Instance.InitializeEventManager();
         // 모든 데이터 로딩이 완료되었습니다.
         if (loadingPanel != null)
         {
@@ -159,39 +161,13 @@ public class GameManager : MonoBehaviour
     //서브이벤트 패널을 열고 닫을 함수
     public void ToggleSubEventPanel(bool isOpen)
     {
-        subEventSelectedText.text = "선택된 서브 이벤트 팩이 없습니다.";
-
+        // [수정] 이 함수는 이제 단순히 패널을 켜고 끄는 역할만 합니다.
         if (subEventSelectPanel != null)
         {
             subEventSelectPanel.SetActive(isOpen);
-            //서브 이벤트 팩이 활성화 되있는 상태라면 텍스트 표시
-            if (isOpen && EventManager.Instance != null)
-            {
-                int selectedPack = EventManager.Instance.GetCurrentSubEventPackID();
-                if (selectedPack != -1)
-                {
-                    subEventSelectedText.gameObject.SetActive(true);
-                    subEventSelectedText.text = $"선택된 서브 이벤트 팩: {selectedPack}";
-                }
-                else
-                {
-
-                    subEventSelectedText.text = "선택된 서브 이벤트 팩이 없습니다.";
-                }
-                if (subEventsEnabled)
-                {
-                    Debug.Log("서브이벤트 모드가 활성화되었습니다.");
-                    // 예: UI 텍스트 변경 -> subEventModeText.text = "ON";
-                }
-                else
-                {
-                    //    EventManager.Instance.ResetEventManagerState();
-                    Debug.Log("서브이벤트 모드가 비활성화되었습니다.");
-                    // 예: UI 텍스트 변경 -> subEventModeText.text = "OFF";
-                }
-            }
         }
     }
+
     private IEnumerator AdvanceGameStateCoroutine()
     {
         if (isTransitioningState) yield break;
@@ -205,12 +181,12 @@ public class GameManager : MonoBehaviour
             case GameState.CommanderSelection: nextState = GameState.PlayingOpeningCutscene; break;
             case GameState.PlayingOpeningCutscene: nextState = GameState.InStory; break;
             case GameState.InStory:
-                // 1장과 6장은 스토리가 먼저이므로, 다음은 이벤트 사이클입니다.
+                // 1장은 스토리가 먼저이므로, 다음은 이벤트 사이클입니다.
                 if (CurrentChapter == 1)
                 {
                     nextState = GameState.InEventCycle;
                 }
-                // 2-5장은 이벤트 사이클 다음이 스토리이므로, 스토리 다음은 컷신입니다.
+                // 2-6장은 이벤트 사이클 다음이 스토리이므로, 스토리 다음은 컷신입니다.
                 else
                 {
                     nextState = GameState.PlayingChapterEndCutscene;
@@ -233,6 +209,7 @@ public class GameManager : MonoBehaviour
             case GameState.InBattle: nextState = GameState.InBattleResult; break;
             case GameState.InBattleResult: nextState = GameState.InChapterResult; break;
             case GameState.InChapterResult:
+                PlayerStats.Instance.SetStat(ParameterType.전황, 50);
                 DataManager.Instance.PlayerData.currentChapter++;
 
                 // 6챕터(5회차 완료 후)가 되면 엔딩으로, 그 전까지는 이벤트 사이클로 돌아가 반복
@@ -293,34 +270,40 @@ public class GameManager : MonoBehaviour
     // 팩 선택 온 클릭 이벤트
     public void SelectStoryPack(int packNumber)
     {
-        subEventSelectedText.gameObject.SetActive(true);
-        subEventSelectedText.text = "서브이벤트가 비활성화 상태입니다.";
-        // 1. 만약 지금 클릭한 팩이 이미 선택되어 있는 팩이라면
-        if (selectedPackNumber == packNumber)
-        {
-            // 2. 선택을 취소합니다 (기본값인 -1로 되돌립니다).
-            selectedPackNumber = -1;
-            Debug.Log($"[GameManager] 서브 스토리 팩 {packNumber}번 선택이 취소되었습니다.");
+        if (DataManager.Instance.PlayerSettings == null) return;
 
-            // 3. UI 텍스트도 초기 상태로 변경합니다.
+        subEventSelectedText.gameObject.SetActive(true);
+
+        // 현재 선택된 ID 리스트를 가져옵니다.
+        List<int> selectedIDs = DataManager.Instance.PlayerSettings.selectedSubEventPackIDs;
+
+        // 이미 해당 팩이 유일하게 선택되어 있었는지 확인
+        bool wasSelected = selectedIDs.Count == 1 && selectedIDs.Contains(packNumber);
+
+        if (wasSelected)
+        {
+            // 선택 취소: 리스트를 완전히 비웁니다.
+            selectedIDs.Clear();
+            Debug.Log($"[GameManager] 서브 스토리 팩 {packNumber}번 선택이 취소되었습니다.");
             if (subEventSelectedText != null)
             {
                 subEventSelectedText.text = "선택된 서브 이벤트 팩이 없습니다.";
             }
         }
-        // 4. 그렇지 않다면 (다른 팩을 선택했거나 아무것도 선택되지 않은 상태라면)
         else
         {
-            // 5. 새로 클릭한 팩을 선택합니다.
-            selectedPackNumber = packNumber;
+            // 새로운 팩 선택: 리스트를 비우고 현재 팩만 추가합니다. (단일 선택)
+            selectedIDs.Clear();
+            selectedIDs.Add(packNumber);
             Debug.Log($"[GameManager] 서브 스토리 팩 {packNumber}번이 선택되었습니다.");
-
-            // 6. UI 텍스트에 선택된 팩 번호를 표시합니다.
             if (subEventSelectedText != null)
             {
                 subEventSelectedText.text = $"서브 이벤트 팩: {packNumber}이 활성화 되었습니다.";
             }
         }
+
+        // 변경된 리스트 정보로 설정을 저장합니다.
+        DataManager.Instance.SaveSettings();
     }
     private void ChangeState(GameState newState)
     {
@@ -330,11 +313,15 @@ public class GameManager : MonoBehaviour
         Debug.Log($"[게임 상태 변경] -> {newState}");
 
         SetUIForState(newState);
-
+        if (newState == GameState.MainMenu)
+        {
+            continueButton.gameObject.SetActive(DataManager.Instance.CheckIfSaveDataExists());
+        }
         if (newState == GameState.InBattle)
         {
             Debug.Log(battleTurnManager == null ? "오류: battleTurnManager 참조가 없습니다!" : "1단계 OK: battleTurnManager 참조 정상");
         }
+
         Debug.Log($"[GameManager] 가 바라보는 WarTurnManager ID: {battleTurnManager.GetInstanceID()}");
         switch (newState)
         {
@@ -353,8 +340,6 @@ public class GameManager : MonoBehaviour
                 if (cardController != null) cardController.choiceHandler = uiFlowSimulator;
                 EventManager.OnEventCycleCompleted += OnStateFinished;
 
-                // [핵심 수정] 새로운 이벤트 사이클이므로, 첫 턴을 바로 시작하라고(true) 지시합니다.
-                // 중복 호출되던 부분도 하나로 정리했습니다.
                 if (uiFlowSimulator != null)
                 {
                     uiFlowSimulator.BeginFlow(true);
@@ -379,7 +364,7 @@ public class GameManager : MonoBehaviour
                 battleTurnManager.OnBattleEnd += HandleBattleEnd;
                 Debug.Log("2단계 OK: GameManager가 OnBattleEnd 신호를 구독했습니다.");
                 break;
-            // <<<<<<< [추가 5] InBattleResult 상태에 대한 로직 추가 (현재는 UI 표시 외에 특별한 동작 없음)
+            // InBattleResult 상태에 대한 로직 추가 (현재는 UI 표시 외에 특별한 동작 없음)
             case GameState.InBattleResult:
                 // 이 상태는 UI 버튼 클릭을 통해 다음 상태로 진행되므로, 여기서는 대기합니다.
                 break;
@@ -393,7 +378,19 @@ public class GameManager : MonoBehaviour
                 break;
         }
 
-        if (DataManager.Instance.PlayerData != null && !isReturningToTitle)
+        bool shouldSaveState = true;
+        switch (newState)
+        {
+            case GameState.Title:
+            case GameState.Login:
+            case GameState.MainMenu:
+            case GameState.CommanderSelection:
+            case GameState.GamePaused:
+                shouldSaveState = false;
+                break;
+        }
+
+        if (shouldSaveState && DataManager.Instance.PlayerData != null && !isReturningToTitle)
         {
             DataManager.Instance.PlayerData.currentGameState = currentGameState;
             DataManager.Instance.SaveLocal();
@@ -442,7 +439,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // <<<<<<< [수정 6] 전투 종료 시 호출되는 함수 변경
+    //  전투 종료 시 호출되는 함수 변경
     private void HandleBattleEnd(string resultLog)
     {
         // 결과 텍스트 설정
@@ -460,7 +457,7 @@ public class GameManager : MonoBehaviour
         ChangeState(GameState.InBattleResult);
     }
 
-    // <<<<<<< [추가 7] BattleResultPanel의 버튼이 호출할 공개 함수
+    // BattleResultPanel의 버튼이 호출할 공개 함수
     public void OnBattleResultConfirmed()
     {
         // OnClick 이벤트가 발생하면 다음 상태(InChapterResult)로 진행
@@ -482,16 +479,21 @@ public class GameManager : MonoBehaviour
         switch (stateToRestore)
         {
             case GameState.InEventCycle:
-                //  "이벤트 사이클 완료" 신호를 GameManager가 받을 수 있도록 여기서도 연결해줍니다.
                 EventManager.OnEventCycleCompleted += OnStateFinished;
 
-                // 아래는 기존에 작업했던 올바른 코드입니다.
+                //  카드 스와이프 로직이 동작하도록 choiceHandler를 연결합니다.
+                if (cardController != null) cardController.choiceHandler = uiFlowSimulator;
+
                 EventManager.Instance.InitializeEventManager();
                 uiFlowSimulator.BeginFlow(false);
+
+                // [PlayNextTurn() 대신 새로 추가한 RestoreCurrentEvent()를 호출합니다.
+                // 이렇게 해야 이벤트를 건너뛰지 않고 정확한 시점의 이벤트를 불러올 수 있습니다.
+                EventManager.Instance.RestoreCurrentEvent();
                 break;
 
             case GameState.InStory:
-                // [추가] 스토리 이어하기 시에도 완료 신호를 연결해줍니다.
+                // 스토리 이어하기 시에도 완료 신호를 연결해줍니다.
                 MainScenarioManager.OnScenarioFinished += OnStateFinished;
                 mainScenarioManager.BeginScenarioFromStart();
                 break;
@@ -503,12 +505,103 @@ public class GameManager : MonoBehaviour
     }
     public void HideTutorial() { if (tutorialPanel != null && tutorialPanel.activeSelf) { tutorialPanel.SetActive(false); } }
 
-    public void OnClickNewGameFromScratch() { ShowConfirmation("모든 진행 상황이 삭제됩니다. 정말 새로 시작하시겠습니까?", () => { DataManager.Instance.DeleteLocalSaveData(); DataManager.Instance.StartNewGame(); ResetAllGameData(); UnlockManager.ResetAllUnlocks(); ChangeState(GameState.CommanderSelection); }); }
+    public void OnClickNewGameFromScratch()
+    {
+        ShowConfirmation("모든 진행 상황과 설정이 삭제됩니다. 정말 새로 시작하시겠습니까?", () =>
+        {
+            // [수정] DeleteLocalSaveData() 대신 DeleteAllLocalData()를 호출합니다.
+            DataManager.Instance.DeleteAllLocalData();
+
+            // 데이터를 모두 지운 후, 새 데이터 객체를 생성하고 게임을 시작합니다.
+            DataManager.Instance.StartNewGame();
+            DataManager.Instance.LoadSettings(); // 삭제 후 새로 로드
+            ResetAllGameData();
+            UnlockManager.ResetAllUnlocks();
+            ChangeState(GameState.CommanderSelection);
+        });
+    }
+    public void OnclickResetData()
+    {
+        ShowConfirmation("모든 진행 상황과 설정이 삭제됩니다. 정말 초기화하시겠습니까?", () =>
+        {
+            // 1. 모든 로컬 파일과 PlayerPrefs 기록 삭제
+            DataManager.Instance.DeleteAllLocalData();
+
+            // 2. 메모리에 새로운 기본 데이터 객체를 즉시 생성하고 로드
+            // StartNewGame은 새 GameData를 만들고 기본 파일까지 생성해줍니다.
+            DataManager.Instance.StartNewGame();
+            // LoadSettings는 파일이 없으면 새 SettingsData를 만들어줍니다.
+            DataManager.Instance.LoadSettings();
+
+            // 3. EventManager 등 다른 게임 시스템들의 상태 초기화
+            ResetAllGameData();
+            UnlockManager.ResetAllUnlocks();
+
+            // 4. 메인 메뉴로 돌아가 UI를 갱신합니다.
+            // (예: '이어하기' 버튼이 사라지는 등 초기화된 상태를 시각적으로 보여줌)
+            ChangeState(GameState.MainMenu);
+        });
+    }
     public void OnClickContinueGame() { if (DataManager.Instance.PlayerData != null) { RestoreGameState(DataManager.Instance.PlayerData.currentGameState); } }
-    public void SaveAndReturnToTitle() { ShowConfirmation("진행 상황을 저장하고 타이틀로 돌아가시겠습니까?", () => { isReturningToTitle = true; if (DataManager.Instance.PlayerData != null) { DataManager.Instance.PlayerData.currentGameState = this.currentGameState; DataManager.Instance.SaveLocal(); } ChangeState(GameState.MainMenu); isReturningToTitle = false; }); }
+    public void SaveAndReturnToTitle()
+    {
+        ShowConfirmation("진행 상황을 저장하고 타이틀로 돌아가시겠습니까?", () =>
+        {
+            isReturningToTitle = true;
+            if (DataManager.Instance.PlayerData != null)
+            {
+                // [추가] 현재 상태가 저장 가능한 상태인지 확인하는 로직
+                bool shouldSaveState = true;
+                switch (this.currentGameState)
+                {
+                    case GameState.Title:
+                    case GameState.Login:
+                    case GameState.MainMenu:
+                    case GameState.CommanderSelection:
+                    case GameState.GamePaused:
+                        shouldSaveState = false;
+                        break;
+                }
+
+                // [수정] 저장 가능한 상태일 때만 저장하도록 if문 추가
+                if (shouldSaveState)
+                {
+                    //  PlayerStats가 DataManager를 직접 수정하므로 별도의 동기화가 필요 없습니다.
+                    var dataToSave = DataManager.Instance.PlayerData;
+                    dataToSave.currentGameState = this.currentGameState;
+
+                    DataManager.Instance.SaveLocal();
+                }
+            }
+            ChangeState(GameState.MainMenu);
+            isReturningToTitle = false;
+        });
+    }
     public void OnTitlePanelTouched() { ChangeState(GameState.Login); titlePanel.SetActive(false); menuPanel.SetActive(true); if (Application.platform == RuntimePlatform.Android) { PlayGamesPlatform.Instance.Authenticate(OnAuthenticated); } else { OnAuthenticated(SignInStatus.Success); } }
-    private void OnAuthenticated(SignInStatus status) { ChangeState(GameState.MainMenu); continueButton.interactable = DataManager.Instance.CheckIfSaveDataExists(); if (status == SignInStatus.Success) { Debug.Log("구글 플레이 게임 서비스 로그인 성공!"); } else { Debug.LogError("구글 플레이 게임 서비스 로그인 실패: " + status); if (FirebaseManager.Instance != null) FirebaseManager.Instance.GPGSLogin(); } }
-    public async void OnCommanderSelected(int commanderIndex) { CommanderInfo selectedCommander = null; switch (commanderIndex) { case 0: selectedCommander = Commander1Button.GetComponent<CommanderInfo>(); break; case 1: selectedCommander = Commander2Button.GetComponent<CommanderInfo>(); break; case 2: selectedCommander = Commander3Button.GetComponent<CommanderInfo>(); break; default: Debug.LogError($"잘못된 지휘관 인덱스입니다: {commanderIndex}"); return; } if (!UnlockManager.IsUnlocked(selectedCommander.traitEnum)) { Debug.LogWarning($"[시스템] 잠겨있는 지휘관({selectedCommander.name})은 선택할 수 없습니다."); return; } PlayerStats.Instance.SetActiveCommander(selectedCommander); if (selectedCommander.initialStatAdjustments.Count > 0) { PlayerStats.Instance.ApplyChanges(selectedCommander.initialStatAdjustments); } await EventManager.Instance.StartNewGame(selectedPackNumber); OnStateFinished(); }
+    private void OnAuthenticated(SignInStatus status) { ChangeState(GameState.MainMenu); continueButton.gameObject.SetActive(DataManager.Instance.CheckIfSaveDataExists()); if (status == SignInStatus.Success) { Debug.Log("구글 플레이 게임 서비스 로그인 성공!"); } else { Debug.LogError("구글 플레이 게임 서비스 로그인 실패: " + status); if (FirebaseManager.Instance != null) FirebaseManager.Instance.GPGSLogin(); } }
+    public async void OnCommanderSelected(int commanderIndex)
+    {
+        CommanderInfo selectedCommander = null;
+        switch (commanderIndex)
+        {
+            case 0: selectedCommander = Commander1Button.GetComponent<CommanderInfo>(); break;
+            case 1: selectedCommander = Commander2Button.GetComponent<CommanderInfo>(); break;
+            case 2: selectedCommander = Commander3Button.GetComponent<CommanderInfo>(); break;
+            default: Debug.LogError($"잘못된 지휘관 인덱스입니다: {commanderIndex}"); return;
+        }
+        if (!UnlockManager.IsUnlocked(selectedCommander.traitEnum))
+        {
+            Debug.LogWarning($"[시스템] 잠겨있는 지휘관({selectedCommander.name})은 선택할 수 없습니다."); return;
+        }
+        PlayerStats.Instance.SetActiveCommander(selectedCommander);
+        if (selectedCommander.initialStatAdjustments.Count > 0)
+        {
+            PlayerStats.Instance.ApplyChanges(selectedCommander.initialStatAdjustments);
+        }
+        // [수정] DataManager에 저장된 설정값을 사용합니다.
+        await EventManager.Instance.StartNewGame(DataManager.Instance.PlayerSettings.selectedSubEventPackIDs);
+        OnStateFinished();
+    }
     private void StartDetailedResultSequence() { int warSituation = PlayerStats.Instance.GetStat(ParameterType.전황); GameOutcome outcome = (warSituation <= 19) ? GameOutcome.Defeat : (warSituation >= 81) ? GameOutcome.Victory : GameOutcome.Draw; int chapterIndex = CurrentChapter - 1; if (chapterIndex < chapterEndDataList.Count && chapterEndDataList[chapterIndex] != null) { chapterEndController.StartChapterEndSequence(chapterEndDataList[chapterIndex], outcome); } else { OnStateFinished(); } }
     public void GameOver(string reason)
     {
@@ -553,10 +646,35 @@ public class GameManager : MonoBehaviour
     {
         ShowConfirmation("게임을 종료하시겠습니까?", () =>
         {
+            if (DataManager.Instance != null)
+            {
+                // [추가] 여기에도 동일한 상태 저장 방지 로직을 적용합니다.
+                bool shouldSaveState = true;
+                switch (this.currentGameState)
+                {
+                    case GameState.Title:
+                    case GameState.Login:
+                    case GameState.MainMenu:
+                    case GameState.CommanderSelection:
+                    case GameState.GamePaused:
+                        shouldSaveState = false;
+                        break;
+                }
+
+                // [수정] 저장 가능한 상태일 때만 진행도를 저장합니다.
+                if (shouldSaveState)
+                {
+                    DataManager.Instance.PlayerData.currentGameState = this.currentGameState;
+                    DataManager.Instance.SaveLocal();
+                }
+
+                // 설정은 언제나 저장합니다.
+                DataManager.Instance.SaveSettings();
+            }
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
 #else
-    Application.Quit();
+        Application.Quit();
 #endif
         });
     }

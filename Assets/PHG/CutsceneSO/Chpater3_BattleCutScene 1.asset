@@ -20,9 +20,9 @@ MonoBehaviour:
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
-      dialogue: "\uC5F0\uD569\uAD70\uACFC \uCCAB \uD569\uB3D9 \uC791\uC804\uC778
-        \u2018\uD0B9\uB85C\uB4DC \uC791\uC804\u2019\uC744 \uC704\uD574 \uCD9C\uC815\uC744
-        \uC900\uBE44\uB97C \uD55C\uB2E4"
+      dialogue: "\uC5F0\uD569\uAD70\uACFC \uD569\uB3D9 \uC791\uC804\uC778 \u2018\uD0B9\uB85C\uB4DC
+        \uC791\uC804\u2019\uC744 \uC704\uD574 \uCD9C\uC815\uC744 \uC900\uBE44\uB97C
+        \uD55C\uB2E4"
       typewriterSpeed: 0.1
     enableSoundEffect: 0
     soundData:
