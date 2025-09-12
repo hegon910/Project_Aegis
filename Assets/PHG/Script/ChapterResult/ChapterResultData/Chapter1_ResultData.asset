@@ -15,15 +15,15 @@ MonoBehaviour:
   victoryImage: {fileID: 21300000, guid: c1152581a5ef4734d9561856ab7f079f, type: 3}
   drawImage: {fileID: 21300000, guid: 7015d3d4eb3b6c04f818062713e437a3, type: 3}
   defeatImage: {fileID: 21300000, guid: 7698b3d878ad457479be1fa5568ae066, type: 3}
-  startYear: 1943
-  startMonth: 6
-  endYear: 1943
-  endMonth: 12
-  victorySummary: "\uCCAB \uC804\uD22C\uC5D0\uC11C \uD070 \uACF5\uD6C8\uC744 \uC138\uC6E0\uB2E4.\n\uC55E\uC73C\uB85C\uC758
-    \uD65C\uC57D\uC774 \uAE30\uB300\uB418\uB294 \uC9C0\uD718\uAD00\uC774\uB77C\uB294
-    \uD3C9\uC774 \uB4E4\uB824\uC628\uB2E4. "
-  drawSummary: "\uCCAB \uC220\uC5D0 \uBC30\uBD80\uB97C \uC21C \uC5C6\uB2E4. \uC801\uAD70\uC744
-    \uC798 \uB9C9\uC558\uB2E4\uB294 \uAC83\uC5D0 \uC758\uC758\uB97C \uB450\uC790."
-  defeatSummary: "\uC544\uC9C1 \uC774 \uBD80\uB300\uC5D0 \uC801\uC751\uD558\uC9C0
-    \uBABB\uD55C\uAC78\uAE4C..\n\uC774\uBC88 \uC804\uD22C\uB294 \uC5F0\uC2B5\uC774\uB77C\uACE0
-    \uC0DD\uAC01\uD558\uC790."
+  startYear: 1941
+  startMonth: 1
+  startDay: 1
+  endYear: 1941
+  endMonth: 6
+  endDay: 1
+  victorySummary: "\uC2B9\uB9AC\uD55C \uC0C1\uD669\uC5D0\uC11C\uC758 \uC694\uC57D
+    \uD14D\uC2A4\uD2B8"
+  drawSummary: "\uBB34\uC2B9\uBD80\uC778 \uC0C1\uD669\uC5D0\uC11C\uC758 \uC694\uC57D
+    \uD14D\uC2A4\uD2B8"
+  defeatSummary: "\uD328\uBC30\uD55C \uC0C1\uD669\uC5D0\uC11C\uC758 \uC694\uC57D
+    \uD14D\uC2A4\uD2B8"

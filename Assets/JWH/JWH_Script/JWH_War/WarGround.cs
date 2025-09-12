@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 [RequireComponent(typeof(RectTransform))]
 public class WarGround : MonoBehaviour
@@ -8,7 +9,7 @@ public class WarGround : MonoBehaviour
     [SerializeField] private int laneLength = 16;
 
     [Tooltip("각 칸의 너비")]
-    [SerializeField] private float cellSize;  //화면 크기에 맞춰 자동으로 계산
+    [SerializeField][ReadOnly] private float cellSize;  //화면 크기에 맞춰 자동으로 계산
 
     private RectTransform rectTransform;
 
@@ -77,19 +78,19 @@ public class WarGround : MonoBehaviour
         }
     }
 
-  //  public class ReadOnlyAttribute : PropertyAttribute { }
+    public class ReadOnlyAttribute : PropertyAttribute { }
 #endif
 }
 
 #if UNITY_EDITOR
-//[UnityEditor.CustomPropertyDrawer(typeof(WarGround.ReadOnlyAttribute))]
-//public class ReadOnlyDrawer : UnityEditor.PropertyDrawer
-//{
-//    public override void OnGUI(Rect position, UnityEditor.SerializedProperty property, GUIContent label)
-//    {
-//        GUI.enabled = false;
-//        UnityEditor.EditorGUI.PropertyField(position, property, label, true);
-//        GUI.enabled = true;
-//    }
-//}
+[UnityEditor.CustomPropertyDrawer(typeof(WarGround.ReadOnlyAttribute))]
+public class ReadOnlyDrawer : UnityEditor.PropertyDrawer
+{
+    public override void OnGUI(Rect position, UnityEditor.SerializedProperty property, GUIContent label)
+    {
+        GUI.enabled = false;
+        UnityEditor.EditorGUI.PropertyField(position, property, label, true);
+        GUI.enabled = true;
+    }
+}
 #endif

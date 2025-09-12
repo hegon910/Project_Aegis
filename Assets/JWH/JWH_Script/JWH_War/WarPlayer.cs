@@ -32,6 +32,7 @@ public class WarPlayer : MonoBehaviour
         if (!controller) controller = GetComponent<WarController>();
         LoadSkillFromID();
     }
+
     public void ResetState(WarGround ground, int startIndex)
     {
         currentShield = 0;
@@ -47,6 +48,7 @@ public class WarPlayer : MonoBehaviour
         }
         Debug.Log("플레이어의 모든 버프와 실드가 초기화되었습니다.");
     }
+
     public void Act(WarAction action)
     {
         int extraForward = 0;

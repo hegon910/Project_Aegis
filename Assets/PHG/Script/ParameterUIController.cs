@@ -13,7 +13,6 @@ public class ParameterSliderUI
     public Image fillImage;
     public Toggle affectedToggle;
     public Image subEventFillImage;
-    public Image backgroundImage;
 }
 
 public class ParameterUIController : MonoBehaviour
@@ -28,11 +27,6 @@ public class ParameterUIController : MonoBehaviour
     [Tooltip("파라미터 수치가 변하는 동안 표시될 색상")]
     public Color parameterChangeColor = Color.yellow;
 
-    [Header("잠금 설정")]
-    [Tooltip("특성 등으로 인해 비활성화될 때의 색상")]
-    public Color disabledColor = Color.magenta;
-    [Tooltip("슬라이더가 활성화 상태일 때의 기본 배경 색상")]
-    public Color defaultBackgroundColor;
 
     [Header("전세 슬라이더")]
     public Slider warSlider;
@@ -41,18 +35,14 @@ public class ParameterUIController : MonoBehaviour
     public Image karmaBorderImage;
     public Gradient karmaColorGradient;
 
-
-
     void OnEnable()
     {
         PlayerStats.OnStatChanged += OnStatChanged;
         UpdateAffectedToggles(new List<ParameterChange>()); // 초기화 시 모든 토글 해제
-        PlayerStats.OnActiveCommanderChanged += UpdatePoliticsLockState;
     }
 
     void OnDisable()
     {
-        PlayerStats.OnActiveCommanderChanged -= UpdatePoliticsLockState;
         PlayerStats.OnStatChanged -= OnStatChanged;
     }
 
@@ -97,14 +87,12 @@ public class ParameterUIController : MonoBehaviour
 
         UpdateWarInstantly(PlayerStats.Instance.GetStat(ParameterType.전황));
         UpdateKarma(PlayerStats.Instance.GetStat(ParameterType.카르마));
-        UpdatePoliticsLockState();
     }
 
     // (UpdateAffectedToggles, ClearAllToggles 함수는 이전과 동일하여 생략)
     public void UpdateAffectedToggles(List<ParameterChange> changes, bool isSubEvent = false)
     {
         ClearAllToggles();
-
         foreach (var change in changes)
         {
             if (change.valueChange == 0) continue;
@@ -117,8 +105,7 @@ public class ParameterUIController : MonoBehaviour
                 ui.subEventFillImage.gameObject.SetActive(true);
                 if (ui.affectedToggle != null) ui.affectedToggle.gameObject.SetActive(false);
             }
-            // [수정] 토글이 상호작용 가능할 때만 isOn 상태를 변경하도록 조건을 추가합니다.
-            else if (!isSubEvent && ui.affectedToggle != null && ui.affectedToggle.interactable)
+            else if (!isSubEvent && ui.affectedToggle != null)
             {
                 ui.affectedToggle.isOn = true;
                 if (ui.subEventFillImage != null) ui.subEventFillImage.gameObject.SetActive(false);
@@ -134,38 +121,6 @@ public class ParameterUIController : MonoBehaviour
             if (ui.subEventFillImage != null) ui.subEventFillImage.gameObject.SetActive(false);
         }
     }
-    public void UpdatePoliticsLockState()
-    {
-        if (PlayerStats.Instance == null) return;
-
-        var politicsUI = parameterSliders.FirstOrDefault(s => s.type == ParameterType.정치력);
-        if (politicsUI == null || politicsUI.slider == null) return;
-
-        bool isPoliticsLocked = (PlayerStats.Instance.ActiveTrait == CommanderTrait.Wille);
-
-        politicsUI.slider.interactable = !isPoliticsLocked;
-        if (politicsUI.affectedToggle != null)
-        {
-            politicsUI.affectedToggle.interactable = !isPoliticsLocked;
-        }
-
-        if (isPoliticsLocked)
-        {
-            if (politicsUI.affectedToggle != null) politicsUI.affectedToggle.isOn = false;
-
-            // [핵심 수정] Fill과 Background 색상을 disabledColor로 통일합니다.
-            if (politicsUI.fillImage != null) politicsUI.fillImage.color = disabledColor;
-            if (politicsUI.backgroundImage != null) politicsUI.backgroundImage.color = disabledColor;
-        }
-        else
-        {
-            // [핵심 수정] 잠금이 풀리면 배경색을 원래대로 복구합니다.
-            if (politicsUI.backgroundImage != null) politicsUI.backgroundImage.color = defaultBackgroundColor;
-            int currentValue = PlayerStats.Instance.GetStat(ParameterType.정치력);
-            UpdateSliderInstantly(politicsUI, currentValue);
-        }
-    }
-
 
     private void OnStatChanged(ParameterType type, int changeAmount, int newValue)
     {
@@ -179,9 +134,7 @@ public class ParameterUIController : MonoBehaviour
         {
             if (changeAmount == 0) return;
             ParameterSliderUI ui = parameterSliders.FirstOrDefault(s => s.type == type);
-
-            // 슬라이더가 존재하고, '활성화' 상태일 때만 애니메이션을 실행하도록 조건
-            if (ui != null && ui.slider.interactable)
+            if (ui != null)
             {
                 AnimateSliderUpdate(ui, newValue);
                 ShowChangeEffect(ui.slider.transform, changeAmount);

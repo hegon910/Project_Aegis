@@ -50,11 +50,6 @@ public class WarTurnManager : MonoBehaviour
 
     public void ResetForNewBattle(int newMaxTurns = 30)
     {
-        maxTurns = newMaxTurns;
-        currentTurn = 0;
-        battleEnded = false;
-        turnRunning = false;
-        usedSingleUseSkills.Clear();
         if (player != null)
         {
             player.ResetState(ground, playerStartIndex);
@@ -73,9 +68,6 @@ public class WarTurnManager : MonoBehaviour
         {
             skillCooldownTimer = 0; // 스킬이 없는 경우 0으로 초기화
         }
-
-
-        Debug.Log("전투 및 캐릭터 상태 초기화 완료");
     }
     void GoStartTurn(WarAction playerAction)
     {
@@ -112,7 +104,7 @@ public class WarTurnManager : MonoBehaviour
     void EndBattle(string resultLog)
     {
         if (battleEnded) return;
-        OnBattleEnd?.Invoke(resultLog);
+        battleEnded = true;
         bool isWin = resultLog.Contains("승리");
         var changes = new List<ParameterChange>//파라미터 관련 추가부분
         {
@@ -125,10 +117,7 @@ public class WarTurnManager : MonoBehaviour
         PlayerStats.Instance.ApplyChanges(changes); // 전황 파라미터 변경 적용
         Debug.Log(resultLog);
         Debug.Log("전투 종료");
-        Debug.Log(OnBattleEnd == null ? "오류: OnBattleEnd 신호를 듣는 리스너가 없습니다!" : "3단계 OK: 리스너에게 신호를 보냅니다.");
-        Debug.Log($"[WarTurnManager] 가 신호를 보냄. 나의 ID: {this.GetInstanceID()}");
-
-        battleEnded = true;
+        OnBattleEnd?.Invoke(resultLog);
     }
 
     void CheckWinLoseDrawAfterTurn()
