@@ -29,6 +29,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 
     private static bool hasShownChapter1ParameterTutorial = false;
 
+    // <<<<<<< [핵심 복원 1] 원본과 같이 OnEnable/OnDisable을 사용한 이벤트 구독으로 되돌립니다.
     private void OnEnable()
     {
         EventManager.OnParameterEventReady += HandleParameterEvent;
@@ -40,12 +41,19 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         EventManager.OnParameterEventReady -= HandleParameterEvent;
         EventManager.OnSubEventReady -= HandleSubEvent;
     }
+
+    // <<<<<<< [삭제] 불필요해진 함수들을 삭제합니다.
+    // public void SubscribeToEvents() { ... }
+    // public void UnsubscribeFromEvents() { ... }
+    // public void ResetFlow() { ... }
+
     public void ResetTutorialState()
     {
         hasShownChapter1ParameterTutorial = false;
     }
 
-    public void BeginFlow()
+    // <<<<<<< [핵심 복원 2] 원본의 BeginFlow 함수 로직을 그대로 사용합니다.
+    public void BeginFlow(bool startFirstTurn = true)
     {
         if (parameterUIController != null)
         {
@@ -55,22 +63,26 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         // UI 초기화
         if (uiPanelController != null) uiPanelController.gameObject.SetActive(false);
         if (situationCardController != null) situationCardController.gameObject.SetActive(false);
-        if (cardController != null)
-        {
-            cardController.gameObject.SetActive(false);
-            cardController.choiceHandler = this;
-        }
         if (dimmerPanel != null) dimmerPanel.color = Color.clear;
 
-        // EventManager에게 첫 턴 시작을 요청
-        EventManager.Instance.PlayNextTurn();
+        // startFirstTurn이 true일 때만 다음 턴을 시작하도록 수정
+        if (startFirstTurn)
+        {
+            Debug.Log("[UIFlowSimulator] 새로운 사이클 시작. 첫 턴을 진행합니다.");
+            EventManager.Instance.PlayNextTurn();
+        }
+        else
+        {
+            Debug.Log("[UIFlowSimulator] UI 준비 완료. 플레이어 입력을 기다립니다.");
+        }
     }
 
     private void HandleParameterEvent(int eventId)
     {
+        Debug.Log($"[UIFlowSimulator] EventManager로부터 ID: {eventId} 이벤트 신호를 성공적으로 받았습니다.");
         if (DataManager.Instance.PlayerData.playthroughCount == 1 &&
-          GameManager.instance.CurrentChapter == 1 &&
-          !hasShownChapter1ParameterTutorial)
+         GameManager.instance.CurrentChapter == 1 &&
+         !hasShownChapter1ParameterTutorial)
         {
             if (tutorialPanel != null)
             {
@@ -82,12 +94,10 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         }
         else if (tutorialPanel != null && tutorialPanel.activeSelf)
         {
-            // 다른 이벤트에서는 스와이프 튜토리얼 등도 꺼준다.
             tutorialPanel.SetActive(false);
         }
         currentSubEventData = null;
 
-        // 이 함수는 dialogue나 choiceText 등을 가져오기 위해 그대로 호출합니다.
         currentParameterEventData = DataManager.Instance.GetEventDataById(eventId);
 
         if (currentParameterEventData == null)
@@ -96,16 +106,12 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             return;
         }
 
-        // --- 캐릭터 이름을 직접 찾는 로직 ---
-        string characterName = "이름 없음"; // 기본값
+        string characterName = "이름 없음";
 
-        // 1. eventId로 원본 데이터(ParameterEventData)
         if (DataManager.Instance.eventDataDict.TryGetValue(eventId, out var rawEventData))
         {
-            // 2. EventQuestion ID로 문자열 데이터(ParameterEventStringData)
             if (DataManager.Instance.eventStringDataDict.TryGetValue(rawEventData.EventQuestion, out var stringData))
             {
-                // 3. 문자열 데이터 안의 CharacterName ID로 characterNameDict에서 실제 이름(string)
                 if (DataManager.Instance.characterNameDict.TryGetValue(stringData.CharacterName, out var name))
                 {
                     characterName = name;
@@ -113,7 +119,6 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             }
         }
 
-        // --- 이제 직접 찾은 characterName 변수를 사용 ---
         DisplayEventUI(
             characterSprite: currentParameterEventData.eventSprite,
             characterName: characterName,
@@ -129,7 +134,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         {
             tutorialPanel.SetActive(false);
         }
-        currentParameterEventData = null; // 다른 타입의 이벤트가 시작됐으므로 초기화
+        currentParameterEventData = null;
         currentSubEventData = data;
 
         DisplayEventUI(
@@ -170,34 +175,35 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             PlaythroughHistory.Instance.RecordEventOutcome(currentParameterEventData.id, success);
             var outcome = success ? choice.successOutcome : choice.failOutcome;
 
-            // 1. 이벤트 결과로 나온 '원본' 변경안 리스트를 복사합니다.
             List<ParameterChange> finalChanges = new List<ParameterChange>(outcome.parameterChanges);
+            // 현재 활성화된 특성이 '리사드'이고, 선택지에 '확정 성공'이 아닌 판정 조건이 있었을 경우에만 특성 로직을 실행합니다.
+            if (PlayerStats.Instance.ActiveTrait == CommanderTrait.Risard &&
+                !(choice.condition is GuaranteedSuccessCondition))
+            {
+                // '리사드' 특성 로직을 호출하여 finalChanges 목록에 성공/실패에 따른 보정치를 추가합니다.
+                PlayerStats.Instance.ActiveCommander?.traitLogic?.ProcessEventOutcome(success, finalChanges);
+            }
+            // '리사드'가 아니거나 '확정 성공' 이벤트인 경우, 위 if문을 건너뛰고 원래 결과만 사용하게 됩니다.
 
-            // 2. 활성화된 지휘관의 Trait에게 최종 변경안을 '가공'하라고 지시합니다.
-            PlayerStats.Instance.ActiveCommander?.traitLogic?.ProcessEventOutcome(success, finalChanges);
-
-            // 3. 모든 가공이 끝난 최종본을 PlayerStats에 넘겨 적용시킵니다.
             PlayerStats.Instance.ApplyChanges(finalChanges);
 
             StartCoroutine(TransitionToNextEvent(outcome.outcomeText));
         }
         else if (currentSubEventData != null)
         {
-            // 서브 이벤트 선택 처리
             EventManager.Instance.OnSubEventChoiceSelected(isRightChoice);
-            StartCoroutine(TransitionToNextEvent("선택지가 처리되었습니다.")); // 서브 이벤트에는 결과 텍스트가 없으므로 임시 텍스트 사용
+            StartCoroutine(TransitionToNextEvent("선택지가 처리되었습니다."));
         }
     }
 
     private IEnumerator TransitionToNextEvent(string resultText)
     {
         situationCardController.UpdateText(resultText);
-        yield return new WaitForSeconds(3f);
+        yield return new WaitForSeconds(1.5f);
         uiPanelController.Hide();
         situationCardController.Hide();
         yield return new WaitUntil(() => !situationCardController.gameObject.activeInHierarchy);
 
-        // EventManager에게 다음 이벤트를 달라고 요청
         Debug.Log("UIFlowSimulator: 다음 턴을 시작하도록 EventManager에 요청합니다.");
         EventManager.Instance.PlayNextTurn();
     }
@@ -205,46 +211,15 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     public void PreviewAffectedParameters(bool isRightChoice)
     {
         if (currentParameterEventData == null) return;
-
         EventChoice choice = isRightChoice ? currentParameterEventData.rightChoice : currentParameterEventData.leftChoice;
-
         var affectedTypes = new HashSet<ParameterType>();
-        foreach (var change in choice.successOutcome.parameterChanges)
-        {
-            if (change.valueChange != 0) affectedTypes.Add(change.parameterType);
-        }
-        foreach (var change in choice.failOutcome.parameterChanges)
-        {
-            if (change.valueChange != 0) affectedTypes.Add(change.parameterType);
-        }
-
+        foreach (var change in choice.successOutcome.parameterChanges) { if (change.valueChange != 0) affectedTypes.Add(change.parameterType); }
+        foreach (var change in choice.failOutcome.parameterChanges) { if (change.valueChange != 0) affectedTypes.Add(change.parameterType); }
         var previewChanges = affectedTypes.Select(type => new ParameterChange { parameterType = type, valueChange = 1 }).ToList();
-
-        if (parameterUIController != null)
-        {
-            parameterUIController.UpdateAffectedToggles(previewChanges);
-        }
+        if (parameterUIController != null) { parameterUIController.UpdateAffectedToggles(previewChanges); }
     }
 
-    public void ClearParameterPreview()
-    {
-        if (parameterUIController != null)
-        {
-            parameterUIController.ClearAllToggles();
-        }
-    }
-
-    public void UpdateDimmer(float alpha)
-    {
-        if (dimmerPanel != null)
-        {
-            dimmerPanel.color = new Color(0, 0, 0, alpha);
-        }
-    }
-    
-
-    public void UpdateChoicePreview(string text, Color color)
-    {
-        //
-    }
+    public void ClearParameterPreview() { if (parameterUIController != null) { parameterUIController.ClearAllToggles(); } }
+    public void UpdateDimmer(float alpha) { if (dimmerPanel != null) { dimmerPanel.color = new Color(0, 0, 0, alpha); } }
+    public void UpdateChoicePreview(string text, Color color) { }
 }

@@ -1,8 +1,10 @@
 // CardController.cs
 
 using DG.Tweening;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
@@ -19,6 +21,13 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     [Header("스와이프 제한")]
     [SerializeField] private float maxSwipeDistance = 200f; // 최대 스와이프 거리
     [SerializeField] private float maxRotationAngle = 20f;  // 최대 회전 각도
+
+    [Header("미리보기 UI 직접 참조")]
+    // MainScenarioManager에 있던 미리보기 텍스트 UI를 CardController가 직접 제어합니다.
+    public TextMeshProUGUI choicePreviewText;
+    public Image choicePreviewImage;
+
+
 
     private string leftChoiceTextString;
     private string rightChoiceTextString;
@@ -78,10 +87,19 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             colorToShow = new Color(0.2f, 0.8f, 0.2f, alpha);
         }
 
-        // [핵심 수정] 두 곳 모두에 미리보기 업데이트를 보냅니다.
         situationCardController?.UpdateChoicePreview(textToShow, colorToShow); // 기존 기능을 위한 호출
-        choiceHandler?.UpdateChoicePreview(textToShow, colorToShow);           // MainScenarioManager를 위한 호출
-
+        if (choicePreviewText != null)
+        {
+            choicePreviewText.text = textToShow;
+            choicePreviewText.color = colorToShow;
+        }
+        if (choicePreviewImage != null)
+        {
+            Color imageColor = choicePreviewImage.color;
+            imageColor.a = colorToShow.a; // 계산된 alpha값을 이미지에 적용
+            choicePreviewImage.color = imageColor;
+        }
+        choiceHandler?.UpdateChoicePreview(textToShow, colorToShow);
         float dimmerAlpha = Mathf.InverseLerp(threshold, maxSwipe, Mathf.Abs(distanceMoved)) * 0.7f;
         choiceHandler?.UpdateDimmer(dimmerAlpha);
 
@@ -115,9 +133,18 @@ public class CardController : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
     public void OnEndDrag(PointerEventData eventData)
     {
-
+        if (choicePreviewText != null)
+        {
+            choicePreviewText.text = "";
+        }
+        if (choicePreviewImage != null)
+        {
+            Color imageColor = choicePreviewImage.color;
+            imageColor.a = 0f;
+            choicePreviewImage.color = imageColor;
+        }
         situationCardController?.UpdateChoicePreview("", Color.clear); // 기존 기능을 위한 호출
-        choiceHandler?.UpdateChoicePreview("", Color.clear);           // MainScenarioManager를 위한 호출
+        choiceHandler?.UpdateChoicePreview("", Color.clear);
 
         choiceHandler?.UpdateDimmer(0f);
 
