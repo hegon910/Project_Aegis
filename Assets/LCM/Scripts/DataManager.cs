@@ -281,23 +281,37 @@ public class DataManager : MonoBehaviour
             var serverData = JsonUtility.FromJson<GameData>(serverJson);
 
             // 3) 타임스탬프 비교
-            if (serverData.lastUpdated > PlayerData.lastUpdated)
-            {
-                // 서버가 더 최신 → 로컬 덮어쓰기
-                PlayerData = serverData;
-                SaveLocal();
-                Debug.Log("서버 데이터가 최신, 로컬 업데이트 완료.");
-            }
-            else if (serverData.lastUpdated < PlayerData.lastUpdated)
-            {
-                // 로컬이 더 최신 → 서버에 덮어쓰기
-                yield return UploadToServer(dbRef);
-                Debug.Log("로컬 데이터가 최신, 서버 업데이트 완료.");
-            }
-            else
-            {
-                Debug.Log("로컬·서버 데이터 동일.");
-            }
+			// 서버 권위 타임스탬프 우선 비교
+			long serverSV = (serverData != null) ? serverData.lastUpdatedServer : 0;
+			long localSV = (PlayerData != null) ? PlayerData.lastUpdatedServer : 0;
+			bool serverHasSV = serverSV > 0;
+			bool localHasSV = localSV > 0;
+
+			bool serverIsNewer;
+			if (serverHasSV || localHasSV)
+			{
+				long a = serverHasSV ? serverSV : long.MinValue;
+				long b = localHasSV ? localSV : long.MinValue;
+				serverIsNewer = a > b;
+			}
+			else
+			{
+				long serverLocal = (serverData != null) ? serverData.lastUpdated : 0;
+				long localLocal = (PlayerData != null) ? PlayerData.lastUpdated : 0;
+				serverIsNewer = serverLocal > localLocal;
+			}
+
+			if (serverIsNewer)
+			{
+				PlayerData = serverData;
+				SaveLocal();
+				Debug.Log("서버 데이터가 최신, 로컬 업데이트 완료.");
+			}
+			else
+			{
+				yield return UploadToServer(dbRef);
+				Debug.Log("로컬 데이터가 최신 또는 동일, 서버 업데이트 완료.");
+			}
         }
         else
         {
@@ -313,13 +327,38 @@ public class DataManager : MonoBehaviour
     /// </summary>
     private IEnumerator UploadToServer(DatabaseReference dbRef)
     {
-        SaveLocal(); // lastUpdated 갱신
+        // 1) 로컬 타임스탬프 갱신 및 전체 JSON 업로드
+        SaveLocal();
         string json = JsonUtility.ToJson(PlayerData, true);
         var uploadTask = dbRef.SetRawJsonValueAsync(json);
         yield return new WaitUntil(() => uploadTask.IsCompleted);
-
         if (uploadTask.IsFaulted)
+        {
             Debug.LogError("서버 업로드 실패" + uploadTask.Exception);
+            yield break;
+        }
+
+        // 2) 서버 권위 타임스탬프 설정
+        var updates = new Dictionary<string, object>
+        {
+            { "lastUpdatedServer", ServerValue.Timestamp }
+        };
+        var tsTask = dbRef.UpdateChildrenAsync(updates);
+        yield return new WaitUntil(() => tsTask.IsCompleted);
+        if (tsTask.IsFaulted)
+        {
+            Debug.LogError("서버 타임스탬프 설정 실패" + tsTask.Exception);
+            yield break;
+        }
+
+        // 3) 서버가 기록한 값을 읽어와 로컬 반영
+        var readTask = dbRef.Child("lastUpdatedServer").GetValueAsync();
+        yield return new WaitUntil(() => readTask.IsCompleted);
+        if (!readTask.IsFaulted && readTask.Result != null && long.TryParse(readTask.Result.Value?.ToString(), out var serverMillis))
+        {
+            PlayerData.lastUpdatedServer = serverMillis;
+            SaveLocal();
+        }
     }
 
     /// <summary>
