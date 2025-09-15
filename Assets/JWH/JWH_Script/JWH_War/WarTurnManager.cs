@@ -185,24 +185,65 @@ public class WarTurnManager : MonoBehaviour
 
         if (playerActsFirst)
         {
+            // 플레이어 이동 시작
             player.Act(playerAction);
-            yield return new WaitWhile(() => player.IsBusy); // 플레이어 움직임이 끝날 때까지 대기
+            while (player.IsBusy)
+            {
+                if (player.Ctrl.CurrentIndex >= enemy.Ctrl.CurrentIndex)
+                {
+                    player.Ctrl.StopMovement(); // 충돌 시 즉시 멈춤
+                    enemy.Ctrl.StopMovement();  // 상대도 멈춤
+                    Debug.Log("이동 중 충돌! 플레이어 이동을 중단합니다.");
+                    break;
+                }
+                yield return null; 
+            }
 
             if (player.Ctrl.CurrentIndex < enemy.Ctrl.CurrentIndex)
             {
                 enemy.Act(enemyAction);
-                yield return new WaitWhile(() => enemy.IsBusy); // 적 움직임이 끝날 때까지 대기
+                while (enemy.IsBusy)
+                {
+                    if (player.Ctrl.CurrentIndex >= enemy.Ctrl.CurrentIndex)
+                    {
+                        player.Ctrl.StopMovement();
+                        enemy.Ctrl.StopMovement();
+                        Debug.Log("이동 중 충돌! 적 이동을 중단합니다.");
+                        break;
+                    }
+                    yield return null;
+                }
             }
         }
         else // 적이 먼저 행동하는 경우
         {
             enemy.Act(enemyAction);
-            yield return new WaitWhile(() => enemy.IsBusy); // 적 움직임이 끝날 때까지 대기
+            while (enemy.IsBusy)
+            {
+                if (player.Ctrl.CurrentIndex >= enemy.Ctrl.CurrentIndex)
+                {
+                    player.Ctrl.StopMovement();
+                    enemy.Ctrl.StopMovement();
+                    Debug.Log("이동 중 충돌! 적 이동을 중단합니다.");
+                    break;
+                }
+                yield return null;
+            }
 
             if (player.Ctrl.CurrentIndex < enemy.Ctrl.CurrentIndex)
             {
                 player.Act(playerAction);
-                yield return new WaitWhile(() => player.IsBusy); // 플레이어 움직임이 끝날 때까지 대기
+                while (player.IsBusy)
+                {
+                    if (player.Ctrl.CurrentIndex >= enemy.Ctrl.CurrentIndex)
+                    {
+                        player.Ctrl.StopMovement();
+                        enemy.Ctrl.StopMovement();
+                        Debug.Log("이동 중 충돌! 플레이어 이동을 중단합니다.");
+                        break;
+                    }
+                    yield return null;
+                }
             }
         }
         int pIdx = player.Ctrl.CurrentIndex;

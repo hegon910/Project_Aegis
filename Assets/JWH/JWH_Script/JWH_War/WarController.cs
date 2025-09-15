@@ -75,6 +75,14 @@ public class WarController : MonoBehaviour
         coMove = StartCoroutine(Co_MoveTo(targetIndex, isCrush));
     }
 
+    public void StopMovement()
+    {
+        if (coMove != null)
+        {
+            StopCoroutine(coMove);
+            coMove = null;
+        }
+    }
     IEnumerator Co_MoveTo(int targetIndex, bool isCrush)
     {
         currentIndex = targetIndex;
