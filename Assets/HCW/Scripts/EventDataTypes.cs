@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -138,7 +138,7 @@ public class HistorySuccessCondition : SuccessCondition
     public override bool Evaluate(PlayerStats playerStats, PlaythroughHistory playthroughHistory)
     {
         if (playthroughHistory == null) return false;
-        return playthroughHistory.GetEventOutcome(requiredEventID, out _);
+        return playthroughHistory.HasCompletedEvent(requiredEventID);
     }
 }
 

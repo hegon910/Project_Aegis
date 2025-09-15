@@ -246,16 +246,6 @@ public class GameManager : MonoBehaviour
                 }
                 break;
             case GameState.PlayingEndingCutscene:
-                // 플레이 기록에 엔딩 완료 정보 저장
-                if (finalEndingCutscene != null)
-                {
-                    // TODO: CutsceneData에 명확한 ID가 없다면, 이름 해시코드를 임시 ID로 사용합니다.
-                    // 추후 CutsceneData에 엔딩 ID 필드를 추가하고, 그 값을 사용하도록 수정해야 합니다.
-                    int endingId = finalEndingCutscene.name.GetHashCode();
-                    PlaythroughHistory.Instance.RecordEndingCompletion(endingId);
-                    Debug.Log($"[GameManager] 엔딩 완료 기록: {finalEndingCutscene.name} (ID: {endingId})");
-                }
-
                 DataManager.Instance.PlayerData.playthroughCount++;
                 DataManager.Instance.PlayerData.currentChapter = 1;
                 EventManager.Instance.ResetEventManagerState();
@@ -440,26 +430,10 @@ public class GameManager : MonoBehaviour
             battleResultText.text = resultLog; // BattleTurnManager에서 "승리" 또는 "패배" 텍스트를 넘겨주는 것을 가정
         }
 
-        // 스탯 설정 및 플레이 기록 저장
-        BattleOutcome outcome;
-        if (resultLog.Contains("승리"))
-        {
-            PlayerStats.Instance.SetStat(ParameterType.전황, 90);
-            outcome = BattleOutcome.Win;
-        }
-        else if (resultLog.Contains("패배"))
-        {
-            PlayerStats.Instance.SetStat(ParameterType.전황, 10);
-            outcome = BattleOutcome.Lose;
-        }
-        else
-        {
-            PlayerStats.Instance.SetStat(ParameterType.전황, 50);
-            outcome = BattleOutcome.Draw;
-        }
-
-        PlaythroughHistory.Instance.RecordBattleResult(outcome);
-        Debug.Log($"[GameManager] 전투 결과 기록: {outcome}");
+        // 스탯 설정
+        if (resultLog.Contains("승리")) PlayerStats.Instance.SetStat(ParameterType.전황, 90);
+        else if (resultLog.Contains("패배")) PlayerStats.Instance.SetStat(ParameterType.전황, 10);
+        else PlayerStats.Instance.SetStat(ParameterType.전황, 50);
 
         // OnStateFinished()를 바로 호출하는 대신, InBattleResult 상태로 직접 변경
         ChangeState(GameState.InBattleResult);
