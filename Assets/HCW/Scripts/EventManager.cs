@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -22,9 +22,9 @@ public class EventManager : MonoBehaviour
     [Header("설정")]
     [SerializeField] private int totalEventsPerCycle = 24;
 
-    // 상태 변수들이 이제 DataManager의 PlayerData와 동기화됩니다.
+    // [수정] 상태 변수들이 이제 DataManager의 PlayerData와 동기화됩니다.
     private EventManagerState currentState = EventManagerState.Idle;
-    private int selectedPackNumber = -1;
+    private int selectedPackNumber;
 
     // [제거] 아래 변수들은 이제 DataManager.Instance.PlayerData에 저장되므로 제거합니다.
     // private int currentChapter = 1; 
@@ -46,24 +46,21 @@ public class EventManager : MonoBehaviour
             Destroy(gameObject);
         }
     }
-   
-    public int GetCurrentSubEventPackID()
-    {
-        return selectedPackNumber;
-    }
 
     public async UniTask StartNewGame(int packNumber)
     {
         selectedPackNumber = packNumber;
 
+        // [수정] DataManager의 새 게임 데이터에 기반하여 초기화합니다.
         DataManager.Instance.PlayerData.currentChapter = 1;
         DataManager.Instance.PlayerData.playedSubEventGroups.Clear();
-        DataManager.Instance.PlayerData.currentPlaylist.Clear(); // 플레이리스트도 확실하게 비워줍니다.
-        DataManager.Instance.PlayerData.eventPlaylistIndex = 0;
 
-        // InitializeEventManager가 새 사이클을 만들어 줄 것이므로 직접 호출할 필요가 없습니다.
-        InitializeEventManager();
+        // DataManager의 CSV 데이터 초기화는 GameManager에서 이미 수행했으므로 여기서는 호출하지 않습니다.
+        // await DataManager.Instance.InitializeDataAsync();
+        // await DataManager.Instance.SubIntializeDataAsync();
 
+        StartNewCycle();
+        currentState = EventManagerState.InCycle;
         Debug.Log($"새 게임 시작. 팩: {selectedPackNumber}, 챕터: {DataManager.Instance.PlayerData.currentChapter}");
     }
 
@@ -86,13 +83,11 @@ public class EventManager : MonoBehaviour
 
         Debug.Log($"[EventManager] 튜토리얼 이벤트 추가 후: {DataManager.Instance.PlayerData.currentPlaylist.Count}개");
 
-
         int remainingSlots = totalEventsPerCycle - DataManager.Instance.PlayerData.currentPlaylist.Count;
 
-        // 아래의 if문으로 서브이벤트 추가 로직 전체를 감싸줍니다.
-        // 선택된 팩이 있을 경우에만 (-1이 아닐 경우) 서브이벤트를 추가하도록 변경합니다.
-        if (remainingSlots > 0 && selectedPackNumber != -1)
+        if (remainingSlots > 0)
         {
+            // [수정] DataManager의 playedSubEventGroups를 참조합니다.
             var availableGroups = GetSubEventGroupsForPack(selectedPackNumber)
                 .Except(DataManager.Instance.PlayerData.playedSubEventGroups).ToList();
 
@@ -103,89 +98,70 @@ public class EventManager : MonoBehaviour
 
                 if (subEventChain.Count > 0 && subEventChain.Count <= remainingSlots)
                 {
-                    DataManager.Instance.PlayerData.playedSubEventGroups.Add(selectedGroup);
+                    DataManager.Instance.PlayerData.playedSubEventGroups.Add(selectedGroup); // 확정되면 추가
+                    PlaythroughHistory.Instance.RecordSubEventGroup(selectedGroup); // 다음 회차 분기를 위해 영구 기록
                     DataManager.Instance.PlayerData.currentPlaylist.Add(subEventChain.First().Index);
                     remainingSlots -= subEventChain.Count;
                 }
             }
-        }
 
-        if (remainingSlots > 0)
+            if (remainingSlots > 0)
             {
                 var commonParameterEvents = GetCommonParameterEvents();
                 DataManager.Instance.PlayerData.currentPlaylist.AddRange(commonParameterEvents.OrderBy(x => Guid.NewGuid()).Take(remainingSlots));
             }
-        
+        }
 
         DataManager.Instance.PlayerData.currentPlaylist = DataManager.Instance.PlayerData.currentPlaylist.OrderBy(x => Guid.NewGuid()).ToList();
         DataManager.Instance.PlayerData.eventPlaylistIndex = 0;
-        currentState = EventManagerState.InCycle;
 
+        // [추가] 새 사이클(챕터)이 구성되었으므로 이 상태를 저장합니다.
         DataManager.Instance.SaveLocal();
-
 
         Debug.Log($"사이클 시작 (회차: {DataManager.Instance.PlayerData.playthroughCount}). 총 이벤트: {DataManager.Instance.PlayerData.currentPlaylist.Count}개");
     }
-    /// <summary>
-    /// EventManager를 초기화합니다.
-    /// 저장된 플레이리스트가 있으면 불러오고, 없으면 새 사이클을 시작합니다.
-    /// </summary>
-    public void InitializeEventManager()
+
+    public void PlayNextTurn()
     {
-        var playerData = DataManager.Instance.PlayerData;
+        if (currentState == EventManagerState.Idle) return;
 
-        // 저장된 플레이리스트가 있는지 확인합니다.
-        if (playerData != null && playerData.currentPlaylist != null && playerData.currentPlaylist.Count > 0)
-        {
-            // 저장된 목록이 있다면, 상태만 'InCycle'로 설정하고 아무것도 하지 않습니다.
-            // 이미 필요한 데이터(플레이리스트, 인덱스)는 DataManager에 로드되어 있습니다.
-            currentState = EventManagerState.InCycle;
-            Debug.Log($"[EventManager] 저장된 이벤트 사이클을 이어합니다. 현재 진행도: {playerData.eventPlaylistIndex} / {playerData.currentPlaylist.Count}");
-        }
-        else
-        {
-            // 저장된 목록이 없다면 (새 게임 또는 새 챕터), 새로운 사이클을 시작합니다.
-            Debug.Log("[EventManager] 새로운 이벤트 사이클을 시작합니다.");
-            StartNewCycle();
-        }
-    }
-   public void PlayNextTurn()
-{
-    if (currentState == EventManagerState.Idle) return;
-
-    if (currentState == EventManagerState.InCycle)
-    {
-        if (DataManager.Instance.PlayerData.eventPlaylistIndex >= DataManager.Instance.PlayerData.currentPlaylist.Count)
-        {
-            Debug.Log("현재 사이클(챕터)의 모든 이벤트를 완료했습니다.");
-            currentState = EventManagerState.Idle;
-            OnEventCycleCompleted?.Invoke();
-            return;
-        }
-
-        // 1. 현재 인덱스에서 이벤트 ID를 먼저 가져옵니다.
-        int eventId = DataManager.Instance.PlayerData.currentPlaylist[DataManager.Instance.PlayerData.eventPlaylistIndex];
-
-        // 2. 인덱스를 증가시킵니다. (다음 상태를 준비)
-        DataManager.Instance.PlayerData.eventPlaylistIndex++;
-
-        // 3. 변경된 인덱스를 포함하여 즉시 저장합니다.
-        Debug.Log($"다음 이벤트 진행. 인덱스 {DataManager.Instance.PlayerData.eventPlaylistIndex}로 변경 후 저장.");
+        // [추가] 다음 턴을 시작하기 전에(즉, 이전 이벤트 선택 직후) 게임을 저장합니다. (요구사항 1)
+        Debug.Log("이전 이벤트 선택 완료. **이벤트 종료 시점 저장**");
         DataManager.Instance.SaveLocal();
 
-        // 4. 준비된 이벤트를 발생시킵니다.
-        if (eventId < 10000)
+        //if (currentState == EventManagerState.InSubEvent)
+        //{
+        //    Debug.Log("서브 이벤트 진행 중... 유저의 선택을 기다립니다.");
+        //    return;
+        //}
+
+        if (currentState == EventManagerState.InCycle)
         {
-            DisplaySubEvent(eventId);
-        }
-        else
-        {
-            Debug.Log($"파라미터 이벤트(ID: {eventId}) 발생.");
-            OnParameterEventReady?.Invoke(eventId);
-            DataManager.Instance.PlayerData.completedEventIds.Add(eventId);
+            // [수정] DataManager의 플레이리스트 인덱스를 사용합니다.
+            if (DataManager.Instance.PlayerData.eventPlaylistIndex >= DataManager.Instance.PlayerData.currentPlaylist.Count)
+            {
+                Debug.Log("현재 사이클(챕터)의 모든 이벤트를 완료했습니다.");
+                currentState = EventManagerState.Idle;
+                OnEventCycleCompleted?.Invoke();
+                return;
+            }
+
+            // [수정] DataManager에서 이벤트 ID를 가져오고 인덱스를 증가시킵니다.
+            int eventId = DataManager.Instance.PlayerData.currentPlaylist[DataManager.Instance.PlayerData.eventPlaylistIndex++];
+
+            if (eventId < 10000)
+            {
+               // currentState = EventManagerState.InSubEvent;
+                DisplaySubEvent(eventId);
+            }
+            else
+            {
+                Debug.Log($"파라미터 이벤트(ID: {eventId}) 발생.");
+                OnParameterEventReady?.Invoke(eventId);
+                DataManager.Instance.PlayerData.completedEventIds.Add(eventId); // 완료 기록은 PlayerStats를 통해 DataManager에 추가
+            }
         }
     }
-}
 
     private void DisplaySubEvent(int index)
     {
@@ -231,7 +207,7 @@ public class EventManager : MonoBehaviour
     public void ResetEventManagerState()
     {
         currentState = EventManagerState.Idle;
-        selectedPackNumber = -1;
+        selectedPackNumber = 0;
 
         // [수정] DataManager의 관련 데이터만 초기화하면 됩니다.
         if (DataManager.Instance?.PlayerData != null)
@@ -273,5 +249,15 @@ public class EventManager : MonoBehaviour
             .Where(d => d.PageType == 0 && !completedIds.Contains(d.ID))
             .Select(d => d.ID)
             .ToList();
+    }
+
+    public int GetCurrentSubEventPackID()
+    {
+        return selectedPackNumber;
+    }
+
+    public void InitializeEventManager()
+    {
+        ResetEventManagerState();
     }
 }
