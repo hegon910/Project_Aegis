@@ -10,6 +10,7 @@ public class WarGround : MonoBehaviour
     [SerializeField] private int laneLength = 16;
 
     [SerializeField] private float sideMargin = 0.5f;
+    public float SideMargin => sideMargin;
 
     [Tooltip("°¢ Ä­ÀÇ ³Êºñ")]
     [SerializeField] private float cellSize;
