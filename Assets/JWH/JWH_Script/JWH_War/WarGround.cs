@@ -1,5 +1,7 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+
 [RequireComponent(typeof(RectTransform))]
 public class WarGround : MonoBehaviour
 {
@@ -7,8 +9,10 @@ public class WarGround : MonoBehaviour
     [Tooltip("전투가 벌어질 전체 칸의 개수")]
     [SerializeField] private int laneLength = 16;
 
+    [SerializeField] private float sideMargin = 0.5f;
+
     [Tooltip("각 칸의 너비")]
-    [SerializeField] private float cellSize;  //화면 크기에 맞춰 자동으로 계산
+    [SerializeField] private float cellSize;
 
     private RectTransform rectTransform;
 
@@ -18,15 +22,22 @@ public class WarGround : MonoBehaviour
     void Awake()
     {
         rectTransform = GetComponent<RectTransform>();
+    }
+
+    void Start()
+    {
         CalculateCellSize();
     }
 
-    public void CalculateCellSize()    // 화면 너비를 기반으로 각 셀의 크기를 계산하는 함수
-
+    public void CalculateCellSize()
     {
         if (rectTransform != null && laneLength > 0)
         {
-            cellSize = rectTransform.rect.width / laneLength;
+            float totalDivisions = laneLength + (sideMargin * 2);
+            if (totalDivisions > 0)
+            {
+                cellSize = rectTransform.rect.width / totalDivisions;
+            }
         }
     }
 
@@ -34,51 +45,17 @@ public class WarGround : MonoBehaviour
     {
         laneIndex = Mathf.Clamp(laneIndex, 0, laneLength - 1);
         float leftEdgeX = -rectTransform.rect.width * rectTransform.pivot.x;
-        float targetX = leftEdgeX + (laneIndex * cellSize) + (cellSize / 2);
+
+        float startOffsetX = leftEdgeX + (sideMargin * cellSize);
+        float targetX = startOffsetX + (laneIndex * cellSize) + (cellSize / 2);
+
         float targetY = 0;
         return new Vector2(targetX, targetY);
     }
 
-#if UNITY_EDITOR
-    
-    [SerializeField, HideInInspector]
-    private int previousLaneLength;
 
-    private void OnValidate()
-    {
-        if (rectTransform == null)
-        {
-            rectTransform = GetComponent<RectTransform>();
-        }
+    //  public class ReadOnlyAttribute : PropertyAttribute { }
 
-        if (laneLength != previousLaneLength)
-        {
-            CalculateCellSize();
-            previousLaneLength = laneLength;
-        }
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        if (rectTransform == null)
-        {
-            rectTransform = GetComponent<RectTransform>();
-        }
-
-        CalculateCellSize();
-
-        Gizmos.color = new Color(0, 1, 0, 0.5f);
-        Vector3 cellSizeVec = new Vector3(cellSize, rectTransform.rect.height, 0.1f);
-
-        for (int i = 0; i < laneLength; i++)
-        {
-            Vector3 cellCenterWorldPos = transform.TransformPoint(GetGroundPos(i));
-            Gizmos.DrawWireCube(cellCenterWorldPos, cellSizeVec);
-        }
-    }
-
-  //  public class ReadOnlyAttribute : PropertyAttribute { }
-#endif
 }
 
 #if UNITY_EDITOR

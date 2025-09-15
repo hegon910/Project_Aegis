@@ -50,11 +50,6 @@ public class WarTurnManager : MonoBehaviour
 
     public void ResetForNewBattle(int newMaxTurns = 30)
     {
-        maxTurns = newMaxTurns;
-        currentTurn = 0;
-        battleEnded = false;
-        turnRunning = false;
-        usedSingleUseSkills.Clear();
         if (player != null)
         {
             player.ResetState(ground, playerStartIndex);
@@ -73,9 +68,6 @@ public class WarTurnManager : MonoBehaviour
         {
             skillCooldownTimer = 0; // 스킬이 없는 경우 0으로 초기화
         }
-
-
-        Debug.Log("전투 및 캐릭터 상태 초기화 완료");
     }
     void GoStartTurn(WarAction playerAction)
     {
@@ -112,8 +104,9 @@ public class WarTurnManager : MonoBehaviour
     void EndBattle(string resultLog)
     {
         if (battleEnded) return;
-        OnBattleEnd?.Invoke(resultLog);
+        battleEnded = true;
         bool isWin = resultLog.Contains("승리");
+        WarHistory.RecordWarResult(isWin); // 전투 결과를 기록 시스템에 저장
         var changes = new List<ParameterChange>//파라미터 관련 추가부분
         {
             new ParameterChange
@@ -125,15 +118,12 @@ public class WarTurnManager : MonoBehaviour
         PlayerStats.Instance.ApplyChanges(changes); // 전황 파라미터 변경 적용
         Debug.Log(resultLog);
         Debug.Log("전투 종료");
-        Debug.Log(OnBattleEnd == null ? "오류: OnBattleEnd 신호를 듣는 리스너가 없습니다!" : "3단계 OK: 리스너에게 신호를 보냅니다.");
-        Debug.Log($"[WarTurnManager] 가 신호를 보냄. 나의 ID: {this.GetInstanceID()}");
-
-        battleEnded = true;
+        OnBattleEnd?.Invoke(resultLog);
     }
 
     void CheckWinLoseDrawAfterTurn()
     {
-        
+
         if (player.IsDead && enemy.IsDead)
         {
             EndBattle("무승부 동시 전멸");
@@ -150,7 +140,7 @@ public class WarTurnManager : MonoBehaviour
             return;
         }
 
-      //  GameManager.instance.GoToBattleResultPanel();
+        //  GameManager.instance.GoToBattleResultPanel();
     }
 
     void CheckRingOutStatus()
@@ -179,33 +169,54 @@ public class WarTurnManager : MonoBehaviour
         turnRunning = true;
         var enemyAction = enemy.ChooseAction();
 
-        player.Act(playerAction);
-        enemy.Act(enemyAction);
-
-        int last = ground.LaneLength - 1;
-
-        while (player.IsBusy || enemy.IsBusy)
+        bool playerActsFirst;
+        switch ((playerAction, enemyAction))
         {
-            int pIdx = player.Ctrl.CurrentIndex;
-            int eIdx = enemy.Ctrl.CurrentIndex;
+            case (WarAction.Attack, WarAction.Defend):
+                playerActsFirst = false;
+                Debug.Log("행동 순서: 적 선공 (방어)");
+                break;
 
-            if (pIdx >= eIdx)
+            default:
+                playerActsFirst = true;
+                Debug.Log("행동 순서: 플레이어 선공");
+                break;
+        }
+
+        if (playerActsFirst)
+        {
+            player.Act(playerAction);
+            yield return new WaitWhile(() => player.IsBusy); // 플레이어 움직임이 끝날 때까지 대기
+
+            if (player.Ctrl.CurrentIndex < enemy.Ctrl.CurrentIndex)
             {
-                int meet = Mathf.Clamp(Mathf.RoundToInt((pIdx + eIdx) * 0.5f), 0, last);
-                player.Ctrl.CrushResult(meet);
-                enemy.Ctrl.CrushResult(meet);
-
-                enemy.HandleCollision(player, playerAction, enemyAction);
-
-                Debug.Log($"--- Turn {currentTurn} Collision --- Player Index: {player.Ctrl.CurrentIndex}, Enemy Index: {enemy.Ctrl.CurrentIndex}");
-                CheckRingOutStatus();
-                CheckWinLoseDrawAfterTurn();
-                if (!battleEnded && currentTurn >= maxTurns) EndBattle("무승부 - 턴 제한 소진");
-
-                turnRunning = false;
-                yield break;
+                enemy.Act(enemyAction);
+                yield return new WaitWhile(() => enemy.IsBusy); // 적 움직임이 끝날 때까지 대기
             }
-            yield return null;
+        }
+        else // 적이 먼저 행동하는 경우
+        {
+            enemy.Act(enemyAction);
+            yield return new WaitWhile(() => enemy.IsBusy); // 적 움직임이 끝날 때까지 대기
+
+            if (player.Ctrl.CurrentIndex < enemy.Ctrl.CurrentIndex)
+            {
+                player.Act(playerAction);
+                yield return new WaitWhile(() => player.IsBusy); // 플레이어 움직임이 끝날 때까지 대기
+            }
+        }
+        int pIdx = player.Ctrl.CurrentIndex;
+        int eIdx = enemy.Ctrl.CurrentIndex;
+
+        if (pIdx >= eIdx)
+        {
+            int meet = Mathf.Clamp(Mathf.RoundToInt((pIdx + eIdx) * 0.5f), 0, ground.LaneLength - 1);
+            player.Ctrl.CrushResult(meet);
+            enemy.Ctrl.CrushResult(meet);
+
+            yield return new WaitWhile(() => player.IsBusy || enemy.IsBusy);
+
+            enemy.HandleCollision(player, playerAction, enemyAction);
         }
 
         Debug.Log($"Turn {currentTurn} End / Player Index: {player.Ctrl.CurrentIndex}, Enemy Index: {enemy.Ctrl.CurrentIndex}");
