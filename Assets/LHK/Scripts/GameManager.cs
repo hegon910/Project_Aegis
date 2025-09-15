@@ -611,7 +611,14 @@ public class GameManager : MonoBehaviour
         }
         gameOverPanel.SetActive(true);
     }
-    public void OnGameOverPanelTouched() { DataManager.Instance.StartNewGame(); ResetAllGameData(); ChangeState(GameState.CommanderSelection); }
+    public void OnGameOverPanelTouched()
+    {
+        // 게임 오버 후에는 자동으로 새 게임을 시작하거나 지휘관 선택으로 이동하지 않습니다.
+        // 메인 메뉴로 돌아가 플레이어가 다음 행동(새 게임 시작, 구매 등)을 선택할 수 있게 합니다.
+        if (gameOverPanel != null) gameOverPanel.SetActive(false);
+        ResetAllGameData();
+        ChangeState(GameState.MainMenu);
+    }
     public void CheckGameOverConditions()
     {
         if (PlayerStats.Instance.GetStat(ParameterType.정치력) <= 0)
