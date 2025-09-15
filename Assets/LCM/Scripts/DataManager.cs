@@ -11,13 +11,16 @@ using JetBrains.Annotations;
 using Firebase.Database;
 using Firebase.Auth;
 using Firebase.Extensions;
+using UnityEditor;
 
 public class DataManager : MonoBehaviour
 {
     public static DataManager Instance { get; private set; }
 
     public GameData PlayerData { get; private set; }
+    public SettingsData PlayerSettings { get; private set; }
     private string _playerDataSavePath;
+    private string _settingsSavePath;
     private bool _hasSyncedWithServer; // 9.9. 이학권 추가
 
     private UniTaskCompletionSource<bool> _isReady = new UniTaskCompletionSource<bool>();
@@ -53,6 +56,15 @@ public class DataManager : MonoBehaviour
     public Dictionary<int, string> roundTypeDict; // 라운드타입 룩업
     public Dictionary<int, string> pageTypeDict; //페이지타입 룩업
 
+    [Header("메인 스토리 데이터")]
+    public List<MainEventData> MainStoryEvents;
+    public Dictionary<int, string> MainStoryAnswers;
+    public Dictionary<int, string> MainStoryCharacters;
+    public Dictionary<int, string> MainStoryDialogues; // Dialogue CSV를 위한 Dictionary
+    public Dictionary<int, Sprite> MainStoryCharacterImages; // 이미지 리소스를 위한 Dictionary
+    public Dictionary<int, Sprite> MainStoryBGs; // 배경 리소스를 위한 Dictionary
+    private Dictionary<int, NewMainEventData> mainEventData = new Dictionary<int, NewMainEventData>();
+
     private void Awake()
     {
         if (Instance == null)
@@ -67,18 +79,25 @@ public class DataManager : MonoBehaviour
 
         // 플레이어 데이터 저장 경로 설정
         _playerDataSavePath = Path.Combine(Application.persistentDataPath, "playerdata.json");
+        _settingsSavePath = Path.Combine(Application.persistentDataPath, "settings.json");
+        LoadSettings();
+        LoadGame();
+        if (PlayerData == null)
+        {
+            Debug.Log("저장된 데이터를 찾을 수 없어 새 게임 데이터를 생성합니다.");
+            StartNewGame(); // 혹은 PlayerData = new GameData(); 로 직접 생성
+        }
     }
 
     private void Start() /// 9.9. 이학권 추가
     {
-        LoadGame();
         FirebaseAuth.DefaultInstance.StateChanged += OnAuthStateChanged;
         TrySyncIfLoggedIn();
     }
 
     private void OnAuthStateChanged(object sender, System.EventArgs e)
     {
-        TrySyncIfLoggedIn();
+       TrySyncIfLoggedIn();
     }
 
     private void TrySyncIfLoggedIn() /// 9.9. 이학권 추가
@@ -92,21 +111,20 @@ public class DataManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 새 게임을 시작할 때 호출
-    /// 새로운 플레이어데이터를 생성하고, 로컬에 저장
+    /// 새 게임을 시작할 때 호출됩니다.
     /// </summary>
     public void StartNewGame()
     {
         PlayerData = new GameData();
-        SaveLocal();
+     //   SaveLocal();
         Debug.Log("새로운 게임 데이터 생성 및 저장 완료.");
     }
 
     /// <summary>
-    /// 로컬파일에서 플레이어 데이터를 불러옵니다. 파일이 없으면 새 게임으로 시작.
+    /// 파일에서 플레이어 데이터를 불러옵니다. 파일이 없으면 새 게임 데이터가 생성됩니다.
     /// 9.9. 이학권 변경
     /// </summary>
-    public void LoadGame()
+    public bool LoadGame() // void -> bool로 변경
     {
         if (File.Exists(_playerDataSavePath))
         {
@@ -114,19 +132,90 @@ public class DataManager : MonoBehaviour
             {
                 string json = File.ReadAllText(_playerDataSavePath, Encoding.UTF8);
                 PlayerData = JsonUtility.FromJson<GameData>(json);
-                if (PlayerData == null) throw new Exception("파싱 실패");
-                Debug.Log("로컬 로드 완료");
+
+                if (PlayerData == null)
+                {
+                    Debug.LogWarning("세이브 파일이 손상되어 새 게임을 시작합니다.");
+                    StartNewGame();
+                    return false; // 로드 실패
+                }
+                else
+                {
+                    Debug.Log($"게임 데이터 로드 완료. (회차: {PlayerData.playthroughCount}, 챕터: {PlayerData.currentChapter})");
+                    return true; // 로드 성공
+                }
             }
             catch (Exception ex)
             {
                 Debug.LogWarning($"로컬 로드 실패 ({ex.Message}), 새 게임 시작");
                 StartNewGame();
+                return false; // 로드 실패
             }
         }
         else
         {
             Debug.Log("로컬 데이터 없음, 새 게임 시작");
             StartNewGame();
+            return false; // 파일 없음
+        }
+    }
+    /// <summary>
+    /// [신규] 설정 데이터를 로컬 파일에서 불러옵니다.
+    /// </summary>
+    public void LoadSettings()
+    {
+        if (File.Exists(_settingsSavePath))
+        {
+            try
+            {
+                string json = File.ReadAllText(_settingsSavePath, Encoding.UTF8);
+                PlayerSettings = JsonUtility.FromJson<SettingsData>(json);
+                if (PlayerSettings == null)
+                {
+                    Debug.LogWarning("설정 파일이 손상되어 기본 설정을 생성합니다.");
+                    PlayerSettings = new SettingsData();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"설정 로드 실패: {ex.Message}. 기본 설정으로 재설정합니다.");
+                PlayerSettings = new SettingsData();
+            }
+        }
+        else
+        {
+            Debug.Log("설정 파일 없음, 기본 설정 생성.");
+            PlayerSettings = new SettingsData();
+        }
+    }
+    /// <summary>
+    /// [신규] 현재 '설정'을 로컬파일에 저장합니다.
+    /// </summary>
+    public void SaveSettings()
+    {
+        if (PlayerSettings == null) return;
+        string json = JsonUtility.ToJson(PlayerSettings, true);
+        File.WriteAllText(_settingsSavePath, json, Encoding.UTF8);
+        Debug.Log($"설정 저장 완료: {_settingsSavePath}");
+    }
+
+    /// <summary>
+    /// 세이브 파일이 존재하는지 확인합니다.
+    /// </summary>
+    public bool CheckIfSaveDataExists()
+    {
+        return File.Exists(_playerDataSavePath);
+    }
+
+    /// <summary>
+    /// 로컬 세이브 파일을 삭제합니다.
+    /// </summary>
+    public void DeleteLocalSaveData()
+    {
+        if (File.Exists(_playerDataSavePath))
+        {
+            File.Delete(_playerDataSavePath);
+            Debug.Log($"세이브 파일 삭제 완료: {_playerDataSavePath}");
         }
     }
 
@@ -142,6 +231,31 @@ public class DataManager : MonoBehaviour
         File.WriteAllText(_playerDataSavePath, json, Encoding.UTF8);
         Debug.Log($"로컬 저장 완료: {_playerDataSavePath}");
     }
+    /// <summary>
+    /// [신규] 모든 로컬 데이터(진행도, 설정, PlayerPrefs)를 삭제합니다.
+    /// </summary>
+    public void DeleteAllLocalData()
+    {
+        // 1. 게임 진행도 파일 삭제
+        if (File.Exists(_playerDataSavePath))
+        {
+            File.Delete(_playerDataSavePath);
+            Debug.Log($"게임 진행도 파일 삭제 완료: {_playerDataSavePath}");
+        }
+
+        // 2. 설정 파일 삭제
+        if (File.Exists(_settingsSavePath))
+        {
+            File.Delete(_settingsSavePath);
+            Debug.Log($"설정 파일 삭제 완료: {_settingsSavePath}");
+        }
+
+        // 3. PlaythroughHistory가 사용하는 PlayerPrefs 기록 삭제
+        PlaythroughHistory.Instance.ClearHistory();
+
+        Debug.LogWarning("[DataManager] 모든 로컬 데이터가 초기화되었습니다.");
+    }
+
 
 
     /// <summary>
@@ -171,23 +285,37 @@ public class DataManager : MonoBehaviour
             var serverData = JsonUtility.FromJson<GameData>(serverJson);
 
             // 3) 타임스탬프 비교
-            if (serverData.lastUpdated > PlayerData.lastUpdated)
-            {
-                // 서버가 더 최신 → 로컬 덮어쓰기
-                PlayerData = serverData;
-                SaveLocal();
-                Debug.Log("서버 데이터가 최신, 로컬 업데이트 완료.");
-            }
-            else if (serverData.lastUpdated < PlayerData.lastUpdated)
-            {
-                // 로컬이 더 최신 → 서버에 덮어쓰기
-                yield return UploadToServer(dbRef);
-                Debug.Log("로컬 데이터가 최신, 서버 업데이트 완료.");
-            }
-            else
-            {
-                Debug.Log("로컬·서버 데이터 동일.");
-            }
+			// 서버 권위 타임스탬프 우선 비교
+			long serverSV = (serverData != null) ? serverData.lastUpdatedServer : 0;
+			long localSV = (PlayerData != null) ? PlayerData.lastUpdatedServer : 0;
+			bool serverHasSV = serverSV > 0;
+			bool localHasSV = localSV > 0;
+
+			bool serverIsNewer;
+			if (serverHasSV || localHasSV)
+			{
+				long a = serverHasSV ? serverSV : long.MinValue;
+				long b = localHasSV ? localSV : long.MinValue;
+				serverIsNewer = a > b;
+			}
+			else
+			{
+				long serverLocal = (serverData != null) ? serverData.lastUpdated : 0;
+				long localLocal = (PlayerData != null) ? PlayerData.lastUpdated : 0;
+				serverIsNewer = serverLocal > localLocal;
+			}
+
+			if (serverIsNewer)
+			{
+				PlayerData = serverData;
+				SaveLocal();
+				Debug.Log("서버 데이터가 최신, 로컬 업데이트 완료.");
+			}
+			else
+			{
+				yield return UploadToServer(dbRef);
+				Debug.Log("로컬 데이터가 최신 또는 동일, 서버 업데이트 완료.");
+			}
         }
         else
         {
@@ -203,13 +331,38 @@ public class DataManager : MonoBehaviour
     /// </summary>
     private IEnumerator UploadToServer(DatabaseReference dbRef)
     {
-        SaveLocal(); // lastUpdated 갱신
+        // 1) 로컬 타임스탬프 갱신 및 전체 JSON 업로드
+        SaveLocal();
         string json = JsonUtility.ToJson(PlayerData, true);
         var uploadTask = dbRef.SetRawJsonValueAsync(json);
         yield return new WaitUntil(() => uploadTask.IsCompleted);
-
         if (uploadTask.IsFaulted)
+        {
             Debug.LogError("서버 업로드 실패" + uploadTask.Exception);
+            yield break;
+        }
+
+        // 2) 서버 권위 타임스탬프 설정
+        var updates = new Dictionary<string, object>
+        {
+            { "lastUpdatedServer", ServerValue.Timestamp }
+        };
+        var tsTask = dbRef.UpdateChildrenAsync(updates);
+        yield return new WaitUntil(() => tsTask.IsCompleted);
+        if (tsTask.IsFaulted)
+        {
+            Debug.LogError("서버 타임스탬프 설정 실패" + tsTask.Exception);
+            yield break;
+        }
+
+        // 3) 서버가 기록한 값을 읽어와 로컬 반영
+        var readTask = dbRef.Child("lastUpdatedServer").GetValueAsync();
+        yield return new WaitUntil(() => readTask.IsCompleted);
+        if (!readTask.IsFaulted && readTask.Result != null && long.TryParse(readTask.Result.Value?.ToString(), out var serverMillis))
+        {
+            PlayerData.lastUpdatedServer = serverMillis;
+            SaveLocal();
+        }
     }
 
     /// <summary>
@@ -217,9 +370,13 @@ public class DataManager : MonoBehaviour
     /// </summary>
     private void OnApplicationQuit()
     {
-        SaveLocal();
+        // [수정] 게임 종료 시 현재 진행 상황을 저장하도록 OnApplicationQuit 로직을 활성화합니다.
+        // PlayerData가 null이 아닐 때만 저장 로직을 실행하여 예외를 방지합니다.
+        if (PlayerData != null)
+        {
+            SaveLocal();
+        }
     }
-
 
 
     public async UniTask InitializeDataAsync()
@@ -306,13 +463,42 @@ public class DataManager : MonoBehaviour
             CharacterDataDict = characterList.ToDictionary(e => e.Chr_ID, e => e);
             bgDataDict = bgList.ToDictionary(bg => bg.BG_ID, bg => bg);
             sfxDataDict = sfxList.ToDictionary(sfx => sfx.SFX_ID, sfx => sfx);
-            characterImgDataDict = characterImgList.ToDictionary(c => c.CharacterImg_ID, c => c);
+            characterImgDataDict = characterImgList.ToDictionary(c => (long)c.CharacterImg_ID, c => c);
             endingEventDataDict = endingEventList.ToDictionary(e => e.ID, e => e);
             endingCutSceneDict = endingCutSceneList.ToDictionary(c => c.EndingCutScene_ID, c => c);
             backDataDict = backDataList.ToDictionary(d => d.Back_ID, d => d);
             subEventDataDict = subEventList.ToDictionary(e => e.ID, e => e);
             subEventAnswerDataDict = subAnswerList.ToDictionary(a => a.AnswerID, a => a);
 
+            // 모든 원본 데이터 로딩이 끝난 후, NewMainEventData 딕셔너리를 채웁니다.
+            mainEventData.Clear(); // 혹시 모를 이전 데이터 삭제
+
+            Debug.Log("---------- [DataManager] 데이터 가공 시작 ----------");
+            // mainEventDataDict에 로드된 모든 원본 데이터를 순회합니다.
+            foreach (var rawData in mainEventDataDict.Values.OrderBy(d => d.ID)) // ID 순서대로 확인
+            {
+                NewMainEventData processedData = GetMainEventDataById(rawData.ID);
+
+                // rawData.ID가 10140 근처일 때 특히 주의 깊게 보세요.
+                if (processedData != null)
+                {
+                    if (!mainEventData.ContainsKey(processedData.id))
+                    {
+                        mainEventData.Add(processedData.id, processedData);
+                        // 어떤 데이터가 성공적으로 추가되었는지 로그로 확인
+                        if (rawData.ID > 10010 && rawData.ID < 10020) // Chapter 2 시작 부근 로그 확인
+                        {
+                            Debug.Log($"[성공] ID: {rawData.ID}, StoryNum: {rawData.StoryNum} -> 가공 완료 및 추가 성공.");
+                        }
+                    }
+                }
+                else
+                {
+                    // 어떤 데이터가 가공에 실패했는지 로그로 확인
+                    Debug.LogError($"[실패] ID: {rawData.ID}, StoryNum: {rawData.StoryNum} -> 가공 중 Null 반환됨. 이 데이터나 관련 데이터(BG, 캐릭터 등)에 문제가 있을 수 있습니다.");
+                }
+            }
+                Debug.Log($"[DataManager] {mainEventData.Count}개의 메인 스토리 데이터를 가공하여 최종 준비했습니다.");
 
 
             _isReady.TrySetResult(true);
@@ -428,8 +614,8 @@ public class DataManager : MonoBehaviour
         {
             id = rawData.ID,
             MainStoryPac = rawData.MainStoryPac,
+            StoryNum = rawData.StoryNum,
             LoopNum = rawData.LoopNum,
-            StoryNum = rawData.StoryNum, // 추가
             dialogue = rawData.Text_kr, 
 
         };
@@ -468,7 +654,22 @@ public class DataManager : MonoBehaviour
 
         return fullEventData;
     }
+    public NewMainEventData GetMainEventDataByStoryNum(int storyNum)
+    {
+        // mainEventData 딕셔너리의 모든 값들 중에서
+        // StoryNum이 일치하는 데이터를 찾되, ID가 가장 낮은(가장 먼저 나오는) 데이터를 반환합니다.
+        var foundData = mainEventData.Values
+                                     .Where(data => data.StoryNum == storyNum)
+                                     .OrderBy(data => data.id) // ID 순으로 정렬
+                                     .FirstOrDefault(); // 그 중 첫 번째 것을 선택
 
+        if (foundData == null)
+        {
+            Debug.LogError($"[DataManager] StoryNum {storyNum}에 해당하는 이벤트 데이터를 찾을 수 없습니다.");
+        }
+
+        return foundData;
+    }
     private MainEventChoice CreateMainChoice(int answerID)
     {
         var choice = new MainEventChoice();
@@ -477,15 +678,19 @@ public class DataManager : MonoBehaviour
         {
             parameterChanges = new List<ParameterChange>()
         };
+        Debug.Log($"[DataManager] 선택지를 생성합니다. AnswerID: {answerID}를 찾습니다...");
 
         if (answerDataDict.TryGetValue(answerID, out var answerData))
         {
+            Debug.Log($"[DataManager] -> <color=green>성공!</color> AnswerID: {answerID}를 찾았습니다. 텍스트: '{answerData.Text_KR}', 다음 이벤트 ID: {answerData.NextTextID}");
             choice.choiceText = answerData.Text_KR;
             choice.nextEventID = answerData.NextTextID;
             //선택지 보상치 적용 단
         }
         else
         {
+            Debug.LogError($"[DataManager] -> <color=red>실패!</color> AnswerID: {answerID}에 해당하는 데이터를 'answerDataDict'에서 찾을 수 없습니다. MainAnswerID.csv 파일을 확인해주세요.");
+
             choice.choiceText = "선택지 데이터를 찾을 수 없습니다.";
         }
 

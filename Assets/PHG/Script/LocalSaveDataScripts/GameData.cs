@@ -1,55 +1,50 @@
 using System;
 using System.Collections.Generic;
 
-[Serializable]
-public class GameSettings
-{
-    // ÇâÈÄ Ãß°¡µÉ »ç¿îµå, ¾ğ¾î µî È¯°æ¼³Á¤ °ªÀ» ¿©±â¿¡ Ãß°¡ÇÕ´Ï´Ù.
-    public float masterVolume = 1.0f;
-    public float bgmVolume = 1.0f;
-    public float sfxVolume = 1.0f;
-}
 
 [Serializable]
 public class GameData
 {
-    // --- ÁøÇà »óÅÂ ---
-    public int playthroughCount;        // ÇöÀç È¸Â÷ (PlayerStats)
+    // --- ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ---
+     public GameState currentGameState;
+    public int playthroughCount;        // ï¿½ï¿½ï¿½ï¿½ È¸ï¿½ï¿½ (PlayerStats)
     public CommanderTrait activeTrait;
-    public int currentChapter;          // ÇöÀç Ã©ÅÍ (GameManager)
-    public int eventPlaylistIndex;      // ÇöÀç Ã©ÅÍÀÇ ÀÌº¥Æ® ÁøÇàµµ (EventManager)
-    public List<int> currentPlaylist;   // ÇöÀç Ã©ÅÍÀÇ ÀÌº¥Æ® ¸ñ·Ï (EventManager)
+    public int currentChapter;          // ï¿½ï¿½ï¿½ï¿½ Ã©ï¿½ï¿½ (GameManager)
+    public int eventPlaylistIndex;      // ï¿½ï¿½ï¿½ï¿½ Ã©ï¿½ï¿½ï¿½ï¿½ ï¿½Ìºï¿½Æ® ï¿½ï¿½ï¿½àµµ (EventManager)
+    public List<int> currentPlaylist;   // ï¿½ï¿½ï¿½ï¿½ Ã©ï¿½ï¿½ï¿½ï¿½ ï¿½Ìºï¿½Æ® ï¿½ï¿½ï¿½ (EventManager)
 
-    // --- ÆÄ¶ó¹ÌÅÍ ---
-    public int politics;                // Á¤Ä¡·Â
-    public int militaryPower;           // º´·Â
-    public int supplies;                // ¹°ÀÚ
-    public int leadership;              // ¸®´õ½Ê
-    public int warSituation;            // Àü¼¼
-    public int karma;                   // Ä«¸£¸¶
+    // --- ï¿½Ä¶ï¿½ï¿½ï¿½ï¿½ ---
+    public int politics;                // ï¿½ï¿½Ä¡ï¿½ï¿½
+    public int militaryPower;           // ï¿½ï¿½ï¿½ï¿½
+    public int supplies;                // ï¿½ï¿½ï¿½ï¿½
+    public int leadership;              // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    public int warSituation;            // ï¿½ï¿½ï¿½ï¿½
+    public int karma;                   // Ä«ï¿½ï¿½ï¿½ï¿½
 
-    // --- ÇÃ·¡±× & ±â·Ï ---
-    public List<int> completedEventIds;        // ¿Ï·áÇÑ ÀÌº¥Æ® ID ¸ñ·Ï (PlayerStats)
-    public List<string> unlockedAchievements;  // ´Ş¼ºÇÑ ¾÷Àû ID ¸ñ·Ï
-    public List<string> completedEndings;      // º» ¿£µù ID ¸ñ·Ï
-    public List<int> playedSubEventGroups;     // ÇÃ·¹ÀÌÇÑ ¼­ºê ÀÌº¥Æ® ±×·ì (EventManager)
+    // --- ï¿½Ã·ï¿½ï¿½ï¿½ & ï¿½ï¿½ï¿½ ---
+    public List<int> completedEventIds;        // ï¿½Ï·ï¿½ï¿½ï¿½ ï¿½Ìºï¿½Æ® ID ï¿½ï¿½ï¿½ (PlayerStats)
+    public List<string> unlockedAchievements;  // ï¿½Ş¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ID ï¿½ï¿½ï¿½
+    public List<string> completedEndings;      // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ID ï¿½ï¿½ï¿½
+    public List<int> playedSubEventGroups;     // ï¿½Ã·ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ìºï¿½Æ® ï¿½×·ï¿½ (EventManager)
 
-    // --- ¸ŞÅ¸ µ¥ÀÌÅÍ ---
-    public bool isTutorialFinished;     // Æ©Åä¸®¾ó ¿Ï·á ¿©ºÎ
-    public float totalPlayTime;         // ÃÑ ÇÃ·¹ÀÌ ½Ã°£
-    public GameSettings settings;       // È¯°æ ¼³Á¤
+    // --- ï¿½ï¿½Å¸ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ---
+    public bool isTutorialFinished;     // Æ©ï¿½ä¸®ï¿½ï¿½ ï¿½Ï·ï¿½ ï¿½ï¿½ï¿½ï¿½
+    public float totalPlayTime;         // ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½
+    public GameSettings settings;       // È¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
-    // --- ¼¼ÀÌºêÆÄÀÏ ÃÖ½ÅÈ­ ºñ±³¿ë ÁöÇ¥ -- 9.9. ÀÌÇĞ±Ç Ãß°¡
+    // --- ï¿½ï¿½ï¿½Ìºï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö½ï¿½È­ ï¿½ñ±³¿ï¿½ ï¿½ï¿½Ç¥ -- 9.9. ï¿½ï¿½ï¿½Ğ±ï¿½ ï¿½ß°ï¿½
     public long lastUpdated;
+    // ì„œë²„ ê¶Œìœ„ íƒ€ì„ìŠ¤íƒ¬í”„(UTC ms). Firebase RTDB ServerValue.Timestampë¡œ ì±„ì›Œì§
+    public long lastUpdatedServer;
 
     /// <summary>
-    /// »õ °ÔÀÓ ½ÃÀÛ ½Ã ±âº»°ª ¼³Á¤
+    ///     âº» 
     /// </summary>
     public GameData()
     {
-        // PlayerStats.InitializeStats() ³»¿ëÀ» ±â¹İÀ¸·Î ÃÊ±â°ª ¼³Á¤
+        // PlayerStats.InitializeStats()   Ê±â°ª 
         playthroughCount = 1;
-        activeTrait = CommanderTrait.Devost;// [Ãß°¡] ±âº» ÁöÈÖ°ü Æ¯¼ºÀ¸·Î ÃÊ±âÈ­
+        activeTrait = CommanderTrait.Devost;// [ß°] âº» Ö° Æ¯ Ê±È­
         currentChapter = 1;
         eventPlaylistIndex = 0;
         currentPlaylist = new List<int>();
@@ -68,9 +63,10 @@ public class GameData
 
         isTutorialFinished = false;
         totalPlayTime = 0f;
-        settings = new GameSettings();
+   //     settings = new GameSettings();
 
-        // »ı¼º½ÃÁ¡ ±âÁØ ÁöÇ¥ 9.9. ÀÌÇĞ±Ç Ãß°¡
+        //   Ç¥ 9.9. Ğ± ß°
         lastUpdated = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        lastUpdatedServer = 0;
     }
 }

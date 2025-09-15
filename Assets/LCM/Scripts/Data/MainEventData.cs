@@ -28,7 +28,7 @@ public class NewMainEventData
     public int id;
     public int MainStoryPac;
     public int LoopNum;
-    public int StoryNum; //Ãß°¡    
+    public int StoryNum;
     public string dialogue;
     public string CharacterName;
 
