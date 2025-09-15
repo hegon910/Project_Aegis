@@ -28,11 +28,15 @@ public class DataManager : MonoBehaviour
     //메인 이벤트 
     public Dictionary<int, MainEventData> mainEventDataDict;
     public Dictionary<int, AnswerData> answerDataDict;
+    //서브 이벤트
+    public Dictionary<int, AllSubEventData> subEventDataDict;
+    public Dictionary<int, SubEventAnswerData> subEventAnswerDataDict;
     //메인 룩업 테이블
     private Dictionary<int, MainCharacterData> CharacterDataDict;
-    private Dictionary<long, BGData> bgDataDict;
-    private Dictionary<long, SFXData> sfxDataDict;
-    private Dictionary<long, MainCharacterImgData> characterImgDataDict;
+    private Dictionary<int, BGData> bgDataDict;
+    private Dictionary<int, SFXData> sfxDataDict;
+    private Dictionary<int, MainCharacterImgData> characterImgDataDict;
+    private Dictionary<int, BackData> backDataDict;
     //전투 결과 이벤트
     public Dictionary<int, BattleResultData> battleResultDataDict;
     //엔딩 이벤트
@@ -220,7 +224,7 @@ public class DataManager : MonoBehaviour
 
     public async UniTask InitializeDataAsync()
     {
-        await MainEventInitializeDataAsync();
+        await AllEventInitializeDataAsync();
         try
         {
             Debug.Log("이벤트 데이터 로딩 시작");
@@ -266,7 +270,7 @@ public class DataManager : MonoBehaviour
         }
     }
 
-    public async UniTask MainEventInitializeDataAsync()
+    public async UniTask AllEventInitializeDataAsync()
     {
         try
         {
@@ -275,6 +279,9 @@ public class DataManager : MonoBehaviour
             // MainEventData11.csv와 AnswerID.csv를 비동기로 로드합니다.
             var mainEventTask = Csvparser.ParseAsync<MainEventData>("MainEventData");
             var answerTask = Csvparser.ParseAsync<AnswerData>("MainAnswerID");
+            //서브 이벤트 데이터 로딩
+            var subEventTask = Csvparser.ParseAsync<AllSubEventData>("SubEventData");
+            var subAnswerTask = Csvparser.ParseAsync<SubEventAnswerData>("SubEventAnswerID");
             //룩업 테이블 로딩
             var bgDataTask = Csvparser.ParseAsync<BGData>("MainBGData");
             var sfxDataTask = Csvparser.ParseAsync<SFXData>("MainSFXData");
@@ -282,10 +289,11 @@ public class DataManager : MonoBehaviour
             var characterImgDataTask = Csvparser.ParseAsync<MainCharacterImgData>("MainCharacterImgData");
             var endingEventDataTask = Csvparser.ParseAsync<EndingEventData>("EndingEventData");
             var endingCutSceneTask = Csvparser.ParseAsync<EndingCutScene>("EndingEventCutScene");
-            var battleResultTask = Csvparser.ParseAsync<BattleResultData>("BattleResultTextData"); 
+            var battleResultTask = Csvparser.ParseAsync<BattleResultData>("BattleResultTextData");
+            var backDataTask = Csvparser.ParseAsync<BackData>("BackData");
 
-            var (mainEventList, answerList, characterList, bgList, sfxList, characterImgList, endingEventList, endingCutSceneList, battleResultList) =
-                await UniTask.WhenAll(mainEventTask, answerTask, characterDataTask, bgDataTask, sfxDataTask, characterImgDataTask, endingEventDataTask, endingCutSceneTask, battleResultTask);
+            var (mainEventList, answerList, characterList, bgList, sfxList, characterImgList, endingEventList, endingCutSceneList, battleResultList, backDataList, subEventList, subAnswerList) =
+                await UniTask.WhenAll(mainEventTask, answerTask, characterDataTask, bgDataTask, sfxDataTask, characterImgDataTask, endingEventDataTask, endingCutSceneTask, battleResultTask, backDataTask, subEventTask, subAnswerTask);
 
             Debug.Log("모든 파일 로딩 완료");
 
@@ -301,6 +309,9 @@ public class DataManager : MonoBehaviour
             characterImgDataDict = characterImgList.ToDictionary(c => c.CharacterImg_ID, c => c);
             endingEventDataDict = endingEventList.ToDictionary(e => e.ID, e => e);
             endingCutSceneDict = endingCutSceneList.ToDictionary(c => c.EndingCutScene_ID, c => c);
+            backDataDict = backDataList.ToDictionary(d => d.Back_ID, d => d);
+            subEventDataDict = subEventList.ToDictionary(e => e.ID, e => e);
+            subEventAnswerDataDict = subAnswerList.ToDictionary(a => a.AnswerID, a => a);
 
 
 
@@ -446,6 +457,10 @@ public class DataManager : MonoBehaviour
         {
             fullEventData.characterImgData = characterImgData;
         }
+        if(backDataDict.TryGetValue(rawData.Back_ID, out var backData))
+        {
+            fullEventData.backData = backData;
+        } 
 
         // 왼쪽 및 오른쪽 선택지 구성
         fullEventData.leftChoice = CreateMainChoice(rawData.AnswerLeftID);
@@ -577,6 +592,49 @@ public class DataManager : MonoBehaviour
         {
             fullEventData.ConditionType = conditionTypeStr;
         }
+
+        return fullEventData;
+    }
+
+    private SubChoice CreateSubChoice(int answerID)
+    {
+        if (subEventAnswerDataDict.TryGetValue(answerID, out var rawData))
+        {
+            return new SubChoice
+            {
+                answerID = rawData.AnswerID,
+                choiceText = rawData.Text_KR,
+                nextEventID = rawData.NextTextID,
+                outcomeReward = rawData.AnswerReward
+            };
+        }
+        return null;
+    }
+
+    public FullSubEventData GetSubEventDataById(int eventID)
+    {
+        if (!subEventDataDict.TryGetValue(eventID, out var rawData))
+        {
+            Debug.LogError($"[DataManager] ID {eventID}에 해당하는 서브 이벤트 데이터를 찾을 수 없습니다.");
+            return null;
+        }
+
+        var fullEventData = new FullSubEventData
+        {
+            ID = rawData.ID,
+            SubStoryPac = rawData.SubStoryPac,
+            StoryNum = rawData.StoryNum,
+            Text_kr = rawData.Text_kr,
+
+            bgData = bgDataDict.TryGetValue(rawData.BG_ID, out var bg) ? bg : null,
+            sfxData = sfxDataDict.TryGetValue(rawData.SFX_ID, out var sfx) ? sfx : null,
+            backData = backDataDict.TryGetValue(rawData.Back_ID, out var back) ? back : null,
+            characterData = CharacterDataDict.TryGetValue(rawData.CharacterName, out var character) ? character : null,
+            characterImgData = characterImgDataDict.TryGetValue(rawData.CharacterImg_ID, out var img) ? img : null,
+
+            leftChoice = CreateSubChoice(rawData.AnswerLeftID),
+            rightChoice = CreateSubChoice(rawData.AnswerRightID)
+        };
 
         return fullEventData;
     }
@@ -717,110 +775,6 @@ public class DataManager : MonoBehaviour
             "전세" => ParameterType.전황,
             "카르마" => ParameterType.카르마,
         };
-    }
-
-
-    //데이터 테이블
-    [System.Serializable]
-    public class ParameterEventData
-    {
-        public int ID { get; set; }
-        public int RoundType { get; set; }
-        public int PageType { get; set; }
-        public int ConditionType { get; set; }
-        public int ChangeCondition { get; set; }
-        public int IsConditionSuccess { get; set; }
-        public int EventQuestion { get; set; }
-        public int LeftString { get; set; }
-        public int NeedType1 { get; set; }
-        public int NeedValue1 { get; set; }
-        public int AcceptReward1 { get; set; }
-        public int DenyReward1 { get; set; }
-        public int AcceptString1 { get; set; }
-        public int DenyString1 { get; set; }
-        public int RightString { get; set; }
-        public int NeedType2 { get; set; }
-        public int NeedValue2 { get; set; }
-        public int AcceptReward2 { get; set; }
-        public int DenyReward2 { get; set; }
-        public int AcceptString2 { get; set; }
-        public int DenyString2 { get; set; }
-        public int AnotherEventQuestion { get; set; }
-        public int AnotherLeftString { get; set; }
-        public int AnotherNeedType1 { get; set; }
-        public int AnotehrNeedValue1 { get; set; }
-        public int AnotherAcceptReward1 { get; set; }
-        public int AnotherDenyReward1 { get; set; }
-        public int AnotherAcceptString1 { get; set; }
-        public int AnotherDenyString1 { get; set; }
-        public int AnotherRightString { get; set; }
-        public int AnotherNeedType2 { get; set; }
-        public int AnotherNeedValue2 { get; set; }
-        public int AnotherAcceptReward2 { get; set; }
-        public int AnotherDenyReward2 { get; set; }
-        public int AnotherAcceptString2 { get; set; }
-        public int AnotherDenyString2 { get; set; }
-    }
-    [System.Serializable]
-    public class ParameterRewardData
-    {
-        public int ID { get; set; }
-        public int RewardType1 { get; set; }
-        public int RewardValue1 { get; set; }
-        public int RewardType2 { get; set; }
-        public int RewardValue2 { get; set; }
-        public int RewardType3 { get; set; }
-        public int RewardValue3 { get; set; }
-        public int RewardType4 { get; set; }
-        public int RewardValue4 { get; set; }
-        public int RewardType5 { get; set; }
-        public int RewardValue5 { get; set; }
-    }
-    [System.Serializable]
-    public class ParameterEventStringData
-    {
-        public int ID { get; set; }
-        public string BG { get; set; }
-        public string SoundEffect { get; set; }
-        public int CharacterName { get; set; }
-        public string CharacterImage { get; set; }
-        public int IsFinishString { get; set; }
-        public string String_kr { get; set; }
-    }
-    //룩업 테이블용 클래스 
-    [System.Serializable]
-    public class CharacterData
-    {
-        public string Chr_name { get; set; }
-        public int Chr_index { get; set; }
-    }
-
-    [System.Serializable]
-    public class RewardTypeData
-    {
-        public string RewardType { get; set; }
-        public int RewardType_index { get; set; }
-    }
-
-    [System.Serializable]
-    public class EventDataList
-    {
-        public int Appearance_Num { get; set; }
-        public string Appearance_Type { get; set; }
-        public int PageType_Num { get; set; }
-        public string PageType { get; set; }
-        public int Parameter_Num { get; set; }
-        public string Parameter_type { get; set; }
-        public int Event_Num { get; set; }
-        public string Event_Type { get; set; }
-        public int Cho_Num { get; set; }
-        public string Cho_txt { get; set; }
-    }
-    [System.Serializable]
-    public class RewardInfo
-    {
-        public string RewardType { get; set; }
-        public int RewardValue { get; set; }
     }
 
     [System.Serializable]

@@ -11,13 +11,14 @@ public class MainEventData
     public string EndingString { get; set; }
     public int AnswerLeftID { get; set; }
     public int AnswerRightID { get; set; }
-    public long BG_ID { get; set; }
-    public long SFX_ID { get; set; }
+    public int BG_ID { get; set; }
+    public int SFX_ID { get; set; }
     public int CharacterName { get; set; }
     public string Text_kr { get; set; }
     public string Text_en { get; set; }
-    public long CharacterImg_ID { get; set; }
-    public long Font_Direction { get; set; }
+    public int Back_ID { get; set; }
+    public int CharacterImg_ID { get; set; }
+    public int Font_Direction { get; set; }
 }
 
 [System.Serializable]
@@ -36,7 +37,7 @@ public class NewMainEventData
     public SFXData sfxData;
     public MainCharacterData characterData;
     public MainCharacterImgData characterImgData;
-
+    public BackData backData;
     // 선택지 데이터
     public MainEventChoice leftChoice;
     public MainEventChoice rightChoice;

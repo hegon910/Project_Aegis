@@ -10,8 +10,8 @@ public class EndingEventData
     public string EndingString { get; set; }
     public int Karma_Rate { get; set; }
     public long EndingCutScene_ID { get; set; }
-    public long BG_ID { get; set; }
-    public long SFX_ID { get; set; }
+    public int BG_ID { get; set; }
+    public int SFX_ID { get; set; }
     public string Text_Kr { get; set; }
     public string Text_En { get; set; }
     public string Direction { get; set; }
