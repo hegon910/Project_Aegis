@@ -437,7 +437,7 @@ public class DataManager : MonoBehaviour
             var mainEventTask = Csvparser.ParseAsync<MainEventData>("MainEventData");
             var answerTask = Csvparser.ParseAsync<AnswerData>("MainAnswerID");
             //서브 이벤트 데이터 로딩
-            var subEventTask = Csvparser.ParseAsync<AllSubEventData>("SubEventData");
+            var subEventTask = Csvparser.ParseAsync<AllSubEventData>("SubEventData1");
             var subAnswerTask = Csvparser.ParseAsync<SubEventAnswerData>("SubEventAnswerID");
             //룩업 테이블 로딩
             var bgDataTask = Csvparser.ParseAsync<BGData>("MainBGData");

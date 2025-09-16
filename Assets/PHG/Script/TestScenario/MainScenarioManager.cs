@@ -164,26 +164,26 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
 
         mainStoryUI.characterNameText.text = currentNode.characterData?.Chr_Name ?? "";
 
-        if (currentNode.characterImgData != null && !string.IsNullOrEmpty(currentNode.characterImgData.CharacterImg_path))
-        {
-            Sprite charSprite = Resources.Load<Sprite>(currentNode.characterImgData.CharacterImg_path);
-            if (charSprite != null)
-            {
-                mainStoryUI.characterImage.sprite = charSprite;
-                mainStoryUI.characterImage.color = Color.white;
-            }
-            else
-            {
-                Debug.LogWarning($"캐릭터 스프라이트를 찾을 수 없습니다: {currentNode.characterImgData.CharacterImg_path}");
-                mainStoryUI.characterImage.sprite = null;
-                mainStoryUI.characterImage.color = Color.clear;
-            }
-        }
-        else
-        {
-            mainStoryUI.characterImage.sprite = null;
-            mainStoryUI.characterImage.color = Color.clear;
-        }
+        //if (currentNode.characterImgData != null && !string.IsNullOrEmpty(currentNode.characterImgData.CharacterImg_path))
+        //{
+        //    Sprite charSprite = Resources.Load<Sprite>(currentNode.characterImgData.CharacterImg_path);
+        //    if (charSprite != null)
+        //    {
+        //        mainStoryUI.characterImage.sprite = charSprite;
+        //        mainStoryUI.characterImage.color = Color.white;
+        //    }
+        //    else
+        //    {
+        //        Debug.LogWarning($"캐릭터 스프라이트를 찾을 수 없습니다: {currentNode.characterImgData.CharacterImg_path}");
+        //        mainStoryUI.characterImage.sprite = null;
+        //        mainStoryUI.characterImage.color = Color.clear;
+        //    }
+        //}
+        //else
+        //{
+        //    mainStoryUI.characterImage.sprite = null;
+        //    mainStoryUI.characterImage.color = Color.clear;
+        //}
 
         if (typingCoroutine != null) StopCoroutine(typingCoroutine);
         typingCoroutine = StartCoroutine(TypeText(currentNode.dialogue));
