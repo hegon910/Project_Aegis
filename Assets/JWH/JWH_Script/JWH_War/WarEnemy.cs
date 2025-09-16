@@ -8,7 +8,7 @@ public class WarEnemy : MonoBehaviour
 
     [Header("AI & Info")]
     [SerializeField, Range(0f, 1f)] protected float attackChance = 0.5f;
-    [SerializeField] private int rank = 1; 
+    [SerializeField] private int rank = 1;
 
     public int Rank => rank;
     public WarController Ctrl => controller;
@@ -26,7 +26,7 @@ public class WarEnemy : MonoBehaviour
         if (controller) controller.TakeDamage(amount);
     }
 
-    public WarAction ChooseAction()
+    public virtual WarAction ChooseAction()
         => (Random.value < attackChance) ? WarAction.Attack : WarAction.Defend;
 
     public virtual void HandleCollision(WarPlayer player, WarAction playerAction, WarAction myAction)
@@ -34,7 +34,7 @@ public class WarEnemy : MonoBehaviour
         Debug.LogWarning("기본 충돌 로직");
     }
 
-   
+
 
     public void KillByRingOut()
     {
@@ -43,5 +43,5 @@ public class WarEnemy : MonoBehaviour
         Debug.Log("적군 링아웃");
     }
 
-    
+
 }

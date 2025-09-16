@@ -422,7 +422,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1998703644467061465, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: attackChance
-      value: 0
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 1998703644467061465, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: playerAttackVsEnemyDefend.enemyBaseDamage
@@ -438,7 +438,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5262811965899116410, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: currentHp
-      value: 10
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 5409619987361007447, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: direction
