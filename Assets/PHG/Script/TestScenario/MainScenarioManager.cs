@@ -196,7 +196,7 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
     private Sprite ResolvePortraitSprite(NewMainEventData node)
     {
         // 1) MainCharacterImgData.csv 경로 우선
-        string imgPath = node.characterImgData?.CharacterImg_path;
+        string imgPath = node.characterImgData?.IMGName;
         if (!string.IsNullOrEmpty(imgPath))
         {
             var s = Resources.Load<Sprite>(imgPath);
