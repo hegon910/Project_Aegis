@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 
 public enum WarAction { None, Attack, Defend }
@@ -13,14 +14,14 @@ public class WarController : MonoBehaviour
     [SerializeField] int direction = 1;         // 이동 방향 (플레이어: 1, 적: -1)
 
     [Header("Stats")]
-    [SerializeField] private int maxHp = 5;         
-    [SerializeField] private int currentHp = 5;     
-    [SerializeField] private int attackPower = 1;   
+    [SerializeField] private int maxHp = 5;
+    [SerializeField] private int currentHp = 5;
+    [SerializeField] private int attackPower = 1;
 
     WarGround ground;
     int currentIndex;
     Coroutine coMove;
-    
+
     public int CurrentIndex => currentIndex;
     public int Direction => direction;
     public bool IsBusy => coMove != null;
@@ -74,6 +75,14 @@ public class WarController : MonoBehaviour
         coMove = StartCoroutine(Co_MoveTo(targetIndex, isCrush));
     }
 
+    public void StopMovement()
+    {
+        if (coMove != null)
+        {
+            StopCoroutine(coMove);
+            coMove = null;
+        }
+    }
     IEnumerator Co_MoveTo(int targetIndex, bool isCrush)
     {
         currentIndex = targetIndex;
@@ -82,7 +91,14 @@ public class WarController : MonoBehaviour
 
         if (isCrush)
         {
-            rect.anchoredPosition = targetPos;
+            rect.DOAnchorPos(targetPos, 0.2f)
+                .SetEase(Ease.OutQuad)
+                .onComplete = () =>
+                {
+                    rect.DOShakePosition(0.1f, 5, 10, 90);
+                };
+
+            yield return new WaitForSeconds(0.3f);
         }
         else
         {
@@ -95,6 +111,7 @@ public class WarController : MonoBehaviour
             }
             rect.anchoredPosition = targetPos;
         }
+
         coMove = null;
     }
 }

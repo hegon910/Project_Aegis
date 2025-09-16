@@ -29,7 +29,17 @@ public class CustomEnemy : WarEnemy
     [Tooltip("플레이어: 방어 / 적: 공격")]
     [SerializeField] private CollisionOutcome playerDefendVsEnemyAttack;
 
-    
+    public override WarAction ChooseAction()
+    {
+        // 현재 위치(인덱스)가 14이면 무조건 공격을 선택합니다.
+        if (controller.CurrentIndex == 14)
+        {
+            return WarAction.Attack;
+        }
+
+        // 그 외의 경우에는 기존의 확률 기반 행동 방식을 따릅니다.
+        return base.ChooseAction();
+    }
 
     // 기존 로직을 데이터 기반으로 변경 나는 천재야
     public override void HandleCollision(WarPlayer player, WarAction playerAction, WarAction myAction)
@@ -61,7 +71,7 @@ public class CustomEnemy : WarEnemy
                 }
                 break;
 
-            
+
         }
 
         // 결정된 결과를 적용
