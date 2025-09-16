@@ -33,6 +33,6 @@ MonoBehaviour:
     dayTextData:
       text: "1943\uB144 6\uC6D4"
       animationDuration: 1
-      holdDuration: 10
+      holdDuration: 0
     waitTime: 10
     waitForClick: 1

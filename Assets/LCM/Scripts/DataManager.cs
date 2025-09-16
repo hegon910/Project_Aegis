@@ -64,6 +64,8 @@ public class DataManager : MonoBehaviour
     public Dictionary<int, Sprite> MainStoryCharacterImages; // 이미지 리소스를 위한 Dictionary
     public Dictionary<int, Sprite> MainStoryBGs; // 배경 리소스를 위한 Dictionary
     private Dictionary<int, NewMainEventData> mainEventData = new Dictionary<int, NewMainEventData>();
+    // Reset 이후 의도치 않은 저장을 방지하기 위한 플래그
+    private bool _suppressSavesUntilGameplay;
 
     private void Awake()
     {
@@ -116,6 +118,8 @@ public class DataManager : MonoBehaviour
     public void StartNewGame()
     {
         PlayerData = new GameData();
+        // 메뉴 단계에서 자동 저장이 일어나지 않도록 저장 억제
+        _suppressSavesUntilGameplay = true;
      //   SaveLocal();
         Debug.Log("새로운 게임 데이터 생성 및 저장 완료.");
     }
@@ -226,6 +230,7 @@ public class DataManager : MonoBehaviour
     public void SaveLocal()
     {
         if (PlayerData == null) return;
+        if (_suppressSavesUntilGameplay) { Debug.Log("[DataManager] 저장 억제 중(게임 플레이 전). SaveLocal() 건너뜀"); return; }
         PlayerData.lastUpdated = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         string json = JsonUtility.ToJson(PlayerData, true);
         File.WriteAllText(_playerDataSavePath, json, Encoding.UTF8);
@@ -252,6 +257,9 @@ public class DataManager : MonoBehaviour
 
         // 3. PlaythroughHistory가 사용하는 PlayerPrefs 기록 삭제
         PlaythroughHistory.Instance.ClearHistory();
+
+        // 초기화 직후에는 저장 생성/덮어쓰기 방지
+        _suppressSavesUntilGameplay = true;
 
         Debug.LogWarning("[DataManager] 모든 로컬 데이터가 초기화되었습니다.");
     }
@@ -372,10 +380,19 @@ public class DataManager : MonoBehaviour
     {
         // [수정] 게임 종료 시 현재 진행 상황을 저장하도록 OnApplicationQuit 로직을 활성화합니다.
         // PlayerData가 null이 아닐 때만 저장 로직을 실행하여 예외를 방지합니다.
-        if (PlayerData != null)
+        if (PlayerData != null && !_suppressSavesUntilGameplay)
         {
             SaveLocal();
         }
+    }
+
+    /// <summary>
+    /// 게임 플레이가 실제로 시작되었음을 알리고 저장 억제를 해제합니다.
+    /// 예: 이벤트 사이클 시작 시 호출.
+    /// </summary>
+    public void AllowSavesFromNow()
+    {
+        _suppressSavesUntilGameplay = false;
     }
 
 
