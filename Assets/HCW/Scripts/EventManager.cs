@@ -33,6 +33,7 @@ public class EventManager : MonoBehaviour
 
     private int currentSubEventIndex;
 
+    // 이벤트 매니저 싱글톤
     private void Awake()
     {
         if (Instance == null)
