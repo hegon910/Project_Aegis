@@ -143,7 +143,6 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
             }
         }
     }
-
     private void DisplayNode(int nodeID)
     {
         if (nodeID <= 0)
@@ -151,12 +150,10 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
             EndScenario();
             return;
         }
-        // 항상 StoryNum이 아닌 'ID'로 데이터를 찾습니다. 
         currentNode = DataManager.Instance.GetMainEventDataById(nodeID);
 
         if (currentNode == null)
         {
-            // 로그 메시지는 그대로 유지합니다. 이제 ID를 못 찾는 경우에만 이 로그가 뜹니다.
             Debug.LogError($"[MainScenarioManager] ID({nodeID})에 해당하는 이벤트 데이터를 가져오지 못했습니다. 시나리오를 종료합니다.");
             EndScenario();
             return;
@@ -164,26 +161,18 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
 
         mainStoryUI.characterNameText.text = currentNode.characterData?.Chr_Name ?? "";
 
-        //if (currentNode.characterImgData != null && !string.IsNullOrEmpty(currentNode.characterImgData.CharacterImg_path))
-        //{
-        //    Sprite charSprite = Resources.Load<Sprite>(currentNode.characterImgData.CharacterImg_path);
-        //    if (charSprite != null)
-        //    {
-        //        mainStoryUI.characterImage.sprite = charSprite;
-        //        mainStoryUI.characterImage.color = Color.white;
-        //    }
-        //    else
-        //    {
-        //        Debug.LogWarning($"캐릭터 스프라이트를 찾을 수 없습니다: {currentNode.characterImgData.CharacterImg_path}");
-        //        mainStoryUI.characterImage.sprite = null;
-        //        mainStoryUI.characterImage.color = Color.clear;
-        //    }
-        //}
-        //else
-        //{
-        //    mainStoryUI.characterImage.sprite = null;
-        //    mainStoryUI.characterImage.color = Color.clear;
-        //}
+        // [변경] 초상 스프라이트 결정 로직 통합
+        var portrait = ResolvePortraitSprite(currentNode);
+        if (portrait != null)
+        {
+            mainStoryUI.characterImage.sprite = portrait;
+            mainStoryUI.characterImage.color = Color.white;
+        }
+        else
+        {
+            mainStoryUI.characterImage.sprite = null;
+            mainStoryUI.characterImage.color = Color.clear;
+        }
 
         if (typingCoroutine != null) StopCoroutine(typingCoroutine);
         typingCoroutine = StartCoroutine(TypeText(currentNode.dialogue));
@@ -201,6 +190,38 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
         {
             cardController.gameObject.SetActive(false);
         }
+    }
+
+    // [수정] 독백/리소스 폴백 포함 초상 결정
+    private Sprite ResolvePortraitSprite(NewMainEventData node)
+    {
+        // 1) MainCharacterImgData.csv 경로 우선
+        string imgPath = node.characterImgData?.IMGName;
+        if (!string.IsNullOrEmpty(imgPath))
+        {
+            var s = Resources.Load<Sprite>(imgPath);
+            if (s != null) return s;
+        }
+
+        // 2) 독백(화자/이미지 모두 없음) → 공란 처리 (이미지 없음)
+        bool noSpeakerName = string.IsNullOrEmpty(node.characterData?.Chr_Name);
+        bool noImg = string.IsNullOrEmpty(imgPath);
+        if (noSpeakerName && noImg)
+        {
+            return null; // 독백일 때는 이미지 없음
+        }
+
+        // 3) 상태 이미지(angry 등)가 없을 때: CharacterName과 동일한 리소스 이름으로 시도
+        string nameKey = node.characterData?.Chr_Name;
+        if (!string.IsNullOrEmpty(nameKey))
+        {
+            // 규칙: Portraits/<CharacterName>.png
+            var fallback = Resources.Load<Sprite>($"Portraits/{nameKey}");
+            if (fallback != null) return fallback;
+        }
+
+        // 4) 최종 실패: null
+        return null;
     }
 
     public void HandleChoice(bool isRightChoice)
