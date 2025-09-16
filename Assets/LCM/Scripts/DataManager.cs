@@ -463,7 +463,7 @@ public class DataManager : MonoBehaviour
             CharacterDataDict = characterList.ToDictionary(e => e.Chr_ID, e => e);
             bgDataDict = bgList.ToDictionary(bg => bg.BG_ID, bg => bg);
             sfxDataDict = sfxList.ToDictionary(sfx => sfx.SFX_ID, sfx => sfx);
-            characterImgDataDict = characterImgList.ToDictionary(c => (long)c.CharacterImg_ID, c => c);
+            characterImgDataDict = characterImgList.ToDictionary(c => c.CharacterImg_ID, c => c);
             endingEventDataDict = endingEventList.ToDictionary(e => e.ID, e => e);
             endingCutSceneDict = endingCutSceneList.ToDictionary(c => c.EndingCutScene_ID, c => c);
             backDataDict = backDataList.ToDictionary(d => d.Back_ID, d => d);
