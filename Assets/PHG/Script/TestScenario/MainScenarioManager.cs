@@ -192,7 +192,7 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
         }
     }
 
-    // [추가] 독백/리소스 폴백 포함 초상 결정
+    // [수정] 독백/리소스 폴백 포함 초상 결정
     private Sprite ResolvePortraitSprite(NewMainEventData node)
     {
         // 1) MainCharacterImgData.csv 경로 우선
@@ -203,18 +203,12 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
             if (s != null) return s;
         }
 
-        // 2) 독백(화자/이미지 모두 없음) → 선택 지휘관 초상 사용
+        // 2) 독백(화자/이미지 모두 없음) → 공란 처리 (이미지 없음)
         bool noSpeakerName = string.IsNullOrEmpty(node.characterData?.Chr_Name);
         bool noImg = string.IsNullOrEmpty(imgPath);
         if (noSpeakerName && noImg)
         {
-            var trait = DataManager.Instance.PlayerData.activeTrait; // Devost/Wille/Risard
-            string commanderPath = $"Portraits/Commander/{trait}";
-            var commanderSprite = Resources.Load<Sprite>(commanderPath);
-            if (commanderSprite != null) return commanderSprite;
-
-            // 커맨더 리소스가 없다면 완전 실패
-            return null;
+            return null; // 독백일 때는 이미지 없음
         }
 
         // 3) 상태 이미지(angry 등)가 없을 때: CharacterName과 동일한 리소스 이름으로 시도
