@@ -30,8 +30,12 @@ public class SwipePreviewUI
     }
 }
 
+[RequireComponent(typeof(CanvasGroup))]
 public class ChoiceCardSwipe : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
+    private CanvasGroup canvasGroup;
+    private bool isInteractable = true; // 카드의 활성화 상태를 제어
+
     [Header("Refs")]
     [SerializeField] RectTransform card;
     [SerializeField] Canvas canvas;
@@ -66,6 +70,7 @@ public class ChoiceCardSwipe : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     void Awake()
     {
+        canvasGroup = GetComponent<CanvasGroup>();
         if (!card) card = GetComponent<RectTransform>();
         if (!canvas) canvas = GetComponentInParent<Canvas>();
         initialPosition = card.anchoredPosition;
@@ -74,14 +79,23 @@ public class ChoiceCardSwipe : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         defendPreview?.SetAlpha(0);
         skillPreview?.SetAlpha(0);
     }
+    public void SetInteractable(bool state)
+    {
+        isInteractable = state;
+        canvasGroup.alpha = state ? 1f : 0.5f; // 비활성 상태일 때 반투명하게
+        canvasGroup.blocksRaycasts = state; // 비활성 상태일 때 터치 막음
+    }
 
     public void OnBeginDrag(PointerEventData e)
     {
+        if (!isInteractable) return;
         dragDelta = Vector2.zero;
     }
 
     public void OnDrag(PointerEventData e)
     {
+        if (!isInteractable) return;
+
         dragDelta += e.delta / canvas.scaleFactor;
 
         Vector2 targetPosition = initialPosition;
@@ -109,6 +123,7 @@ public class ChoiceCardSwipe : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     }
     public void OnEndDrag(PointerEventData e)
     {
+        if (!isInteractable) return;
         attackPreview?.SetAlpha(0);
         defendPreview?.SetAlpha(0);
         skillPreview?.SetAlpha(0);

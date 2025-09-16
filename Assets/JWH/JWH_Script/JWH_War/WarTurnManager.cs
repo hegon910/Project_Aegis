@@ -8,6 +8,9 @@ public class WarTurnManager : MonoBehaviour
     [SerializeField] WarPlayer player;
     [SerializeField] WarEnemy enemy;
 
+    [Header("UI References")]
+    [SerializeField] private ChoiceCardSwipe choiceCard;
+
     [Header("Turn Settings")]
     [SerializeField] int maxTurns = 30;
     int currentTurn = 0;
@@ -30,6 +33,10 @@ public class WarTurnManager : MonoBehaviour
 
     void Start()
     {
+        if (choiceCard != null)
+        {
+            choiceCard.SetInteractable(true);
+        }
         // 컨트롤러 초기화
         if (ground != null && player != null && enemy != null)
         {
@@ -71,7 +78,11 @@ public class WarTurnManager : MonoBehaviour
     }
     void GoStartTurn(WarAction playerAction)
     {
-        if (battleEnded) return;
+        if (choiceCard != null)
+        {
+            choiceCard.SetInteractable(false);
+        }
+        
         if (currentTurn >= maxTurns)
         {
             Debug.Log($"턴 제한({maxTurns})에 도달 전투를 종료");
@@ -99,6 +110,7 @@ public class WarTurnManager : MonoBehaviour
         currentTurn++;
         Debug.Log($"Turn {currentTurn}/{maxTurns} 시작 - Player Action: {playerAction}");
         StartCoroutine(Co_Turn(playerAction));
+        if (battleEnded) return;
     }
 
     void EndBattle(string resultLog)
@@ -264,6 +276,10 @@ public class WarTurnManager : MonoBehaviour
         CheckRingOutStatus();
         CheckWinLoseDrawAfterTurn();
         if (!battleEnded && currentTurn >= maxTurns) EndBattle("무승부 - 턴 제한 소진");
+        if (choiceCard != null)
+        {
+            choiceCard.SetInteractable(true);
+        }
 
         turnRunning = false;
     }
