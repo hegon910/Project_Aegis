@@ -266,9 +266,16 @@ public class GameManager : MonoBehaviour
         optionCanvas.SetActive(newState == GameState.GamePaused);
         gameOverPanel.SetActive(false);
 
+        // 튜토리얼 패널은 특정 상황에서만 활성화
         if (newState == GameState.InStory && CurrentChapter == 1 && DataManager.Instance.PlayerData.playthroughCount == 1)
         {
             if (tutorialPanel != null) tutorialPanel.SetActive(true);
+            if (tutorialText != null) tutorialText.SetActive(false);
+        }
+        else if (newState == GameState.InChapterResult)
+        {
+            // 챕터 결과 화면에서는 튜토리얼 패널 비활성화
+            if (tutorialPanel != null) tutorialPanel.SetActive(false);
             if (tutorialText != null) tutorialText.SetActive(false);
         }
 
@@ -520,6 +527,11 @@ public class GameManager : MonoBehaviour
 
             case GameState.InBattle:
                 battleTurnManager.OnBattleEnd += HandleBattleEnd;
+                break;
+
+            case GameState.InChapterResult:
+                // 챕터 결과 화면 복원 시에도 StartDetailedResultSequence 호출
+                StartDetailedResultSequence();
                 break;
         }
     }
