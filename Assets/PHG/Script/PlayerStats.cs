@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System;
+using System.Linq;
 
 public class PlayerStats : MonoBehaviour
 {
@@ -96,8 +97,14 @@ public class PlayerStats : MonoBehaviour
     public void ApplyChanges(List<ParameterChange> changes)
     {
         if (DataManager.Instance?.PlayerData == null) return;
+        // [추가] Wille 특성일 때는 정치력(정치력) 변화는 적용하지 않습니다.
+        List<ParameterChange> appliedChanges = changes;
+        if (ActiveTrait == CommanderTrait.Wille)
+        {
+            appliedChanges = changes.Where(c => c.parameterType != ParameterType.정치력).ToList();
+        }
 
-        foreach (var change in changes)
+        foreach (var change in appliedChanges)
         {
             int oldValue = GetStat(change.parameterType);
             int newValue = 0;
@@ -150,6 +157,7 @@ public class PlayerStats : MonoBehaviour
             case ParameterType.카르마: DataManager.Instance.PlayerData.karma = clampedValue; break;
         }
 
+        // 통지: Wille 특성이라도 SetStat은 시스템 초기화 등에 사용되므로 그대로 통지합니다.
         OnStatChanged?.Invoke(type, clampedValue - oldValue, clampedValue);
         GameManager.instance.CheckGameOverConditions();
     }

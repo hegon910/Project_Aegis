@@ -174,7 +174,12 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             bool success = choice.condition.Evaluate(PlayerStats.Instance, PlaythroughHistory.Instance);
             var outcome = success ? choice.successOutcome : choice.failOutcome;
 
+            // [추가] Wille 특성일 때는 정치력 변화가 UI 하이라이트에도 반영되지 않도록 차단
             List<ParameterChange> finalChanges = new List<ParameterChange>(outcome.parameterChanges);
+            if (PlayerStats.Instance != null && PlayerStats.Instance.ActiveTrait == CommanderTrait.Wille)
+            {
+                finalChanges = finalChanges.Where(c => c.parameterType != ParameterType.정치력).ToList();
+            }
             // 현재 활성화된 특성이 '리사드'이고, 선택지에 '확정 성공'이 아닌 판정 조건이 있었을 경우에만 특성 로직을 실행합니다.
             if (PlayerStats.Instance.ActiveTrait == CommanderTrait.Risard &&
                 !(choice.condition is GuaranteedSuccessCondition))
