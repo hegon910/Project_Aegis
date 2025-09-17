@@ -669,6 +669,23 @@ public class DataManager : MonoBehaviour
         fullEventData.leftChoice = CreateMainChoice(rawData.AnswerLeftID);
         fullEventData.rightChoice = CreateMainChoice(rawData.AnswerRightID);
 
+
+        //데이터 확인용 로그
+        Debug.Log($"<color=cyan>[DataManager] 이벤트 ID {eventID} 로드 성공!</color>");
+        Debug.Log($"<b>대화 내용:</b> \"{fullEventData.dialogue}\"");
+        Debug.Log($"<b>왼쪽 선택지:</b> '{fullEventData.leftChoice.choiceText}'");
+        if (fullEventData.leftChoice.outcome.parameterChanges.Count > 0)
+        {
+            var changes = string.Join(", ", fullEventData.leftChoice.outcome.parameterChanges.Select(p => $"{p.parameterType} {p.valueChange}"));
+            Debug.Log($"  <b>ㄴ 증감치:</b> {changes}");
+        }
+        Debug.Log($"<b>오른쪽 선택지:</b> '{fullEventData.rightChoice.choiceText}'");
+        if (fullEventData.rightChoice.outcome.parameterChanges.Count > 0)
+        {
+            var changes = string.Join(", ", fullEventData.rightChoice.outcome.parameterChanges.Select(p => $"{p.parameterType} {p.valueChange}"));
+            Debug.Log($"  <b>ㄴ 증감치:</b> {changes}");
+        }
+
         return fullEventData;
     }
     public NewMainEventData GetMainEventDataByStoryNum(int storyNum)
@@ -687,6 +704,53 @@ public class DataManager : MonoBehaviour
 
         return foundData;
     }
+
+    private List<ParameterChange> ParseRewardString(string rewardString)
+    {
+        var changes = new List<ParameterChange>();
+
+        if (string.IsNullOrEmpty(rewardString))
+        {
+            return changes;
+        }
+
+        var rewardItems = rewardString.Split(',');
+
+        foreach (var item in rewardItems)
+        {
+            var cleanItem = item.Trim();
+            if (string.IsNullOrEmpty(cleanItem)) continue;
+
+            var parts = cleanItem.Split(' ');
+            if (parts.Length < 3) continue;
+
+            // 문자열을 ParameterType Enum으로 변환합니다.
+            if (!Enum.TryParse(parts[0], out ParameterType parameterType))
+            {
+                Debug.LogError($"[DataManager] 파라미터 이름 '{parts[0]}'을 유효한 ParameterType으로 변환할 수 없습니다.");
+                continue;
+            }
+
+            if (!int.TryParse(parts[1], out int value))
+            {
+                Debug.LogError($"[DataManager] 보상 값 '{parts[1]}'을 숫자로 변환할 수 없습니다.");
+                continue;
+            }
+
+            var direction = parts[2];
+            var finalValue = (direction == "하락") ? -value : value;
+
+            // 수정된 ParameterChange 클래스에 맞게 값 할당
+            changes.Add(new ParameterChange
+            {
+                parameterType = parameterType,
+                valueChange = finalValue
+            });
+        }
+
+        return changes;
+    }
+
     private MainEventChoice CreateMainChoice(int answerID)
     {
         var choice = new MainEventChoice();
@@ -702,7 +766,12 @@ public class DataManager : MonoBehaviour
             Debug.Log($"[DataManager] -> <color=green>성공!</color> AnswerID: {answerID}를 찾았습니다. 텍스트: '{answerData.Text_KR}', 다음 이벤트 ID: {answerData.NextTextID}");
             choice.choiceText = answerData.Text_KR;
             choice.nextEventID = answerData.NextTextID;
-            //선택지 보상치 적용 단
+            //선택지 보상치 적용 단 
+            if (!string.IsNullOrEmpty(answerData.AnswerReward))
+            {
+                // ParseRewardString 함수를 호출하여 보상치 목록을 가져옵니다.
+                choice.outcome.parameterChanges = ParseRewardString(answerData.AnswerReward);
+            }
         }
         else
         {
@@ -818,21 +887,7 @@ public class DataManager : MonoBehaviour
         return fullEventData;
     }
 
-    private SubChoice CreateSubChoice(int answerID)
-    {
-        if (subEventAnswerDataDict.TryGetValue(answerID, out var rawData))
-        {
-            return new SubChoice
-            {
-                answerID = rawData.AnswerID,
-                choiceText = rawData.Text_KR,
-                nextEventID = rawData.NextTextID,
-                outcomeReward = rawData.AnswerReward
-            };
-        }
-        return null;
-    }
-
+    //서비 이벤트의 ID값을 이용하여 데이터를 가져오는 메서드
     public FullSubEventData GetSubEventDataById(int eventID)
     {
         if (!subEventDataDict.TryGetValue(eventID, out var rawData))
@@ -859,6 +914,33 @@ public class DataManager : MonoBehaviour
         };
 
         return fullEventData;
+    }
+    //GetSubEventDataById 선택지 데이터를 만드는 메서드
+    private SubChoice CreateSubChoice(int answerID)
+    {
+        if (subEventAnswerDataDict.TryGetValue(answerID, out var rawData))
+        {
+            var choice = new SubChoice
+            {
+                answerID = rawData.AnswerID,
+                choiceText = rawData.Text_KR,
+                nextEventID = rawData.NextTextID,
+                outcome = new ChoiceOutcome
+                {
+                    parameterChanges = new List<ParameterChange>()
+                }
+            };
+
+            if (!string.IsNullOrEmpty(rawData.AnswerReward))
+            {
+                choice.outcome.parameterChanges = ParseRewardString(rawData.AnswerReward);
+            }
+
+            return choice;
+        }
+
+        Debug.LogError($"[DataManager] 서브 이벤트 AnswerID: {answerID}에 해당하는 데이터를 찾을 수 없습니다.");
+        return null;
     }
 
     /// <summary>

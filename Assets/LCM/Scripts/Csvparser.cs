@@ -7,14 +7,25 @@ using System.Threading;
 
 public static class Csvparser
 {
+    // CSV의 쉼표(,)를 큰따옴표 밖에서만 분리하는 정규식
     private static readonly Regex CsvSplitRegex = new Regex(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+
+    // CSV의 행(줄)을 큰따옴표 규칙에 따라 올바르게 분리하는 정규식
+    private static readonly Regex CsvLineSplitter = new Regex("(?<=[\"](?:[\"\"].*?[\"\"].*?|[^\"].*?)[\"]|[^\"]+)(\\r\\n|\\n)", RegexOptions.Compiled);
+
 
     public static List<T> Parse<T>(string csvContent) where T : new()
     {
         var dataList = new List<T>();
 
-        string[] lines = csvContent.Split('\n');
-        string[] headers = CsvSplitRegex.Split(lines[0]);
+        // Windows/Linux 줄바꿈 문자를 통일
+        csvContent = csvContent.Replace("\r\n", "\n");
+
+        // 첫 번째 줄(헤더) 분리
+        string[] headerLine = csvContent.Split(new[] { '\n' }, 2);
+        if (headerLine.Length < 2) return dataList;
+
+        string[] headers = CsvSplitRegex.Split(headerLine[0]);
         var headerMap = new Dictionary<string, int>();
         for (int i = 0; i < headers.Length; i++)
         {
@@ -22,15 +33,41 @@ public static class Csvparser
             headerMap[headerName] = i;
         }
 
-        for (int i = 1; i < lines.Length; i++)
-        {
-            if (string.IsNullOrWhiteSpace(lines[i])) continue;
+        // --- 수정된 부분: CSV 내용을 올바르게 행 단위로 분리하는 새로운 로직 ---
+        var dataLines = new List<string>();
+        var currentLine = new System.Text.StringBuilder();
+        bool inQuotes = false;
 
-            string[] values = CsvSplitRegex.Split(lines[i]);
+        foreach (char c in headerLine[1])
+        {
+            if (c == '"')
+            {
+                inQuotes = !inQuotes;
+            }
+            else if (c == '\n' && !inQuotes)
+            {
+                dataLines.Add(currentLine.ToString().Trim());
+                currentLine.Clear();
+                continue;
+            }
+            currentLine.Append(c);
+        }
+        if (currentLine.Length > 0)
+        {
+            dataLines.Add(currentLine.ToString().Trim());
+        }
+        // ----------------------------------------------------------------------
+
+        for (int i = 0; i < dataLines.Count; i++)
+        {
+            string line = dataLines[i];
+            if (string.IsNullOrWhiteSpace(line)) continue;
+
+            string[] values = CsvSplitRegex.Split(line);
 
             if (values.Length < headers.Length)
             {
-                Debug.LogError($"'{lines[i]}' 행에 오류가 있습니다. 데이터 열 개수: {values.Length}, 헤더 열 개수: {headers.Length}");
+                Debug.LogError($"'{line}' 행에 오류가 있습니다. 데이터 열 개수: {values.Length}, 헤더 열 개수: {headers.Length}");
                 continue;
             }
 
@@ -41,15 +78,22 @@ public static class Csvparser
                 {
                     int index = headerMap[property.Name];
                     string rawValue = values[index];
-                    string trimmedValue = rawValue.Trim().Trim('"');
+                    string trimmedValue = rawValue;
+
+                    // 문자열이 큰따옴표로 시작하고 끝나는지 확인하고 제거
+                    if (trimmedValue.StartsWith("\"") && trimmedValue.EndsWith("\""))
+                    {
+                        trimmedValue = trimmedValue.Substring(1, trimmedValue.Length - 2);
+                    }
+
+                    // 이중 큰따옴표를 단일 큰따옴표로 변환
+                    trimmedValue = trimmedValue.Replace("\"\"", "\"");
 
                     try
                     {
                         object convertedValue = null;
-                        // 타입에 따라 안전한 변환 로직 추가
                         if (property.PropertyType == typeof(int))
                         {
-                            // int 타입이고 값이 비어있으면 0으로 변환
                             if (string.IsNullOrWhiteSpace(trimmedValue))
                             {
                                 convertedValue = 0;
@@ -61,28 +105,23 @@ public static class Csvparser
                         }
                         else if (property.PropertyType == typeof(bool))
                         {
-                            // bool 타입이고 값이 비어있으면 false로 변환
                             if (string.IsNullOrWhiteSpace(trimmedValue))
                             {
                                 convertedValue = null;
                             }
                             else
                             {
-                                // "TRUE" 또는 "FALSE"를 인식하도록 처리
                                 convertedValue = bool.Parse(trimmedValue.ToLower());
                             }
                         }
                         else
                         {
-                            // 그 외 타입은 기본 ChangeType 사용
                             convertedValue = System.Convert.ChangeType(trimmedValue, property.PropertyType);
                         }
-
                         property.SetValue(data, convertedValue);
                     }
                     catch (System.FormatException)
                     {
-                        // 변환 실패 시 0이나 false를 기본값으로 설정
                         if (property.PropertyType == typeof(int))
                         {
                             property.SetValue(data, 0);
@@ -103,7 +142,6 @@ public static class Csvparser
         }
         return dataList;
     }
-
 
     public static async UniTask<List<T>> ParseAsync<T>(string assetName, CancellationToken token = default) where T : new()
     {

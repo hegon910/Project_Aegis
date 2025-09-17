@@ -10,7 +10,7 @@ public class TestData : MonoBehaviour
         await DataManager.Instance.IsReady;
 
         Debug.Log("--- 모든 이벤트 데이터 로드 시작 ---");
-        DataManager.Instance.GetMainEventDataById(10014);
+        DataManager.Instance.GetMainEventDataById(10093);
         Debug.Log("--- 모든 이벤트 데이터 로드 완료 ---");
     }
 }
