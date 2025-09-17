@@ -126,7 +126,7 @@ public class DataManager : MonoBehaviour
 
     /// <summary>
     /// 파일에서 플레이어 데이터를 불러옵니다. 파일이 없으면 새 게임 데이터가 생성됩니다.
-    /// 9.9. 이학권 변경
+    /// 9.9. 이학권 변경 - 암호화 기능 추가
     /// </summary>
     public bool LoadGame() // void -> bool로 변경
     {
@@ -134,7 +134,16 @@ public class DataManager : MonoBehaviour
         {
             try
             {
-                string json = File.ReadAllText(_playerDataSavePath, Encoding.UTF8);
+                // 암호화된 파일에서 데이터 로드
+                string json = EncryptionUtility.LoadEncryptedFile(_playerDataSavePath);
+                
+                if (string.IsNullOrEmpty(json))
+                {
+                    Debug.LogWarning("암호화된 세이브 파일 로드 실패, 새 게임을 시작합니다.");
+                    StartNewGame();
+                    return false;
+                }
+
                 PlayerData = JsonUtility.FromJson<GameData>(json);
 
                 if (PlayerData == null)
@@ -165,6 +174,7 @@ public class DataManager : MonoBehaviour
     }
     /// <summary>
     /// [신규] 설정 데이터를 로컬 파일에서 불러옵니다.
+    /// 암호화 기능 추가
     /// </summary>
     public void LoadSettings()
     {
@@ -172,7 +182,16 @@ public class DataManager : MonoBehaviour
         {
             try
             {
-                string json = File.ReadAllText(_settingsSavePath, Encoding.UTF8);
+                // 암호화된 설정 파일에서 데이터 로드
+                string json = EncryptionUtility.LoadEncryptedFile(_settingsSavePath);
+                
+                if (string.IsNullOrEmpty(json))
+                {
+                    Debug.LogWarning("암호화된 설정 파일 로드 실패, 기본 설정을 생성합니다.");
+                    PlayerSettings = new SettingsData();
+                    return;
+                }
+
                 PlayerSettings = JsonUtility.FromJson<SettingsData>(json);
                 if (PlayerSettings == null)
                 {
@@ -194,13 +213,16 @@ public class DataManager : MonoBehaviour
     }
     /// <summary>
     /// [신규] 현재 '설정'을 로컬파일에 저장합니다.
+    /// 암호화 기능 추가
     /// </summary>
     public void SaveSettings()
     {
         if (PlayerSettings == null) return;
         string json = JsonUtility.ToJson(PlayerSettings, true);
-        File.WriteAllText(_settingsSavePath, json, Encoding.UTF8);
-        Debug.Log($"설정 저장 완료: {_settingsSavePath}");
+        
+        // 암호화하여 저장
+        EncryptionUtility.SaveEncryptedFile(_settingsSavePath, json);
+        Debug.Log($"암호화된 설정 저장 완료: {_settingsSavePath}");
     }
 
     /// <summary>
@@ -225,7 +247,7 @@ public class DataManager : MonoBehaviour
 
     /// <summary>
     /// 현재 플레이어 데이터를 로컬파일에 저장합니다.
-    /// 9.9. 이학권 변경
+    /// 9.9. 이학권 변경 - 암호화 기능 추가
     /// </summary>
     public void SaveLocal()
     {
@@ -233,8 +255,10 @@ public class DataManager : MonoBehaviour
         if (_suppressSavesUntilGameplay) { Debug.Log("[DataManager] 저장 억제 중(게임 플레이 전). SaveLocal() 건너뜀"); return; }
         PlayerData.lastUpdated = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         string json = JsonUtility.ToJson(PlayerData, true);
-        File.WriteAllText(_playerDataSavePath, json, Encoding.UTF8);
-        Debug.Log($"로컬 저장 완료: {_playerDataSavePath}");
+        
+        // 암호화하여 저장
+        EncryptionUtility.SaveEncryptedFile(_playerDataSavePath, json);
+        Debug.Log($"암호화된 로컬 저장 완료: {_playerDataSavePath}");
     }
     /// <summary>
     /// [신규] 모든 로컬 데이터(진행도, 설정, PlayerPrefs)를 삭제합니다.
