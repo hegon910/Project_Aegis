@@ -27,8 +27,12 @@ public enum GameState
 }
 public class GameManager : MonoBehaviour
 {
+    // 게임오버 중복 호출 방지 플래그
+    private bool _isGameOverActive = false;
     public static GameManager instance { get; private set; }
     public GameState currentGameState { get; private set; }
+    // 이어하기 직후 1회성 튜토리얼(스토리/파라미터) 표시 억제 플래그
+    private bool suppressTutorialOnce = false;
 
     [Header("메인 스토리 정보")]
     [Tooltip("모든 메인 스토리 CSV 파일에 사용되는 MainStoryPac ID")]
@@ -278,18 +282,31 @@ public class GameManager : MonoBehaviour
         optionCanvas.SetActive(newState == GameState.GamePaused);
         gameOverPanel.SetActive(false);
 
-        if (newState == GameState.InStory && CurrentChapter == 1 && DataManager.Instance.PlayerData.playthroughCount == 1)
+        // 이어하기 복원 직후에는 어떤 튜토리얼도 표시하지 않음 (한 번만 동작)
+        if (!suppressTutorialOnce)
         {
-            if (tutorialPanel != null) tutorialPanel.SetActive(true);
+            if (newState == GameState.InStory && CurrentChapter == 1 && DataManager.Instance.PlayerData.playthroughCount == 1)
+            {
+                if (tutorialPanel != null) tutorialPanel.SetActive(true);
+                if (tutorialText != null) tutorialText.SetActive(false);
+            }
+
+            // 메인 이벤트(스토리) 종료 후 파라미터 이벤트 사이클 진입 시 텍스트 다시 활성화
+            if (newState == GameState.InEventCycle && CurrentChapter == 1 && DataManager.Instance.PlayerData.playthroughCount == 1)
+            {
+                if (parameterTutorialPanel!= null) parameterTutorialPanel.SetActive(true);
+                if (tutorialText != null) tutorialText.SetActive(true);
+            }
+        }
+        else
+        {
+            if (tutorialPanel != null) tutorialPanel.SetActive(false);
             if (tutorialText != null) tutorialText.SetActive(false);
+            if (parameterTutorialPanel != null) parameterTutorialPanel.SetActive(false);
         }
 
-        // 메인 이벤트(스토리) 종료 후 파라미터 이벤트 사이클 진입 시 텍스트 다시 활성화
-        if (newState == GameState.InEventCycle && CurrentChapter == 1 && DataManager.Instance.PlayerData.playthroughCount == 1)
-        {
-            if (parameterTutorialPanel!= null) parameterTutorialPanel.SetActive(true);
-            if (tutorialText != null) tutorialText.SetActive(true);
-        }
+        // 한 프레임 동안만 억제하도록 플래그 해제
+        if (suppressTutorialOnce) suppressTutorialOnce = false;
     }
     // 팩 선택 온 클릭 이벤트
     public void SelectStoryPack(int packNumber)
@@ -504,6 +521,8 @@ public class GameManager : MonoBehaviour
     private void RestoreGameState(GameState stateToRestore)
     {
         Debug.Log($"[게임 상태 복원] -> {stateToRestore}");
+        // 이어하기로 복원하는 경우에도 게임오버 가드는 해제되어야 함
+        _isGameOverActive = false;
         currentGameState = stateToRestore;
         SetUIForState(stateToRestore);
 
@@ -609,6 +628,35 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        // 게임오버 후 메인복귀 상태라면, 이어하기 시 챕터 처음부터 재시작
+        if (DataManager.Instance.PlayerData.pendingRestartFromGameOver)
+        {
+            ResetAllGameData();
+            ResetParameterDataToDefaults();
+            EventManager.Instance.ResetEventManagerState();
+            int targetChapter = DataManager.Instance.PlayerData.pendingRestartChapter;
+            DataManager.Instance.PlayerData.currentChapter = (targetChapter >= 1 && targetChapter <= 6) ? targetChapter : 1;
+            DataManager.Instance.PlayerData.completedEventIds.Clear();
+            DataManager.Instance.PlayerData.eventPlaylistIndex = 0;
+            DataManager.Instance.PlayerData.currentPlaylist.Clear();
+            // 저장 억제를 해제한 뒤 사이클을 구성하여 SaveLocal이 억제되지 않도록 순서 수정
+            DataManager.Instance.AllowSavesFromNow();
+            EventManager.Instance.StartNewCycle();
+            DataManager.Instance.PlayerData.currentGameState = GameState.InEventCycle;
+            DataManager.Instance.PlayerData.pendingRestartFromGameOver = false;
+            DataManager.Instance.PlayerData.pendingRestartChapter = 0;
+            DataManager.Instance.SaveLocal();
+
+            // 튜토리얼 억제 및 즉시 숨김
+            suppressTutorialOnce = true;
+            if (tutorialPanel != null) tutorialPanel.SetActive(false);
+            if (parameterTutorialPanel != null) parameterTutorialPanel.SetActive(false);
+            if (uiFlowSimulator != null) uiFlowSimulator.MarkParameterTutorialShown();
+
+            ChangeState(GameState.InEventCycle);
+            return;
+        }
+
         var stateToRestore = DataManager.Instance.PlayerData.currentGameState;
         // 비플레이 상태는 이어하기 대상에서 제외하고 버튼 숨김
         switch (stateToRestore)
@@ -624,6 +672,12 @@ public class GameManager : MonoBehaviour
         }
 
         DataManager.Instance.AllowSavesFromNow();
+        // 이어하기 직후 튜토리얼(스토리/파라미터) 표시 억제
+        suppressTutorialOnce = true;
+        // 안전을 위해 즉시 패널을 내림
+        if (tutorialPanel != null) tutorialPanel.SetActive(false);
+        if (parameterTutorialPanel != null) parameterTutorialPanel.SetActive(false);
+        if (uiFlowSimulator != null) uiFlowSimulator.MarkParameterTutorialShown();
         RestoreGameState(stateToRestore);
     }
     public void SaveAndReturnToTitle()
@@ -701,19 +755,107 @@ public class GameManager : MonoBehaviour
     private void StartDetailedResultSequence() { int warSituation = PlayerStats.Instance.GetStat(ParameterType.전황); GameOutcome outcome = (warSituation <= 19) ? GameOutcome.Defeat : (warSituation >= 81) ? GameOutcome.Victory : GameOutcome.Draw; int chapterIndex = CurrentChapter - 1; if (chapterIndex < chapterEndDataList.Count && chapterEndDataList[chapterIndex] != null) { chapterEndController.StartChapterEndSequence(chapterEndDataList[chapterIndex], outcome); } else { OnStateFinished(); } }
     public void GameOver(string reason)
     {
+        if (_isGameOverActive) return; // 재진입 방지
+        _isGameOverActive = true;
         if (gameOverText != null)
         {
             gameOverText.text = reason;
         }
+        // 진행 중인 UI 전환 코루틴이 다음 턴을 호출하지 못하도록 즉시 중단
+        if (uiFlowSimulator != null)
+        {
+            uiFlowSimulator.AbortPendingTransitions();
+        }
+        // 게임오버 패널 즉시 노출 (원상복구).
         gameOverPanel.SetActive(true);
+		// 게임오버 패널을 누르기 전에 종료되더라도 이어하기 시 챕터 처음부터 재시작되도록 즉시 플래그 저장
+		if (DataManager.Instance?.PlayerData != null)
+		{
+			DataManager.Instance.PlayerData.pendingRestartFromGameOver = true;
+			DataManager.Instance.PlayerData.pendingRestartChapter = CurrentChapter;
+			DataManager.Instance.AllowSavesFromNow();
+			DataManager.Instance.SaveLocal();
+		}
     }
+    // 지연 노출 코루틴 제거 (원상복구)
     public void OnGameOverPanelTouched()
     {
         // 게임 오버 후에는 자동으로 새 게임을 시작하거나 지휘관 선택으로 이동하지 않습니다.
         // 메인 메뉴로 돌아가 플레이어가 다음 행동(새 게임 시작, 구매 등)을 선택할 수 있게 합니다.
         if (gameOverPanel != null) gameOverPanel.SetActive(false);
+        // 메인화면 복귀 시, 다음 이어하기에서 해당 챕터 처음부터 시작하도록 플래그 설정
+        if (DataManager.Instance?.PlayerData != null)
+        {
+            DataManager.Instance.PlayerData.pendingRestartFromGameOver = true;
+            DataManager.Instance.PlayerData.pendingRestartChapter = CurrentChapter;
+            DataManager.Instance.SaveLocal();
+        }
         ResetAllGameData();
         ChangeState(GameState.MainMenu);
+        _isGameOverActive = false; // 게임오버 플로우 종료
+    }
+    
+    // 게임 오버 화면에서 즉시 현재 챕터 진행을 재시작
+    public void OnClickRestartAfterGameOver()
+    {
+        if (gameOverPanel != null) gameOverPanel.SetActive(false);
+        // 같은 프레임에 패널 비활성화와 상태/플로우 전환을 동시에 하면
+        // UI 차단/포커스 충돌로 첫 클릭 효과가 시각적으로 지연될 수 있어 한 프레임 뒤에 처리
+        StartCoroutine(Co_RestartAfterGameOverNextFrame());
+    }
+
+    private System.Collections.IEnumerator Co_RestartAfterGameOverNextFrame()
+    {
+        // 입력 잔여 처리/레이캐스트 정리를 위해 이벤트 시스템 포커스 해제
+        var es = UnityEngine.EventSystems.EventSystem.current;
+        if (es != null) es.SetSelectedGameObject(null);
+
+        // 타임스케일이 0으로 잠겨 있었다면 정상 진행을 위해 복구
+        if (Time.timeScale == 0f) Time.timeScale = 1f;
+
+        // 한 프레임 대기 후 재시작 실행
+        yield return null;
+        RestartEventCycleSimple();
+        _isGameOverActive = false; // 재시작으로 게임오버 상태 종료
+    }
+
+    // 재시작용 간소화 루틴: 이벤트/파라미터만 초기화하고 새 사이클부터 바로 시작
+    private void RestartEventCycleSimple()
+    {
+        if (DataManager.Instance?.PlayerData == null)
+        {
+            ChangeState(GameState.MainMenu);
+            return;
+        }
+
+        // 1) 진행 중 전환 중단(PlayNextTurn 잔여 호출 차단), UIPanel 토글 시퀀스는 유지됨
+        if (uiFlowSimulator != null) uiFlowSimulator.AbortPendingTransitions();
+
+        // 2) 파라미터/이벤트 관련만 초기화
+        ResetParameterDataToDefaults();
+        EventManager.Instance.ResetEventManagerState();
+        var pd = DataManager.Instance.PlayerData;
+        pd.currentChapter = Mathf.Clamp(pd.currentChapter, 1, 6);
+        pd.completedEventIds.Clear();
+        pd.eventPlaylistIndex = 0;
+        pd.currentPlaylist.Clear();
+
+        // 3) 저장 허용 후 새 사이클 구성 → 즉시 저장
+        DataManager.Instance.AllowSavesFromNow();
+        EventManager.Instance.StartNewCycle();
+        pd.currentGameState = GameState.InEventCycle;
+        pd.pendingRestartFromGameOver = false;
+        pd.pendingRestartChapter = 0;
+        DataManager.Instance.SaveLocal();
+
+        // 4) 상태 전환 및 첫 턴 시작
+        // 데이터가 모두 안전하게 초기화된 뒤에 가드를 해제
+        _isGameOverActive = false;
+        ChangeState(GameState.InEventCycle);
+        if (uiFlowSimulator != null)
+        {
+            uiFlowSimulator.BeginFlow(true);
+        }
     }
     public void CheckGameOverConditions()
     {

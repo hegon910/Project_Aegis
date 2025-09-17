@@ -32,6 +32,10 @@ public class GameData
     public float totalPlayTime;         // �� �÷��� �ð�
     public GameSettings settings;       // ȯ�� ����
 
+    // --- 게임오버 후 메인복귀 시 이어하기에서 챕터 처음부터 재시작하기 위한 플래그 ---
+    public bool pendingRestartFromGameOver; // true면 다음 이어하기 시 챕터 처음부터 재시작
+    public int pendingRestartChapter;       // 재시작할 챕터(0이면 무시)
+
     // --- ���̺����� �ֽ�ȭ �񱳿� ��ǥ -- 9.9. ���б� �߰�
     public long lastUpdated;
     // 서버 권위 타임스탬프(UTC ms). Firebase RTDB ServerValue.Timestamp로 채워짐
@@ -64,6 +68,9 @@ public class GameData
         isTutorialFinished = false;
         totalPlayTime = 0f;
    //     settings = new GameSettings();
+
+        pendingRestartFromGameOver = false;
+        pendingRestartChapter = 0;
 
         //   ǥ 9.9. б ߰
         lastUpdated = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
