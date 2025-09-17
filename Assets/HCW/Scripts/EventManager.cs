@@ -108,23 +108,25 @@ public class EventManager : MonoBehaviour
                 allAvailableGroups.AddRange(groupsFromPack);
             }
 
-            // 이미 플레이한 그룹은 제외합니다.
+            // 이미 플레이한 그룹은 제외하고, 리스트를 무작위로 섞습니다.
             var availableGroups = allAvailableGroups
                 .Where(pg => !DataManager.Instance.PlayerData.playedSubEventGroups.Contains(pg.groupId))
+                .OrderBy(x => Guid.NewGuid()) // 리스트 셔플
                 .ToList();
 
             if (availableGroups.Count > 0)
             {
-                // 플레이 가능한 모든 그룹 중에서 무작위로 하나를 선택합니다.
-                var selectedPackAndGroup = availableGroups[UnityEngine.Random.Range(0, availableGroups.Count)];
-                var subEventChain = GetSubEventChain(selectedPackAndGroup.packId, selectedPackAndGroup.groupId);
-
-                if (subEventChain.Count > 0 && subEventChain.Count <= remainingSlots)
+                // 셔플된 그룹 목록을 순회하며 자리가 있으면 재생 목록에 추가
+                foreach (var selectedPackAndGroup in availableGroups)
                 {
-                    DataManager.Instance.PlayerData.playedSubEventGroups.Add(selectedPackAndGroup.groupId);
-                    DataManager.Instance.PlayerData.currentPlaylist.Add(subEventChain.First().Index);
-                    remainingSlots -= subEventChain.Count;
-                    Debug.Log($"[EventManager] 서브 이벤트 체인 추가: 팩 {selectedPackAndGroup.packId}, 그룹 {selectedPackAndGroup.groupId}");
+                    var subEventChain = GetSubEventChain(selectedPackAndGroup.packId, selectedPackAndGroup.groupId);
+                    if (subEventChain.Count > 0 && subEventChain.Count <= remainingSlots)
+                    {
+                        DataManager.Instance.PlayerData.playedSubEventGroups.Add(selectedPackAndGroup.groupId);
+                        DataManager.Instance.PlayerData.currentPlaylist.Add(subEventChain.First().Index);
+                        remainingSlots -= subEventChain.Count;
+                        Debug.Log($"[EventManager] 서브 이벤트 체인 추가: 팩 {selectedPackAndGroup.packId}, 그룹 {selectedPackAndGroup.groupId} ({subEventChain.Count}턴 소모)");
+                    }
                 }
             }
             else
