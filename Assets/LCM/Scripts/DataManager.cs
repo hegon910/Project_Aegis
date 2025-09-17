@@ -126,7 +126,7 @@ public class DataManager : MonoBehaviour
 
     /// <summary>
     /// 파일에서 플레이어 데이터를 불러옵니다. 파일이 없으면 새 게임 데이터가 생성됩니다.
-    /// 9.9. 이학권 변경 - 암호화 기능 추가
+    /// 9.9. 이학권 변경 - 암호화 기능 추가 (기존 평문 파일 호환성 포함)
     /// </summary>
     public bool LoadGame() // void -> bool로 변경
     {
@@ -134,17 +134,58 @@ public class DataManager : MonoBehaviour
         {
             try
             {
-                // 암호화된 파일에서 데이터 로드
-                string json = EncryptionUtility.LoadEncryptedFile(_playerDataSavePath);
+                string json = null;
                 
+                // 1. 먼저 암호화된 파일로 시도
+                try
+                {
+                    json = EncryptionUtility.LoadEncryptedFile(_playerDataSavePath);
+                    if (!string.IsNullOrEmpty(json))
+                    {
+                        Debug.Log("암호화된 세이브 파일을 성공적으로 로드했습니다.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"암호화된 파일 로드 실패: {ex.Message}");
+                }
+                
+                // 2. 암호화된 파일 로드 실패 시 평문 파일로 시도 (기존 호환성)
                 if (string.IsNullOrEmpty(json))
                 {
-                    Debug.LogWarning("암호화된 세이브 파일 로드 실패, 새 게임을 시작합니다.");
+                    try
+                    {
+                        json = File.ReadAllText(_playerDataSavePath, Encoding.UTF8);
+                        Debug.Log("기존 평문 세이브 파일을 로드했습니다. 다음 저장 시 암호화됩니다.");
+                        
+                        // 평문 파일을 암호화하여 다시 저장 (마이그레이션)
+                        PlayerData = JsonUtility.FromJson<GameData>(json);
+                        if (PlayerData != null)
+                        {
+                            SaveLocal(); // 암호화된 형태로 다시 저장
+                            Debug.Log("기존 평문 파일을 암호화된 형태로 마이그레이션 완료.");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogWarning($"평문 파일 로드도 실패: {ex.Message}");
+                        json = null;
+                    }
+                }
+                
+                // 3. 모든 로드 시도 실패
+                if (string.IsNullOrEmpty(json))
+                {
+                    Debug.LogWarning("모든 세이브 파일 로드 시도 실패, 새 게임을 시작합니다.");
                     StartNewGame();
                     return false;
                 }
 
-                PlayerData = JsonUtility.FromJson<GameData>(json);
+                // 4. JSON 파싱 (암호화된 파일의 경우)
+                if (PlayerData == null)
+                {
+                    PlayerData = JsonUtility.FromJson<GameData>(json);
+                }
 
                 if (PlayerData == null)
                 {
@@ -174,7 +215,7 @@ public class DataManager : MonoBehaviour
     }
     /// <summary>
     /// [신규] 설정 데이터를 로컬 파일에서 불러옵니다.
-    /// 암호화 기능 추가
+    /// 암호화 기능 추가 (기존 평문 파일 호환성 포함)
     /// </summary>
     public void LoadSettings()
     {
@@ -182,17 +223,59 @@ public class DataManager : MonoBehaviour
         {
             try
             {
-                // 암호화된 설정 파일에서 데이터 로드
-                string json = EncryptionUtility.LoadEncryptedFile(_settingsSavePath);
+                string json = null;
                 
+                // 1. 먼저 암호화된 설정 파일로 시도
+                try
+                {
+                    json = EncryptionUtility.LoadEncryptedFile(_settingsSavePath);
+                    if (!string.IsNullOrEmpty(json))
+                    {
+                        Debug.Log("암호화된 설정 파일을 성공적으로 로드했습니다.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"암호화된 설정 파일 로드 실패: {ex.Message}");
+                }
+                
+                // 2. 암호화된 파일 로드 실패 시 평문 파일로 시도 (기존 호환성)
                 if (string.IsNullOrEmpty(json))
                 {
-                    Debug.LogWarning("암호화된 설정 파일 로드 실패, 기본 설정을 생성합니다.");
+                    try
+                    {
+                        json = File.ReadAllText(_settingsSavePath, Encoding.UTF8);
+                        Debug.Log("기존 평문 설정 파일을 로드했습니다. 다음 저장 시 암호화됩니다.");
+                        
+                        // 평문 파일을 암호화하여 다시 저장 (마이그레이션)
+                        PlayerSettings = JsonUtility.FromJson<SettingsData>(json);
+                        if (PlayerSettings != null)
+                        {
+                            SaveSettings(); // 암호화된 형태로 다시 저장
+                            Debug.Log("기존 평문 설정 파일을 암호화된 형태로 마이그레이션 완료.");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogWarning($"평문 설정 파일 로드도 실패: {ex.Message}");
+                        json = null;
+                    }
+                }
+                
+                // 3. 모든 로드 시도 실패
+                if (string.IsNullOrEmpty(json))
+                {
+                    Debug.LogWarning("모든 설정 파일 로드 시도 실패, 기본 설정을 생성합니다.");
                     PlayerSettings = new SettingsData();
                     return;
                 }
 
-                PlayerSettings = JsonUtility.FromJson<SettingsData>(json);
+                // 4. JSON 파싱 (암호화된 파일의 경우)
+                if (PlayerSettings == null)
+                {
+                    PlayerSettings = JsonUtility.FromJson<SettingsData>(json);
+                }
+                
                 if (PlayerSettings == null)
                 {
                     Debug.LogWarning("설정 파일이 손상되어 기본 설정을 생성합니다.");
@@ -221,8 +304,15 @@ public class DataManager : MonoBehaviour
         string json = JsonUtility.ToJson(PlayerSettings, true);
         
         // 암호화하여 저장
-        EncryptionUtility.SaveEncryptedFile(_settingsSavePath, json);
-        Debug.Log($"암호화된 설정 저장 완료: {_settingsSavePath}");
+        bool saveSuccess = EncryptionUtility.SaveEncryptedFile(_settingsSavePath, json);
+        if (saveSuccess)
+        {
+            Debug.Log($"암호화된 설정 저장 완료: {_settingsSavePath}");
+        }
+        else
+        {
+            Debug.LogError($"설정 저장 실패: {_settingsSavePath}");
+        }
     }
 
     /// <summary>
@@ -257,8 +347,15 @@ public class DataManager : MonoBehaviour
         string json = JsonUtility.ToJson(PlayerData, true);
         
         // 암호화하여 저장
-        EncryptionUtility.SaveEncryptedFile(_playerDataSavePath, json);
-        Debug.Log($"암호화된 로컬 저장 완료: {_playerDataSavePath}");
+        bool saveSuccess = EncryptionUtility.SaveEncryptedFile(_playerDataSavePath, json);
+        if (saveSuccess)
+        {
+            Debug.Log($"암호화된 로컬 저장 완료: {_playerDataSavePath}");
+        }
+        else
+        {
+            Debug.LogError($"게임 데이터 저장 실패: {_playerDataSavePath}");
+        }
     }
     /// <summary>
     /// [신규] 모든 로컬 데이터(진행도, 설정, PlayerPrefs)를 삭제합니다.

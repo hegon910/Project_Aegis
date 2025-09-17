@@ -5,14 +5,21 @@ using System.Text;
 using UnityEngine;
 
 /// <summary>
-/// 개발 초심자에게 적합한 간단한 암호화 유틸리티
-/// AES + Base64 암호화 방식을 사용합니다.
+/// 간단한 암호화 유틸리티
+/// AES + Base64 암호화 방식을 사용
 /// </summary>
 public static class EncryptionUtility
 {
-    // 암호화 키 (실제 프로젝트에서는 더 안전한 방법으로 관리하세요)
-    private static readonly string ENCRYPTION_KEY = "MyGameSecretKey123456789012345678901234"; // 32자리
-    private static readonly string ENCRYPTION_IV = "MyGameSecretIV123456789012345678901234"; // 32자리
+    // 암호화 키 (TODO : 코드가 아닌 다른 저장방법 필요)
+    // AES-256을 위한 32바이트 키와 16바이트 IV
+    private static readonly byte[] ENCRYPTION_KEY = {
+        0x4D, 0x79, 0x47, 0x61, 0x6D, 0x65, 0x53, 0x65, 0x63, 0x72, 0x65, 0x74, 0x4B, 0x65, 0x79, 0x31,
+        0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37
+    }; // 32바이트 (256비트)
+    
+    private static readonly byte[] ENCRYPTION_IV = {
+        0x4D, 0x79, 0x47, 0x61, 0x6D, 0x65, 0x53, 0x65, 0x63, 0x72, 0x65, 0x74, 0x49, 0x56, 0x31, 0x32
+    }; // 16바이트 (128비트)
 
     /// <summary>
     /// 문자열을 AES로 암호화한 후 Base64로 인코딩합니다.
@@ -32,8 +39,8 @@ public static class EncryptionUtility
             // AES 암호화 객체 생성
             using (Aes aes = Aes.Create())
             {
-                aes.Key = Encoding.UTF8.GetBytes(ENCRYPTION_KEY);
-                aes.IV = Encoding.UTF8.GetBytes(ENCRYPTION_IV);
+                aes.Key = ENCRYPTION_KEY; // 32바이트 키 직접 사용
+                aes.IV = ENCRYPTION_IV;   // 16바이트 IV 직접 사용
                 aes.Mode = CipherMode.CBC;
                 aes.Padding = PaddingMode.PKCS7;
 
@@ -54,7 +61,8 @@ public static class EncryptionUtility
         catch (Exception ex)
         {
             Debug.LogError($"[EncryptionUtility] 암호화 실패: {ex.Message}");
-            return plainText; // 암호화 실패 시 원본 반환
+            // 보안상 암호화 실패 시 null 반환 (원본 반환하지 않음)
+            return null;
         }
     }
 
@@ -79,8 +87,8 @@ public static class EncryptionUtility
             // AES 복호화 객체 생성
             using (Aes aes = Aes.Create())
             {
-                aes.Key = Encoding.UTF8.GetBytes(ENCRYPTION_KEY);
-                aes.IV = Encoding.UTF8.GetBytes(ENCRYPTION_IV);
+                aes.Key = ENCRYPTION_KEY; // 32바이트 키 직접 사용
+                aes.IV = ENCRYPTION_IV;   // 16바이트 IV 직접 사용
                 aes.Mode = CipherMode.CBC;
                 aes.Padding = PaddingMode.PKCS7;
 
@@ -97,7 +105,8 @@ public static class EncryptionUtility
         catch (Exception ex)
         {
             Debug.LogError($"[EncryptionUtility] 복호화 실패: {ex.Message}");
-            return cipherText; // 복호화 실패 시 원본 반환
+            // 보안상 복호화 실패 시 null 반환 (원본 반환하지 않음)
+            return null;
         }
     }
 
@@ -106,17 +115,32 @@ public static class EncryptionUtility
     /// </summary>
     /// <param name="filePath">저장할 파일 경로</param>
     /// <param name="content">저장할 내용</param>
-    public static void SaveEncryptedFile(string filePath, string content)
+    /// <returns>저장 성공 여부</returns>
+    public static bool SaveEncryptedFile(string filePath, string content)
     {
         try
         {
+            if (string.IsNullOrEmpty(content))
+            {
+                Debug.LogWarning("[EncryptionUtility] 저장할 내용이 비어있습니다.");
+                return false;
+            }
+
             string encryptedContent = EncryptString(content);
+            if (string.IsNullOrEmpty(encryptedContent))
+            {
+                Debug.LogError("[EncryptionUtility] 암호화 실패로 파일 저장을 중단합니다.");
+                return false;
+            }
+
             File.WriteAllText(filePath, encryptedContent, Encoding.UTF8);
             Debug.Log($"[EncryptionUtility] 암호화된 파일 저장 완료: {filePath}");
+            return true;
         }
         catch (Exception ex)
         {
             Debug.LogError($"[EncryptionUtility] 암호화 파일 저장 실패: {ex.Message}");
+            return false;
         }
     }
 

@@ -1,9 +1,5 @@
 using UnityEngine;
 
-/// <summary>
-    /// 암호화 기능을 테스트하는 스크립트
-    /// 개발 초심자가 암호화가 제대로 작동하는지 확인할 수 있습니다.
-    /// </summary>
 public class EncryptionTest : MonoBehaviour
 {
     [Header("테스트 설정")]
@@ -43,11 +39,11 @@ public class EncryptionTest : MonoBehaviour
         
         if (isSuccess)
         {
-            Debug.Log("✅ 암호화/복호화가 정상적으로 작동합니다!");
+            Debug.Log("암호화/복호화가 정상적으로 작동합니다!");
         }
         else
         {
-            Debug.LogError("❌ 암호화/복호화에 문제가 있습니다!");
+            Debug.LogError("암호화/복호화에 문제가 있습니다!");
         }
         
         Debug.Log("=== 암호화 테스트 완료 ===");
@@ -80,11 +76,11 @@ public class EncryptionTest : MonoBehaviour
             
             if (isSuccess)
             {
-                Debug.Log("✅ 파일 암호화/복호화가 정상적으로 작동합니다!");
+                Debug.Log("파일 암호화/복호화가 정상적으로 작동합니다!");
             }
             else
             {
-                Debug.LogError("❌ 파일 암호화/복호화에 문제가 있습니다!");
+                Debug.LogError("파일 암호화/복호화에 문제가 있습니다!");
             }
             
             // 4. 테스트 파일 삭제
@@ -100,32 +96,6 @@ public class EncryptionTest : MonoBehaviour
         }
         
         Debug.Log("=== 파일 암호화 테스트 완료 ===");
-    }
-
-    /// <summary>
-    /// XOR 암호화 테스트 (참고용)
-    /// </summary>
-    [ContextMenu("XOR 암호화 테스트 실행")]
-    public void RunXORTest()
-    {
-        Debug.Log("=== XOR 암호화 테스트 시작 ===");
-        
-        string testText = "XOR 테스트 문자열";
-        string xorKey = "MySecretKey";
-        
-        // XOR 암호화
-        string xorEncrypted = EncryptionUtility.SimpleXOREncrypt(testText, xorKey);
-        Debug.Log($"XOR 암호화된 텍스트: {xorEncrypted}");
-        
-        // XOR 복호화
-        string xorDecrypted = EncryptionUtility.SimpleXORDecrypt(xorEncrypted, xorKey);
-        Debug.Log($"XOR 복호화된 텍스트: {xorDecrypted}");
-        
-        // 결과 검증
-        bool isSuccess = testText == xorDecrypted;
-        Debug.Log($"XOR 테스트 결과: {(isSuccess ? "성공" : "실패")}");
-        
-        Debug.Log("=== XOR 암호화 테스트 완료 ===");
     }
 
     /// <summary>
@@ -178,13 +148,13 @@ public class EncryptionTest : MonoBehaviour
             
             if (isSuccess)
             {
-                Debug.Log("✅ 게임 데이터 암호화/복호화가 정상적으로 작동합니다!");
+                Debug.Log("게임 데이터 암호화/복호화가 정상적으로 작동합니다!");
                 Debug.Log($"복원된 데이터 - 회차: {restoredGameData.playthroughCount}, 챕터: {restoredGameData.currentChapter}");
                 Debug.Log($"복원된 데이터 - 정치력: {restoredGameData.politics}, 병력: {restoredGameData.militaryPower}");
             }
             else
             {
-                Debug.LogError("❌ 게임 데이터 암호화/복호화에 문제가 있습니다!");
+                Debug.LogError("게임 데이터 암호화/복호화에 문제가 있습니다!");
             }
         }
         catch (System.Exception ex)
