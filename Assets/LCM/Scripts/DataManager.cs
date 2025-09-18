@@ -93,8 +93,12 @@ public class DataManager : MonoBehaviour
 
     private void Start() /// 9.9. 이학권 추가
     {
+        #if UNITY_ANDROID && !UNITY_EDITOR
         FirebaseAuth.DefaultInstance.StateChanged += OnAuthStateChanged;
         TrySyncIfLoggedIn();
+        #else
+        Debug.Log("[DataManager] 에디터/비모바일 환경: Firebase 비활성");
+        #endif
     }
 
     private void OnAuthStateChanged(object sender, System.EventArgs e)
@@ -120,6 +124,7 @@ public class DataManager : MonoBehaviour
 
     private void TrySyncIfLoggedIn() /// 9.9. 이학권 추가
     {
+        #if UNITY_ANDROID && !UNITY_EDITOR
         var user = FirebaseAuth.DefaultInstance.CurrentUser;
         Debug.Log($"[DataManager] TrySyncIfLoggedIn 호출 - User: {(user != null ? user.UserId : "null")}, HasSynced: {_hasSyncedWithServer}");
         
@@ -145,6 +150,9 @@ public class DataManager : MonoBehaviour
         {
             Debug.Log("[DataManager] 이미 서버 동기화 완료됨");
         }
+        #else
+        Debug.Log("[DataManager] 에디터/비모바일 환경: 서버 동기화 생략");
+        #endif
     }
 
     /// <summary>
@@ -387,7 +395,8 @@ public class DataManager : MonoBehaviour
         {
             Debug.Log($"암호화된 로컬 저장 완료: {_playerDataSavePath}");
             
-            // Firebase 사용자가 로그인되어 있으면 서버에도 업로드
+            // Firebase 사용자가 로그인되어 있으면 서버에도 업로드 (Android 디바이스에서만)
+            #if UNITY_ANDROID && !UNITY_EDITOR
             var user = FirebaseAuth.DefaultInstance.CurrentUser;
             if (user != null)
             {
@@ -398,6 +407,9 @@ public class DataManager : MonoBehaviour
             {
                 Debug.Log("[DataManager] Firebase 사용자 로그인되지 않음, 로컬 저장만 완료");
             }
+            #else
+            Debug.Log("[DataManager] 에디터/비모바일 환경: Firebase 업로드 비활성");
+            #endif
         }
         else
         {
@@ -461,6 +473,10 @@ public class DataManager : MonoBehaviour
     /// </summary>
     private IEnumerator SyncWithServer(string uid)
     {
+        #if !(UNITY_ANDROID && !UNITY_EDITOR)
+        Debug.Log("[DataManager] 에디터/비모바일 환경: 서버 동기화 루틴 생략");
+        yield break;
+        #endif
         Debug.Log($"[DataManager] SyncWithServer 시작 - UID: {uid}");
         
         // 1) 서버에서 데이터 읽기
@@ -543,6 +559,10 @@ public class DataManager : MonoBehaviour
     /// </summary>
     private IEnumerator UploadToServer(DatabaseReference dbRef)
     {
+        #if !(UNITY_ANDROID && !UNITY_EDITOR)
+        Debug.Log("[DataManager] 에디터/비모바일 환경: 서버 업로드 루틴 생략");
+        yield break;
+        #endif
         Debug.Log("[DataManager] UploadToServer 시작");
         
         // 1) 로컬 타임스탬프 갱신 및 전체 JSON 업로드
@@ -608,6 +628,10 @@ public class DataManager : MonoBehaviour
     /// </summary>
     private IEnumerator UploadToServerAsync(string uid)
     {
+        #if !(UNITY_ANDROID && !UNITY_EDITOR)
+        Debug.Log("[DataManager] 에디터/비모바일 환경: 서버 업로드 루틴 생략");
+        yield break;
+        #endif
         Debug.Log("[DataManager] UploadToServerAsync 시작");
         
         var dbRef = FirebaseDatabase.DefaultInstance
