@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Text;
 using System.Collections;
@@ -358,7 +358,7 @@ public class DataManager : MonoBehaviour
         }
     }
     /// <summary>
-    /// [신규] 모든 로컬 데이터(진행도, 설정, PlayerPrefs)를 삭제합니다.
+    /// [신규] 모든 로컬 데이터(진행도, 설정)를 삭제합니다.
     /// </summary>
     public void DeleteAllLocalData()
     {
@@ -376,8 +376,8 @@ public class DataManager : MonoBehaviour
             Debug.Log($"설정 파일 삭제 완료: {_settingsSavePath}");
         }
 
-        // 3. PlaythroughHistory가 사용하는 PlayerPrefs 기록 삭제
-        PlaythroughHistory.Instance.ClearHistory();
+        // 3. PlayerPrefs 기록 삭제 (필요 시)
+        // PlayerPrefs.DeleteAll();
 
         // 초기화 직후에는 저장 생성/덮어쓰기 방지
         _suppressSavesUntilGameplay = true;
@@ -385,6 +385,27 @@ public class DataManager : MonoBehaviour
         Debug.LogWarning("[DataManager] 모든 로컬 데이터가 초기화되었습니다.");
     }
 
+    /// <summary>
+    /// [신규] 특정 전투 결과를 플레이어 데이터에 기록합니다.
+    /// </summary>
+    public void RecordBattleResult(int resultId)
+    {
+        if (PlayerData == null || PlayerData.completedBattleResultIds.Contains(resultId)) return;
+        PlayerData.completedBattleResultIds.Add(resultId);
+        Debug.Log($"[DataManager] 전투 결과 기록됨: ID {resultId}");
+        SaveLocal();
+    }
+
+    /// <summary>
+    /// [신규] 특정 엔딩을 플레이어 데이터에 기록합니다.
+    /// </summary>
+    public void RecordEnding(int endingId)
+    {
+        if (PlayerData == null || PlayerData.completedEndingIds.Contains(endingId)) return;
+        PlayerData.completedEndingIds.Add(endingId);
+        Debug.Log($"[DataManager] 엔딩 기록됨: ID {endingId}");
+        SaveLocal();
+    }
 
 
     /// <summary>
@@ -962,9 +983,34 @@ public class DataManager : MonoBehaviour
             return null;
         }
 
+        bool isBranchTriggered = false;
+        if (PlayerData != null)
+        {
+            switch (rawData.ConditionType)
+            {
+                case 0: // 조건 없음
+                    isBranchTriggered = false;
+                    break;
+                case 1: // 특정 파라미터 이벤트 경험
+                    // TODO: 현재는 완료 여부만 체크. 기획서의 IsConditionSuccess (성공/실패)까지 체크하려면
+                    // PlayerData.completedEventIds를 Dictionary<int, bool> 같은 형태로 확장해야 함.
+                    isBranchTriggered = PlayerData.completedEventIds.Contains(rawData.ChangeCondition);
+                    break;
+                case 2: // 특정 서브 이벤트 그룹 경험
+                    isBranchTriggered = PlayerData.playedSubEventGroups.Contains(rawData.ChangeCondition);
+                    break;
+                case 3: // 특정 전투 결과 경험
+                    isBranchTriggered = PlayerData.completedBattleResultIds.Contains(rawData.ChangeCondition);
+                    break;
+                case 4: // 특정 엔딩 경험
+                    isBranchTriggered = PlayerData.completedEndingIds.Contains(rawData.ChangeCondition);
+                    break;
+                default:
+                    isBranchTriggered = false;
+                    break;
+            }
+        }
 
-        // 분기 조건 확인: ChangeCondition 이벤트가 과거에 성공적으로 완료되었는지 여부
-        bool isBranchTriggered = rawData.ConditionType == 1 && PlaythroughHistory.Instance.HasCompletedEvent(rawData.ChangeCondition);
 
         var fullEventData = new EventData
         {
@@ -1262,63 +1308,5 @@ public class DataManager : MonoBehaviour
         public string RightSelectString { get; set; }
         public string CharacterName { get; set; }
         public string End_Text { get; set; }
-    }
-
-    // PlayerPrefs를 사용하여 회차 기록을 관리하는 클래스
-    public class PlaythroughHistory
-    {
-        public static PlaythroughHistory Instance { get; private set; } = new PlaythroughHistory();
-
-        private const string CompletedEventsKey = "CompletedEvents";
-        private HashSet<int> completedEvents;
-
-        // 생성자에서 데이터 로드
-        private PlaythroughHistory()
-        {
-            Load();
-        }
-
-        private void Load()
-        {
-            completedEvents = new HashSet<int>();
-            string savedEvents = PlayerPrefs.GetString(CompletedEventsKey, "");
-            if (!string.IsNullOrEmpty(savedEvents))
-            {
-                foreach (var idStr in savedEvents.Split(','))
-                {
-                    if (int.TryParse(idStr, out int id))
-                    {
-                        completedEvents.Add(id);
-                    }
-                }
-            }
-            Debug.Log($"[PlaythroughHistory] 로드 완료. 완료된 이벤트 {completedEvents.Count}개");
-        }
-
-        private void Save()
-        {
-            string eventIds = string.Join(",", completedEvents);
-            PlayerPrefs.SetString(CompletedEventsKey, eventIds);
-            PlayerPrefs.Save(); // 확실한 저장을 위해 호출
-            Debug.Log($"[PlaythroughHistory] 저장 완료. 현재 완료된 이벤트: {eventIds}");
-        }
-
-        public bool HasCompletedEvent(int eventId) => completedEvents.Contains(eventId);
-
-        public void AddCompletedEvent(int eventId)
-        {
-            if (completedEvents.Add(eventId)) // 새로운 이벤트일 경우에만 저장
-            {
-                Save();
-            }
-        }
-
-        public void ClearHistory()
-        {
-            completedEvents.Clear();
-            PlayerPrefs.DeleteKey(CompletedEventsKey);
-            PlayerPrefs.Save();
-            Debug.Log("[PlaythroughHistory] 모든 기록이 삭제되었습니다.");
-        }
     }
 }

@@ -171,10 +171,13 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         if (currentParameterEventData != null)
         {
             var choice = isRightChoice ? currentParameterEventData.rightChoice : currentParameterEventData.leftChoice;
-            bool success = choice.condition.Evaluate(PlayerStats.Instance, PlaythroughHistory.Instance);
+            
+            // [수정] 새로운 Evaluate 시그니처 호출
+            bool success = choice.condition.Evaluate();
             var outcome = success ? choice.successOutcome : choice.failOutcome;
 
             List<ParameterChange> finalChanges = new List<ParameterChange>(outcome.parameterChanges);
+            
             // 현재 활성화된 특성이 '리사드'이고, 선택지에 '확정 성공'이 아닌 판정 조건이 있었을 경우에만 특성 로직을 실행합니다.
             if (PlayerStats.Instance.ActiveTrait == CommanderTrait.Risard &&
                 !(choice.condition is GuaranteedSuccessCondition))
@@ -185,6 +188,10 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             // '리사드'가 아니거나 '확정 성공' 이벤트인 경우, 위 if문을 건너뛰고 원래 결과만 사용하게 됩니다.
 
             PlayerStats.Instance.ApplyChanges(finalChanges);
+
+            // [신규] 파라미터 이벤트 완료 기록
+            // TODO: 성공/실패 여부(success 변수)도 함께 기록하는 로직 추가 필요
+            DataManager.Instance.PlayerData.completedEventIds.Add(currentParameterEventData.id);
 
             StartCoroutine(TransitionToNextEvent(outcome.outcomeText));
         }
@@ -221,4 +228,40 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     public void ClearParameterPreview() { if (parameterUIController != null) { parameterUIController.ClearAllToggles(); } }
     public void UpdateDimmer(float alpha) { if (dimmerPanel != null) { dimmerPanel.color = new Color(0, 0, 0, alpha); } }
     public void UpdateChoicePreview(string text, Color color) { }
+
+    /// <summary>
+    /// [신규] 전투 종료를 시뮬레이션하고 결과를 기록합니다.
+    /// </summary>
+    /// <param name="battleResultId">기록할 전투 결과 ID</param>
+    public void SimulateBattleEnd(int battleResultId)
+    {
+        var resultData = DataManager.Instance.GetBattleResultDataById(battleResultId);
+        if (resultData != null)
+        {
+            Debug.Log($"전투 결과 시뮬레이션: {resultData.Text_Kr}");
+            DataManager.Instance.RecordBattleResult(battleResultId);
+        }
+        else
+        {
+            Debug.LogError($"[UIFlowSimulator] ID {battleResultId}에 해당하는 전투 결과 데이터를 찾을 수 없습니다.");
+        }
+    }
+
+    /// <summary>
+    /// [신규] 엔딩을 시뮬레이션하고 결과를 기록합니다.
+    /// </summary>
+    /// <param name="endingId">기록할 엔딩 ID</param>
+    public void SimulateEnding(int endingId)
+    {
+        var endingData = DataManager.Instance.GetEndingData(endingId);
+        if (endingData != null)
+        {
+            Debug.Log($"엔딩 시뮬레이션: {endingData.Text_Kr}");
+            DataManager.Instance.RecordEnding(endingId);
+        }
+        else
+        {
+            Debug.LogError($"[UIFlowSimulator] ID {endingId}에 해당하는 엔딩 데이터를 찾을 수 없습니다.");
+        }
+    }
 }

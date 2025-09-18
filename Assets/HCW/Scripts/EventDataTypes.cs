@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -62,10 +62,8 @@ public abstract class SuccessCondition
     /// <summary>
     /// 이 조건의 성공 여부를 평가합니다.
     /// </summary>
-    /// <param name="playerStats">현재 플레이어 스탯</param>
-    /// <param name="playthroughHistory">과거 플레이 기록</param>
     /// <returns>성공 여부</returns>
-    public abstract bool Evaluate(PlayerStats playerStats, PlaythroughHistory playthroughHistory);
+    public abstract bool Evaluate();
 }
 
 /// <summary>
@@ -76,7 +74,7 @@ public class GuaranteedSuccessCondition : SuccessCondition
 {
     public override SuccessConditionType Type => SuccessConditionType.Guaranteed;
 
-    public override bool Evaluate(PlayerStats playerStats, PlaythroughHistory playthroughHistory)
+    public override bool Evaluate()
     {
         return true;
     }
@@ -95,9 +93,9 @@ public class ParameterSuccessCondition : SuccessCondition
     [Tooltip("성공 확률을 계산하기 위한 요구 파라미터 값")]
     public int requiredValue;
 
-    public override bool Evaluate(PlayerStats playerStats, PlaythroughHistory playthroughHistory)
+    public override bool Evaluate()
     {
-        if (playerStats == null)
+        if (PlayerStats.Instance == null)
         {
             Debug.LogError("[ParameterSuccessCondition] PlayerStats가 null입니다.");
             return false;
@@ -109,7 +107,7 @@ public class ParameterSuccessCondition : SuccessCondition
             return true;
         }
 
-        float playerValue = playerStats.GetStat(targetParameter);
+        float playerValue = PlayerStats.Instance.GetStat(targetParameter);
 
         // 플레이어의 스탯이 요구치보다 높거나 같으면 무조건 성공
         if (playerValue >= requiredValue)
@@ -135,10 +133,10 @@ public class HistorySuccessCondition : SuccessCondition
     [Tooltip("완료 여부를 체크할 이벤트의 ID")]
     public int requiredEventID;
 
-    public override bool Evaluate(PlayerStats playerStats, PlaythroughHistory playthroughHistory)
+    public override bool Evaluate()
     {
-        if (playthroughHistory == null) return false;
-        return playthroughHistory.HasCompletedEvent(requiredEventID);
+        if (DataManager.Instance?.PlayerData == null) return false;
+        return DataManager.Instance.PlayerData.completedEventIds.Contains(requiredEventID);
     }
 }
 
@@ -150,16 +148,13 @@ public class BattleResultSuccessCondition : SuccessCondition
 {
     public override SuccessConditionType Type => SuccessConditionType.BattleResult;
 
-    // TODO: 전투 결과 Enum 정의 필요
-    [Tooltip("요구되는 전투 결과")]
-    public int requiredBattleResult; // 예: 0=승리, 1=무승부, 2=패배
+    [Tooltip("요구되는 전투 결과 ID")]
+    public int requiredBattleResultId;
 
-    public override bool Evaluate(PlayerStats playerStats, PlaythroughHistory playthroughHistory)
+    public override bool Evaluate()
     {
-        if (playthroughHistory == null) return false;
-        // TODO: playthroughHistory에서 특정 전투 결과를 가져오는 로직 구현 필요
-        // return playthroughHistory.GetLastBattleResult() == requiredBattleResult;
-        return false; // 임시
+        if (DataManager.Instance?.PlayerData == null) return false;
+        return DataManager.Instance.PlayerData.completedBattleResultIds.Contains(requiredBattleResultId);
     }
 }
 
@@ -174,10 +169,10 @@ public class EndingSuccessCondition : SuccessCondition
     [Tooltip("완료 여부를 체크할 엔딩의 ID")]
     public int requiredEndingID;
 
-    public override bool Evaluate(PlayerStats playerStats, PlaythroughHistory playthroughHistory)
+    public override bool Evaluate()
     {
-        if (playthroughHistory == null) return false;
-        return playthroughHistory.HasCompletedEnding(requiredEndingID);
+        if (DataManager.Instance?.PlayerData == null) return false;
+        return DataManager.Instance.PlayerData.completedEndingIds.Contains(requiredEndingID);
     }
 }
 

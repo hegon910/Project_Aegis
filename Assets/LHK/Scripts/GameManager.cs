@@ -2,6 +2,7 @@
 using GooglePlayGames.BasicApi;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using TMPro; // TextMeshPro를 사용하기 위해 추가
 using UnityEngine;
@@ -278,7 +279,7 @@ public class GameManager : MonoBehaviour
             if (tutorialText != null) tutorialText.SetActive(true);
         }
     }
-    // 팩 선택 온 클릭 이벤트
+    // 팩 선택 온 클릭 이벤트 (다중 선택 지원)
     public void SelectStoryPack(int packNumber)
     {
         if (DataManager.Instance.PlayerSettings == null) return;
@@ -288,28 +289,34 @@ public class GameManager : MonoBehaviour
         // 현재 선택된 ID 리스트를 가져옵니다.
         List<int> selectedIDs = DataManager.Instance.PlayerSettings.selectedSubEventPackIDs;
 
-        // 이미 해당 팩이 유일하게 선택되어 있었는지 확인
-        bool wasSelected = selectedIDs.Count == 1 && selectedIDs.Contains(packNumber);
+        // 이미 해당 팩이 선택되어 있었는지 확인
+        bool isAlreadySelected = selectedIDs.Contains(packNumber);
 
-        if (wasSelected)
+        if (isAlreadySelected)
         {
-            // 선택 취소: 리스트를 완전히 비웁니다.
-            selectedIDs.Clear();
+            // 선택 취소: 리스트에서 해당 팩 ID를 제거합니다.
+            selectedIDs.Remove(packNumber);
             Debug.Log($"[GameManager] 서브 스토리 팩 {packNumber}번 선택이 취소되었습니다.");
-            if (subEventSelectedText != null)
-            {
-                subEventSelectedText.text = "선택된 서브 이벤트 팩이 없습니다.";
-            }
         }
         else
         {
-            // 새로운 팩 선택: 리스트를 비우고 현재 팩만 추가합니다. (단일 선택)
-            selectedIDs.Clear();
+            // 새로운 팩 선택: 리스트에 현재 팩 ID를 추가합니다.
             selectedIDs.Add(packNumber);
             Debug.Log($"[GameManager] 서브 스토리 팩 {packNumber}번이 선택되었습니다.");
-            if (subEventSelectedText != null)
+        }
+
+        // UI 텍스트 업데이트
+        if (subEventSelectedText != null)
+        {
+            if (selectedIDs.Count > 0)
             {
-                subEventSelectedText.text = $"서브 이벤트 팩: {packNumber}이 활성화 되었습니다.";
+                // 선택된 팩들의 번호를 쉼표로 구분하여 문자열로 만듭니다.
+                string selectedPacksStr = string.Join(", ", selectedIDs.OrderBy(id => id));
+                subEventSelectedText.text = $"활성화된 팩: {selectedPacksStr}";
+            }
+            else
+            {
+                subEventSelectedText.text = "선택된 서브 이벤트 팩이 없습니다.";
             }
         }
 
