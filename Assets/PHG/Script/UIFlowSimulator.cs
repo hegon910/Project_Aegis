@@ -26,9 +26,9 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     [SerializeField] private GameObject swipeTutorialImage;
 
     public bool CanMakeChoice => true;
+
     // 게임오버 등으로 다음 턴 전환 코루틴을 중단하기 위한 플래그
     private bool cancelTransitions = false;
-
 
     private static bool hasShownChapter1ParameterTutorial = false;
 
@@ -53,15 +53,6 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     public void ResetTutorialState()
     {
         hasShownChapter1ParameterTutorial = false;
-    }
-
-    // 이어하기 복원 등으로 파라미터 튜토리얼을 건너뛰어야 할 때 호출
-    public void MarkParameterTutorialShown()
-    {
-        hasShownChapter1ParameterTutorial = true;
-        if (tutorialPanel != null) tutorialPanel.SetActive(false);
-        if (parameterTutoText != null) parameterTutoText.SetActive(false);
-        if (swipeTutorialImage != null) swipeTutorialImage.SetActive(false);
     }
 
     // <<<<<<< [핵심 복원 2] 원본의 BeginFlow 함수 로직을 그대로 사용합니다.
@@ -98,10 +89,15 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         // UIPanelController의 꺼졌다 켜지는 시퀀스를 방해하지 않기 위해 UI 활성 상태는 변경하지 않습니다.
     }
 
+    // 튜토리얼 표시 상태를 강제로 설정 (이어하기 시 튜토리얼 억제용)
+    public void MarkParameterTutorialShown()
+    {
+        hasShownChapter1ParameterTutorial = true;
+    }
+
     private void HandleParameterEvent(int eventId)
     {
         Debug.Log($"[UIFlowSimulator] EventManager로부터 ID: {eventId} 이벤트 신호를 성공적으로 받았습니다.");
-        // (추가 로그 제거 - 원상복구)
         if (DataManager.Instance.PlayerData.playthroughCount == 1 &&
          GameManager.instance.CurrentChapter == 1 &&
          !hasShownChapter1ParameterTutorial)
@@ -152,7 +148,6 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 
     private void HandleSubEvent(SubEventData data)
     {
-        // (추가 로그 제거 - 원상복구)
         if (tutorialPanel != null && tutorialPanel.activeSelf)
         {
             tutorialPanel.SetActive(false);
@@ -227,13 +222,45 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     {
         situationCardController.UpdateText(resultText);
         yield return new WaitForSeconds(1.5f);
-        if (cancelTransitions) yield break;
+        
+        // 대기 중에도 취소 플래그 체크
+        if (cancelTransitions)
+        {
+            Debug.Log("UIFlowSimulator: 전환이 취소되었습니다.");
+            yield break;
+        }
+        
         uiPanelController.Hide();
         situationCardController.Hide();
         yield return new WaitUntil(() => !situationCardController.gameObject.activeInHierarchy);
-        if (cancelTransitions) yield break;
+
+        // 게임 오버 상태인지 확인합니다.
+        if (IsGameOver())
+        {
+            Debug.Log("UIFlowSimulator: 게임 오버 상태이므로 다음 턴을 진행하지 않습니다.");
+            yield break;
+        }
+
+        // 취소 플래그 재확인
+        if (cancelTransitions)
+        {
+            Debug.Log("UIFlowSimulator: 전환이 취소되었습니다.");
+            yield break;
+        }
+
         Debug.Log("UIFlowSimulator: 다음 턴을 시작하도록 EventManager에 요청합니다.");
         EventManager.Instance.PlayNextTurn();
+    }
+
+    private bool IsGameOver()
+    {
+        if (PlayerStats.Instance == null) return false;
+        
+        // 파라미터 중 하나라도 0 이하이면 게임 오버 상태로 간주
+        return PlayerStats.Instance.GetStat(ParameterType.정치력) <= 0 ||
+               PlayerStats.Instance.GetStat(ParameterType.병력) <= 0 ||
+               PlayerStats.Instance.GetStat(ParameterType.물자) <= 0 ||
+               PlayerStats.Instance.GetStat(ParameterType.리더십) <= 0;
     }
 
     public void PreviewAffectedParameters(bool isRightChoice)

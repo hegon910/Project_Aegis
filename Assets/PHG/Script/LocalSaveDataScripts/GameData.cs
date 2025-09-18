@@ -67,7 +67,7 @@ public class GameData
 
         isTutorialFinished = false;
         totalPlayTime = 0f;
-   //     settings = new GameSettings();
+        settings = new GameSettings();
 
         pendingRestartFromGameOver = false;
         pendingRestartChapter = 0;

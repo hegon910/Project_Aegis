@@ -57,6 +57,13 @@ public class WarTurnManager : MonoBehaviour
 
     public void ResetForNewBattle(int newMaxTurns = 30)
     {
+        // 전투 상태 초기화
+        maxTurns = newMaxTurns;
+        currentTurn = 0;
+        battleEnded = false;
+        turnRunning = false;
+        usedSingleUseSkills.Clear();
+
         if (player != null)
         {
             player.ResetState(ground, playerStartIndex);
@@ -75,6 +82,8 @@ public class WarTurnManager : MonoBehaviour
         {
             skillCooldownTimer = 0; // 스킬이 없는 경우 0으로 초기화
         }
+
+        Debug.Log("전투 및 캐릭터 상태 초기화 완료");
     }
     void GoStartTurn(WarAction playerAction)
     {

@@ -31,6 +31,9 @@ public class GameManager : MonoBehaviour
     private bool _isGameOverActive = false;
     public static GameManager instance { get; private set; }
     public GameState currentGameState { get; private set; }
+    
+    // 게임 상태 변경 이벤트
+    public static System.Action<GameState> OnGameStateChanged;
     // 이어하기 직후 1회성 튜토리얼(스토리/파라미터) 표시 억제 플래그
     private bool suppressTutorialOnce = false;
 
@@ -353,6 +356,9 @@ public class GameManager : MonoBehaviour
 
         currentGameState = newState;
         Debug.Log($"[게임 상태 변경] -> {newState}");
+        
+        // 상태 변경 이벤트 발생
+        OnGameStateChanged?.Invoke(newState);
 
         SetUIForState(newState);
         if (newState == GameState.MainMenu)
@@ -550,6 +556,12 @@ public class GameManager : MonoBehaviour
 
             case GameState.InBattle:
                 battleTurnManager.OnBattleEnd += HandleBattleEnd;
+                // 전투 시작 전 상태 초기화
+                if (battleTurnManager != null)
+                {
+                    battleTurnManager.ResetForNewBattle();
+                    Debug.Log("[GameManager] 전투 상태 초기화 완료");
+                }
                 break;
         }
     }
