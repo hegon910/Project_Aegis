@@ -102,13 +102,42 @@ public class DataManager : MonoBehaviour
        TrySyncIfLoggedIn();
     }
 
+    /// <summary>
+    /// Firebase 로그인 완료 시 호출되는 메서드
+    /// </summary>
+    public void OnFirebaseLoginCompleted()
+    {
+        Debug.Log("[DataManager] Firebase 로그인 완료 콜백 호출");
+        _hasSyncedWithServer = false; // 동기화 플래그 리셋
+        TrySyncIfLoggedIn();
+    }
+
     private void TrySyncIfLoggedIn() /// 9.9. 이학권 추가
     {
         var user = FirebaseAuth.DefaultInstance.CurrentUser;
+        Debug.Log($"[DataManager] TrySyncIfLoggedIn 호출 - User: {(user != null ? user.UserId : "null")}, HasSynced: {_hasSyncedWithServer}");
+        
         if (user != null && !_hasSyncedWithServer)
         {
+            // Firebase Database가 초기화되었는지 확인
+            if (FirebaseDatabase.DefaultInstance == null)
+            {
+                Debug.LogWarning("[DataManager] Firebase Database가 아직 초기화되지 않음. 1초 후 재시도...");
+                Invoke(nameof(TrySyncIfLoggedIn), 1f);
+                return;
+            }
+            
             _hasSyncedWithServer = true;
+            Debug.Log($"[DataManager] 서버 동기화 시작 - UserId: {user.UserId}");
             StartCoroutine(SyncWithServer(user.UserId));
+        }
+        else if (user == null)
+        {
+            Debug.Log("[DataManager] Firebase 사용자가 로그인되지 않음");
+        }
+        else
+        {
+            Debug.Log("[DataManager] 이미 서버 동기화 완료됨");
         }
     }
 
@@ -337,7 +366,7 @@ public class DataManager : MonoBehaviour
 
     /// <summary>
     /// 현재 플레이어 데이터를 로컬파일에 저장합니다.
-    /// 9.9. 이학권 변경 - 암호화 기능 추가
+    /// 9.9. 이학권 변경 - 암호화 기능 추가 + 서버 동기화
     /// </summary>
     public void SaveLocal()
     {
@@ -351,6 +380,18 @@ public class DataManager : MonoBehaviour
         if (saveSuccess)
         {
             Debug.Log($"암호화된 로컬 저장 완료: {_playerDataSavePath}");
+            
+            // Firebase 사용자가 로그인되어 있으면 서버에도 업로드
+            var user = FirebaseAuth.DefaultInstance.CurrentUser;
+            if (user != null)
+            {
+                Debug.Log("[DataManager] Firebase 사용자 로그인됨, 서버 동기화 시작");
+                StartCoroutine(UploadToServerAsync(user.UserId));
+            }
+            else
+            {
+                Debug.Log("[DataManager] Firebase 사용자 로그인되지 않음, 로컬 저장만 완료");
+            }
         }
         else
         {
@@ -414,24 +455,36 @@ public class DataManager : MonoBehaviour
     /// </summary>
     private IEnumerator SyncWithServer(string uid)
     {
+        Debug.Log($"[DataManager] SyncWithServer 시작 - UID: {uid}");
+        
         // 1) 서버에서 데이터 읽기
         var dbRef = FirebaseDatabase.DefaultInstance
             .GetReference($"users/{uid}/playerData");
+
+        Debug.Log($"[DataManager] Firebase Database 참조 생성: users/{uid}/playerData");
 
         var fetchTask = dbRef.GetValueAsync();
         yield return new WaitUntil(() => fetchTask.IsCompleted);
 
         if (fetchTask.IsFaulted)
         {
-            Debug.LogError("서버 데이터 가져오기 실패: " + fetchTask.Exception);
+            Debug.LogError($"[DataManager] 서버 데이터 가져오기 실패: {fetchTask.Exception}");
+            if (fetchTask.Exception != null)
+            {
+                Debug.LogError($"[DataManager] 예외 상세: {fetchTask.Exception.InnerException?.Message}");
+            }
             yield break;
         }
 
         DataSnapshot snapshot = fetchTask.Result;
+        Debug.Log($"[DataManager] 서버 스냅샷 존재 여부: {snapshot.Exists}");
+        
         if (snapshot.Exists)
         {
             // 2) 서버 JSON → GameData
             string serverJson = snapshot.GetRawJsonValue();
+            Debug.Log($"[DataManager] 서버에서 받은 JSON 길이: {serverJson?.Length ?? 0}");
+            
             var serverData = JsonUtility.FromJson<GameData>(serverJson);
 
             // 3) 타임스탬프 비교
@@ -440,6 +493,8 @@ public class DataManager : MonoBehaviour
 			long localSV = (PlayerData != null) ? PlayerData.lastUpdatedServer : 0;
 			bool serverHasSV = serverSV > 0;
 			bool localHasSV = localSV > 0;
+
+			Debug.Log($"[DataManager] 타임스탬프 비교 - 서버: {serverSV}, 로컬: {localSV}");
 
 			bool serverIsNewer;
 			if (serverHasSV || localHasSV)
@@ -459,19 +514,20 @@ public class DataManager : MonoBehaviour
 			{
 				PlayerData = serverData;
 				SaveLocal();
-				Debug.Log("서버 데이터가 최신, 로컬 업데이트 완료.");
+				Debug.Log("[DataManager] 서버 데이터가 최신, 로컬 업데이트 완료.");
 			}
 			else
 			{
 				yield return UploadToServer(dbRef);
-				Debug.Log("로컬 데이터가 최신 또는 동일, 서버 업데이트 완료.");
+				Debug.Log("[DataManager] 로컬 데이터가 최신 또는 동일, 서버 업데이트 완료.");
 			}
         }
         else
         {
             // 서버에 데이터 없음 → 로컬 업로드
+            Debug.Log("[DataManager] 서버에 데이터 없음, 로컬 데이터 업로드 시작");
             yield return UploadToServer(dbRef);
-            Debug.Log("서버 데이터 없음, 로컬 업로드 완료.");
+            Debug.Log("[DataManager] 서버 데이터 없음, 로컬 업로드 완료.");
         }
     }
 
@@ -481,16 +537,27 @@ public class DataManager : MonoBehaviour
     /// </summary>
     private IEnumerator UploadToServer(DatabaseReference dbRef)
     {
+        Debug.Log("[DataManager] UploadToServer 시작");
+        
         // 1) 로컬 타임스탬프 갱신 및 전체 JSON 업로드
         SaveLocal();
         string json = JsonUtility.ToJson(PlayerData, true);
+        Debug.Log($"[DataManager] 업로드할 JSON 길이: {json?.Length ?? 0}");
+        
         var uploadTask = dbRef.SetRawJsonValueAsync(json);
         yield return new WaitUntil(() => uploadTask.IsCompleted);
+        
         if (uploadTask.IsFaulted)
         {
-            Debug.LogError("서버 업로드 실패" + uploadTask.Exception);
+            Debug.LogError($"[DataManager] 서버 업로드 실패: {uploadTask.Exception}");
+            if (uploadTask.Exception != null)
+            {
+                Debug.LogError($"[DataManager] 업로드 예외 상세: {uploadTask.Exception.InnerException?.Message}");
+            }
             yield break;
         }
+        
+        Debug.Log("[DataManager] 서버 업로드 성공");
 
         // 2) 서버 권위 타임스탬프 설정
         var updates = new Dictionary<string, object>
@@ -499,20 +566,97 @@ public class DataManager : MonoBehaviour
         };
         var tsTask = dbRef.UpdateChildrenAsync(updates);
         yield return new WaitUntil(() => tsTask.IsCompleted);
+        
         if (tsTask.IsFaulted)
         {
-            Debug.LogError("서버 타임스탬프 설정 실패" + tsTask.Exception);
+            Debug.LogError($"[DataManager] 서버 타임스탬프 설정 실패: {tsTask.Exception}");
+            if (tsTask.Exception != null)
+            {
+                Debug.LogError($"[DataManager] 타임스탬프 예외 상세: {tsTask.Exception.InnerException?.Message}");
+            }
             yield break;
         }
+        
+        Debug.Log("[DataManager] 서버 타임스탬프 설정 성공");
 
         // 3) 서버가 기록한 값을 읽어와 로컬 반영
         var readTask = dbRef.Child("lastUpdatedServer").GetValueAsync();
         yield return new WaitUntil(() => readTask.IsCompleted);
+        
         if (!readTask.IsFaulted && readTask.Result != null && long.TryParse(readTask.Result.Value?.ToString(), out var serverMillis))
         {
             PlayerData.lastUpdatedServer = serverMillis;
             SaveLocal();
+            Debug.Log($"[DataManager] 서버 타임스탬프 로컬 반영 완료: {serverMillis}");
         }
+        else
+        {
+            Debug.LogWarning("[DataManager] 서버 타임스탬프 읽기 실패");
+        }
+        
+        Debug.Log("[DataManager] UploadToServer 완료");
+    }
+
+    /// <summary>
+    /// 서버에 로컬 데이터를 업로드 (SaveLocal에서 호출)
+    /// </summary>
+    private IEnumerator UploadToServerAsync(string uid)
+    {
+        Debug.Log("[DataManager] UploadToServerAsync 시작");
+        
+        var dbRef = FirebaseDatabase.DefaultInstance
+            .GetReference($"users/{uid}/playerData");
+
+        // 로컬 데이터를 JSON으로 변환
+        string json = JsonUtility.ToJson(PlayerData, true);
+        Debug.Log($"[DataManager] 서버 업로드할 JSON 길이: {json?.Length ?? 0}");
+        
+        // 서버에 업로드
+        var uploadTask = dbRef.SetRawJsonValueAsync(json);
+        yield return new WaitUntil(() => uploadTask.IsCompleted);
+        
+        if (uploadTask.IsFaulted)
+        {
+            Debug.LogError($"[DataManager] 서버 업로드 실패: {uploadTask.Exception}");
+            if (uploadTask.Exception != null)
+            {
+                Debug.LogError($"[DataManager] 업로드 예외 상세: {uploadTask.Exception.InnerException?.Message}");
+            }
+            yield break;
+        }
+        
+        Debug.Log("[DataManager] 서버 업로드 성공");
+
+        // 서버 타임스탬프 설정
+        var updates = new Dictionary<string, object>
+        {
+            { "lastUpdatedServer", ServerValue.Timestamp }
+        };
+        var tsTask = dbRef.UpdateChildrenAsync(updates);
+        yield return new WaitUntil(() => tsTask.IsCompleted);
+        
+        if (tsTask.IsFaulted)
+        {
+            Debug.LogError($"[DataManager] 서버 타임스탬프 설정 실패: {tsTask.Exception}");
+            yield break;
+        }
+        
+        Debug.Log("[DataManager] 서버 타임스탬프 설정 성공");
+
+        // 서버 타임스탬프를 로컬에 반영
+        var readTask = dbRef.Child("lastUpdatedServer").GetValueAsync();
+        yield return new WaitUntil(() => readTask.IsCompleted);
+        
+        if (!readTask.IsFaulted && readTask.Result != null && long.TryParse(readTask.Result.Value?.ToString(), out var serverMillis))
+        {
+            PlayerData.lastUpdatedServer = serverMillis;
+            // 로컬 파일에 타임스탬프 반영 (암호화 없이 직접 저장)
+            string updatedJson = JsonUtility.ToJson(PlayerData, true);
+            EncryptionUtility.SaveEncryptedFile(_playerDataSavePath, updatedJson);
+            Debug.Log($"[DataManager] 서버 타임스탬프 로컬 반영 완료: {serverMillis}");
+        }
+        
+        Debug.Log("[DataManager] UploadToServerAsync 완료");
     }
 
     /// <summary>
