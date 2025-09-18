@@ -143,6 +143,13 @@ public class FirebaseManager : MonoBehaviour
                     User = task.Result;
                     Debug.Log($"Firebase 인증완료: {User.DisplayName} ({User.UserId})");
 
+                    // DataManager에 로그인 완료 알림
+                    if (DataManager.Instance != null)
+                    {
+                        Debug.Log("[FirebaseManager] DataManager에 로그인 완료 알림 전송");
+                        DataManager.Instance.OnFirebaseLoginCompleted();
+                    }
+
                     GameManager.instance.OnTitlePanelTouched();
                 });
             }
