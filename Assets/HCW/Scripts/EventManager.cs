@@ -142,6 +142,7 @@ public class EventManager : MonoBehaviour
         
 
         DataManager.Instance.PlayerData.currentPlaylist = DataManager.Instance.PlayerData.currentPlaylist.OrderBy(x => Guid.NewGuid()).ToList();
+        // 표준 흐름 유지: 인덱스는 0에서 시작하고, 첫 이벤트 처리 시 증가
         DataManager.Instance.PlayerData.eventPlaylistIndex = 0;
         currentState = EventManagerState.InCycle;
 
@@ -211,6 +212,8 @@ public class EventManager : MonoBehaviour
         }
     }
 }
+
+    // (표기용 보조 메서드 없음 - 원상복구)
 
     private void DisplaySubEvent(int index)
     {
@@ -328,10 +331,19 @@ public class EventManager : MonoBehaviour
             return;
         }
 
-        // 현재 인덱스의 이벤트 ID를 가져와서, 인덱스 변경이나 저장 없이 즉시 이벤트를 발생시킵니다.
-        int eventId = DataManager.Instance.PlayerData.currentPlaylist[DataManager.Instance.PlayerData.eventPlaylistIndex];
+        // 저장 시점에 PlayNextTurn에서 인덱스를 이미 +1 증가시킨 뒤 저장되므로,
+        // 복원 시에는 실제로 화면에 표시되던 이벤트를 복구하기 위해 -1 보정이 필요합니다.
+        int savedIndex = DataManager.Instance.PlayerData.eventPlaylistIndex;
+        int indexToRestore = Mathf.Max(0, savedIndex - 1);
+        if (indexToRestore >= DataManager.Instance.PlayerData.currentPlaylist.Count)
+        {
+            Debug.LogWarning($"[EventManager] 복원 인덱스({indexToRestore})가 범위를 벗어났습니다. 마지막 이벤트로 조정합니다.");
+            indexToRestore = DataManager.Instance.PlayerData.currentPlaylist.Count - 1;
+        }
 
-        Debug.Log($"[EventManager] 저장된 이벤트(ID: {eventId})를 복원합니다.");
+        int eventId = DataManager.Instance.PlayerData.currentPlaylist[indexToRestore];
+
+        Debug.Log($"[EventManager] 저장된 이벤트(ID: {eventId})를 복원합니다. (savedIndex={savedIndex} -> restoreIndex={indexToRestore})");
 
         if (eventId < 10000)
         {

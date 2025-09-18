@@ -3497,8 +3497,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   laneLength: 16
+  sideMargin: 0.5
   cellSize: 50
-  previousLaneLength: 16
 --- !u!1 &3201014759126432619
 GameObject:
   m_ObjectHideFlags: 0
@@ -6649,8 +6649,8 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 5348385969586163199}
   - {fileID: 1162940167391338001}
+  - {fileID: 5348385969586163199}
   - {fileID: 1245210293013154211}
   - {fileID: 3680241511129981344}
   - {fileID: 648756478048239663}
@@ -8137,6 +8137,7 @@ MonoBehaviour:
   ground: {fileID: 869533868976386670}
   player: {fileID: 7831991435369316234}
   enemy: {fileID: 1998703644467061465}
+  choiceCard: {fileID: 0}
   maxTurns: 30
   playerStartIndex: 6
   enemyStartIndex: 9
@@ -9873,6 +9874,7 @@ GameObject:
   - component: {fileID: 7101532982044637742}
   - component: {fileID: 2580598984102089463}
   - component: {fileID: 1958663304189081122}
+  - component: {fileID: 1513248829309208258}
   m_Layer: 5
   m_Name: ChoiceCard
   m_TagString: Untagged
@@ -10010,6 +10012,18 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+--- !u!225 &1513248829309208258
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7612557753482688849}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &7704163244361501351
 GameObject:
   m_ObjectHideFlags: 0

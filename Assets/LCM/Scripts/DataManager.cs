@@ -99,7 +99,13 @@ public class DataManager : MonoBehaviour
 
     private void OnAuthStateChanged(object sender, System.EventArgs e)
     {
-       TrySyncIfLoggedIn();
+        // 이미 동기화가 완료되었거나 게임이 진행 중이면 무시
+        if (_hasSyncedWithServer || (GameManager.instance != null && GameManager.instance.currentGameState != GameState.Title && GameManager.instance.currentGameState != GameState.Login && GameManager.instance.currentGameState != GameState.MainMenu))
+        {
+            return;
+        }
+        
+        TrySyncIfLoggedIn();
     }
 
     /// <summary>
@@ -717,11 +723,11 @@ public class DataManager : MonoBehaviour
             pageTypeDict = choTextList.GroupBy(p => p.PageType_Num)
                                       .ToDictionary(g => g.Key, g => g.First().PageType);
 
-            eventDict = choTextList.GroupBy(c => c.Parameter_Num)
-                                       .ToDictionary(g => g.Key, g => g.First().Parameter_type);
+        eventDict = choTextList.GroupBy(c => c.Parameter_Num)
+                                   .ToDictionary(g => g.Key, g => g.First().Parameter_type);
 
-            _isReady.TrySetResult(true);
-            Debug.Log("모든 이벤트 데이터가 성공적으로 로드되었습니다.");
+        _isReady.TrySetResult(true);
+        Debug.Log("모든 이벤트 데이터가 성공적으로 로드되었습니다.");
         }
         catch (System.Exception ex)
         {
@@ -802,7 +808,6 @@ public class DataManager : MonoBehaviour
                 }
             }
                 Debug.Log($"[DataManager] {mainEventData.Count}개의 메인 스토리 데이터를 가공하여 최종 준비했습니다.");
-
 
             _isReady.TrySetResult(true);
             Debug.Log("모든 이벤트 데이터가 성공적으로 로드되었습니다.");

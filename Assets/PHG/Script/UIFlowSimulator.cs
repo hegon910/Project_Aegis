@@ -27,6 +27,9 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 
     public bool CanMakeChoice => true;
 
+    // 게임오버 등으로 다음 턴 전환 코루틴을 중단하기 위한 플래그
+    private bool cancelTransitions = false;
+
     private static bool hasShownChapter1ParameterTutorial = false;
 
     // <<<<<<< [핵심 복원 1] 원본과 같이 OnEnable/OnDisable을 사용한 이벤트 구독으로 되돌립니다.
@@ -55,6 +58,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     // <<<<<<< [핵심 복원 2] 원본의 BeginFlow 함수 로직을 그대로 사용합니다.
     public void BeginFlow(bool startFirstTurn = true)
     {
+        cancelTransitions = false; // 새 플로우 시작 시 코루틴 허용
         if (parameterUIController != null)
         {
             parameterUIController.InitializeAndDisplayStats();
@@ -75,6 +79,20 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         {
             Debug.Log("[UIFlowSimulator] UI 준비 완료. 플레이어 입력을 기다립니다.");
         }
+    }
+
+    // 외부(예: GameManager.GameOver)에서 호출: 진행 중 전환을 모두 중지
+    public void AbortPendingTransitions()
+    {
+        cancelTransitions = true;
+        StopAllCoroutines();
+        // UIPanelController의 꺼졌다 켜지는 시퀀스를 방해하지 않기 위해 UI 활성 상태는 변경하지 않습니다.
+    }
+
+    // 튜토리얼 표시 상태를 강제로 설정 (이어하기 시 튜토리얼 억제용)
+    public void MarkParameterTutorialShown()
+    {
+        hasShownChapter1ParameterTutorial = true;
     }
 
     private void HandleParameterEvent(int eventId)
@@ -176,8 +194,13 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             bool success = choice.condition.Evaluate();
             var outcome = success ? choice.successOutcome : choice.failOutcome;
 
+            // [추가] Wille 특성일 때는 정치력 변화가 UI 하이라이트에도 반영되지 않도록 차단
             List<ParameterChange> finalChanges = new List<ParameterChange>(outcome.parameterChanges);
-            
+
+            if (PlayerStats.Instance != null && PlayerStats.Instance.ActiveTrait == CommanderTrait.Wille)
+            {
+                finalChanges = finalChanges.Where(c => c.parameterType != ParameterType.정치력).ToList();
+            }
             // 현재 활성화된 특성이 '리사드'이고, 선택지에 '확정 성공'이 아닌 판정 조건이 있었을 경우에만 특성 로직을 실행합니다.
             if (PlayerStats.Instance.ActiveTrait == CommanderTrait.Risard &&
                 !(choice.condition is GuaranteedSuccessCondition))
@@ -206,12 +229,45 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     {
         situationCardController.UpdateText(resultText);
         yield return new WaitForSeconds(1.5f);
+        
+        // 대기 중에도 취소 플래그 체크
+        if (cancelTransitions)
+        {
+            Debug.Log("UIFlowSimulator: 전환이 취소되었습니다.");
+            yield break;
+        }
+        
         uiPanelController.Hide();
         situationCardController.Hide();
         yield return new WaitUntil(() => !situationCardController.gameObject.activeInHierarchy);
 
+        // 게임 오버 상태인지 확인합니다.
+        if (IsGameOver())
+        {
+            Debug.Log("UIFlowSimulator: 게임 오버 상태이므로 다음 턴을 진행하지 않습니다.");
+            yield break;
+        }
+
+        // 취소 플래그 재확인
+        if (cancelTransitions)
+        {
+            Debug.Log("UIFlowSimulator: 전환이 취소되었습니다.");
+            yield break;
+        }
+
         Debug.Log("UIFlowSimulator: 다음 턴을 시작하도록 EventManager에 요청합니다.");
         EventManager.Instance.PlayNextTurn();
+    }
+
+    private bool IsGameOver()
+    {
+        if (PlayerStats.Instance == null) return false;
+        
+        // 파라미터 중 하나라도 0 이하이면 게임 오버 상태로 간주
+        return PlayerStats.Instance.GetStat(ParameterType.정치력) <= 0 ||
+               PlayerStats.Instance.GetStat(ParameterType.병력) <= 0 ||
+               PlayerStats.Instance.GetStat(ParameterType.물자) <= 0 ||
+               PlayerStats.Instance.GetStat(ParameterType.리더십) <= 0;
     }
 
     public void PreviewAffectedParameters(bool isRightChoice)

@@ -13,9 +13,15 @@ public class ChapterResultController : MonoBehaviour
     [SerializeField] private Image backgroundImage;
     [SerializeField] private TextMeshProUGUI dateText;
     [SerializeField] private TextMeshProUGUI titleText; // "승리", "패배" 등
+    [SerializeField] private TextMeshProUGUI chapterSummaryText; // 챕터 요약 텍스트
     [SerializeField] private TextMeshProUGUI summaryText;
     [SerializeField] private Button continueButton;
     private Vector3 originalButtonScale;
+
+    [Header("챕터 데이터")]
+    [SerializeField] private int currentChapterNumber = 1; // 현재 챕터 번호
+    [SerializeField] private GameOutcome currentGameOutcome = GameOutcome.Victory; // 현재 게임 결과
+
 
     //연출이 끝났음을 EventManager에게 알리는 이벤트
     public static event Action OnSequenceComplete;
@@ -31,6 +37,9 @@ public class ChapterResultController : MonoBehaviour
     {
         continueButton.onClick.AddListener(OnContinueButtonClicked);
         endPanel.SetActive(false);
+        
+        // 현재 챕터 번호를 DataManager나 다른 매니저에서 가져오기
+        LoadCurrentChapterData();
     }
       void OnEnable()
     {
@@ -46,6 +55,14 @@ public class ChapterResultController : MonoBehaviour
         endPanel.SetActive(true);
         continueButton.gameObject.SetActive(false); // 처음에는 버튼 숨기기
         summaryText.text = "";
+        chapterSummaryText.text = "";
+
+        // 현재 챕터와 결과 저장
+        currentGameOutcome = outcome;
+        if (GameManager.instance != null)
+        {
+            currentChapterNumber = GameManager.instance.CurrentChapter;
+        }
 
         //결과에 따라 제목과 요약 텍스트
         string title;
@@ -72,6 +89,25 @@ public class ChapterResultController : MonoBehaviour
         }
         backgroundImage.sprite = resultBackgroundImage;
         titleText.text = title;
+        chapterSummaryText.text = data.chapterSummary;
+        
+        // 디버깅용 로그
+        Debug.Log($"=== ChapterResult 디버깅 ===");
+        Debug.Log($"Data가 null인가?: {data == null}");
+        if (data != null)
+        {
+            Debug.Log($"Data.chapterSummary: '{data.chapterSummary}'");
+            Debug.Log($"Data.victorySummary: '{data.victorySummary}'");
+            Debug.Log($"Data.defeatSummary: '{data.defeatSummary}'");
+            Debug.Log($"Data.drawSummary: '{data.drawSummary}'");
+        }
+        Debug.Log($"ChapterSummaryText UI 할당됨: {chapterSummaryText != null}");
+        Debug.Log($"SummaryText UI 할당됨: {summaryText != null}");
+        Debug.Log($"Game Outcome: {outcome}");
+        Debug.Log($"Current Chapter: {currentChapterNumber}");
+        Debug.Log($"Title: {title}");
+        Debug.Log($"Summary: {summary}");
+        Debug.Log($"===============================");
 
         StartCoroutine(PlaySequence(data, title, summary));
 
@@ -151,4 +187,20 @@ public class ChapterResultController : MonoBehaviour
             continueButton.transform.DOKill();
         }
     }
+
+    /// <summary>
+    /// 현재 챕터 데이터를 로드합니다.
+    /// </summary>
+    private void LoadCurrentChapterData()
+    {
+        // GameManager에서 실제 챕터 번호 가져오기
+        if (GameManager.instance != null)
+        {
+            currentChapterNumber = GameManager.instance.CurrentChapter;
+            Debug.Log($"현재 챕터: {currentChapterNumber}");
+        }
+    }
+
+
+
 }

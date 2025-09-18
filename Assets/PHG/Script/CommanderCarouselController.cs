@@ -206,7 +206,7 @@ public class CommanderCarouselController : MonoBehaviour
             Debug.Log($"'{centerCommander.name}' Commander Unlocked by Toggle.");
         }
     }
-    private void RefreshUIState()
+    public void RefreshUIState()
     {
         UpdateAllLockOverlays(); // 모든 카드의 자물쇠 아이콘 업데이트
         UpdateCenterCardState(); // 시작 버튼 상태 업데이트

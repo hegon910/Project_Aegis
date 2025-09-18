@@ -107,6 +107,9 @@ public class ParameterUIController : MonoBehaviour
 
         foreach (var change in changes)
         {
+            // [추가] Wille 특성일 때는 정치력 변화 하이라이트를 표시하지 않습니다.
+            if (PlayerStats.Instance != null && PlayerStats.Instance.ActiveTrait == CommanderTrait.Wille && change.parameterType == ParameterType.정치력)
+                continue;
             if (change.valueChange == 0) continue;
 
             ParameterSliderUI ui = parameterSliders.FirstOrDefault(s => s.type == change.parameterType);
@@ -169,6 +172,11 @@ public class ParameterUIController : MonoBehaviour
 
     private void OnStatChanged(ParameterType type, int changeAmount, int newValue)
     {
+        // [추가] Wille 특성일 때 정치력 변화는 시각적으로도 무시
+        if (PlayerStats.Instance != null && PlayerStats.Instance.ActiveTrait == CommanderTrait.Wille && type == ParameterType.정치력)
+        {
+            return;
+        }
         if (type == ParameterType.카르마) UpdateKarma(newValue);
         else if (type == ParameterType.전황)
         {
@@ -180,10 +188,37 @@ public class ParameterUIController : MonoBehaviour
             if (changeAmount == 0) return;
             ParameterSliderUI ui = parameterSliders.FirstOrDefault(s => s.type == type);
 
-            // 슬라이더가 존재하고, '활성화' 상태일 때만 애니메이션을 실행하도록 조건
-            if (ui != null && ui.slider.interactable)
+            if (ui != null && ui.slider != null)
             {
-                AnimateSliderUpdate(ui, newValue);
+                // 목표 슬라이더 값 계산 (25 단위 스텝)
+                float targetSliderValue = Mathf.Ceil(newValue / 25.0f);
+
+                // 현재 값과 목표 값이 같아도(스텝 미변경) 연출은 표시되도록 처리
+                bool valueWillMove = !Mathf.Approximately(ui.slider.value, targetSliderValue);
+
+                // 값이 움직일 예정이면 애니메이션, 아니면 컬러 플래시만
+                if (valueWillMove)
+                {
+                    // 인터랙티브 여부와 관계없이 연출은 보여줌 (입력만 막히는 개념)
+                    AnimateSliderUpdate(ui, newValue);
+                }
+                else
+                {
+                    // 변화 중 색상으로 잠깐 플래시 후 원래 그라디언트 복귀
+                    if (ui.fillImage != null)
+                    {
+                        Color original = ui.fillImage.color;
+                        ui.fillImage.color = parameterChangeColor;
+                        // 0.6초 뒤 원상복구
+                        DOVirtual.DelayedCall(0.6f, () =>
+                        {
+                            // 값 기준 그라디언트 색으로 복귀
+                            UpdateSliderInstantly(ui, newValue);
+                        });
+                    }
+                }
+
+                // 변화 이펙트는 항상 표시
                 ShowChangeEffect(ui.slider.transform, changeAmount);
             }
         }
