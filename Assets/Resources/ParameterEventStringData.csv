@@ -281,3 +281,124 @@ ID,BG,SoundEffect,CharacterName,CharacterImage,IsFinishString,String_kr
 10280,CommandCenter,,4,Soldier_Idle,0,"적군의 척후병이 교전중인 부대의 후방으로 이동중이라는 첩보입니다. 조금만 더 하면 적 본진을 돌파할 것 같습니다."
 10281,CommandCenter,,4,Soldier_Idle,1,"후방으로 병력을 후퇴시키면서 교전을 준비하겠습니다!"
 10282,CommandCenter,,4,Soldier_Idle,1,"조금 더 밀어붙일 수 있도록 지시하겠습니다!"
+10283,CommandCenter,,6,Reporter_Idle,0,적군이 민간인 학살을 자행하고 있다는 이야기가 있습니다. 프로파간다 활동에 적절할 것 같습니다.
+10284,CommandCenter,,6,Reporter_Idle,1,알겠습니다. 즉시 기사거리로 만들어 공개하겠습니다.
+10285,CommandCenter,,6,Reporter_Idle,1,일단 알겠습니다. 해당 정보는 진위 여부 확인을 진행하겠습니다.
+10286,CommandCenter,,7,Congressman_Idle,0,최근 개인적으로 보고 있는 업체가 있다네. 단가도 좋고 품질도 괜찮은데 해당 업체에서 군수품을 받아보는게 어떤가?
+10287,CommandCenter,,7,Congressman_Idle,1,유감이군. 자네의 의견은 잘 알겠네.
+10288,CommandCenter,,7,Congressman_Idle,1,이야기가 통하는군. 자세한 이야기는 이후에 개인적으로 하지.
+10289,CommandCenter,,6,Reporter_Idle,0,"사령관님, 최근 전투 지역에서 민간인이 사망한 사진이 외부로 유출되고 있습니다."
+10290,CommandCenter,,6,Reporter_Idle,1,좋은 평가는 못받겠지만 최소한 책임감은 보일 수 있을겁니다. 너무 상심하지 않으셨으면 합니다.
+10291,CommandCenter,,6,Reporter_Idle,1,은폐로 진행하시는 겁니까? 우선은 그렇게 진행하겠습니다.
+10292,CommandCenter,,9,Villager_Idle,0,사령관님! 최근 보호중인 피난민들 사이에서 식량 문제로 다툼이 일어났습니다! 방치 할 경우 상황이 악화될 것 같습니다!
+10293,CommandCenter,,9,Villager_Idle,1,알겠습니다. 병사들을 시켜 중재시키겠습니다.
+10294,CommandCenter,,9,Villager_Idle,1,알겠습니다. 우선 전투가 우선이니 피난민 관리 병력은 따로 배정하지 않겠습니다.
+10295,CommandCenter,,9,Villager_Idle,0,적군이 저희 마을의 사람들을 학살했습니다. 이 증거를 퍼뜨려 주셨으면 합니다..!
+10296,CommandCenter,,9,Villager_Idle,1,감사합니다..! 정말 감사합니다..!
+10297,CommandCenter,,9,Villager_Idle,1,제발…저희의 한을 풀어주시길...!
+10298,CommandCenter,,6,Reporter_Idle,0,전쟁의 진짜 모습을 촬영하기 위해 참호의 모습을 촬영하게 해주시겠습니까?
+10299,CommandCenter,,6,Reporter_Idle,1,어쩔 수 없군요. 그렇다면 병사 인터뷰 허가를 부탁드려도 괜찮을까요?
+10300,CommandCenter,,6,Reporter_Idle,1,감사합니다! 덕분에 생생한 현장 상황을 전달할 수 있겠습니다!
+10301,CommandCenter,,6,Reporter_Idle,0,"최근 민간인 구출 작전이 준비중이라는 소문이 있던데, 저희도 동행을 허가해 주셨으면 합니다."
+10302,CommandCenter,,6,Reporter_Idle,1,작전이니 외부로 퍼지는게 문제라는 겁니까? 작전 종료 이후에 기사를 내려고 했는데…
+10303,CommandCenter,,6,Reporter_Idle,1,최대한 방해가 안 되도록 하겠습니다.
+10304,CommandCenter,,9,Villager_Idle,0,저희의 마을이 작전 지역으로 사용할 예정이니 나가라니…저희는 절대 승낙할 수 없습니다!
+10305,CommandCenter,,9,Villager_Idle,1,이러는게 어딨냐! 이 쓰레기 같은 놈들아! 싹 다 죽어버려라!
+10306,CommandCenter,,9,Villager_Idle,1,하신 약속은….꼭 지키시리라 믿겠습니다.
+10307,CommandCenter,,9,Villager_Idle,1,거절합니다! 저희가 무엇을 믿고 나가라는 겁니까! 어차피 금방 버릴 것 아닙니까!
+10308,CommandCenter,,9,Villager_Idle,0,사령관님 장교 한 명을 물자 밀반출로 처벌하신다 들었습니다. 그를 처벌하지 않으셨으면 합니다. 그는 저희를 도운 것 뿐입니다…
+10309,CommandCenter,,9,Villager_Idle,1,꼭 그렇게 까지 해야 합니까! 사람 살리려고 한 일 아닙니까!
+10310,CommandCenter,,9,Villager_Idle,1,혹시라도 문제가 생긴다면 저희도 책임을 지겠습니다...꼭 선처를 부탁드립니다…
+10311,CommandCenter,,7,Congressman_Idle,0,최근 특정 장교가 문제를 일으켰다던데…조용히 넘어가 줄 수 있겠나? 사례는 톡톡히 하겠네.
+10312,CommandCenter,,7,Congressman_Idle,1,고맙네 빠른 시일 내에 사례를 준비하겠네.
+10313,CommandCenter,,7,Congressman_Idle,1,…..이 일은 잊지 않을걸세.
+10314,CommandCenter,,7,Congressman_Idle,0,지금 시기에 공격을 강행하는게 어떤가? 모두가 승리를 바라고 있다네. 물론 우리도 마찬가지고.
+10315,CommandCenter,,7,Congressman_Idle,1,뭐…? 전멸했다고? 우리는 모르는 일일세! 자네가 지휘권자니 자네 책임이지 않나!
+10316,CommandCenter,,7,Congressman_Idle,1,그렇게 거칠게 거부하지 않아도 괜찮네. 전문가가 잘 알지 않겠나.
+10317,CommandCenter,,4,Soldier_Idle,0,최근 저희 부대를 촬영하고 있는 기자가 있습니다. 평소 오던 기자가 아닌 처음 보는 사람입니다.
+10318,CommandCenter,,4,Soldier_Idle,1,기자를 잡아 검사를 진행했습니다. 온갖 장소에 도청장치와 통신기기를 소유하고 있었습니다.
+10319,CommandCenter,,4,Soldier_Idle,1,사령관님! 그 기자가 사라지면서 보급품들이 모두 훼손되었습니다! 스파이였습니다!
+10320,CommandCenter,,7,Congressman_Idle,0,지금 전선을 물리고 있다는 도심 지역은 반드시 방어해야 하네! 그곳은 국가의 상징이 걸린 장소란 말일세!
+10321,CommandCenter,,7,Congressman_Idle,1,자네 미쳤나! 국가의 상징이 걸린 장소가 없어지면 이겨봐야 무슨 소용이냔 말일세!
+10322,CommandCenter,,7,Congressman_Idle,1,다행히 말이 통하는 사령관이군! 정말 고맙네! 우리 의원들도 자네의 공적을 기리겠네!
+10323,CommandCenter,,7,Congressman_Idle,0,최근 난민들을 위한 보급소를 만들고자 한다네. 다만 물자가 부족하여 자네의 지원이 필요할 것 같네만…
+10324,CommandCenter,,7,Congressman_Idle,1,고맙네. 역시 군인의 모범일세
+10325,CommandCenter,,7,Congressman_Idle,1,좋은 일인데도 거절하다니…아쉽군.
+10326,CommandCenter,,7,Congressman_Idle,0,최근 지원중인 군수공장에서 신식 무기를 제작했다네. 자네의 부대에서 사용하고 후원자 명단에 나를 올려주겠나?
+10327,CommandCenter,,7,Congressman_Idle,1,알겠네. 즉시 보내도록 하겠네.
+10328,CommandCenter,,7,Congressman_Idle,1,다른 부대를 알아봐야겠군. 알겠네.
+10329,CommandCenter,,7,Congressman_Idle,0,이번에 전쟁 자금을 지원할 수 있는데 자네도 나를 이번 선거에서 지지해 줄 수 있겠는가?
+10330,CommandCenter,,7,Congressman_Idle,1,고맙네. 지원금은 섭섭치 않을테니 앞으로 잘 지내보세.
+10331,CommandCenter,,7,Congressman_Idle,1,…알겠네. 일단 물러나도록 하지.
+10332,CommandCenter,,7,Congressman_Idle,0,최근 기자들이 자주 방문한다고 들었네. 몇몇 기자들이 불온한 움직임을 보이니 이들을 거절하는게 어떤가?
+10333,CommandCenter,,7,Congressman_Idle,1,좋은 생각이네. 좋지 않은 이야기가 퍼지는건 모두가 원치 않을테니 말일세.
+10334,CommandCenter,,7,Congressman_Idle,1,….놈들을 입막음 할 방법을 생각해야 겠군.
+10335,CommandCenter,,7,Congressman_Idle,0,전쟁이 일어나기 전 나는 군대의 양성을 주로 행했다네. 이번에 증명하기 위해 행군 장면을 언론에 노출하고 싶다네.
+10336,CommandCenter,,7,Congressman_Idle,1,내가 군부 양성을 위해 한 일이 헛되진 않았군. 고맙네.
+10337,CommandCenter,,7,Congressman_Idle,1,이런 식으로 나오는건가? 꽤나 실망이 크군.
+10338,CommandCenter,,7,Congressman_Idle,0,크흠…최근 자네 부대에 보급에 차질이 생겼다는 이야기를 들었네. 조금 문제가 있었는데..공식적으로 항의는 자제했으면 하네.
+10339,CommandCenter,,7,Congressman_Idle,1,고맙네. 지금까지 모자란 만큼 후하게 대우하겠네.
+10340,CommandCenter,,7,Congressman_Idle,1,꼭 일을 그렇게 까지 늘릴 필요가 있는가? 다시 한번 생각해보는게 어떻겠나?
+10341,CommandCenter,,7,Congressman_Idle,0,자네의 병사를 조금 빌려줬으면 하네. 최근 도시 내부에서 우리를 추궁하는 시위가 시끄러워서 진압할 필요가 있다네.
+10342,CommandCenter,,7,Congressman_Idle,1,대화가 좀 통하는군. 기브 앤 테이크는 잊지 않을테니 안심하게.
+10343,CommandCenter,,7,Congressman_Idle,1,자네 말고도 사령관은 있으니 다른 사람을 찾으면 그만이지. 이만 가보겠네.
+10344,CommandCenter,,7,Congressman_Idle,0,최근 전쟁을 반대하는 세력들이 시끄럽더군. 이들을 밟을 필요가 있을 것 같은데 병력좀 지원해주게.
+10345,CommandCenter,,7,Congressman_Idle,1,드디어 놈들이 소리내는걸 없앨 수 있겠군! 정말 고맙네!
+10346,CommandCenter,,7,Congressman_Idle,1,자네 밥그릇을 뺏으려는 목소리인데 그걸 듣고만 있겠다는건가! 믿을수가 없군!
+10347,CommandCenter,,7,Congressman_Idle,0,자네도 전쟁이 끝난 뒤를 생각해야 하지 않겠나? 우리를 지원한다면 전쟁 종료 후 요직에 앉을 수 있도록 힘써주겠네.
+10348,CommandCenter,,7,Congressman_Idle,1,너무 순진한 이야기 하지 말게나. 한번 다시 생각해보게.
+10349,CommandCenter,,7,Congressman_Idle,1,역시 자네도 큰 그림을 그릴 줄 아는 사람이군. 앞으로 좋은 관계를 가져나가는게 좋겠군.
+10350,CommandCenter,,7,Congressman_Idle,0,전쟁에는 영웅이 필요하네. 그래서 우리가 한 명을 영웅으로 만드려고 하네. 해당 사령관이 활약할 수 있도록 자네들이 선두를 맡아주게.
+10351,CommandCenter,,7,Congressman_Idle,1,물론이네. 섭섭치 않을 정도로 준비해 주겠네.
+10352,CommandCenter,,7,Congressman_Idle,1,거절하는건가? 자네는 의원들이 두렵지도 않은건가? 너무 순진하군.
+10353,CommandCenter,,7,Congressman_Idle,0,최근 보급품이 적게 들어오고 있습니다. 살펴보니 의원들이 거주하는 구역쪽 보급이 많더군요. 정식으로 항의할까요?
+10354,CommandCenter,,7,Congressman_Idle,1,알겠습니다. 본부에 항의를 남기겠습니다.
+10355,CommandCenter,,7,Congressman_Idle,1,정치인들과 반등해서 좋을 게 없다 이겁니까. 알겠습니다. 해당 안건은 묵인하겠습니다.
+10356,CommandCenter,,7,Congressman_Idle,0,지난 전투에서 전쟁 범죄를 일으켰다던 지휘관이 내 친척이라네. 조용히 넘어가줬으면 하는데…
+10357,CommandCenter,,7,Congressman_Idle,1,....자네를 기억 해 두겠네.
+10358,CommandCenter,,7,Congressman_Idle,1,고맙네. 우리 또한 자네의 편의를 봐 줄 수 있는지 살펴보겠네.
+10359,CommandCenter,,7,Congressman_Idle,0,이번에 내가 조직한 구호단이 있다네. 이들을 전선에 동행하게 해주겠나? 부상병 치료를 도울 수 있을것 같은데…
+10360,CommandCenter,,7,Congressman_Idle,1,고맙네. 덕분에 내 입지도 늘고 자네는 인력 지원도 받을 수 있겠군. 이런게 상부상조 아니겠나.
+10361,CommandCenter,,7,Congressman_Idle,1,거절인가? 알겠네. 자네 말고 다른 사령관에게 부탁하러 가보겠네.
+10362,CommandCenter,,9,Villager_Idle,0,일부 병사들이 저희 마을을 약탈했습니다. 그들을 심판해 주시겠습니까?
+10363,CommandCenter,,9,Villager_Idle,1,감사합니다. 보답이 될 진 모르겠지만 저희 역시 사령관님께 도음을 드릴 수 있는지 찾아보겠습니다.
+10364,CommandCenter,,9,Villager_Idle,1,….이 사령관도 믿을 수 있는 사람이 아니군…
+10365,CommandCenter,,9,Villager_Idle,0,다른 부대의 사람들이 저희 마을 사람들을 적군과 내통한다고 합니다! 저희는 억울합니다! 저희를 보호해 주세요!
+10366,CommandCenter,,9,Villager_Idle,1,감사합니다! 이제야 안심하고 있을 수 있겠군요!
+10367,CommandCenter,,9,Villager_Idle,1,제발 부탁드립니다…! 저희는 그런 적이 없습니다! 제발 믿어주세요!
+10368,CommandCenter,,1,Aide_Idle,0,최근 병사들의 사기가 많이 떨어졌군요. 전선이 지속되니 제대로 쉬지 못해 그런 것 같습니다.
+10369,CommandCenter,,1,Aide_Idle,1,알겠습니다. 잠시나마 전쟁을 잊을 수 있게 술을 조금 배급하겠습니다.
+10370,CommandCenter,,1,Aide_Idle,1,알겠습니다. 작전중이니 병사들도 이해 할 것 입니다.
+10371,CommandCenter,,1,Aide_Idle,0,사령관님. 상부에서 독가스 방식의 화학 무기가 보급되었습니다. 사용 여부는 사령관 재량에 맡긴다고 합니다.
+10372,CommandCenter,,1,Aide_Idle,1,분명 전쟁의 판도는 바뀔겁니다. 다만 민간인 까지 사망할 수 있습니다.
+10373,CommandCenter,,1,Aide_Idle,1,알겠습니다. 의도치 않은 피해가 발생할 수 있으니 신중을 가하시길 바랍니다.
+10374,CommandCenter,,9,Villager_Idle,0,전쟁에서 독가스를 사용해서 우리같은 민간인들이 죽어나가고 있지 않습니까! 지금이라도 사용을 중단해 주십쇼!
+10375,CommandCenter,,9,Villager_Idle,1,우리들을 지키라고 있는게 군인 아닙니까! 우리를 죽이는게 군인이라면 적군과 다를게 없지 않습니까!
+10376,CommandCenter,,9,Villager_Idle,1,하신 말씀을 믿고 저희는 물러나겠습니다. 약속을 지켜주시길 바랍니다.
+10377,CommandCenter,,9,Villager_Idle,0,저희 마을 사람이 처형이라뇨! 정보를 팔아 넘긴게 잘못이긴 하지만 민간인이지 않습니까! 부디 선처를 부탁드립니다!
+10378,CommandCenter,,9,Villager_Idle,1,너희들이 무능해서 진 것을 민간인 탓을 하는거냐! 역겹기 짝이 없다!
+10379,CommandCenter,,9,Villager_Idle,1,감사합니다..! 정말 감사합니다..!
+10380,CommandCenter,,1,Aide_Idle,0,타 부대에서 전선에서 후퇴하는데 추격이 집요하다고 합니다. 지원요청이 왔는데 어떻게 하시겠습니까?
+10381,CommandCenter,,1,Aide_Idle,1,알겠습니다. 즉시 병력을 투입하겠습니다.
+10382,CommandCenter,,1,Aide_Idle,1,저희쪽도 손이 없다고 상부에는 전달하겠습니다.
+10383,CommandCenter,,1,Aide_Idle,0,최근 민간인 거주 구역에 좋지 않은 분위기가 돈다고 합니다. 반란 조짐이 보인다는데 통제하는게 어떠십니까?
+10384,CommandCenter,,1,Aide_Idle,1,알겠습니다. 병사가 있다면 불안감도 높아질테니 우선 놔두는게 좋겠습니다.
+10385,CommandCenter,,1,Aide_Idle,1,분대 단위로 병사를 파견하겠습니다.
+10386,CommandCenter,,1,Aide_Idle,0,적군의 민간인들이 전란을 피해 넘어온 것 같습니다. 구조 요청을 보내는데 어떻게 하시겠습니까?
+10387,CommandCenter,,1,Aide_Idle,1,알겠습니다. 비전투 지역까지 호송할 병력을 보내겠습니다.
+10388,CommandCenter,,1,Aide_Idle,1,비전투 지역만 적당히 알려주고 돌려 보내겠습니다.
+10389,CommandCenter,,1,Aide_Idle,0,적군이 민간인 거주구역에서 포격을 가하고 있습니다. 저희 측 포격은 준비되어 있습니다.
+10390,CommandCenter,,1,Aide_Idle,1,수신 확인했습니다. 일단 포격은 막혔으니 저 곳을 어떻게 뚫을지가 문제입니다.
+10391,CommandCenter,,1,Aide_Idle,1,포격 확인. 착탄되었습니다. 돌격을 진행하겠습니다.
+10392,CommandCenter,,1,Aide_Idle,0,민간인을 방패로 삼던 적군 병사들을 생포했습니다. 이는 명백히 전쟁법 위반 행위입니다. 처형 시 저희 역시 전쟁법 위반이 될 겁니다.
+10393,CommandCenter,,1,Aide_Idle,1,알겠습니다. 최대한 조용히 처리하겠습니다.
+10394,CommandCenter,,1,Aide_Idle,1,우선 구금한 뒤 본부 쪽으로 이송시키겠습니다.
+10395,CommandCenter,,1,Aide_Idle,0,적 지역으로 침투하는 작전을 진행해야 합니다. 전멸 위험이 높은 작전입니다만 어떻게 하시겠습니까?
+10396,CommandCenter,,1,Aide_Idle,1,조금이라도 작전 성공률을 높이기 위함이십니까. 알겠습니다.
+10397,CommandCenter,,1,Aide_Idle,1,그렇다면 탈영병이나 범죄 이력이 있는 병사를 투입시키겠습니다.
+10398,CommandCenter,,1,Aide_Idle,0,최근들어 사령부 측에 적군과 내통하는 자가 있다고 합니다. 이 타이밍에 작전 변경이 내려왔는데 따를 필요가 있습니까?
+10399,CommandCenter,,1,Aide_Idle,1,일단 작전 명령대로 전선을 철수 하겠습니다.
+10400,CommandCenter,,1,Aide_Idle,1,알겠습니다. 저는 사령관님의 명령을 듣겠습니다.
+10401,CommandCenter,,1,Aide_Idle,0,최근 점령한 점령지에서 적 병사들이 투항했습니다. 요구 조건으로 신변 보장을 요청하는데 어떻게 하시겠습니까?
+10402,CommandCenter,,1,Aide_Idle,1,알겠습니다. 우선 그들을 치료하고 정보를 캘 수 있는지 찾아보겠습니다.
+10403,CommandCenter,,1,Aide_Idle,1,최소한의 조치만 한 뒤 본부로 이송시키겠습니다.

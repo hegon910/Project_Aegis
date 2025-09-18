@@ -55,5 +55,5 @@ public class SubChoice
     public int answerID;
     public string choiceText;
     public int nextEventID;
-    public string outcomeReward;
+    public ChoiceOutcome outcome;
 }
