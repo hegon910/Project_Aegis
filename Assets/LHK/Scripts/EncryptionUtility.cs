@@ -111,7 +111,7 @@ public static class EncryptionUtility
     }
 
     /// <summary>
-    /// 파일 내용을 암호화하여 저장합니다.
+    /// 파일 내용을 암호화하여 원자적으로 저장합니다.
     /// </summary>
     /// <param name="filePath">저장할 파일 경로</param>
     /// <param name="content">저장할 내용</param>
@@ -133,8 +133,10 @@ public static class EncryptionUtility
                 return false;
             }
 
-            File.WriteAllText(filePath, encryptedContent, Encoding.UTF8);
-            Debug.Log($"[EncryptionUtility] 암호화된 파일 저장 완료: {filePath}");
+            // 원자적 쓰기로 안전하게 저장
+            byte[] encryptedBytes = Encoding.UTF8.GetBytes(encryptedContent);
+            FileAtomic.WriteAllBytesAtomic(filePath, encryptedBytes);
+            Debug.Log($"[EncryptionUtility] 암호화된 파일 원자적 저장 완료: {filePath}");
             return true;
         }
         catch (Exception ex)
