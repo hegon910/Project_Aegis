@@ -379,12 +379,24 @@ public class DataManager : MonoBehaviour
         }
 
         // 3. PlaythroughHistory가 사용하는 PlayerPrefs 기록 삭제
-        PlaythroughHistory.Instance.ClearHistory();
+        global::PlaythroughHistory.Instance.ClearHistory();
 
         // 초기화 직후에는 저장 생성/덮어쓰기 방지
         _suppressSavesUntilGameplay = true;
 
         Debug.LogWarning("[DataManager] 모든 로컬 데이터가 초기화되었습니다.");
+    }
+
+    /// <summary>
+    /// [신규] 진행도와 회차 기록을 초기화합니다.
+    /// - clearPlaythroughHistory: PlaythroughHistory PlayerPrefs 및 메모리 초기화
+    /// - resetPlaythroughCount: 회차(playthroughCount)를 1로 재설정
+    /// - resetStats: 파라미터 수치 및 특성 초기화
+    /// - resetChapter: 챕터 및 현재 플레이리스트/인덱스 초기화
+    /// </summary>
+    public void ResetProgressAndHistory(bool clearPlaythroughHistory = true, bool resetPlaythroughCount = true, bool resetStats = true, bool resetChapter = true)
+    {
+        ProgressResetService.ResetProgressAndHistory(clearPlaythroughHistory, resetPlaythroughCount, resetStats, resetChapter);
     }
 
 
@@ -962,7 +974,7 @@ public class DataManager : MonoBehaviour
 
         bool isBranchTriggered = false;
         // PlaythroughHistory가 초기화되었는지 확인
-        if (PlaythroughHistory.Instance != null)
+        if (global::PlaythroughHistory.Instance != null)
         {
             switch (rawData.ConditionType)
             {
@@ -971,7 +983,7 @@ public class DataManager : MonoBehaviour
                     break;
 
                 case 1: // 1: 특정 파라미터 이벤트 경험
-                    bool eventCompleted = PlaythroughHistory.Instance.GetEventCompletionState(rawData.ChangeCondition, out bool wasSuccess);
+                    bool eventCompleted = global::PlaythroughHistory.Instance.GetEventCompletionState(rawData.ChangeCondition, out bool wasSuccess);
                     if (eventCompleted)
                     {
                         // CSV의 IsConditionSuccess (0 또는 1)와 실제 성공 여부(bool)를 비교
@@ -981,7 +993,7 @@ public class DataManager : MonoBehaviour
                     break;
 
                 case 2: // 2: 특정 서브 이벤트 그룹 경험
-                    isBranchTriggered = PlaythroughHistory.Instance.HasCompletedSubEventGroup(rawData.ChangeCondition);
+                    isBranchTriggered = global::PlaythroughHistory.Instance.HasCompletedSubEventGroup(rawData.ChangeCondition);
                     break;
 
                 case 3: // 3: 특정 전투 결과 경험
@@ -993,7 +1005,7 @@ public class DataManager : MonoBehaviour
                     break;
 
                 case 4: // 4: 특정 엔딩 경험
-                    isBranchTriggered = PlaythroughHistory.Instance.HasCompletedEnding(rawData.ChangeCondition);
+                    isBranchTriggered = global::PlaythroughHistory.Instance.HasCompletedEnding(rawData.ChangeCondition);
                     break;
 
                 default:
@@ -1002,8 +1014,7 @@ public class DataManager : MonoBehaviour
             }
         }
 
-        // 분기 조건 확인: ChangeCondition 이벤트가 과거에 성공적으로 완료되었는지 여부
-        bool isBranchTriggered = rawData.ConditionType == 1 && PlaythroughHistory.Instance.HasCompletedEvent(rawData.ChangeCondition);
+        // 과거 완료 여부는 위 switch에서 이미 계산됨
 
         var fullEventData = new EventData
         {

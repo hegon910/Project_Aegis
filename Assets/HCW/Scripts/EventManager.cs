@@ -408,7 +408,7 @@ public class EventManager : MonoBehaviour
 
         if (selectedChoice.outcome != null)
         {
-            PlayerStats.Instance.ApplyChanges(selectedChoice.outcome.parameterChanges);
+            GamePlayerStats.Instance.ApplyChanges(selectedChoice.outcome.parameterChanges);
         }
 
         DataManager.Instance.PlayerData.completedEventIds.Add(currentSubEventIndex);
