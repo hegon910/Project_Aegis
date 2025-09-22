@@ -124,7 +124,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             return;
         }
 
-        string characterName = "이름 없음";
+        string characterName = "";
 
         if (DataManager.Instance.eventDataDict.TryGetValue(eventId, out var rawEventData))
         {
