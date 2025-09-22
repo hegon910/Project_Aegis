@@ -355,7 +355,20 @@ public class EventManager : MonoBehaviour
     private void DisplaySubEvent(int index)
     {
         currentSubEventIndex = index;
-        subEventChainLength++; // 체인 길이 증가
+        
+        // 서브이벤트 체인이 시작될 때만 체인 길이 증가 (첫 번째 서브이벤트)
+        if (currentState != EventManagerState.InSubEvent)
+        {
+            subEventChainLength = 1;
+        }
+        else
+        {
+            // 체인 내에서 다음 서브이벤트로 진행할 때마다 체인 길이와 플레이리스트 인덱스 증가
+            subEventChainLength++;
+            DataManager.Instance.PlayerData.eventPlaylistIndex++;
+            DataManager.Instance.SaveLocal(); // 인덱스 변경사항 저장
+        }
+        
         Debug.Log($"[EventManager] 서브이벤트 체인 길이: {subEventChainLength} (전체 플레이리스트: {DataManager.Instance.PlayerData.eventPlaylistIndex}/{DataManager.Instance.PlayerData.currentPlaylist.Count})");
         
         var data = DataManager.Instance.FullSubEvents.FirstOrDefault(e => e.ID == index);
