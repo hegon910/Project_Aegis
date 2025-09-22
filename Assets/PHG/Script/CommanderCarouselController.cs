@@ -442,7 +442,7 @@ public class CommanderCarouselController : MonoBehaviour
         // 2. PlayerStats가 존재하는지 확인합니다.
         if (GamePlayerStats.Instance == null)
         {
-            Debug.LogError("PlayerStats 인스턴스를 찾을 수 없습니다! 게임 시작이 불가능합니다.");
+            Debug.LogError("GamePlayerStats 인스턴스를 찾을 수 없습니다! 게임 시작이 불가능합니다.");
             return;
         }
 
