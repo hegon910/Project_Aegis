@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
+using System.Linq;
 
 /// <summary>
-/// 간단한 이벤트 기록 매니저
+/// 메인이벤트 Ending_Memoriar 기준의 이벤트 기록 매니저
 /// </summary>
 public class SimpleEventHistoryManager : MonoBehaviour
 {
@@ -10,8 +12,10 @@ public class SimpleEventHistoryManager : MonoBehaviour
 
     [Header("설정")]
     [SerializeField] private bool enableRecording = true;
+    [SerializeField] private bool enableLocalSave = true;
 
     private List<SimpleEventRecord> eventHistory = new List<SimpleEventRecord>();
+    private string savePath;
 
     private void Awake()
     {
@@ -19,6 +23,12 @@ public class SimpleEventHistoryManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            
+            // 저장 경로 설정
+            savePath = Path.Combine(Application.persistentDataPath, "ending_memoriar_history.json");
+            
+            // 기존 데이터 로드
+            LoadHistory();
         }
         else
         {
@@ -28,56 +38,35 @@ public class SimpleEventHistoryManager : MonoBehaviour
 
     private void Start()
     {
-        // EventManager 이벤트 구독
-        if (EventManager.Instance != null)
+        // 이벤트 구독은 더 이상 필요하지 않음
+        // 선택지 선택 시점에서 직접 RecordMainEvent, RecordParameterEvent, RecordSubEvent를 호출
+        Debug.Log("[SimpleEventHistoryManager] Ending_Memoriar 기준 이벤트 기록 시스템이 활성화되었습니다.");
+    }
+
+    // 이벤트 발생 시점에서는 기록하지 않고, 선택지 선택 시점에서만 기록
+    // (OnParameterEvent와 OnSubEvent 메서드는 제거됨)
+
+    /// <summary>
+    /// 메인이벤트 기록 (Ending_Memoriar 기준)
+    /// </summary>
+    public void RecordMainEvent(int eventId, string dialogue, string selectedChoice, bool isEndingMemoriar)
+    {
+        if (!enableRecording) return;
+
+        var record = new SimpleEventRecord(eventId, 
+            DataManager.Instance.PlayerData.currentChapter, dialogue, selectedChoice, isEndingMemoriar);
+        
+        eventHistory.Add(record);
+        Debug.Log($"[SimpleEventHistoryManager] 메인이벤트 기록: {dialogue} (Ending_Memoriar: {isEndingMemoriar})");
+        
+        // 로컬 저장
+        if (enableLocalSave)
         {
-            EventManager.OnParameterEventReady += OnParameterEvent;
-            EventManager.OnSubEventReady += OnSubEvent;
+            SaveHistory();
         }
     }
 
-    /// <summary>
-    /// 파라미터 이벤트 기록
-    /// </summary>
-    private void OnParameterEvent(int eventId)
-    {
-        if (!enableRecording) return;
-
-        // DataManager에서 이벤트 정보 가져오기
-        var eventData = DataManager.Instance?.eventDataDict?.GetValueOrDefault(eventId);
-        if (eventData == null) return;
-
-        // 이벤트 제목과 설명 가져오기 (실제 구현에서는 CSV에서 가져와야 함)
-        string title = $"파라미터 이벤트 {eventId}";
-        string description = "파라미터 이벤트가 발생했습니다.";
-        
-        // 선택한 답변 (실제로는 사용자가 선택한 답변을 저장해야 함)
-        string choice = "선택한 답변을 여기에 저장";
-
-        var record = new SimpleEventRecord(eventId, "Parameter", 
-            DataManager.Instance.PlayerData.currentChapter, title, description, choice);
-        
-        eventHistory.Add(record);
-        Debug.Log($"[SimpleEventHistoryManager] 파라미터 이벤트 기록: {title}");
-    }
-
-    /// <summary>
-    /// 서브 이벤트 기록
-    /// </summary>
-    private void OnSubEvent(FullSubEventData subEventData)
-    {
-        if (!enableRecording) return;
-
-        string title = subEventData.Text_kr ?? $"서브 이벤트 {subEventData.ID}";
-        string description = "서브 이벤트가 발생했습니다.";
-        string choice = "선택한 답변을 여기에 저장";
-
-        var record = new SimpleEventRecord(subEventData.ID, "Sub", 
-            DataManager.Instance.PlayerData.currentChapter, title, description, choice);
-        
-        eventHistory.Add(record);
-        Debug.Log($"[SimpleEventHistoryManager] 서브 이벤트 기록: {title}");
-    }
+    // 파라미터 이벤트와 서브 이벤트는 Ending_Memoriar 같은 플래그가 없으므로 별도 기록하지 않음
 
     /// <summary>
     /// 이벤트 기록 가져오기
@@ -96,22 +85,104 @@ public class SimpleEventHistoryManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Ending_Memoriar 이벤트만 가져오기
+    /// </summary>
+    public List<SimpleEventRecord> GetEndingMemoriarEvents()
+    {
+        return eventHistory.FindAll(e => e.isEndingMemoriar);
+    }
+
+    /// <summary>
+    /// 특정 챕터의 Ending_Memoriar 이벤트만 가져오기
+    /// </summary>
+    public List<SimpleEventRecord> GetEndingMemoriarEventsByChapter(int chapter)
+    {
+        return eventHistory.FindAll(e => e.chapter == chapter && e.isEndingMemoriar);
+    }
+
+    /// <summary>
     /// 이벤트 기록 초기화
     /// </summary>
     public void ClearHistory()
     {
         eventHistory.Clear();
+        
+        // 로컬 파일도 삭제
+        if (enableLocalSave && File.Exists(savePath))
+        {
+            File.Delete(savePath);
+        }
+        
         Debug.Log("[SimpleEventHistoryManager] 이벤트 기록이 초기화되었습니다.");
+    }
+
+    /// <summary>
+    /// 이벤트 기록을 로컬 파일에 저장
+    /// </summary>
+    private void SaveHistory()
+    {
+        if (!enableLocalSave || string.IsNullOrEmpty(savePath)) return;
+
+        try
+        {
+            var jsonData = JsonUtility.ToJson(new SerializableEventHistory(eventHistory), true);
+            File.WriteAllText(savePath, jsonData);
+            Debug.Log($"[SimpleEventHistoryManager] 이벤트 기록이 저장되었습니다. ({eventHistory.Count}개)");
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"[SimpleEventHistoryManager] 저장 실패: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 로컬 파일에서 이벤트 기록 로드
+    /// </summary>
+    private void LoadHistory()
+    {
+        if (!enableLocalSave || string.IsNullOrEmpty(savePath) || !File.Exists(savePath)) return;
+
+        try
+        {
+            var jsonData = File.ReadAllText(savePath);
+            var serializableHistory = JsonUtility.FromJson<SerializableEventHistory>(jsonData);
+            
+            if (serializableHistory != null && serializableHistory.records != null)
+            {
+                eventHistory = serializableHistory.records.ToList();
+                Debug.Log($"[SimpleEventHistoryManager] 이벤트 기록이 로드되었습니다. ({eventHistory.Count}개)");
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"[SimpleEventHistoryManager] 로드 실패: {ex.Message}");
+            eventHistory = new List<SimpleEventRecord>();
+        }
     }
 
     private void OnDestroy()
     {
-        // 이벤트 구독 해제
-        if (EventManager.Instance != null)
+        // 마지막에 한 번 더 저장
+        if (enableLocalSave)
         {
-            EventManager.OnParameterEventReady -= OnParameterEvent;
-            EventManager.OnSubEventReady -= OnSubEvent;
+            SaveHistory();
         }
+        
+        Debug.Log("[SimpleEventHistoryManager] 이벤트 기록 시스템이 종료되었습니다.");
+    }
+}
+
+/// <summary>
+/// JsonUtility 직렬화를 위한 래퍼 클래스
+/// </summary>
+[System.Serializable]
+public class SerializableEventHistory
+{
+    public SimpleEventRecord[] records;
+
+    public SerializableEventHistory(List<SimpleEventRecord> eventHistory)
+    {
+        records = eventHistory.ToArray();
     }
 }
 
