@@ -585,8 +585,8 @@ public class GameManager : MonoBehaviour
     {
         ShowConfirmation("모든 진행 상황과 설정이 삭제됩니다. 정말 새로 시작하시겠습니까?", () =>
         {
-            // [수정] DeleteLocalSaveData() 대신 DeleteAllLocalData()를 호출합니다.
-            DataManager.Instance.DeleteAllLocalData();
+            // 진행도만 삭제하여 Settings(서브이벤트 팩 선택)는 보존
+            DataManager.Instance.DeleteLocalSaveData();
 
             // 데이터를 모두 지운 후, 새 데이터 객체를 생성하고 게임을 시작합니다.
             DataManager.Instance.StartNewGame();
@@ -605,7 +605,8 @@ public class GameManager : MonoBehaviour
         ShowConfirmation("모든 진행 상황과 설정이 삭제됩니다. 정말 초기화하시겠습니까?", () =>
         {
             // 1. 모든 로컬 파일과 PlayerPrefs 기록 삭제
-            DataManager.Instance.DeleteAllLocalData();
+            // 진행도만 삭제하여 Settings 보존
+            DataManager.Instance.DeleteLocalSaveData();
 
             // 2. 메모리에 새로운 기본 데이터 객체를 즉시 생성하고 로드
             // StartNewGame은 새 GameData를 만들고 기본 파일까지 생성해줍니다.
@@ -766,8 +767,13 @@ public class GameManager : MonoBehaviour
         // 튜토리얼 플래그 및 UI 초기화 (데이터 리셋 후 오동작 방지)
         ResetTutorialFlagsAndUI();
 
-        // [수정] DataManager에 저장된 설정값을 사용합니다.
-        await EventManager.Instance.StartNewGame(DataManager.Instance.PlayerSettings.selectedSubEventPackIDs);
+        // [수정] 선택 저장을 StoryPackManager가 디스크에 먼저 저장하므로, 시작 직전에 설정을 다시 로드하여 동기화합니다.
+        DataManager.Instance.LoadSettings();
+        // StoryPackManager가 씬에 존재하면, 매니저를 통해 선택값을 우선 가져옵니다(동일 인스턴스 참조 강제).
+        var spm = FindObjectOfType<StoryPackManager>();
+        var selectedPacksForNewGame = spm != null ? spm.GetSelectedPackIDs() : (DataManager.Instance.PlayerSettings != null ? DataManager.Instance.PlayerSettings.selectedSubEventPackIDs : null);
+        Debug.Log($"[GameManager] 새게임 직전 선택 팩: {(selectedPacksForNewGame != null ? string.Join(", ", selectedPacksForNewGame) : "null")}, 개수: {selectedPacksForNewGame?.Count ?? -1}");
+        await EventManager.Instance.StartNewGame(selectedPacksForNewGame);
         OnStateFinished();
     }
     private void StartDetailedResultSequence() { int warSituation = PlayerStats.Instance.GetStat(ParameterType.전황); GameOutcome outcome = (warSituation <= 19) ? GameOutcome.Defeat : (warSituation >= 81) ? GameOutcome.Victory : GameOutcome.Draw; int chapterIndex = CurrentChapter - 1; if (chapterIndex < chapterEndDataList.Count && chapterEndDataList[chapterIndex] != null) { chapterEndController.StartChapterEndSequence(chapterEndDataList[chapterIndex], outcome); } else { OnStateFinished(); } }

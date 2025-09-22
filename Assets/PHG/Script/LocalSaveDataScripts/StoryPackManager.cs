@@ -42,7 +42,35 @@ public class StoryPackManager : MonoBehaviour
     // 임시로 스토리 팩 데이터를 초기화하는 함수
     private void InitializeStoryPackData()
     {
-        allStoryPacks.Add(new StoryPackInfo { packID = 1000001, packName = "기본 스토리 팩 1", isUnlocked = true });
+        allStoryPacks.Clear();
+
+        // DataManager에서 실제 SubEvents를 기반으로 팩 번호를 구성합니다.
+        var subEvents = DataManager.Instance != null ? DataManager.Instance.FullSubEvents : null;
+        if (subEvents != null && subEvents.Count > 0)
+        {
+            var distinctPacks = subEvents
+                .Select(e => e.SubStoryPac)
+                .Distinct()
+                .OrderBy(id => id)
+                .ToList();
+
+            foreach (var pack in distinctPacks)
+            {
+                // 간단한 표시 이름: "팩 {id}". 필요 시 별도 이름 소스 연동.
+                allStoryPacks.Add(new StoryPackInfo
+                {
+                    packID = pack,
+                    packName = $"팩 {pack}",
+                    isUnlocked = true
+                });
+            }
+        }
+        else
+        {
+            // 안전장치: 데이터 미로딩 시 최소 1개 제공 (임시)
+            allStoryPacks.Add(new StoryPackInfo { packID = 1001, packName = "팩 1001", isUnlocked = true });
+        }
+      
        // allStoryPacks.Add(new StoryPackInfo { packID = 2, packName = "기본 스토리 팩 2", isUnlocked = true });
        // allStoryPacks.Add(new StoryPackInfo { packID = 3, packName = "기본 스토리 팩 3", isUnlocked = true });
        // allStoryPacks.Add(new StoryPackInfo { packID = 4, packName = "미래의 스토리 팩 4", isUnlocked = false });
@@ -136,5 +164,14 @@ public class StoryPackManager : MonoBehaviour
     {
         DataManager.Instance.SaveSettings();
         Debug.Log("스토리 팩 선택 정보가 저장되었습니다: " + string.Join(", ", DataManager.Instance.PlayerSettings.selectedSubEventPackIDs));
+    }
+
+    // 현재 선택된 팩 ID 리스트를 안전하게 반환 (설정 메모리 기반)
+    public List<int> GetSelectedPackIDs()
+    {
+        var ids = DataManager.Instance != null && DataManager.Instance.PlayerSettings != null
+            ? DataManager.Instance.PlayerSettings.selectedSubEventPackIDs
+            : null;
+        return new List<int>(ids ?? new List<int>());
     }
 }
