@@ -26,7 +26,10 @@ public class DataManager : MonoBehaviour
     private UniTaskCompletionSource<bool> _isReady = new UniTaskCompletionSource<bool>();
     public UniTask IsReady => _isReady.Task;
 
+    //서브이벤트 전체 목록
     public List<FullSubEventData> FullSubEvents { get; private set; } = new List<FullSubEventData>();
+    //엔딩 텍스트 누적 리스트
+    private List<string> acquiredEndingMemoriars = new List<string>();
 
     //메인 이벤트 
     public Dictionary<int, MainEventData> mainEventDataDict;
@@ -43,10 +46,10 @@ public class DataManager : MonoBehaviour
     //전투 결과 이벤트
     public Dictionary<int, BattleResultData> battleResultDataDict;
     //엔딩 이벤트
-    private Dictionary<long, EndingEventData> endingEventDataDict;
-    private Dictionary<long, EndingCutScene> endingCutSceneDict;
+    public Dictionary<long, EndingEventData> endingEventDataDict;
+    public Dictionary<long, EndingCutScene> endingCutSceneDict;
     //회상 이벤트
-    private Dictionary<int, EndingMemoriarData> endingMemoriarDataDict;
+    public Dictionary<int, EndingMemoriarData> endingMemoriarDataDict;
     //파라미터 이벤트 
     public Dictionary<int, ParameterEventData> eventDataDict;
     public Dictionary<int, ParameterEventStringData> eventStringDataDict;
@@ -878,11 +881,14 @@ public class DataManager : MonoBehaviour
         if (answerDataDict.TryGetValue(answerID, out var answerData))
         {
             //Debug.Log($"[DataManager] -> <color=green>성공!</color> AnswerID: {answerID}를 찾았습니다. 텍스트: '{answerData.Text_KR}', 다음 이벤트 ID: {answerData.NextTextID}");
+            choice.ID = answerData.AnswerID;
             choice.choiceText = answerData.Text_KR;
             choice.nextEventID = answerData.NextTextID;
 
             //엔딩에 영향을 미치는지 플래그값 추가
             bool.TryParse(answerData.Ending_Memoriar, out choice.isEndingMemoriar);
+            bool.TryParse(answerData.Counting_for_RealEnding2, out choice.isCountingforRealEnding2);
+            bool.TryParse(answerData.Counting_for_RealEnding3, out choice.isCountingforRealEnding3);
 
             //선택지 보상치 적용 단 
             if (!string.IsNullOrEmpty(answerData.AnswerReward))
@@ -899,6 +905,21 @@ public class DataManager : MonoBehaviour
         }
 
         return choice;
+    }
+
+    public void AddEndingMemoriar(string text)
+    {
+        // 중복을 방지하거나 필요한 로직을 추가할 수 있습니다.
+        if (!string.IsNullOrEmpty(text))
+        {
+            acquiredEndingMemoriars.Add(text);
+        }
+    }
+
+    public string GetFinalEndingText()
+    {
+        // 리스트의 모든 텍스트를 줄 바꿈으로 연결하여 반환
+        return string.Join("\n", acquiredEndingMemoriars);
     }
 
     public BattleResultData GetBattleResultDataById(int resultID)

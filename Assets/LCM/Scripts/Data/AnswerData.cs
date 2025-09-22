@@ -10,4 +10,6 @@ public class AnswerData
     public string AnswerReward { get; set; }
     public string Font_Direction { get; set; }
     public string Ending_Memoriar { get; set; }
+    public string Counting_for_RealEnding2 { get; set; }
+    public string Counting_for_RealEnding3 { get; set; }
 }
