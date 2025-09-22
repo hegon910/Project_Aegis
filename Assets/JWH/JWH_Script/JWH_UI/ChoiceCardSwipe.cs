@@ -36,6 +36,9 @@ public class ChoiceCardSwipe : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     private CanvasGroup canvasGroup;
     private bool isInteractable = true; // 카드의 활성화 상태를 제어
 
+    [Header("Visual Effects")]
+    [SerializeField] private GameObject glowcard;
+
     [Header("Refs")]
     [SerializeField] RectTransform card;
     [SerializeField] Canvas canvas;
@@ -78,6 +81,7 @@ public class ChoiceCardSwipe : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         attackPreview?.SetAlpha(0);
         defendPreview?.SetAlpha(0);
         skillPreview?.SetAlpha(0);
+        if (glowcard != null) glowcard.SetActive(false);
     }
     public void SetInteractable(bool state)
     {
@@ -227,5 +231,13 @@ public class ChoiceCardSwipe : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         card.DOAnchorPos(initialPosition, 0.3f).SetEase(Ease.OutBack);
         card.DORotate(Vector3.zero, 0.3f).SetEase(Ease.OutBack);
         dragDelta = Vector2.zero;
+    }
+
+    public void SetGlow(bool isOn)
+    {
+        if (glowcard != null)
+        {
+            glowcard.SetActive(isOn);
+        }
     }
 }

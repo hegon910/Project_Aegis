@@ -253,7 +253,7 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
 
         if (selectedChoice.outcome?.parameterChanges != null)
         {
-            PlayerStats.Instance.ApplyChanges(selectedChoice.outcome.parameterChanges);
+            GamePlayerStats.Instance.ApplyChanges(selectedChoice.outcome.parameterChanges);
         }
 
         StartCoroutine(TransitionToNextNode(selectedChoice.nextEventID));

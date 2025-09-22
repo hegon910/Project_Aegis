@@ -50,11 +50,12 @@ public class WarGroundUI : MonoBehaviour
         ClearMarkers();
 
         RectTransform groundRect = warGround.GetComponent<RectTransform>();
+        float totalGridWidth = warGround.LaneLength * warGround.CellSize;
+        float remainingSpace = groundRect.rect.width - totalGridWidth;
         float leftEdgeX = -groundRect.rect.width * groundRect.pivot.x;
-        float startOffsetX = leftEdgeX + (warGround.SideMargin * warGround.CellSize);
+        float startOffsetX = leftEdgeX + (remainingSpace / 2);
 
-        // 눈금선 생성
-        for (int i = 0; i <= warGround.LaneLength; i++)
+        for (int i = 1; i < warGround.LaneLength; i++)
         {
             GameObject dividerObj = Instantiate(dividerPrefab, dividersContainer);
             RectTransform dividerRect = dividerObj.GetComponent<RectTransform>();
@@ -62,37 +63,24 @@ public class WarGroundUI : MonoBehaviour
             dividerRect.anchoredPosition = new Vector2(lineX, 0);
         }
 
-        for (int i = 1; i <= warGround.LaneLength; i++) // i를 1부터 16까지 반복
+
+        for (int i = 0; i < warGround.LaneLength - 2; i++)
         {
+            int numberValue = i + 1;
+            int laneIndex = i + 1;
+
             GameObject numberObj = Instantiate(numberPrefab, numbersContainer);
             RectTransform numberRect = numberObj.GetComponent<RectTransform>();
-            Vector2 numberPos;
 
-            // 숫자 '1'의 위치 (첫 번째 경계선)
-            if (i == 1)
-            {
-                float lineX = startOffsetX + ((i - 1) * warGround.CellSize);
-                numberPos = new Vector2(lineX, numberYOffset);
-            }
-            // 숫자 '16'의 위치 (마지막 경계선)
-            else if (i == warGround.LaneLength)
-            {
-                float lineX = startOffsetX + (i * warGround.CellSize);
-                numberPos = new Vector2(lineX, numberYOffset);
-            }
-            // 나머지 숫자 '2' ~ '15'의 위치 (각 칸의 중앙)
-            else
-            {
-                numberPos = warGround.GetGroundPos(i - 1); // GetGroundPos는 0부터 시작하므로 i-1
-                numberPos.y += numberYOffset;
-            }
+            Vector2 numberPos = warGround.GetGroundPos(laneIndex);
+            numberPos.y += numberYOffset; // Y축 오프셋 적용
 
             numberRect.anchoredPosition = numberPos;
 
             TextMeshProUGUI numberText = numberObj.GetComponent<TextMeshProUGUI>();
             if (numberText != null)
             {
-                numberText.text = i.ToString();
+                numberText.text = numberValue.ToString();
             }
         }
     }

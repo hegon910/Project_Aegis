@@ -175,7 +175,11 @@ public class EventManager : MonoBehaviour
                     }
                     else
                     {
-                        Debug.LogWarning($"[EventManager] 그룹 {selectedPackAndGroup.groupId} 체인 데이터 없음");
+                        DataManager.Instance.PlayerData.playedSubEventGroups.Add(selectedPackAndGroup.groupId);
+                        PlaythroughHistory.Instance.RecordSubEventGroupCompletion(selectedPackAndGroup.groupId); // 영구 기록 추가
+                        DataManager.Instance.PlayerData.currentPlaylist.Add(subEventChain.First().Index);
+                        remainingSlots -= subEventChain.Count;
+                        Debug.Log($"[EventManager] 서브 이벤트 체인 추가: 팩 {selectedPackAndGroup.packId}, 그룹 {selectedPackAndGroup.groupId} ({subEventChain.Count}턴 소모)");
                     }
                 }
             }

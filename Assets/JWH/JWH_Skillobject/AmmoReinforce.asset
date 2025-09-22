@@ -17,6 +17,6 @@ MonoBehaviour:
   skillRank: 3
   description: "\uB2E4\uC74C 3\uD68C \uACF5\uACA9 \uD589\uB3D9\uC774 \uACF5\uACA9\uC5D0
     \uC131\uACF5\uD558\uBA74 1\uC758 \uD53C\uD574\uB97C \uCD94\uAC00\uB85C \uC90D\uB2C8\uB2E4."
-  cooltime: 1
+  cooltime: 3
   isSingleUsePerCombat: 1
   attackStacks: 3

@@ -214,24 +214,23 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             // [추가] Wille 특성일 때는 정치력 변화가 UI 하이라이트에도 반영되지 않도록 차단
             List<ParameterChange> finalChanges = new List<ParameterChange>(outcome.parameterChanges);
 
-            if (PlayerStats.Instance != null && PlayerStats.Instance.ActiveTrait == CommanderTrait.Wille)
+            if (GamePlayerStats.Instance != null && GamePlayerStats.Instance.ActiveTrait == CommanderTrait.Wille)
             {
                 finalChanges = finalChanges.Where(c => c.parameterType != ParameterType.정치력).ToList();
             }
             // 현재 활성화된 특성이 '리사드'이고, 선택지에 '확정 성공'이 아닌 판정 조건이 있었을 경우에만 특성 로직을 실행합니다.
-            if (PlayerStats.Instance.ActiveTrait == CommanderTrait.Risard &&
+            if (GamePlayerStats.Instance.ActiveTrait == CommanderTrait.Risard &&
                 !(choice.condition is GuaranteedSuccessCondition))
             {
                 // '리사드' 특성 로직을 호출하여 finalChanges 목록에 성공/실패에 따른 보정치를 추가합니다.
-                PlayerStats.Instance.ActiveCommander?.traitLogic?.ProcessEventOutcome(success, finalChanges);
+                GamePlayerStats.Instance.ActiveCommander?.traitLogic?.ProcessEventOutcome(success, finalChanges);
             }
             // '리사드'가 아니거나 '확정 성공' 이벤트인 경우, 위 if문을 건너뛰고 원래 결과만 사용하게 됩니다.
 
-            PlayerStats.Instance.ApplyChanges(finalChanges);
+            GamePlayerStats.Instance.ApplyChanges(finalChanges);
 
-            // [신규] 파라미터 이벤트 완료 기록
-            // TODO: 성공/실패 여부(success 변수)도 함께 기록하는 로직 추가 필요
-            DataManager.Instance.PlayerData.completedEventIds.Add(currentParameterEventData.id);
+            // [신규] 파라미터 이벤트 완료 기록 (성공/실패 여부 포함)
+            PlaythroughHistory.Instance.RecordEventCompletion(currentParameterEventData.id, success);
 
             StartCoroutine(TransitionToNextEvent(outcome.outcomeText));
         }
@@ -327,13 +326,13 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 
     private bool IsGameOver()
     {
-        if (PlayerStats.Instance == null) return false;
+        if (GamePlayerStats.Instance == null) return false;
         
         // 파라미터 중 하나라도 0 이하이면 게임 오버 상태로 간주
-        return PlayerStats.Instance.GetStat(ParameterType.정치력) <= 0 ||
-               PlayerStats.Instance.GetStat(ParameterType.병력) <= 0 ||
-               PlayerStats.Instance.GetStat(ParameterType.물자) <= 0 ||
-               PlayerStats.Instance.GetStat(ParameterType.리더십) <= 0;
+        return GamePlayerStats.Instance.GetStat(ParameterType.정치력) <= 0 ||
+               GamePlayerStats.Instance.GetStat(ParameterType.병력) <= 0 ||
+               GamePlayerStats.Instance.GetStat(ParameterType.물자) <= 0 ||
+               GamePlayerStats.Instance.GetStat(ParameterType.리더십) <= 0;
     }
 
     public void PreviewAffectedParameters(bool isRightChoice)
