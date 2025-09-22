@@ -1,7 +1,8 @@
-using TMPro;
+ï»¿using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 
 public class WarHUD : MonoBehaviour
 {
@@ -9,7 +10,8 @@ public class WarHUD : MonoBehaviour
     [SerializeField] WarTurnManager turnMgr;
     [SerializeField] WarPlayer player;
     [SerializeField] WarEnemy enemy;
-    
+    [SerializeField] private ChoiceCardSwipe choiceCard;
+
     [Header("Texts")]
     [SerializeField] TMP_Text turnTxt;     
     
@@ -24,14 +26,44 @@ public class WarHUD : MonoBehaviour
 
     [Header("War Status Slider")]
     [SerializeField] Slider warSlider;
-    [SerializeField] Image warSliderFill; // ½½¶óÀÌ´õÀÇ Fill Image
-    [SerializeField] Gradient warSliderGradient; // ½½¶óÀÌ´õ °ª¿¡ µû¶ó º¯ÇÒ »ö»ó
+    [SerializeField] Image warSliderFill; // ìŠ¬ë¼ì´ë”ì˜ Fill Image
+    [SerializeField] Gradient warSliderGradient; // ìŠ¬ë¼ì´ë” ê°’ì— ë”°ë¼ ë³€í•  ìƒ‰ìƒ
 
+    [Header("Skill Description UI")]
+    [Tooltip("½ºÅ³ ÅÍÄ¡ ¹öÆ°")]
+    [SerializeField] private Button skillInfoButton;
+    [Tooltip("½ºÅ³ ¼³¸í ÆĞ³Î")]
+    [SerializeField] private GameObject skillDescriptionPanel;
+    [Tooltip("½ºÅ³ ¼³¸í ÅØ½ºÆ®")]
+    [SerializeField] private TMP_Text skillDescriptionText;
+
+    [Header("Feedback UI")]
+    [Tooltip("Çàµ¿ °á°ú ÇÇµå¹é ÅØ½ºÆ® (¿¹: ½ºÅ³ »ç¿ë!)")]
+    [SerializeField] private TMP_Text actionFeedbackText;
+
+    private Coroutine feedbackCoroutine;
+
+
+    void Start()
+    {
+        if (skillInfoButton != null)
+        {
+            skillInfoButton.onClick.AddListener(ToggleSkillDescription);
+        }
+        if (skillDescriptionPanel != null)
+        {
+            skillDescriptionPanel.SetActive(false);
+        }
+        if (actionFeedbackText != null)
+        {
+            actionFeedbackText.gameObject.SetActive(false);
+        }
+    }
     void Update()
     {
         if (turnMgr)
         {
-            // ÃÖ´ë ÅÏÀÇ ÀÚ¸´¼ö¿¡ ¸ÂÃç ÃÖ¼Ò 2ÀÚ¸®·Î ÆĞµù
+            // ìµœëŒ€ í„´ì˜ ìë¦¿ìˆ˜ì— ë§ì¶° ìµœì†Œ 2ìë¦¬ë¡œ íŒ¨ë”©
             int width = Mathf.Max(2, turnMgr.MaxTurns.ToString().Length);
             string cur = turnMgr.CurrentTurn.ToString($"D{width}");
             string max = turnMgr.MaxTurns.ToString($"D{width}");
@@ -53,21 +85,45 @@ public class WarHUD : MonoBehaviour
         UpdateWarSlider();
         UpdateSkillUI();
     }
+
+    public void ShowActionFeedback(string message, float duration = 1.5f)
+    {
+        // ÀÌ¹Ì ½ÇÇà ÁßÀÎ ÇÇµå¹é ÄÚ·çÆ¾ÀÌ ÀÖ´Ù¸é ÁßÁö½ÃÅµ´Ï´Ù.
+        if (feedbackCoroutine != null)
+        {
+            StopCoroutine(feedbackCoroutine);
+        }
+        feedbackCoroutine = StartCoroutine(Co_ShowFeedbackText(message, duration));
+    }
+    private IEnumerator Co_ShowFeedbackText(string message, float duration)
+    {
+        if (actionFeedbackText != null)
+        {
+            actionFeedbackText.text = message;
+            actionFeedbackText.gameObject.SetActive(true);
+
+            yield return new WaitForSeconds(duration);
+
+            actionFeedbackText.gameObject.SetActive(false);
+            feedbackCoroutine = null;
+        }
+    }
+
     private void UpdateWarSlider()
     {
-        // PlayerStats ÀÎ½ºÅÏ½º¿Í warSlider°¡ ¸ğµÎ ÇÒ´çµÇ¾úÀ» ¶§¸¸ ½ÇÇà
-        if (warSlider != null && PlayerStats.Instance != null)
+        // PlayerStats ì¸ìŠ¤í„´ìŠ¤ì™€ warSliderê°€ ëª¨ë‘ í• ë‹¹ë˜ì—ˆì„ ë•Œë§Œ ì‹¤í–‰
+        if (warSlider != null && GamePlayerStats.Instance != null)
         {
-            // ÀüÈ² ÆÄ¶ó¹ÌÅÍ °ªÀ» °¡Á®¿È (0~100 ¹üÀ§·Î °¡Á¤)
-            int warValue = PlayerStats.Instance.GetStat(ParameterType.ÀüÈ²);
+            // ì „í™© íŒŒë¼ë¯¸í„° ê°’ì„ ê°€ì ¸ì˜´ (0~100 ë²”ìœ„ë¡œ ê°€ì •)
+            int warValue = GamePlayerStats.Instance.GetStat(ParameterType.ì „í™©);
 
-            // ½½¶óÀÌ´õ °ª ¾÷µ¥ÀÌÆ®
+            // ìŠ¬ë¼ì´ë” ê°’ ì—…ë°ì´íŠ¸
             warSlider.value = warValue;
 
-            // ½½¶óÀÌ´õ »ö»ó ¾÷µ¥ÀÌÆ® (Fill°ú Gradient°¡ ¸ğµÎ ÇÒ´çµÈ °æ¿ì)
+            // ìŠ¬ë¼ì´ë” ìƒ‰ìƒ ì—…ë°ì´íŠ¸ (Fillê³¼ Gradientê°€ ëª¨ë‘ í• ë‹¹ëœ ê²½ìš°)
             if (warSliderFill != null && warSliderGradient != null)
             {
-                // °ªÀ» 0.0 ~ 1.0 ¹üÀ§·Î Á¤±ÔÈ­ÇÏ¿© Gradient¿¡ »ç¿ë
+                // ê°’ì„ 0.0 ~ 1.0 ë²”ìœ„ë¡œ ì •ê·œí™”í•˜ì—¬ Gradientì— ì‚¬ìš©
                 warSliderFill.color = warSliderGradient.Evaluate(warValue / 100f);
             }
         }
@@ -76,24 +132,47 @@ public class WarHUD : MonoBehaviour
     void UpdateSkillUI()
     {
         if (turnMgr == null) return;
+
         string currentSkillName = turnMgr.GetSkillName();
+        int cooldown = turnMgr.GetSkillCooldown();
+        bool isSkillAvailable = !string.IsNullOrEmpty(currentSkillName) && cooldown <= 0;
+
+        if (choiceCard != null)
+        {
+            choiceCard.SetGlow(isSkillAvailable);
+        }
+
         if (!string.IsNullOrEmpty(currentSkillName))
         {
             skillNameText.text = currentSkillName;
-            int cooldown = turnMgr.GetSkillCooldown();
             if (cooldown > 0)
             {
                 skillCooldownText.text = cooldown.ToString();
             }
             else
             {
-                skillCooldownText.text = "»ç¿ë °¡´É";
+                skillCooldownText.text = "ì‚¬ìš© ê°€ëŠ¥";
             }
         }
         else
         {
-            skillNameText.text = "½ºÅ³ ¾øÀ½";
+            skillNameText.text = "ìŠ¤í‚¬ ì—†ìŒ";
             skillCooldownText.text = "";
         }
     }
+
+    public void ToggleSkillDescription()
+    {        
+        if (player == null || player.currentSkill == null || skillDescriptionPanel == null)
+        {
+            return;
+        }
+        bool isActive = skillDescriptionPanel.activeSelf;
+        skillDescriptionPanel.SetActive(!isActive);
+        if (!isActive)
+        {
+            skillDescriptionText.text = player.currentSkill.description;
+        }
+    }
+    
 }

@@ -960,6 +960,48 @@ public class DataManager : MonoBehaviour
         }
 
 
+        bool isBranchTriggered = false;
+        // PlaythroughHistory가 초기화되었는지 확인
+        if (PlaythroughHistory.Instance != null)
+        {
+            switch (rawData.ConditionType)
+            {
+                case 0: // 0: 조건 없음
+                    isBranchTriggered = false;
+                    break;
+
+                case 1: // 1: 특정 파라미터 이벤트 경험
+                    bool eventCompleted = PlaythroughHistory.Instance.GetEventCompletionState(rawData.ChangeCondition, out bool wasSuccess);
+                    if (eventCompleted)
+                    {
+                        // CSV의 IsConditionSuccess (0 또는 1)와 실제 성공 여부(bool)를 비교
+                        bool requiredState = (rawData.IsConditionSuccess == 1);
+                        isBranchTriggered = (wasSuccess == requiredState);
+                    }
+                    break;
+
+                case 2: // 2: 특정 서브 이벤트 그룹 경험
+                    isBranchTriggered = PlaythroughHistory.Instance.HasCompletedSubEventGroup(rawData.ChangeCondition);
+                    break;
+
+                case 3: // 3: 특정 전투 결과 경험
+                    // 이 데이터는 GameData에 저장되므로 PlayerData에서 직접 확인
+                    if (PlayerData != null)
+                    {
+                        isBranchTriggered = PlayerData.completedBattleResultIds.Contains(rawData.ChangeCondition);
+                    }
+                    break;
+
+                case 4: // 4: 특정 엔딩 경험
+                    isBranchTriggered = PlaythroughHistory.Instance.HasCompletedEnding(rawData.ChangeCondition);
+                    break;
+
+                default:
+                    isBranchTriggered = false;
+                    break;
+            }
+        }
+
         // 분기 조건 확인: ChangeCondition 이벤트가 과거에 성공적으로 완료되었는지 여부
         bool isBranchTriggered = rawData.ConditionType == 1 && PlaythroughHistory.Instance.HasCompletedEvent(rawData.ChangeCondition);
 
@@ -1085,7 +1127,7 @@ public class DataManager : MonoBehaviour
                                        : (isBranch ? rawData.AnotherDenyReward2 : rawData.DenyReward2);
         int needType = isLeft ? (isBranch ? rawData.AnotherNeedType1 : rawData.NeedType1)
                                        : (isBranch ? rawData.AnotherNeedType2 : rawData.NeedType2);
-        int needValue = isLeft ? (isBranch ? rawData.AnotehrNeedValue1 : rawData.NeedValue1) // 'Anotehr' 오타 대응
+        int needValue = isLeft ? (isBranch ? rawData.AnotherNeedValue1 : rawData.NeedValue1)
                                        : (isBranch ? rawData.AnotherNeedValue2 : rawData.NeedValue2);
 
         // 선택지 텍스트 설정

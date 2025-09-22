@@ -29,7 +29,7 @@ public class ParameterEventData
     public int AnotherEventQuestion { get; set; }
     public int AnotherLeftString { get; set; }
     public int AnotherNeedType1 { get; set; }
-    public int AnotehrNeedValue1 { get; set; }
+    public int AnotherNeedValue1 { get; set; }
     public int AnotherAcceptReward1 { get; set; }
     public int AnotherDenyReward1 { get; set; }
     public int AnotherAcceptString1 { get; set; }

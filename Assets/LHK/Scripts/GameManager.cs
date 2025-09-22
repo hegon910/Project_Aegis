@@ -231,7 +231,7 @@ public class GameManager : MonoBehaviour
             case GameState.InBattle: nextState = GameState.InBattleResult; break;
             case GameState.InBattleResult: nextState = GameState.InChapterResult; break;
             case GameState.InChapterResult:
-                PlayerStats.Instance.SetStat(ParameterType.전황, 50);
+                GamePlayerStats.Instance.SetStat(ParameterType.전황, 50);
                 DataManager.Instance.PlayerData.currentChapter++;
 
                 // 6챕터(5회차 완료 후)가 되면 엔딩으로, 그 전까지는 이벤트 사이클로 돌아가 반복
@@ -754,10 +754,10 @@ public class GameManager : MonoBehaviour
         // 새 게임 시작 시점에 파라미터를 명확히 기본값으로 초기화
         ResetParameterDataToDefaults();
 
-        PlayerStats.Instance.SetActiveCommander(selectedCommander);
+        GamePlayerStats.Instance.SetActiveCommander(selectedCommander);
         if (selectedCommander.initialStatAdjustments.Count > 0)
         {
-            PlayerStats.Instance.ApplyChanges(selectedCommander.initialStatAdjustments);
+            GamePlayerStats.Instance.ApplyChanges(selectedCommander.initialStatAdjustments);
         }
         // 즉시 저장하여 이후 초기화 루틴이 덮어쓰지 않도록 보존
         if (DataManager.Instance?.PlayerData != null)
@@ -776,7 +776,7 @@ public class GameManager : MonoBehaviour
         await EventManager.Instance.StartNewGame(selectedPacksForNewGame);
         OnStateFinished();
     }
-    private void StartDetailedResultSequence() { int warSituation = PlayerStats.Instance.GetStat(ParameterType.전황); GameOutcome outcome = (warSituation <= 19) ? GameOutcome.Defeat : (warSituation >= 81) ? GameOutcome.Victory : GameOutcome.Draw; int chapterIndex = CurrentChapter - 1; if (chapterIndex < chapterEndDataList.Count && chapterEndDataList[chapterIndex] != null) { chapterEndController.StartChapterEndSequence(chapterEndDataList[chapterIndex], outcome); } else { OnStateFinished(); } }
+    private void StartDetailedResultSequence() { int warSituation = GamePlayerStats.Instance.GetStat(ParameterType.전황); GameOutcome outcome = (warSituation <= 19) ? GameOutcome.Defeat : (warSituation >= 81) ? GameOutcome.Victory : GameOutcome.Draw; int chapterIndex = CurrentChapter - 1; if (chapterIndex < chapterEndDataList.Count && chapterEndDataList[chapterIndex] != null) { chapterEndController.StartChapterEndSequence(chapterEndDataList[chapterIndex], outcome); } else { OnStateFinished(); } }
     public void GameOver(string reason)
     {
         if (_isGameOverActive) return; // 재진입 방지
@@ -883,19 +883,19 @@ public class GameManager : MonoBehaviour
     }
     public void CheckGameOverConditions()
     {
-        if (PlayerStats.Instance.GetStat(ParameterType.정치력) <= 0)
+        if (GamePlayerStats.Instance.GetStat(ParameterType.정치력) <= 0)
         {
             GameOver("정치력이 0이 되어 통치 기반을 잃었습니다.");
         }
-        else if (PlayerStats.Instance.GetStat(ParameterType.병력) <= 0)
+        else if (GamePlayerStats.Instance.GetStat(ParameterType.병력) <= 0)
         {
             GameOver("병력이 0이 되어 전선을 유지할 수 없습니다.");
         }
-        else if (PlayerStats.Instance.GetStat(ParameterType.물자) <= 0)
+        else if (GamePlayerStats.Instance.GetStat(ParameterType.물자) <= 0)
         {
             GameOver("물자가 0이 되어 부대를 운용할 수 없습니다.");
         }
-        else if (PlayerStats.Instance.GetStat(ParameterType.리더십) <= 0)
+        else if (GamePlayerStats.Instance.GetStat(ParameterType.리더십) <= 0)
         {
             GameOver("리더십이 0이 되어 병사들이 따르지 않습니다.");
         }
@@ -908,12 +908,12 @@ public class GameManager : MonoBehaviour
     private void ResetParameterDataToDefaults()
     {
         // DataManager의 GameData가 새로 생성되지 않은 경우에도 안전하게 기본값을 보장
-        PlayerStats.Instance.SetStat(ParameterType.정치력, 50);
-        PlayerStats.Instance.SetStat(ParameterType.병력, 50);
-        PlayerStats.Instance.SetStat(ParameterType.물자, 50);
-        PlayerStats.Instance.SetStat(ParameterType.리더십, 50);
-        PlayerStats.Instance.SetStat(ParameterType.전황, 50);
-        PlayerStats.Instance.SetStat(ParameterType.카르마, 50);
+        GamePlayerStats.Instance.SetStat(ParameterType.정치력, 50);
+        GamePlayerStats.Instance.SetStat(ParameterType.병력, 50);
+        GamePlayerStats.Instance.SetStat(ParameterType.물자, 50);
+        GamePlayerStats.Instance.SetStat(ParameterType.리더십, 50);
+        GamePlayerStats.Instance.SetStat(ParameterType.전황, 50);
+        GamePlayerStats.Instance.SetStat(ParameterType.카르마, 50);
 
         // UI 즉시 반영
         var paramUI = FindObjectOfType<ParameterUIController>();
