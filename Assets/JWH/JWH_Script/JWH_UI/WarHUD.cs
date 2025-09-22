@@ -2,6 +2,7 @@ using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 
 public class WarHUD : MonoBehaviour
 {
@@ -9,7 +10,8 @@ public class WarHUD : MonoBehaviour
     [SerializeField] WarTurnManager turnMgr;
     [SerializeField] WarPlayer player;
     [SerializeField] WarEnemy enemy;
-    
+    [SerializeField] private ChoiceCardSwipe choiceCard;
+
     [Header("Texts")]
     [SerializeField] TMP_Text turnTxt;     
     
@@ -27,6 +29,36 @@ public class WarHUD : MonoBehaviour
     [SerializeField] Image warSliderFill; // 슬라이더의 Fill Image
     [SerializeField] Gradient warSliderGradient; // 슬라이더 값에 따라 변할 색상
 
+    [Header("Skill Description UI")]
+    [Tooltip("스킬 터치 버튼")]
+    [SerializeField] private Button skillInfoButton;
+    [Tooltip("스킬 설명 패널")]
+    [SerializeField] private GameObject skillDescriptionPanel;
+    [Tooltip("스킬 설명 텍스트")]
+    [SerializeField] private TMP_Text skillDescriptionText;
+
+    [Header("Feedback UI")]
+    [Tooltip("행동 결과 피드백 텍스트 (예: 스킬 사용!)")]
+    [SerializeField] private TMP_Text actionFeedbackText;
+
+    private Coroutine feedbackCoroutine;
+
+
+    void Start()
+    {
+        if (skillInfoButton != null)
+        {
+            skillInfoButton.onClick.AddListener(ToggleSkillDescription);
+        }
+        if (skillDescriptionPanel != null)
+        {
+            skillDescriptionPanel.SetActive(false);
+        }
+        if (actionFeedbackText != null)
+        {
+            actionFeedbackText.gameObject.SetActive(false);
+        }
+    }
     void Update()
     {
         if (turnMgr)
@@ -53,6 +85,30 @@ public class WarHUD : MonoBehaviour
         UpdateWarSlider();
         UpdateSkillUI();
     }
+
+    public void ShowActionFeedback(string message, float duration = 1.5f)
+    {
+        // 이미 실행 중인 피드백 코루틴이 있다면 중지시킵니다.
+        if (feedbackCoroutine != null)
+        {
+            StopCoroutine(feedbackCoroutine);
+        }
+        feedbackCoroutine = StartCoroutine(Co_ShowFeedbackText(message, duration));
+    }
+    private IEnumerator Co_ShowFeedbackText(string message, float duration)
+    {
+        if (actionFeedbackText != null)
+        {
+            actionFeedbackText.text = message;
+            actionFeedbackText.gameObject.SetActive(true);
+
+            yield return new WaitForSeconds(duration);
+
+            actionFeedbackText.gameObject.SetActive(false);
+            feedbackCoroutine = null;
+        }
+    }
+
     private void UpdateWarSlider()
     {
         // PlayerStats 인스턴스와 warSlider가 모두 할당되었을 때만 실행
@@ -76,11 +132,19 @@ public class WarHUD : MonoBehaviour
     void UpdateSkillUI()
     {
         if (turnMgr == null) return;
+
         string currentSkillName = turnMgr.GetSkillName();
+        int cooldown = turnMgr.GetSkillCooldown();
+        bool isSkillAvailable = !string.IsNullOrEmpty(currentSkillName) && cooldown <= 0;
+
+        if (choiceCard != null)
+        {
+            choiceCard.SetGlow(isSkillAvailable);
+        }
+
         if (!string.IsNullOrEmpty(currentSkillName))
         {
             skillNameText.text = currentSkillName;
-            int cooldown = turnMgr.GetSkillCooldown();
             if (cooldown > 0)
             {
                 skillCooldownText.text = cooldown.ToString();
@@ -96,4 +160,19 @@ public class WarHUD : MonoBehaviour
             skillCooldownText.text = "";
         }
     }
+
+    public void ToggleSkillDescription()
+    {        
+        if (player == null || player.currentSkill == null || skillDescriptionPanel == null)
+        {
+            return;
+        }
+        bool isActive = skillDescriptionPanel.activeSelf;
+        skillDescriptionPanel.SetActive(!isActive);
+        if (!isActive)
+        {
+            skillDescriptionText.text = player.currentSkill.description;
+        }
+    }
+    
 }
