@@ -89,8 +89,8 @@ public class EventManager : MonoBehaviour
         DataManager.Instance.PlayerData.currentPlaylist.Clear();
         List<int> tutorialEvents = new List<int>();
 
-        // [수정] PlayerStats 대신 DataManager에서 회차 정보와 완료 이벤트 목록을 가져옵니다.
-        if (DataManager.Instance.PlayerData.playthroughCount == 1)
+        // [수정] 튜토리얼 이벤트는 1회차 1챕터에서만 우선적으로 등장하도록 수정
+        if (DataManager.Instance.PlayerData.playthroughCount == 1 && DataManager.Instance.PlayerData.currentChapter == 1)
         {
             var completedIds = new HashSet<int>(DataManager.Instance.PlayerData.completedEventIds);
             tutorialEvents = DataManager.Instance.eventDataDict.Values
@@ -104,6 +104,7 @@ public class EventManager : MonoBehaviour
             {
                 Debug.LogWarning($"[EventManager] 튜토리얼 원본 {tutorialEvents.Count}개 중 {tutorialToEnqueue.Count}개만 이번 사이클에 편성(용량 {totalEventsPerCycle}).");
             }
+            Debug.Log($"[EventManager] 1회차 1챕터에서 튜토리얼 이벤트 {tutorialToEnqueue.Count}개 추가됨");
         }
 
         Debug.Log($"[EventManager] 튜토리얼 이벤트 추가 후: {DataManager.Instance.PlayerData.currentPlaylist.Count}개 (총용량 {totalEventsPerCycle})");
@@ -205,7 +206,24 @@ public class EventManager : MonoBehaviour
             }
         
 
-        DataManager.Instance.PlayerData.currentPlaylist = DataManager.Instance.PlayerData.currentPlaylist.OrderBy(x => Guid.NewGuid()).ToList();
+        // 튜토리얼 이벤트가 가장 먼저 등장하도록 보장
+        if (DataManager.Instance.PlayerData.playthroughCount == 1 && DataManager.Instance.PlayerData.currentChapter == 1 && tutorialEvents.Count > 0)
+        {
+            // 튜토리얼 이벤트들을 앞쪽에 고정하고, 나머지만 랜덤하게 섞기
+            var tutorialIds = new HashSet<int>(tutorialEvents);
+            var tutorialInPlaylist = DataManager.Instance.PlayerData.currentPlaylist.Where(id => tutorialIds.Contains(id)).ToList();
+            var nonTutorialInPlaylist = DataManager.Instance.PlayerData.currentPlaylist.Where(id => !tutorialIds.Contains(id)).ToList();
+            
+            // 튜토리얼 이벤트들을 순서대로 앞쪽에 배치하고, 나머지는 랜덤하게 섞어서 뒤에 배치
+            DataManager.Instance.PlayerData.currentPlaylist = tutorialInPlaylist.Concat(nonTutorialInPlaylist.OrderBy(x => Guid.NewGuid())).ToList();
+            Debug.Log($"[EventManager] 튜토리얼 이벤트 {tutorialInPlaylist.Count}개를 플레이리스트 앞쪽에 고정 배치");
+        }
+        else
+        {
+            // 일반적인 경우: 전체 플레이리스트를 랜덤하게 섞기
+            DataManager.Instance.PlayerData.currentPlaylist = DataManager.Instance.PlayerData.currentPlaylist.OrderBy(x => Guid.NewGuid()).ToList();
+        }
+        
         // 표준 흐름 유지: 인덱스는 0에서 시작하고, 첫 이벤트 처리 시 증가
         DataManager.Instance.PlayerData.eventPlaylistIndex = 0;
         currentState = EventManagerState.InCycle;
