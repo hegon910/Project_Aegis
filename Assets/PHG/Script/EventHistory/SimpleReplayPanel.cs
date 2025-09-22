@@ -120,11 +120,16 @@ public class SimpleReplayPanel : MonoBehaviour
         var image = eventItem.AddComponent<Image>();
         image.color = new Color(0.1f, 0.1f, 0.1f, 0.8f);
 
-        // 제목 텍스트
-        var titleText = CreateText("TitleText", eventItem.transform, eventRecord.eventTitle, 16, Color.white, new Vector2(0, 0.6f), new Vector2(1, 1));
+        // 지문 텍스트 (제목으로 사용)
+        var titleText = CreateText("TitleText", eventItem.transform, 
+            eventRecord.isEndingMemoriar ? "[메모리어] " + eventRecord.dialogue : eventRecord.dialogue, 
+            16, eventRecord.isEndingMemoriar ? Color.magenta : Color.white, 
+            new Vector2(0, 0.6f), new Vector2(1, 1));
 
-        // 설명 텍스트
-        var descText = CreateText("DescText", eventItem.transform, eventRecord.eventDescription, 12, Color.gray, new Vector2(0, 0.3f), new Vector2(1, 0.6f));
+        // 이벤트 ID와 타입 정보
+        var descText = CreateText("DescText", eventItem.transform, 
+            $"이벤트 ID: {eventRecord.eventId} | 타입: {eventRecord.eventType}", 
+            12, Color.gray, new Vector2(0, 0.3f), new Vector2(1, 0.6f));
 
         // 선택한 답변 텍스트
         var choiceText = CreateText("ChoiceText", eventItem.transform, $"선택: {eventRecord.selectedChoice}", 12, Color.yellow, new Vector2(0, 0), new Vector2(1, 0.3f));
@@ -169,7 +174,7 @@ public class SimpleReplayPanel : MonoBehaviour
     /// </summary>
     private void OnEventClicked(SimpleEventRecord eventRecord)
     {
-        Debug.Log($"[SimpleReplayPanel] 이벤트 클릭: {eventRecord.eventTitle}");
+        Debug.Log($"[SimpleReplayPanel] 이벤트 클릭: {eventRecord.dialogue} (메모리어: {eventRecord.isEndingMemoriar})");
         // 여기서 이벤트 상세 정보를 표시할 수 있습니다.
     }
 
