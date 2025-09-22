@@ -147,7 +147,7 @@ public class FirebaseManager : MonoBehaviour
                     if (DataManager.Instance != null)
                     {
                         Debug.Log("[FirebaseManager] DataManager에 로그인 완료 알림 전송");
-                        DataManager.Instance.OnFirebaseLoginCompleted();
+                       // DataManager.Instance.OnFirebaseLoginCompleted();
                     }
 
                     GameManager.instance.OnTitlePanelTouched();

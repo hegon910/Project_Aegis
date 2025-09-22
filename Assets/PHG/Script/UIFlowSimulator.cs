@@ -148,6 +148,12 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 
     private void HandleSubEvent(FullSubEventData data)
     {
+        if (data == null)
+        {
+            Debug.LogError("[UIFlowSimulator] HandleSubEvent: data가 null입니다.");
+            return;
+        }
+
         if (tutorialPanel != null && tutorialPanel.activeSelf)
         {
             tutorialPanel.SetActive(false);
@@ -155,12 +161,23 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         currentParameterEventData = null;
         currentSubEventData = data;
 
+        string characterName = "이름 없음";
+        if (data.characterData != null)
+        {
+            characterName = data.characterData.Chr_Name ?? "이름 없음";
+        }
+
+        // null 체크 추가
+        string dialogue = data.Text_kr ?? "대화 내용이 없습니다.";
+        string leftChoiceText = data.leftChoice?.choiceText ?? "선택지 1";
+        string rightChoiceText = data.rightChoice?.choiceText ?? "선택지 2";
+
         DisplayEventUI(
             characterSprite: null,
-            characterName: data.characterData.Chr_Name,
-            dialogue: data.Text_kr,
-            leftChoice: data.leftChoice.choiceText,
-            rightChoice: data.rightChoice.choiceText
+            characterName: characterName,
+            dialogue: dialogue,
+            leftChoice: leftChoiceText,
+            rightChoice: rightChoiceText
         );
     }
 
@@ -220,8 +237,18 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         }
         else if (currentSubEventData != null)
         {
-            EventManager.Instance.OnSubEventChoiceSelected(isRightChoice);
-            StartCoroutine(TransitionToNextEvent("선택지가 처리되었습니다."));
+            Debug.Log($"[UIFlowSimulator] 서브이벤트 선택 처리: isRightChoice={isRightChoice}");
+            
+            // 서브이벤트 선택지에서 결과 텍스트 가져오기
+            var choice = isRightChoice ? currentSubEventData.rightChoice : currentSubEventData.leftChoice;
+            string resultText = choice?.outcome?.outcomeText ?? "";
+            
+            // 파라미터 이벤트와 동일한 타이밍으로 결과 표시 후 다음 이벤트 진행
+            StartCoroutine(TransitionToNextSubEvent(resultText, isRightChoice));
+        }
+        else
+        {
+            Debug.LogWarning("[UIFlowSimulator] HandleChoice: 현재 이벤트 데이터가 null입니다.");
         }
     }
 
@@ -234,6 +261,13 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         if (cancelTransitions)
         {
             Debug.Log("UIFlowSimulator: 전환이 취소되었습니다.");
+            yield break;
+        }
+        
+        // 서브이벤트 체인 진행 중인지 확인
+        if (EventManager.Instance.currentState == EventManagerState.InSubEvent)
+        {
+            Debug.Log("UIFlowSimulator: 서브이벤트 체인이 진행 중이므로 대기합니다.");
             yield break;
         }
         
@@ -257,6 +291,38 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 
         Debug.Log("UIFlowSimulator: 다음 턴을 시작하도록 EventManager에 요청합니다.");
         EventManager.Instance.PlayNextTurn();
+    }
+
+    private IEnumerator TransitionToNextSubEvent(string resultText, bool isRightChoice)
+    {
+        // 파라미터 이벤트와 동일한 타이밍으로 결과 텍스트 표시
+        situationCardController.UpdateText(resultText);
+        yield return new WaitForSeconds(1.5f);
+        
+        // 대기 중에도 취소 플래그 체크
+        if (cancelTransitions)
+        {
+            Debug.Log("UIFlowSimulator: 서브이벤트 전환이 취소되었습니다.");
+            yield break;
+        }
+
+        // 게임 오버 상태인지 확인
+        if (IsGameOver())
+        {
+            Debug.Log("UIFlowSimulator: 게임 오버 상태이므로 서브이벤트를 진행하지 않습니다.");
+            yield break;
+        }
+
+        // 취소 플래그 재확인
+        if (cancelTransitions)
+        {
+            Debug.Log("UIFlowSimulator: 서브이벤트 전환이 취소되었습니다.");
+            yield break;
+        }
+
+        Debug.Log("UIFlowSimulator: 서브이벤트 선택을 EventManager에 전달합니다.");
+        // EventManager에서 다음 서브이벤트 처리 (UI 숨기기는 EventManager에서 관리)
+        EventManager.Instance.OnSubEventChoiceSelected(isRightChoice);
     }
 
     private bool IsGameOver()

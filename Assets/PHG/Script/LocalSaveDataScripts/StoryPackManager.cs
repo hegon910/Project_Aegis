@@ -45,11 +45,11 @@ public class StoryPackManager : MonoBehaviour
         allStoryPacks.Clear();
 
         // DataManager에서 실제 SubEvents를 기반으로 팩 번호를 구성합니다.
-        var subEvents = DataManager.Instance != null ? DataManager.Instance.SubEvents : null;
+        var subEvents = DataManager.Instance != null ? DataManager.Instance.FullSubEvents : null;
         if (subEvents != null && subEvents.Count > 0)
         {
             var distinctPacks = subEvents
-                .Select(e => e.PackNumber)
+                .Select(e => e.SubStoryPac)
                 .Distinct()
                 .OrderBy(id => id)
                 .ToList();
