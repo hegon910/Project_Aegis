@@ -240,6 +240,18 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
 
         MainEventChoice selectedChoice = isRightChoice ? currentNode.rightChoice : currentNode.leftChoice;
         Debug.Log($"[MainScenarioManager] 선택지 처리 시작. 선택된 다음 노드 ID: {selectedChoice.nextEventID}");
+        
+        // 이벤트 기록 (Ending_Memoriar 기준)
+        if (SimpleEventHistoryManager.Instance != null)
+        {
+            SimpleEventHistoryManager.Instance.RecordMainEvent(
+                currentNode.id, 
+                currentNode.dialogue, 
+                selectedChoice.choiceText, 
+                selectedChoice.isEndingMemoriar
+            );
+        }
+        
         if (selectedChoice.outcome?.parameterChanges != null)
         {
             PlayerStats.Instance.ApplyChanges(selectedChoice.outcome.parameterChanges);

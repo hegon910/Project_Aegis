@@ -229,8 +229,9 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 
             PlayerStats.Instance.ApplyChanges(finalChanges);
 
+            // 파라미터 이벤트는 Ending_Memoriar 같은 플래그가 없으므로 기록하지 않음
+
             // [신규] 파라미터 이벤트 완료 기록
-            // TODO: 성공/실패 여부(success 변수)도 함께 기록하는 로직 추가 필요
             DataManager.Instance.PlayerData.completedEventIds.Add(currentParameterEventData.id);
 
             StartCoroutine(TransitionToNextEvent(outcome.outcomeText));
@@ -242,6 +243,8 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             // 서브이벤트 선택지에서 결과 텍스트 가져오기
             var choice = isRightChoice ? currentSubEventData.rightChoice : currentSubEventData.leftChoice;
             string resultText = choice?.outcome?.outcomeText ?? "";
+            
+            // 서브이벤트는 Ending_Memoriar 같은 플래그가 없으므로 기록하지 않음
             
             // 파라미터 이벤트와 동일한 타이밍으로 결과 표시 후 다음 이벤트 진행
             StartCoroutine(TransitionToNextSubEvent(resultText, isRightChoice));
