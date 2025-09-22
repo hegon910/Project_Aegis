@@ -28,8 +28,8 @@ public class FirebaseManager : MonoBehaviour
     private void Awake()
     {
 #if UNITY_EDITOR
-        openloginPnanelButton.onClick.AddListener(OpenLoginPanel);
-        emailLoginButton.onClick.AddListener(EmailLogin);
+        //openloginPnanelButton.onClick.AddListener(OpenLoginPanel);
+        //emailLoginButton.onClick.AddListener(EmailLogin);
 #endif
 
         if (Instance == null)
