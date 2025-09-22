@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,26 +18,26 @@ public class ParameterSliderUI
 
 public class ParameterUIController : MonoBehaviour
 {
-    [Header("½½¶óÀÌ´õ ¼³Á¤")]
+    [Header("ìŠ¬ë¼ì´ë” ì„¤ì •")]
     public List<ParameterSliderUI> parameterSliders;
 
-    // ¡å 1¹ø ¿äÃ»: ¿ø·¡´ë·Î ±×¶óµğ¾ğÆ® »ç¿ëÀ¸·Î º¹±Í
+    // â–¼ 1ë²ˆ ìš”ì²­: ì›ë˜ëŒ€ë¡œ ê·¸ë¼ë””ì–¸íŠ¸ ì‚¬ìš©ìœ¼ë¡œ ë³µê·€
     public Gradient sliderColorGradient;
 
-    // ¡å 1¹ø ¿äÃ»: ÆÄ¶ó¹ÌÅÍ º¯È­ Áß¿¡ Ç¥½ÃµÉ Æ¯Á¤ »ö»ó
-    [Tooltip("ÆÄ¶ó¹ÌÅÍ ¼öÄ¡°¡ º¯ÇÏ´Â µ¿¾È Ç¥½ÃµÉ »ö»ó")]
+    // â–¼ 1ë²ˆ ìš”ì²­: íŒŒë¼ë¯¸í„° ë³€í™” ì¤‘ì— í‘œì‹œë  íŠ¹ì • ìƒ‰ìƒ
+    [Tooltip("íŒŒë¼ë¯¸í„° ìˆ˜ì¹˜ê°€ ë³€í•˜ëŠ” ë™ì•ˆ í‘œì‹œë  ìƒ‰ìƒ")]
     public Color parameterChangeColor = Color.yellow;
 
-    [Header("Àá±İ ¼³Á¤")]
-    [Tooltip("Æ¯¼º µîÀ¸·Î ÀÎÇØ ºñÈ°¼ºÈ­µÉ ¶§ÀÇ »ö»ó")]
+    [Header("ì ê¸ˆ ì„¤ì •")]
+    [Tooltip("íŠ¹ì„± ë“±ìœ¼ë¡œ ì¸í•´ ë¹„í™œì„±í™”ë  ë•Œì˜ ìƒ‰ìƒ")]
     public Color disabledColor = Color.magenta;
-    [Tooltip("½½¶óÀÌ´õ°¡ È°¼ºÈ­ »óÅÂÀÏ ¶§ÀÇ ±âº» ¹è°æ »ö»ó")]
+    [Tooltip("ìŠ¬ë¼ì´ë”ê°€ í™œì„±í™” ìƒíƒœì¼ ë•Œì˜ ê¸°ë³¸ ë°°ê²½ ìƒ‰ìƒ")]
     public Color defaultBackgroundColor;
 
-    [Header("Àü¼¼ ½½¶óÀÌ´õ")]
+    [Header("ì „ì„¸ ìŠ¬ë¼ì´ë”")]
     public Slider warSlider;
 
-    [Header("Ä«¸£¸¶ Å×µÎ¸® ¼³Á¤")]
+    [Header("ì¹´ë¥´ë§ˆ í…Œë‘ë¦¬ ì„¤ì •")]
     public Image karmaBorderImage;
     public Gradient karmaColorGradient;
 
@@ -45,15 +45,15 @@ public class ParameterUIController : MonoBehaviour
 
     void OnEnable()
     {
-        PlayerStats.OnStatChanged += OnStatChanged;
-        UpdateAffectedToggles(new List<ParameterChange>()); // ÃÊ±âÈ­ ½Ã ¸ğµç Åä±Û ÇØÁ¦
-        PlayerStats.OnActiveCommanderChanged += UpdatePoliticsLockState;
+        GamePlayerStats.OnStatChanged += OnStatChanged;
+        UpdateAffectedToggles(new List<ParameterChange>()); // ì´ˆê¸°í™” ì‹œ ëª¨ë“  í† ê¸€ í•´ì œ
+        GamePlayerStats.OnActiveCommanderChanged += UpdatePoliticsLockState;
     }
 
     void OnDisable()
     {
-        PlayerStats.OnActiveCommanderChanged -= UpdatePoliticsLockState;
-        PlayerStats.OnStatChanged -= OnStatChanged;
+        GamePlayerStats.OnActiveCommanderChanged -= UpdatePoliticsLockState;
+        GamePlayerStats.OnStatChanged -= OnStatChanged;
     }
 
     //void Start()
@@ -73,15 +73,15 @@ public class ParameterUIController : MonoBehaviour
     //        UpdateSliderInstantly(ui, initialValue);
     //    }
     //
-    //    UpdateWarInstantly(PlayerStats.Instance.GetStat(ParameterType.ÀüÈ²));
-    //    UpdateKarma(PlayerStats.Instance.GetStat(ParameterType.Ä«¸£¸¶));
+    //    UpdateWarInstantly(PlayerStats.Instance.GetStat(ParameterType.ì „í™©));
+    //    UpdateKarma(PlayerStats.Instance.GetStat(ParameterType.ì¹´ë¥´ë§ˆ));
     //}
 
     public void InitializeAndDisplayStats()
     {
-        if (PlayerStats.Instance == null)
+        if (GamePlayerStats.Instance == null)
         {
-            Debug.LogError("PlayerStats ÀÎ½ºÅÏ½º°¡ ¾ø¾î UI¸¦ ÃÊ±âÈ­ÇÒ ¼ö ¾ø½À´Ï´Ù!");
+            Debug.LogError("PlayerStats ì¸ìŠ¤í„´ìŠ¤ê°€ ì—†ì–´ UIë¥¼ ì´ˆê¸°í™”í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤!");
             return;
         }
 
@@ -89,24 +89,27 @@ public class ParameterUIController : MonoBehaviour
 
         foreach (var ui in parameterSliders)
         {
-            int initialValue = PlayerStats.Instance.GetStat(ui.type);
-            // µğ¹ö±ëÀ» À§ÇØ ·Î±× Ãß°¡
-            Debug.Log($"[UI ÃÊ±âÈ­] {ui.type} ÆÄ¶ó¹ÌÅÍ °ªÀ» {initialValue}(À¸)·Î ¼³Á¤ÇÕ´Ï´Ù.");
+            int initialValue = GamePlayerStats.Instance.GetStat(ui.type);
+            // ë””ë²„ê¹…ì„ ìœ„í•´ ë¡œê·¸ ì¶”ê°€
+            Debug.Log($"[UI ì´ˆê¸°í™”] {ui.type} íŒŒë¼ë¯¸í„° ê°’ì„ {initialValue}(ìœ¼)ë¡œ ì„¤ì •í•©ë‹ˆë‹¤.");
             UpdateSliderInstantly(ui, initialValue);
         }
 
-        UpdateWarInstantly(PlayerStats.Instance.GetStat(ParameterType.ÀüÈ²));
-        UpdateKarma(PlayerStats.Instance.GetStat(ParameterType.Ä«¸£¸¶));
+        UpdateWarInstantly(GamePlayerStats.Instance.GetStat(ParameterType.ì „í™©));
+        UpdateKarma(GamePlayerStats.Instance.GetStat(ParameterType.ì¹´ë¥´ë§ˆ));
         UpdatePoliticsLockState();
     }
 
-    // (UpdateAffectedToggles, ClearAllToggles ÇÔ¼ö´Â ÀÌÀü°ú µ¿ÀÏÇÏ¿© »ı·«)
+    // (UpdateAffectedToggles, ClearAllToggles í•¨ìˆ˜ëŠ” ì´ì „ê³¼ ë™ì¼í•˜ì—¬ ìƒëµ)
     public void UpdateAffectedToggles(List<ParameterChange> changes, bool isSubEvent = false)
     {
         ClearAllToggles();
 
         foreach (var change in changes)
         {
+            // [ì¶”ê°€] Wille íŠ¹ì„±ì¼ ë•ŒëŠ” ì •ì¹˜ë ¥ ë³€í™” í•˜ì´ë¼ì´íŠ¸ë¥¼ í‘œì‹œí•˜ì§€ ì•ŠìŠµë‹ˆë‹¤.
+            if (GamePlayerStats.Instance != null && GamePlayerStats.Instance.ActiveTrait == CommanderTrait.Wille && change.parameterType == ParameterType.ì •ì¹˜ë ¥)
+                continue;
             if (change.valueChange == 0) continue;
 
             ParameterSliderUI ui = parameterSliders.FirstOrDefault(s => s.type == change.parameterType);
@@ -117,7 +120,7 @@ public class ParameterUIController : MonoBehaviour
                 ui.subEventFillImage.gameObject.SetActive(true);
                 if (ui.affectedToggle != null) ui.affectedToggle.gameObject.SetActive(false);
             }
-            // [¼öÁ¤] Åä±ÛÀÌ »óÈ£ÀÛ¿ë °¡´ÉÇÒ ¶§¸¸ isOn »óÅÂ¸¦ º¯°æÇÏµµ·Ï Á¶°ÇÀ» Ãß°¡ÇÕ´Ï´Ù.
+            // [ìˆ˜ì •] í† ê¸€ì´ ìƒí˜¸ì‘ìš© ê°€ëŠ¥í•  ë•Œë§Œ isOn ìƒíƒœë¥¼ ë³€ê²½í•˜ë„ë¡ ì¡°ê±´ì„ ì¶”ê°€í•©ë‹ˆë‹¤.
             else if (!isSubEvent && ui.affectedToggle != null && ui.affectedToggle.interactable)
             {
                 ui.affectedToggle.isOn = true;
@@ -136,12 +139,12 @@ public class ParameterUIController : MonoBehaviour
     }
     public void UpdatePoliticsLockState()
     {
-        if (PlayerStats.Instance == null) return;
+        if (GamePlayerStats.Instance == null) return;
 
-        var politicsUI = parameterSliders.FirstOrDefault(s => s.type == ParameterType.Á¤Ä¡·Â);
+        var politicsUI = parameterSliders.FirstOrDefault(s => s.type == ParameterType.ì •ì¹˜ë ¥);
         if (politicsUI == null || politicsUI.slider == null) return;
 
-        bool isPoliticsLocked = (PlayerStats.Instance.ActiveTrait == CommanderTrait.Wille);
+        bool isPoliticsLocked = (GamePlayerStats.Instance.ActiveTrait == CommanderTrait.Wille);
 
         politicsUI.slider.interactable = !isPoliticsLocked;
         if (politicsUI.affectedToggle != null)
@@ -153,15 +156,15 @@ public class ParameterUIController : MonoBehaviour
         {
             if (politicsUI.affectedToggle != null) politicsUI.affectedToggle.isOn = false;
 
-            // [ÇÙ½É ¼öÁ¤] Fill°ú Background »ö»óÀ» disabledColor·Î ÅëÀÏÇÕ´Ï´Ù.
+            // [í•µì‹¬ ìˆ˜ì •] Fillê³¼ Background ìƒ‰ìƒì„ disabledColorë¡œ í†µì¼í•©ë‹ˆë‹¤.
             if (politicsUI.fillImage != null) politicsUI.fillImage.color = disabledColor;
             if (politicsUI.backgroundImage != null) politicsUI.backgroundImage.color = disabledColor;
         }
         else
         {
-            // [ÇÙ½É ¼öÁ¤] Àá±İÀÌ Ç®¸®¸é ¹è°æ»öÀ» ¿ø·¡´ë·Î º¹±¸ÇÕ´Ï´Ù.
+            // [í•µì‹¬ ìˆ˜ì •] ì ê¸ˆì´ í’€ë¦¬ë©´ ë°°ê²½ìƒ‰ì„ ì›ë˜ëŒ€ë¡œ ë³µêµ¬í•©ë‹ˆë‹¤.
             if (politicsUI.backgroundImage != null) politicsUI.backgroundImage.color = defaultBackgroundColor;
-            int currentValue = PlayerStats.Instance.GetStat(ParameterType.Á¤Ä¡·Â);
+            int currentValue = GamePlayerStats.Instance.GetStat(ParameterType.ì •ì¹˜ë ¥);
             UpdateSliderInstantly(politicsUI, currentValue);
         }
     }
@@ -169,8 +172,13 @@ public class ParameterUIController : MonoBehaviour
 
     private void OnStatChanged(ParameterType type, int changeAmount, int newValue)
     {
-        if (type == ParameterType.Ä«¸£¸¶) UpdateKarma(newValue);
-        else if (type == ParameterType.ÀüÈ²)
+        // [ì¶”ê°€] Wille íŠ¹ì„±ì¼ ë•Œ ì •ì¹˜ë ¥ ë³€í™”ëŠ” ì‹œê°ì ìœ¼ë¡œë„ ë¬´ì‹œ
+        if (GamePlayerStats.Instance != null && GamePlayerStats.Instance.ActiveTrait == CommanderTrait.Wille && type == ParameterType.ì •ì¹˜ë ¥)
+        {
+            return;
+        }
+        if (type == ParameterType.ì¹´ë¥´ë§ˆ) UpdateKarma(newValue);
+        else if (type == ParameterType.ì „í™©)
         {
             if (changeAmount == 0) return;
             AnimateWarUpdate(newValue);
@@ -180,16 +188,43 @@ public class ParameterUIController : MonoBehaviour
             if (changeAmount == 0) return;
             ParameterSliderUI ui = parameterSliders.FirstOrDefault(s => s.type == type);
 
-            // ½½¶óÀÌ´õ°¡ Á¸ÀçÇÏ°í, 'È°¼ºÈ­' »óÅÂÀÏ ¶§¸¸ ¾Ö´Ï¸ŞÀÌ¼ÇÀ» ½ÇÇàÇÏµµ·Ï Á¶°Ç
-            if (ui != null && ui.slider.interactable)
+            if (ui != null && ui.slider != null)
             {
-                AnimateSliderUpdate(ui, newValue);
+                // ëª©í‘œ ìŠ¬ë¼ì´ë” ê°’ ê³„ì‚° (25 ë‹¨ìœ„ ìŠ¤í…)
+                float targetSliderValue = Mathf.Ceil(newValue / 25.0f);
+
+                // í˜„ì¬ ê°’ê³¼ ëª©í‘œ ê°’ì´ ê°™ì•„ë„(ìŠ¤í… ë¯¸ë³€ê²½) ì—°ì¶œì€ í‘œì‹œë˜ë„ë¡ ì²˜ë¦¬
+                bool valueWillMove = !Mathf.Approximately(ui.slider.value, targetSliderValue);
+
+                // ê°’ì´ ì›€ì§ì¼ ì˜ˆì •ì´ë©´ ì• ë‹ˆë©”ì´ì…˜, ì•„ë‹ˆë©´ ì»¬ëŸ¬ í”Œë˜ì‹œë§Œ
+                if (valueWillMove)
+                {
+                    // ì¸í„°ë™í‹°ë¸Œ ì—¬ë¶€ì™€ ê´€ê³„ì—†ì´ ì—°ì¶œì€ ë³´ì—¬ì¤Œ (ì…ë ¥ë§Œ ë§‰íˆëŠ” ê°œë…)
+                    AnimateSliderUpdate(ui, newValue);
+                }
+                else
+                {
+                    // ë³€í™” ì¤‘ ìƒ‰ìƒìœ¼ë¡œ ì ê¹ í”Œë˜ì‹œ í›„ ì›ë˜ ê·¸ë¼ë””ì–¸íŠ¸ ë³µê·€
+                    if (ui.fillImage != null)
+                    {
+                        Color original = ui.fillImage.color;
+                        ui.fillImage.color = parameterChangeColor;
+                        // 0.6ì´ˆ ë’¤ ì›ìƒë³µêµ¬
+                        DOVirtual.DelayedCall(0.6f, () =>
+                        {
+                            // ê°’ ê¸°ì¤€ ê·¸ë¼ë””ì–¸íŠ¸ ìƒ‰ìœ¼ë¡œ ë³µê·€
+                            UpdateSliderInstantly(ui, newValue);
+                        });
+                    }
+                }
+
+                // ë³€í™” ì´í™íŠ¸ëŠ” í•­ìƒ í‘œì‹œ
                 ShowChangeEffect(ui.slider.transform, changeAmount);
             }
         }
     }
 
-    // ¾Ö´Ï¸ŞÀÌ¼Ç ¾øÀÌ ½½¶óÀÌ´õ UI¸¦ Áï½Ã ¾÷µ¥ÀÌÆ®ÇÏ´Â ÇÔ¼ö
+    // ì• ë‹ˆë©”ì´ì…˜ ì—†ì´ ìŠ¬ë¼ì´ë” UIë¥¼ ì¦‰ì‹œ ì—…ë°ì´íŠ¸í•˜ëŠ” í•¨ìˆ˜
     private void UpdateSliderInstantly(ParameterSliderUI ui, int currentValue)
     {
         if (ui == null || ui.slider == null) return;
@@ -199,19 +234,19 @@ public class ParameterUIController : MonoBehaviour
 
         if (ui.fillImage != null && sliderColorGradient != null)
         {
-            // ¿ø·¡ ±×¶óµğ¾ğÆ® »ö»óÀ¸·Î ¼³Á¤
+            // ì›ë˜ ê·¸ë¼ë””ì–¸íŠ¸ ìƒ‰ìƒìœ¼ë¡œ ì„¤ì •
             ui.fillImage.color = sliderColorGradient.Evaluate(currentValue / 100f);
         }
     }
 
     /// <summary>
-    /// ¡Ú 1¹ø ¿äÃ»: ¼öÁ¤µÈ ÆÄ¶ó¹ÌÅÍ º¯È­ ¾Ö´Ï¸ŞÀÌ¼Ç
+    /// â˜… 1ë²ˆ ìš”ì²­: ìˆ˜ì •ëœ íŒŒë¼ë¯¸í„° ë³€í™” ì• ë‹ˆë©”ì´ì…˜
     /// </summary>
     private void AnimateSliderUpdate(ParameterSliderUI ui, int newTotalValue)
     {
         if (ui == null || ui.slider == null) return;
 
-        // 1. Áï½Ã 'º¯È­ Áß »ö»ó'À¸·Î º¯°æ
+        // 1. ì¦‰ì‹œ 'ë³€í™” ì¤‘ ìƒ‰ìƒ'ìœ¼ë¡œ ë³€ê²½
         if (ui.fillImage != null)
         {
             ui.fillImage.color = parameterChangeColor;
@@ -219,11 +254,11 @@ public class ParameterUIController : MonoBehaviour
 
         float targetSliderValue = Mathf.Ceil(newTotalValue / 25.0f);
 
-        // 2. ½½¶óÀÌ´õ °ª¸¸ ¾Ö´Ï¸ŞÀÌ¼ÇÀ¸·Î º¯°æ
+        // 2. ìŠ¬ë¼ì´ë” ê°’ë§Œ ì• ë‹ˆë©”ì´ì…˜ìœ¼ë¡œ ë³€ê²½
         ui.slider.DOValue(targetSliderValue, 2f)
             .SetEase(Ease.OutCubic)
             .OnComplete(() => {
-                // 3. ¾Ö´Ï¸ŞÀÌ¼ÇÀÌ ³¡³ª¸é ¿ø·¡ÀÇ ±×¶óµğ¾ğÆ® '´ë±â »ö»ó'À¸·Î º¹±Í
+                // 3. ì• ë‹ˆë©”ì´ì…˜ì´ ëë‚˜ë©´ ì›ë˜ì˜ ê·¸ë¼ë””ì–¸íŠ¸ 'ëŒ€ê¸° ìƒ‰ìƒ'ìœ¼ë¡œ ë³µê·€
                 UpdateSliderInstantly(ui, newTotalValue);
             });
     }
@@ -233,7 +268,7 @@ public class ParameterUIController : MonoBehaviour
         if (warSlider != null) warSlider.value = currentValue;
     }
 
-    // ¡Ú¡Ú¡Ú ¼öÁ¤: ±âÁ¸ UpdateWar ÇÔ¼ö¸¦ ¾Ö´Ï¸ŞÀÌ¼Ç ±â´ÉÀ¸·Î º¯°æ
+    // â˜…â˜…â˜… ìˆ˜ì •: ê¸°ì¡´ UpdateWar í•¨ìˆ˜ë¥¼ ì• ë‹ˆë©”ì´ì…˜ ê¸°ëŠ¥ìœ¼ë¡œ ë³€ê²½
     private void AnimateWarUpdate(int currentValue)
     {
         if (warSlider != null)
@@ -250,6 +285,6 @@ public class ParameterUIController : MonoBehaviour
 
     private void ShowChangeEffect(Transform parent, int changeAmount)
     {
-        Debug.Log($"{parent.name} À§Ä¡¿¡ {(changeAmount > 0 ? "Áõ°¡" : "°¨¼Ò")} ÀÌÆåÆ® Ç¥½Ã!");
+        Debug.Log($"{parent.name} ìœ„ì¹˜ì— {(changeAmount > 0 ? "ì¦ê°€" : "ê°ì†Œ")} ì´í™íŠ¸ í‘œì‹œ!");
     }
 }

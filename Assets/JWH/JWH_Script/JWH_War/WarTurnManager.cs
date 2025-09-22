@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -38,7 +38,7 @@ public class WarTurnManager : MonoBehaviour
         {
             choiceCard.SetInteractable(true);
         }
-        // ÄÁÆ®·Ñ·¯ ÃÊ±âÈ­
+        // ì»¨íŠ¸ë¡¤ëŸ¬ ì´ˆê¸°í™”
         if (ground != null && player != null && enemy != null)
         {
             player.Ctrl.Init(ground, playerStartIndex);
@@ -46,36 +46,45 @@ public class WarTurnManager : MonoBehaviour
         }
         else
         {
-            Debug.LogError("WarTurnManager¿¡ Ground, Player, ¶Ç´Â Enemy°¡ ÇÒ´çµÇÁö ¾Ê¾Æ ÃÊ±âÈ­ÇÒ ¼ö ¾ø½À´Ï´Ù!");
+            Debug.LogError("WarTurnManagerì— Ground, Player, ë˜ëŠ” Enemyê°€ í• ë‹¹ë˜ì§€ ì•Šì•„ ì´ˆê¸°í™”í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤!");
         }
         if (player != null && player.currentSkill != null)
         {
             skillCooldownTimer = player.currentSkill.cooltime;
-            Debug.Log($"ÀüÅõ ½ÃÀÛ! '{player.currentSkill.skillName}' ½ºÅ³ÀÇ ÃÊ±â ÄğÅ¸ÀÓ({skillCooldownTimer}ÅÏ)ÀÌ Àû¿ë");
+            Debug.Log($"ì „íˆ¬ ì‹œì‘! '{player.currentSkill.skillName}' ìŠ¤í‚¬ì˜ ì´ˆê¸° ì¿¨íƒ€ì„({skillCooldownTimer}í„´)ì´ ì ìš©");
         }
     }
 
 
     public void ResetForNewBattle(int newMaxTurns = 30)
     {
+        // ì „íˆ¬ ìƒíƒœ ì´ˆê¸°í™”
+        maxTurns = newMaxTurns;
+        currentTurn = 0;
+        battleEnded = false;
+        turnRunning = false;
+        usedSingleUseSkills.Clear();
+
         if (player != null)
         {
             player.ResetState(ground, playerStartIndex);
         }
         if (enemy != null)
         {
-            enemy.Ctrl.ResetState(ground, enemyStartIndex); // WarEnemy´Â º°µµ ¹öÇÁ°¡ ¾øÀ¸¹Ç·Î ÄÁÆ®·Ñ·¯¸¸ ÃÊ±âÈ­
+            enemy.Ctrl.ResetState(ground, enemyStartIndex); // WarEnemyëŠ” ë³„ë„ ë²„í”„ê°€ ì—†ìœ¼ë¯€ë¡œ ì»¨íŠ¸ë¡¤ëŸ¬ë§Œ ì´ˆê¸°í™”
         }
 
         if (player != null && player.currentSkill != null)
         {
             skillCooldownTimer = player.currentSkill.cooltime;
-            Debug.Log($"ÀüÅõ ¸®¼Â! '{player.currentSkill.skillName}' ½ºÅ³ÀÇ ÃÊ±â ÄğÅ¸ÀÓ({skillCooldownTimer}ÅÏ)ÀÌ Àû¿ëµË´Ï´Ù.");
+            Debug.Log($"ì „íˆ¬ ë¦¬ì…‹! '{player.currentSkill.skillName}' ìŠ¤í‚¬ì˜ ì´ˆê¸° ì¿¨íƒ€ì„({skillCooldownTimer}í„´)ì´ ì ìš©ë©ë‹ˆë‹¤.");
         }
         else
         {
-            skillCooldownTimer = 0; // ½ºÅ³ÀÌ ¾ø´Â °æ¿ì 0À¸·Î ÃÊ±âÈ­
+            skillCooldownTimer = 0; // ìŠ¤í‚¬ì´ ì—†ëŠ” ê²½ìš° 0ìœ¼ë¡œ ì´ˆê¸°í™”
         }
+
+        Debug.Log("ì „íˆ¬ ë° ìºë¦­í„° ìƒíƒœ ì´ˆê¸°í™” ì™„ë£Œ");
     }
     void GoStartTurn(WarAction playerAction)
     {
@@ -86,7 +95,7 @@ public class WarTurnManager : MonoBehaviour
         
         if (currentTurn >= maxTurns)
         {
-            Debug.Log($"ÅÏ Á¦ÇÑ({maxTurns})¿¡ µµ´Ş ÀüÅõ¸¦ Á¾·á");
+            Debug.Log($"í„´ ì œí•œ({maxTurns})ì— ë„ë‹¬ ì „íˆ¬ë¥¼ ì¢…ë£Œ");
             return;
         }
         if (player.AttackShieldBuff)
@@ -94,22 +103,22 @@ public class WarTurnManager : MonoBehaviour
             if (playerAction == WarAction.Attack)
             {
                 player.GainShield(1);
-                Debug.Log("°ø°İ °­È­ ¹öÇÁ È¿°ú ¹ßµ¿! ½¯µå¸¦ 1 È¹µæ");
+                Debug.Log("ê³µê²© ê°•í™” ë²„í”„ íš¨ê³¼ ë°œë™! ì‰´ë“œë¥¼ 1 íšë“");
             }
             else
             {
-                Debug.Log("°ø°İÀ» ¼±ÅÃÇÏÁö ¾Ê¾Æ ¹öÇÁ°¡ ¼Ò¸ê");
+                Debug.Log("ê³µê²©ì„ ì„ íƒí•˜ì§€ ì•Šì•„ ë²„í”„ê°€ ì†Œë©¸");
             }
-            player.AttackShieldBuff = false;//¹öÇÁ 1ÅÏ »ç¿ëÈÄ Á¦°Å
+            player.AttackShieldBuff = false;//ë²„í”„ 1í„´ ì‚¬ìš©í›„ ì œê±°
         }
         if (skillCooldownTimer > 0)
         {
             skillCooldownTimer--;
-            Debug.Log($"½ºÅ³ ÄğÅ¸ÀÓ °¨¼Ò. ³²Àº ÅÏ: {skillCooldownTimer}");
+            Debug.Log($"ìŠ¤í‚¬ ì¿¨íƒ€ì„ ê°ì†Œ. ë‚¨ì€ í„´: {skillCooldownTimer}");
         }
 
         currentTurn++;
-        Debug.Log($"Turn {currentTurn}/{maxTurns} ½ÃÀÛ - Player Action: {playerAction}");
+        Debug.Log($"Turn {currentTurn}/{maxTurns} ì‹œì‘ - Player Action: {playerAction}");
         StartCoroutine(Co_Turn(playerAction));
         if (battleEnded) return;
     }
@@ -122,19 +131,20 @@ public class WarTurnManager : MonoBehaviour
         PlayerPrefs.DeleteKey("HasSeenWarTutorial");
         PlayerPrefs.Save();
 
-        bool isWin = resultLog.Contains("½Â¸®");
-        WarHistory.RecordWarResult(isWin); // ÀüÅõ °á°ú¸¦ ±â·Ï ½Ã½ºÅÛ¿¡ ÀúÀå
-        var changes = new List<ParameterChange>//ÆÄ¶ó¹ÌÅÍ °ü·Ã Ãß°¡ºÎºĞ
+        bool isWin = resultLog.Contains("ï¿½Â¸ï¿½");
+        WarHistory.RecordWarResult(isWin); // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½Ã½ï¿½ï¿½Û¿ï¿½ ï¿½ï¿½ï¿½ï¿½
+        var changes = new List<ParameterChange>//ï¿½Ä¶ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½ï¿½Îºï¿½
+
         {
             new ParameterChange
             {
-            parameterType = ParameterType.ÀüÈ²,
+            parameterType = ParameterType.ì „í™©,
             valueChange = isWin ? +20 : -20
             }
         };
-        PlayerStats.Instance.ApplyChanges(changes); // ÀüÈ² ÆÄ¶ó¹ÌÅÍ º¯°æ Àû¿ë
+        GamePlayerStats.Instance.ApplyChanges(changes); // ì „í™© íŒŒë¼ë¯¸í„° ë³€ê²½ ì ìš©
         Debug.Log(resultLog);
-        Debug.Log("ÀüÅõ Á¾·á");
+        Debug.Log("ì „íˆ¬ ì¢…ë£Œ");
         OnBattleEnd?.Invoke(resultLog);
     }
 
@@ -143,17 +153,17 @@ public class WarTurnManager : MonoBehaviour
 
         if (player.IsDead && enemy.IsDead)
         {
-            EndBattle("¹«½ÂºÎ µ¿½Ã Àü¸ê");
+            EndBattle("ë¬´ìŠ¹ë¶€ ë™ì‹œ ì „ë©¸");
             return;
         }
         if (enemy.IsDead)
         {
-            EndBattle("½Â¸® ÀûÀÇ Ã¼·ÂÀÌ 0");
+            EndBattle("ìŠ¹ë¦¬ ì ì˜ ì²´ë ¥ì´ 0");
             return;
         }
         if (player.IsDead)
         {
-            EndBattle("ÆĞ¹è ÇÃ·¹ÀÌ¾îÀÇ Ã¼·ÂÀÌ 0");
+            EndBattle("íŒ¨ë°° í”Œë ˆì´ì–´ì˜ ì²´ë ¥ì´ 0");
             return;
         }
 
@@ -166,18 +176,18 @@ public class WarTurnManager : MonoBehaviour
 
         int lastIndex = ground.LaneLength - 1; // 15
 
-        // ÇÃ·¹ÀÌ¾î À§Ä¡ È®ÀÎ
+        // í”Œë ˆì´ì–´ ìœ„ì¹˜ í™•ì¸
         if (player.Ctrl.CurrentIndex == 0 || player.Ctrl.CurrentIndex == lastIndex)
         {
             player.KillByRingOut();
-            Debug.Log("ÇÃ·¹ÀÌ¾î Àå¿Ü!");
+            Debug.Log("í”Œë ˆì´ì–´ ì¥ì™¸!");
         }
 
-        // Àû À§Ä¡ È®ÀÎ
+        // ì  ìœ„ì¹˜ í™•ì¸
         if (enemy.Ctrl.CurrentIndex == 0 || enemy.Ctrl.CurrentIndex == lastIndex)
         {
             enemy.KillByRingOut();
-            Debug.Log("Àû Àå¿Ü!");
+            Debug.Log("ì  ì¥ì™¸!");
         }
     }
 
@@ -191,26 +201,26 @@ public class WarTurnManager : MonoBehaviour
         {
             case (WarAction.Attack, WarAction.Defend):
                 playerActsFirst = false;
-                Debug.Log("Çàµ¿ ¼ø¼­: Àû ¼±°ø (¹æ¾î)");
+                Debug.Log("í–‰ë™ ìˆœì„œ: ì  ì„ ê³µ (ë°©ì–´)");
                 break;
 
             default:
                 playerActsFirst = true;
-                Debug.Log("Çàµ¿ ¼ø¼­: ÇÃ·¹ÀÌ¾î ¼±°ø");
+                Debug.Log("í–‰ë™ ìˆœì„œ: í”Œë ˆì´ì–´ ì„ ê³µ");
                 break;
         }
 
         if (playerActsFirst)
         {
-            // ÇÃ·¹ÀÌ¾î ÀÌµ¿ ½ÃÀÛ
+            // í”Œë ˆì´ì–´ ì´ë™ ì‹œì‘
             player.Act(playerAction);
             while (player.IsBusy)
             {
                 if (player.Ctrl.CurrentIndex >= enemy.Ctrl.CurrentIndex)
                 {
-                    player.Ctrl.StopMovement(); // Ãæµ¹ ½Ã Áï½Ã ¸ØÃã
-                    enemy.Ctrl.StopMovement();  // »ó´ëµµ ¸ØÃã
-                    Debug.Log("ÀÌµ¿ Áß Ãæµ¹! ÇÃ·¹ÀÌ¾î ÀÌµ¿À» Áß´ÜÇÕ´Ï´Ù.");
+                    player.Ctrl.StopMovement(); // ì¶©ëŒ ì‹œ ì¦‰ì‹œ ë©ˆì¶¤
+                    enemy.Ctrl.StopMovement();  // ìƒëŒ€ë„ ë©ˆì¶¤
+                    Debug.Log("ì´ë™ ì¤‘ ì¶©ëŒ! í”Œë ˆì´ì–´ ì´ë™ì„ ì¤‘ë‹¨í•©ë‹ˆë‹¤.");
                     break;
                 }
                 yield return null; 
@@ -225,14 +235,14 @@ public class WarTurnManager : MonoBehaviour
                     {
                         player.Ctrl.StopMovement();
                         enemy.Ctrl.StopMovement();
-                        Debug.Log("ÀÌµ¿ Áß Ãæµ¹! Àû ÀÌµ¿À» Áß´ÜÇÕ´Ï´Ù.");
+                        Debug.Log("ì´ë™ ì¤‘ ì¶©ëŒ! ì  ì´ë™ì„ ì¤‘ë‹¨í•©ë‹ˆë‹¤.");
                         break;
                     }
                     yield return null;
                 }
             }
         }
-        else // ÀûÀÌ ¸ÕÀú Çàµ¿ÇÏ´Â °æ¿ì
+        else // ì ì´ ë¨¼ì € í–‰ë™í•˜ëŠ” ê²½ìš°
         {
             enemy.Act(enemyAction);
             while (enemy.IsBusy)
@@ -241,7 +251,7 @@ public class WarTurnManager : MonoBehaviour
                 {
                     player.Ctrl.StopMovement();
                     enemy.Ctrl.StopMovement();
-                    Debug.Log("ÀÌµ¿ Áß Ãæµ¹! Àû ÀÌµ¿À» Áß´ÜÇÕ´Ï´Ù.");
+                    Debug.Log("ì´ë™ ì¤‘ ì¶©ëŒ! ì  ì´ë™ì„ ì¤‘ë‹¨í•©ë‹ˆë‹¤.");
                     break;
                 }
                 yield return null;
@@ -256,7 +266,7 @@ public class WarTurnManager : MonoBehaviour
                     {
                         player.Ctrl.StopMovement();
                         enemy.Ctrl.StopMovement();
-                        Debug.Log("ÀÌµ¿ Áß Ãæµ¹! ÇÃ·¹ÀÌ¾î ÀÌµ¿À» Áß´ÜÇÕ´Ï´Ù.");
+                        Debug.Log("ì´ë™ ì¤‘ ì¶©ëŒ! í”Œë ˆì´ì–´ ì´ë™ì„ ì¤‘ë‹¨í•©ë‹ˆë‹¤.");
                         break;
                     }
                     yield return null;
@@ -280,7 +290,7 @@ public class WarTurnManager : MonoBehaviour
         Debug.Log($"Turn {currentTurn} End / Player Index: {player.Ctrl.CurrentIndex}, Enemy Index: {enemy.Ctrl.CurrentIndex}");
         CheckRingOutStatus();
         CheckWinLoseDrawAfterTurn();
-        if (!battleEnded && currentTurn >= maxTurns) EndBattle("¹«½ÂºÎ - ÅÏ Á¦ÇÑ ¼ÒÁø");
+        if (!battleEnded && currentTurn >= maxTurns) EndBattle("ë¬´ìŠ¹ë¶€ - í„´ ì œí•œ ì†Œì§„");
         if (choiceCard != null)
         {
             choiceCard.SetInteractable(true);
@@ -295,22 +305,24 @@ public class WarTurnManager : MonoBehaviour
 
         if (turnRunning || IsBattleEnded || player.currentSkill == null || skillCooldownTimer > 0)
         {
-            string reason = "½ºÅ³ »ç¿ë ºÒ°¡";
-            if (turnRunning) reason = "ÇöÀç ÅÏ ÁøÇà Áß";
-            else if (player.currentSkill == null) reason = "ÀåÂøµÈ ½ºÅ³ ¾øÀ½";
-            else if (skillCooldownTimer > 0) reason = $"ÄğÅ¸ÀÓ {skillCooldownTimer}ÅÏ ³²À½";
+            string reason = "ï¿½ï¿½Å³ ï¿½ï¿½ï¿½ ï¿½Ò°ï¿½";
+            if (turnRunning) reason = "ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½";
+            else if (player.currentSkill == null) reason = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å³ ï¿½ï¿½ï¿½ï¿½";
+            else if (skillCooldownTimer > 0) reason = $"ï¿½ï¿½Å¸ï¿½ï¿½ {skillCooldownTimer}ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½";
             warHUD.ShowActionFeedback(reason); 
+
             return;
         }
 
         SkillData usedSkill = player.currentSkill;
         if (usedSkill.isSingleUsePerCombat && usedSingleUseSkills.Contains(usedSkill))
         {
-            warHUD.ShowActionFeedback("ÀÌ¹ø ÀüÅõ¿¡¼­ ÀÌ¹Ì »ç¿ëÇÑ ½ºÅ³");
+            warHUD.ShowActionFeedback("ï¿½Ì¹ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¹ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å³");
             return;
         }
 
-        warHUD.ShowActionFeedback($"{usedSkill.skillName} »ç¿ë!");
+        warHUD.ShowActionFeedback($"{usedSkill.skillName} ï¿½ï¿½ï¿½!");
+
 
         player.UseSkill(enemy, this);
         if (usedSkill.isSingleUsePerCombat)
@@ -318,6 +330,7 @@ public class WarTurnManager : MonoBehaviour
             usedSingleUseSkills.Add(usedSkill);
         }
         skillCooldownTimer = usedSkill.cooltime;
+
     }
 
     public string GetSkillName()
@@ -329,7 +342,7 @@ public class WarTurnManager : MonoBehaviour
         return null;
     }
 
-    //¿ÜºÎ·Î ÅÏ Á¤º¸ ³Ñ±æ¿¹Á¤ ¾Æ¸¶ ½ÂÆĞÂÊ¿¡¼­
+    //ì™¸ë¶€ë¡œ í„´ ì •ë³´ ë„˜ê¸¸ì˜ˆì • ì•„ë§ˆ ìŠ¹íŒ¨ìª½ì—ì„œ
     public int CurrentTurn => currentTurn;
     public int MaxTurns => maxTurns;
     public bool IsBattleEnded => battleEnded || currentTurn >= maxTurns;

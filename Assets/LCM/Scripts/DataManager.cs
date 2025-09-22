@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Text;
 using System.Collections;
@@ -31,11 +31,15 @@ public class DataManager : MonoBehaviour
     //메인 이벤트 
     public Dictionary<int, MainEventData> mainEventDataDict;
     public Dictionary<int, AnswerData> answerDataDict;
+    //서브 이벤트
+    public Dictionary<int, AllSubEventData> subEventDataDict;
+    public Dictionary<int, SubEventAnswerData> subEventAnswerDataDict;
     //메인 룩업 테이블
     private Dictionary<int, MainCharacterData> CharacterDataDict;
-    private Dictionary<long, BGData> bgDataDict;
-    private Dictionary<long, SFXData> sfxDataDict;
-    private Dictionary<long, MainCharacterImgData> characterImgDataDict;
+    private Dictionary<int, BGData> bgDataDict;
+    private Dictionary<int, SFXData> sfxDataDict;
+    private Dictionary<int, MainCharacterImgData> characterImgDataDict;
+    private Dictionary<int, BackData> backDataDict;
     //전투 결과 이벤트
     public Dictionary<int, BattleResultData> battleResultDataDict;
     //엔딩 이벤트
@@ -60,6 +64,8 @@ public class DataManager : MonoBehaviour
     public Dictionary<int, Sprite> MainStoryCharacterImages; // 이미지 리소스를 위한 Dictionary
     public Dictionary<int, Sprite> MainStoryBGs; // 배경 리소스를 위한 Dictionary
     private Dictionary<int, NewMainEventData> mainEventData = new Dictionary<int, NewMainEventData>();
+    // Reset 이후 의도치 않은 저장을 방지하기 위한 플래그
+    private bool _suppressSavesUntilGameplay;
 
     private void Awake()
     {
@@ -87,23 +93,66 @@ public class DataManager : MonoBehaviour
 
     private void Start() /// 9.9. 이학권 추가
     {
+        #if UNITY_ANDROID && !UNITY_EDITOR
         FirebaseAuth.DefaultInstance.StateChanged += OnAuthStateChanged;
         TrySyncIfLoggedIn();
+        #else
+        Debug.Log("[DataManager] 에디터/비모바일 환경: Firebase 비활성");
+        #endif
     }
 
     private void OnAuthStateChanged(object sender, System.EventArgs e)
     {
-       TrySyncIfLoggedIn();
+        // 이미 동기화가 완료되었거나 게임이 진행 중이면 무시
+        if (_hasSyncedWithServer || (GameManager.instance != null && GameManager.instance.currentGameState != GameState.Title && GameManager.instance.currentGameState != GameState.Login && GameManager.instance.currentGameState != GameState.MainMenu))
+        {
+            return;
+        }
+        
+        TrySyncIfLoggedIn();
+    }
+
+    /// <summary>
+    /// Firebase 로그인 완료 시 호출되는 메서드
+    /// </summary>
+    public void OnFirebaseLoginCompleted()
+    {
+        Debug.Log("[DataManager] Firebase 로그인 완료 콜백 호출");
+        _hasSyncedWithServer = false; // 동기화 플래그 리셋
+        TrySyncIfLoggedIn();
     }
 
     private void TrySyncIfLoggedIn() /// 9.9. 이학권 추가
     {
+        #if UNITY_ANDROID && !UNITY_EDITOR
         var user = FirebaseAuth.DefaultInstance.CurrentUser;
+        Debug.Log($"[DataManager] TrySyncIfLoggedIn 호출 - User: {(user != null ? user.UserId : "null")}, HasSynced: {_hasSyncedWithServer}");
+        
         if (user != null && !_hasSyncedWithServer)
         {
+            // Firebase Database가 초기화되었는지 확인
+            if (FirebaseDatabase.DefaultInstance == null)
+            {
+                Debug.LogWarning("[DataManager] Firebase Database가 아직 초기화되지 않음. 1초 후 재시도...");
+                Invoke(nameof(TrySyncIfLoggedIn), 1f);
+                return;
+            }
+            
             _hasSyncedWithServer = true;
+            Debug.Log($"[DataManager] 서버 동기화 시작 - UserId: {user.UserId}");
             StartCoroutine(SyncWithServer(user.UserId));
         }
+        else if (user == null)
+        {
+            Debug.Log("[DataManager] Firebase 사용자가 로그인되지 않음");
+        }
+        else
+        {
+            Debug.Log("[DataManager] 이미 서버 동기화 완료됨");
+        }
+        #else
+        Debug.Log("[DataManager] 에디터/비모바일 환경: 서버 동기화 생략");
+        #endif
     }
 
     /// <summary>
@@ -112,13 +161,15 @@ public class DataManager : MonoBehaviour
     public void StartNewGame()
     {
         PlayerData = new GameData();
+        // 메뉴 단계에서 자동 저장이 일어나지 않도록 저장 억제
+        _suppressSavesUntilGameplay = true;
      //   SaveLocal();
         Debug.Log("새로운 게임 데이터 생성 및 저장 완료.");
     }
 
     /// <summary>
     /// 파일에서 플레이어 데이터를 불러옵니다. 파일이 없으면 새 게임 데이터가 생성됩니다.
-    /// 9.9. 이학권 변경
+    /// 9.9. 이학권 변경 - 암호화 기능 추가 (기존 평문 파일 호환성 포함)
     /// </summary>
     public bool LoadGame() // void -> bool로 변경
     {
@@ -126,8 +177,58 @@ public class DataManager : MonoBehaviour
         {
             try
             {
-                string json = File.ReadAllText(_playerDataSavePath, Encoding.UTF8);
-                PlayerData = JsonUtility.FromJson<GameData>(json);
+                string json = null;
+                
+                // 1. 먼저 암호화된 파일로 시도
+                try
+                {
+                    json = EncryptionUtility.LoadEncryptedFile(_playerDataSavePath);
+                    if (!string.IsNullOrEmpty(json))
+                    {
+                        Debug.Log("암호화된 세이브 파일을 성공적으로 로드했습니다.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"암호화된 파일 로드 실패: {ex.Message}");
+                }
+                
+                // 2. 암호화된 파일 로드 실패 시 평문 파일로 시도 (기존 호환성)
+                if (string.IsNullOrEmpty(json))
+                {
+                    try
+                    {
+                        json = File.ReadAllText(_playerDataSavePath, Encoding.UTF8);
+                        Debug.Log("기존 평문 세이브 파일을 로드했습니다. 다음 저장 시 암호화됩니다.");
+                        
+                        // 평문 파일을 암호화하여 다시 저장 (마이그레이션)
+                        PlayerData = JsonUtility.FromJson<GameData>(json);
+                        if (PlayerData != null)
+                        {
+                            SaveLocal(); // 암호화된 형태로 다시 저장
+                            Debug.Log("기존 평문 파일을 암호화된 형태로 마이그레이션 완료.");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogWarning($"평문 파일 로드도 실패: {ex.Message}");
+                        json = null;
+                    }
+                }
+                
+                // 3. 모든 로드 시도 실패
+                if (string.IsNullOrEmpty(json))
+                {
+                    Debug.LogWarning("모든 세이브 파일 로드 시도 실패, 새 게임을 시작합니다.");
+                    StartNewGame();
+                    return false;
+                }
+
+                // 4. JSON 파싱 (암호화된 파일의 경우)
+                if (PlayerData == null)
+                {
+                    PlayerData = JsonUtility.FromJson<GameData>(json);
+                }
 
                 if (PlayerData == null)
                 {
@@ -157,6 +258,7 @@ public class DataManager : MonoBehaviour
     }
     /// <summary>
     /// [신규] 설정 데이터를 로컬 파일에서 불러옵니다.
+    /// 암호화 기능 추가 (기존 평문 파일 호환성 포함)
     /// </summary>
     public void LoadSettings()
     {
@@ -164,8 +266,59 @@ public class DataManager : MonoBehaviour
         {
             try
             {
-                string json = File.ReadAllText(_settingsSavePath, Encoding.UTF8);
-                PlayerSettings = JsonUtility.FromJson<SettingsData>(json);
+                string json = null;
+                
+                // 1. 먼저 암호화된 설정 파일로 시도
+                try
+                {
+                    json = EncryptionUtility.LoadEncryptedFile(_settingsSavePath);
+                    if (!string.IsNullOrEmpty(json))
+                    {
+                        Debug.Log("암호화된 설정 파일을 성공적으로 로드했습니다.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"암호화된 설정 파일 로드 실패: {ex.Message}");
+                }
+                
+                // 2. 암호화된 파일 로드 실패 시 평문 파일로 시도 (기존 호환성)
+                if (string.IsNullOrEmpty(json))
+                {
+                    try
+                    {
+                        json = File.ReadAllText(_settingsSavePath, Encoding.UTF8);
+                        Debug.Log("기존 평문 설정 파일을 로드했습니다. 다음 저장 시 암호화됩니다.");
+                        
+                        // 평문 파일을 암호화하여 다시 저장 (마이그레이션)
+                        PlayerSettings = JsonUtility.FromJson<SettingsData>(json);
+                        if (PlayerSettings != null)
+                        {
+                            SaveSettings(); // 암호화된 형태로 다시 저장
+                            Debug.Log("기존 평문 설정 파일을 암호화된 형태로 마이그레이션 완료.");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogWarning($"평문 설정 파일 로드도 실패: {ex.Message}");
+                        json = null;
+                    }
+                }
+                
+                // 3. 모든 로드 시도 실패
+                if (string.IsNullOrEmpty(json))
+                {
+                    Debug.LogWarning("모든 설정 파일 로드 시도 실패, 기본 설정을 생성합니다.");
+                    PlayerSettings = new SettingsData();
+                    return;
+                }
+
+                // 4. JSON 파싱 (암호화된 파일의 경우)
+                if (PlayerSettings == null)
+                {
+                    PlayerSettings = JsonUtility.FromJson<SettingsData>(json);
+                }
+                
                 if (PlayerSettings == null)
                 {
                     Debug.LogWarning("설정 파일이 손상되어 기본 설정을 생성합니다.");
@@ -186,13 +339,23 @@ public class DataManager : MonoBehaviour
     }
     /// <summary>
     /// [신규] 현재 '설정'을 로컬파일에 저장합니다.
+    /// 암호화 기능 추가
     /// </summary>
     public void SaveSettings()
     {
         if (PlayerSettings == null) return;
         string json = JsonUtility.ToJson(PlayerSettings, true);
-        File.WriteAllText(_settingsSavePath, json, Encoding.UTF8);
-        Debug.Log($"설정 저장 완료: {_settingsSavePath}");
+        
+        // 암호화하여 저장
+        bool saveSuccess = EncryptionUtility.SaveEncryptedFile(_settingsSavePath, json);
+        if (saveSuccess)
+        {
+            Debug.Log($"암호화된 설정 저장 완료: {_settingsSavePath}");
+        }
+        else
+        {
+            Debug.LogError($"설정 저장 실패: {_settingsSavePath}");
+        }
     }
 
     /// <summary>
@@ -217,18 +380,44 @@ public class DataManager : MonoBehaviour
 
     /// <summary>
     /// 현재 플레이어 데이터를 로컬파일에 저장합니다.
-    /// 9.9. 이학권 변경
+    /// 9.9. 이학권 변경 - 암호화 기능 추가 + 서버 동기화
     /// </summary>
     public void SaveLocal()
     {
         if (PlayerData == null) return;
+        if (_suppressSavesUntilGameplay) { Debug.Log("[DataManager] 저장 억제 중(게임 플레이 전). SaveLocal() 건너뜀"); return; }
         PlayerData.lastUpdated = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         string json = JsonUtility.ToJson(PlayerData, true);
-        File.WriteAllText(_playerDataSavePath, json, Encoding.UTF8);
-        Debug.Log($"로컬 저장 완료: {_playerDataSavePath}");
+        
+        // 암호화하여 저장
+        bool saveSuccess = EncryptionUtility.SaveEncryptedFile(_playerDataSavePath, json);
+        if (saveSuccess)
+        {
+            Debug.Log($"암호화된 로컬 저장 완료: {_playerDataSavePath}");
+            
+            // Firebase 사용자가 로그인되어 있으면 서버에도 업로드 (Android 디바이스에서만)
+            #if UNITY_ANDROID && !UNITY_EDITOR
+            var user = FirebaseAuth.DefaultInstance.CurrentUser;
+            if (user != null)
+            {
+                Debug.Log("[DataManager] Firebase 사용자 로그인됨, 서버 동기화 시작");
+                StartCoroutine(UploadToServerAsync(user.UserId));
+            }
+            else
+            {
+                Debug.Log("[DataManager] Firebase 사용자 로그인되지 않음, 로컬 저장만 완료");
+            }
+            #else
+            Debug.Log("[DataManager] 에디터/비모바일 환경: Firebase 업로드 비활성");
+            #endif
+        }
+        else
+        {
+            Debug.LogError($"게임 데이터 저장 실패: {_playerDataSavePath}");
+        }
     }
     /// <summary>
-    /// [신규] 모든 로컬 데이터(진행도, 설정, PlayerPrefs)를 삭제합니다.
+    /// [신규] 모든 로컬 데이터(진행도, 설정)를 삭제합니다.
     /// </summary>
     public void DeleteAllLocalData()
     {
@@ -246,12 +435,36 @@ public class DataManager : MonoBehaviour
             Debug.Log($"설정 파일 삭제 완료: {_settingsSavePath}");
         }
 
-        // 3. PlaythroughHistory가 사용하는 PlayerPrefs 기록 삭제
-        PlaythroughHistory.Instance.ClearHistory();
+        // 3. PlayerPrefs 기록 삭제 (필요 시)
+        // PlayerPrefs.DeleteAll();
+
+        // 초기화 직후에는 저장 생성/덮어쓰기 방지
+        _suppressSavesUntilGameplay = true;
 
         Debug.LogWarning("[DataManager] 모든 로컬 데이터가 초기화되었습니다.");
     }
 
+    /// <summary>
+    /// [신규] 특정 전투 결과를 플레이어 데이터에 기록합니다.
+    /// </summary>
+    public void RecordBattleResult(int resultId)
+    {
+        if (PlayerData == null || PlayerData.completedBattleResultIds.Contains(resultId)) return;
+        PlayerData.completedBattleResultIds.Add(resultId);
+        Debug.Log($"[DataManager] 전투 결과 기록됨: ID {resultId}");
+        SaveLocal();
+    }
+
+    /// <summary>
+    /// [신규] 특정 엔딩을 플레이어 데이터에 기록합니다.
+    /// </summary>
+    public void RecordEnding(int endingId)
+    {
+        if (PlayerData == null || PlayerData.completedEndingIds.Contains(endingId)) return;
+        PlayerData.completedEndingIds.Add(endingId);
+        Debug.Log($"[DataManager] 엔딩 기록됨: ID {endingId}");
+        SaveLocal();
+    }
 
 
     /// <summary>
@@ -260,50 +473,83 @@ public class DataManager : MonoBehaviour
     /// </summary>
     private IEnumerator SyncWithServer(string uid)
     {
+        #if !(UNITY_ANDROID && !UNITY_EDITOR)
+        Debug.Log("[DataManager] 에디터/비모바일 환경: 서버 동기화 루틴 생략");
+        yield break;
+        #endif
+        Debug.Log($"[DataManager] SyncWithServer 시작 - UID: {uid}");
+        
         // 1) 서버에서 데이터 읽기
         var dbRef = FirebaseDatabase.DefaultInstance
             .GetReference($"users/{uid}/playerData");
+
+        Debug.Log($"[DataManager] Firebase Database 참조 생성: users/{uid}/playerData");
 
         var fetchTask = dbRef.GetValueAsync();
         yield return new WaitUntil(() => fetchTask.IsCompleted);
 
         if (fetchTask.IsFaulted)
         {
-            Debug.LogError("서버 데이터 가져오기 실패: " + fetchTask.Exception);
+            Debug.LogError($"[DataManager] 서버 데이터 가져오기 실패: {fetchTask.Exception}");
+            if (fetchTask.Exception != null)
+            {
+                Debug.LogError($"[DataManager] 예외 상세: {fetchTask.Exception.InnerException?.Message}");
+            }
             yield break;
         }
 
         DataSnapshot snapshot = fetchTask.Result;
+        Debug.Log($"[DataManager] 서버 스냅샷 존재 여부: {snapshot.Exists}");
+        
         if (snapshot.Exists)
         {
             // 2) 서버 JSON → GameData
             string serverJson = snapshot.GetRawJsonValue();
+            Debug.Log($"[DataManager] 서버에서 받은 JSON 길이: {serverJson?.Length ?? 0}");
+            
             var serverData = JsonUtility.FromJson<GameData>(serverJson);
 
             // 3) 타임스탬프 비교
-            if (serverData.lastUpdated > PlayerData.lastUpdated)
-            {
-                // 서버가 더 최신 → 로컬 덮어쓰기
-                PlayerData = serverData;
-                SaveLocal();
-                Debug.Log("서버 데이터가 최신, 로컬 업데이트 완료.");
-            }
-            else if (serverData.lastUpdated < PlayerData.lastUpdated)
-            {
-                // 로컬이 더 최신 → 서버에 덮어쓰기
-                yield return UploadToServer(dbRef);
-                Debug.Log("로컬 데이터가 최신, 서버 업데이트 완료.");
-            }
-            else
-            {
-                Debug.Log("로컬·서버 데이터 동일.");
-            }
+			// 서버 권위 타임스탬프 우선 비교
+			long serverSV = (serverData != null) ? serverData.lastUpdatedServer : 0;
+			long localSV = (PlayerData != null) ? PlayerData.lastUpdatedServer : 0;
+			bool serverHasSV = serverSV > 0;
+			bool localHasSV = localSV > 0;
+
+			Debug.Log($"[DataManager] 타임스탬프 비교 - 서버: {serverSV}, 로컬: {localSV}");
+
+			bool serverIsNewer;
+			if (serverHasSV || localHasSV)
+			{
+				long a = serverHasSV ? serverSV : long.MinValue;
+				long b = localHasSV ? localSV : long.MinValue;
+				serverIsNewer = a > b;
+			}
+			else
+			{
+				long serverLocal = (serverData != null) ? serverData.lastUpdated : 0;
+				long localLocal = (PlayerData != null) ? PlayerData.lastUpdated : 0;
+				serverIsNewer = serverLocal > localLocal;
+			}
+
+			if (serverIsNewer)
+			{
+				PlayerData = serverData;
+				SaveLocal();
+				Debug.Log("[DataManager] 서버 데이터가 최신, 로컬 업데이트 완료.");
+			}
+			else
+			{
+				yield return UploadToServer(dbRef);
+				Debug.Log("[DataManager] 로컬 데이터가 최신 또는 동일, 서버 업데이트 완료.");
+			}
         }
         else
         {
             // 서버에 데이터 없음 → 로컬 업로드
+            Debug.Log("[DataManager] 서버에 데이터 없음, 로컬 데이터 업로드 시작");
             yield return UploadToServer(dbRef);
-            Debug.Log("서버 데이터 없음, 로컬 업로드 완료.");
+            Debug.Log("[DataManager] 서버 데이터 없음, 로컬 업로드 완료.");
         }
     }
 
@@ -313,13 +559,134 @@ public class DataManager : MonoBehaviour
     /// </summary>
     private IEnumerator UploadToServer(DatabaseReference dbRef)
     {
-        SaveLocal(); // lastUpdated 갱신
+        #if !(UNITY_ANDROID && !UNITY_EDITOR)
+        Debug.Log("[DataManager] 에디터/비모바일 환경: 서버 업로드 루틴 생략");
+        yield break;
+        #endif
+        Debug.Log("[DataManager] UploadToServer 시작");
+        
+        // 1) 로컬 타임스탬프 갱신 및 전체 JSON 업로드
+        SaveLocal();
         string json = JsonUtility.ToJson(PlayerData, true);
+        Debug.Log($"[DataManager] 업로드할 JSON 길이: {json?.Length ?? 0}");
+        
         var uploadTask = dbRef.SetRawJsonValueAsync(json);
         yield return new WaitUntil(() => uploadTask.IsCompleted);
-
+        
         if (uploadTask.IsFaulted)
-            Debug.LogError("서버 업로드 실패" + uploadTask.Exception);
+        {
+            Debug.LogError($"[DataManager] 서버 업로드 실패: {uploadTask.Exception}");
+            if (uploadTask.Exception != null)
+            {
+                Debug.LogError($"[DataManager] 업로드 예외 상세: {uploadTask.Exception.InnerException?.Message}");
+            }
+            yield break;
+        }
+        
+        Debug.Log("[DataManager] 서버 업로드 성공");
+
+        // 2) 서버 권위 타임스탬프 설정
+        var updates = new Dictionary<string, object>
+        {
+            { "lastUpdatedServer", ServerValue.Timestamp }
+        };
+        var tsTask = dbRef.UpdateChildrenAsync(updates);
+        yield return new WaitUntil(() => tsTask.IsCompleted);
+        
+        if (tsTask.IsFaulted)
+        {
+            Debug.LogError($"[DataManager] 서버 타임스탬프 설정 실패: {tsTask.Exception}");
+            if (tsTask.Exception != null)
+            {
+                Debug.LogError($"[DataManager] 타임스탬프 예외 상세: {tsTask.Exception.InnerException?.Message}");
+            }
+            yield break;
+        }
+        
+        Debug.Log("[DataManager] 서버 타임스탬프 설정 성공");
+
+        // 3) 서버가 기록한 값을 읽어와 로컬 반영
+        var readTask = dbRef.Child("lastUpdatedServer").GetValueAsync();
+        yield return new WaitUntil(() => readTask.IsCompleted);
+        
+        if (!readTask.IsFaulted && readTask.Result != null && long.TryParse(readTask.Result.Value?.ToString(), out var serverMillis))
+        {
+            PlayerData.lastUpdatedServer = serverMillis;
+            SaveLocal();
+            Debug.Log($"[DataManager] 서버 타임스탬프 로컬 반영 완료: {serverMillis}");
+        }
+        else
+        {
+            Debug.LogWarning("[DataManager] 서버 타임스탬프 읽기 실패");
+        }
+        
+        Debug.Log("[DataManager] UploadToServer 완료");
+    }
+
+    /// <summary>
+    /// 서버에 로컬 데이터를 업로드 (SaveLocal에서 호출)
+    /// </summary>
+    private IEnumerator UploadToServerAsync(string uid)
+    {
+        #if !(UNITY_ANDROID && !UNITY_EDITOR)
+        Debug.Log("[DataManager] 에디터/비모바일 환경: 서버 업로드 루틴 생략");
+        yield break;
+        #endif
+        Debug.Log("[DataManager] UploadToServerAsync 시작");
+        
+        var dbRef = FirebaseDatabase.DefaultInstance
+            .GetReference($"users/{uid}/playerData");
+
+        // 로컬 데이터를 JSON으로 변환
+        string json = JsonUtility.ToJson(PlayerData, true);
+        Debug.Log($"[DataManager] 서버 업로드할 JSON 길이: {json?.Length ?? 0}");
+        
+        // 서버에 업로드
+        var uploadTask = dbRef.SetRawJsonValueAsync(json);
+        yield return new WaitUntil(() => uploadTask.IsCompleted);
+        
+        if (uploadTask.IsFaulted)
+        {
+            Debug.LogError($"[DataManager] 서버 업로드 실패: {uploadTask.Exception}");
+            if (uploadTask.Exception != null)
+            {
+                Debug.LogError($"[DataManager] 업로드 예외 상세: {uploadTask.Exception.InnerException?.Message}");
+            }
+            yield break;
+        }
+        
+        Debug.Log("[DataManager] 서버 업로드 성공");
+
+        // 서버 타임스탬프 설정
+        var updates = new Dictionary<string, object>
+        {
+            { "lastUpdatedServer", ServerValue.Timestamp }
+        };
+        var tsTask = dbRef.UpdateChildrenAsync(updates);
+        yield return new WaitUntil(() => tsTask.IsCompleted);
+        
+        if (tsTask.IsFaulted)
+        {
+            Debug.LogError($"[DataManager] 서버 타임스탬프 설정 실패: {tsTask.Exception}");
+            yield break;
+        }
+        
+        Debug.Log("[DataManager] 서버 타임스탬프 설정 성공");
+
+        // 서버 타임스탬프를 로컬에 반영
+        var readTask = dbRef.Child("lastUpdatedServer").GetValueAsync();
+        yield return new WaitUntil(() => readTask.IsCompleted);
+        
+        if (!readTask.IsFaulted && readTask.Result != null && long.TryParse(readTask.Result.Value?.ToString(), out var serverMillis))
+        {
+            PlayerData.lastUpdatedServer = serverMillis;
+            // 로컬 파일에 타임스탬프 반영 (암호화 없이 직접 저장)
+            string updatedJson = JsonUtility.ToJson(PlayerData, true);
+            EncryptionUtility.SaveEncryptedFile(_playerDataSavePath, updatedJson);
+            Debug.Log($"[DataManager] 서버 타임스탬프 로컬 반영 완료: {serverMillis}");
+        }
+        
+        Debug.Log("[DataManager] UploadToServerAsync 완료");
     }
 
     /// <summary>
@@ -329,16 +696,25 @@ public class DataManager : MonoBehaviour
     {
         // [수정] 게임 종료 시 현재 진행 상황을 저장하도록 OnApplicationQuit 로직을 활성화합니다.
         // PlayerData가 null이 아닐 때만 저장 로직을 실행하여 예외를 방지합니다.
-        if (PlayerData != null)
+        if (PlayerData != null && !_suppressSavesUntilGameplay)
         {
             SaveLocal();
         }
     }
 
+    /// <summary>
+    /// 게임 플레이가 실제로 시작되었음을 알리고 저장 억제를 해제합니다.
+    /// 예: 이벤트 사이클 시작 시 호출.
+    /// </summary>
+    public void AllowSavesFromNow()
+    {
+        _suppressSavesUntilGameplay = false;
+    }
+
 
     public async UniTask InitializeDataAsync()
     {
-        await MainEventInitializeDataAsync();
+        await AllEventInitializeDataAsync();
         try
         {
             Debug.Log("이벤트 데이터 로딩 시작");
@@ -371,11 +747,11 @@ public class DataManager : MonoBehaviour
             pageTypeDict = choTextList.GroupBy(p => p.PageType_Num)
                                       .ToDictionary(g => g.Key, g => g.First().PageType);
 
-            eventDict = choTextList.GroupBy(c => c.Parameter_Num)
-                                       .ToDictionary(g => g.Key, g => g.First().Parameter_type);
+        eventDict = choTextList.GroupBy(c => c.Parameter_Num)
+                                   .ToDictionary(g => g.Key, g => g.First().Parameter_type);
 
-            _isReady.TrySetResult(true);
-            Debug.Log("모든 이벤트 데이터가 성공적으로 로드되었습니다.");
+        _isReady.TrySetResult(true);
+        Debug.Log("모든 이벤트 데이터가 성공적으로 로드되었습니다.");
         }
         catch (System.Exception ex)
         {
@@ -384,7 +760,7 @@ public class DataManager : MonoBehaviour
         }
     }
 
-    public async UniTask MainEventInitializeDataAsync()
+    public async UniTask AllEventInitializeDataAsync()
     {
         try
         {
@@ -393,6 +769,9 @@ public class DataManager : MonoBehaviour
             // MainEventData11.csv와 AnswerID.csv를 비동기로 로드합니다.
             var mainEventTask = Csvparser.ParseAsync<MainEventData>("MainEventData");
             var answerTask = Csvparser.ParseAsync<AnswerData>("MainAnswerID");
+            //서브 이벤트 데이터 로딩
+            var subEventTask = Csvparser.ParseAsync<AllSubEventData>("SubEventData1");
+            var subAnswerTask = Csvparser.ParseAsync<SubEventAnswerData>("SubEventAnswerID");
             //룩업 테이블 로딩
             var bgDataTask = Csvparser.ParseAsync<BGData>("MainBGData");
             var sfxDataTask = Csvparser.ParseAsync<SFXData>("MainSFXData");
@@ -400,10 +779,11 @@ public class DataManager : MonoBehaviour
             var characterImgDataTask = Csvparser.ParseAsync<MainCharacterImgData>("MainCharacterImgData");
             var endingEventDataTask = Csvparser.ParseAsync<EndingEventData>("EndingEventData");
             var endingCutSceneTask = Csvparser.ParseAsync<EndingCutScene>("EndingEventCutScene");
-            var battleResultTask = Csvparser.ParseAsync<BattleResultData>("BattleResultTextData"); 
+            var battleResultTask = Csvparser.ParseAsync<BattleResultData>("BattleResultTextData");
+            var backDataTask = Csvparser.ParseAsync<BackData>("BackData");
 
-            var (mainEventList, answerList, characterList, bgList, sfxList, characterImgList, endingEventList, endingCutSceneList, battleResultList) =
-                await UniTask.WhenAll(mainEventTask, answerTask, characterDataTask, bgDataTask, sfxDataTask, characterImgDataTask, endingEventDataTask, endingCutSceneTask, battleResultTask);
+            var (mainEventList, answerList, characterList, bgList, sfxList, characterImgList, endingEventList, endingCutSceneList, battleResultList, backDataList, subEventList, subAnswerList) =
+                await UniTask.WhenAll(mainEventTask, answerTask, characterDataTask, bgDataTask, sfxDataTask, characterImgDataTask, endingEventDataTask, endingCutSceneTask, battleResultTask, backDataTask, subEventTask, subAnswerTask);
 
             Debug.Log("모든 파일 로딩 완료");
 
@@ -416,9 +796,12 @@ public class DataManager : MonoBehaviour
             CharacterDataDict = characterList.ToDictionary(e => e.Chr_ID, e => e);
             bgDataDict = bgList.ToDictionary(bg => bg.BG_ID, bg => bg);
             sfxDataDict = sfxList.ToDictionary(sfx => sfx.SFX_ID, sfx => sfx);
-            characterImgDataDict = characterImgList.ToDictionary(c => (long)c.CharacterImg_ID, c => c);
+            characterImgDataDict = characterImgList.ToDictionary(c => c.CharacterImg_ID, c => c);
             endingEventDataDict = endingEventList.ToDictionary(e => e.ID, e => e);
             endingCutSceneDict = endingCutSceneList.ToDictionary(c => c.EndingCutScene_ID, c => c);
+            backDataDict = backDataList.ToDictionary(d => d.Back_ID, d => d);
+            subEventDataDict = subEventList.ToDictionary(e => e.ID, e => e);
+            subEventAnswerDataDict = subAnswerList.ToDictionary(a => a.AnswerID, a => a);
 
             // 모든 원본 데이터 로딩이 끝난 후, NewMainEventData 딕셔너리를 채웁니다.
             mainEventData.Clear(); // 혹시 모를 이전 데이터 삭제
@@ -449,7 +832,6 @@ public class DataManager : MonoBehaviour
                 }
             }
                 Debug.Log($"[DataManager] {mainEventData.Count}개의 메인 스토리 데이터를 가공하여 최종 준비했습니다.");
-
 
             _isReady.TrySetResult(true);
             Debug.Log("모든 이벤트 데이터가 성공적으로 로드되었습니다.");
@@ -593,10 +975,31 @@ public class DataManager : MonoBehaviour
         {
             fullEventData.characterImgData = characterImgData;
         }
+        if(backDataDict.TryGetValue(rawData.Back_ID, out var backData))
+        {
+            fullEventData.backData = backData;
+        } 
 
         // 왼쪽 및 오른쪽 선택지 구성
         fullEventData.leftChoice = CreateMainChoice(rawData.AnswerLeftID);
         fullEventData.rightChoice = CreateMainChoice(rawData.AnswerRightID);
+
+
+        //데이터 확인용 로그
+        Debug.Log($"<color=cyan>[DataManager] 이벤트 ID {eventID} 로드 성공!</color>");
+        Debug.Log($"<b>대화 내용:</b> \"{fullEventData.dialogue}\"");
+        Debug.Log($"<b>왼쪽 선택지:</b> '{fullEventData.leftChoice.choiceText}'");
+        if (fullEventData.leftChoice.outcome.parameterChanges.Count > 0)
+        {
+            var changes = string.Join(", ", fullEventData.leftChoice.outcome.parameterChanges.Select(p => $"{p.parameterType} {p.valueChange}"));
+            Debug.Log($"  <b>ㄴ 증감치:</b> {changes}");
+        }
+        Debug.Log($"<b>오른쪽 선택지:</b> '{fullEventData.rightChoice.choiceText}'");
+        if (fullEventData.rightChoice.outcome.parameterChanges.Count > 0)
+        {
+            var changes = string.Join(", ", fullEventData.rightChoice.outcome.parameterChanges.Select(p => $"{p.parameterType} {p.valueChange}"));
+            Debug.Log($"  <b>ㄴ 증감치:</b> {changes}");
+        }
 
         return fullEventData;
     }
@@ -616,6 +1019,53 @@ public class DataManager : MonoBehaviour
 
         return foundData;
     }
+
+    private List<ParameterChange> ParseRewardString(string rewardString)
+    {
+        var changes = new List<ParameterChange>();
+
+        if (string.IsNullOrEmpty(rewardString))
+        {
+            return changes;
+        }
+
+        var rewardItems = rewardString.Split(',');
+
+        foreach (var item in rewardItems)
+        {
+            var cleanItem = item.Trim();
+            if (string.IsNullOrEmpty(cleanItem)) continue;
+
+            var parts = cleanItem.Split(' ');
+            if (parts.Length < 3) continue;
+
+            // 문자열을 ParameterType Enum으로 변환합니다.
+            if (!Enum.TryParse(parts[0], out ParameterType parameterType))
+            {
+                Debug.LogError($"[DataManager] 파라미터 이름 '{parts[0]}'을 유효한 ParameterType으로 변환할 수 없습니다.");
+                continue;
+            }
+
+            if (!int.TryParse(parts[1], out int value))
+            {
+                Debug.LogError($"[DataManager] 보상 값 '{parts[1]}'을 숫자로 변환할 수 없습니다.");
+                continue;
+            }
+
+            var direction = parts[2];
+            var finalValue = (direction == "하락") ? -value : value;
+
+            // 수정된 ParameterChange 클래스에 맞게 값 할당
+            changes.Add(new ParameterChange
+            {
+                parameterType = parameterType,
+                valueChange = finalValue
+            });
+        }
+
+        return changes;
+    }
+
     private MainEventChoice CreateMainChoice(int answerID)
     {
         var choice = new MainEventChoice();
@@ -631,7 +1081,12 @@ public class DataManager : MonoBehaviour
             Debug.Log($"[DataManager] -> <color=green>성공!</color> AnswerID: {answerID}를 찾았습니다. 텍스트: '{answerData.Text_KR}', 다음 이벤트 ID: {answerData.NextTextID}");
             choice.choiceText = answerData.Text_KR;
             choice.nextEventID = answerData.NextTextID;
-            //선택지 보상치 적용 단
+            //선택지 보상치 적용 단 
+            if (!string.IsNullOrEmpty(answerData.AnswerReward))
+            {
+                // ParseRewardString 함수를 호출하여 보상치 목록을 가져옵니다.
+                choice.outcome.parameterChanges = ParseRewardString(answerData.AnswerReward);
+            }
         }
         else
         {
@@ -701,9 +1156,48 @@ public class DataManager : MonoBehaviour
             return null;
         }
 
+        bool isBranchTriggered = false;
+        // PlaythroughHistory가 초기화되었는지 확인
+        if (PlaythroughHistory.Instance != null)
+        {
+            switch (rawData.ConditionType)
+            {
+                case 0: // 0: 조건 없음
+                    isBranchTriggered = false;
+                    break;
 
-        // 분기 조건 확인: ChangeCondition 이벤트가 과거에 성공적으로 완료되었는지 여부
-        bool isBranchTriggered = rawData.ConditionType == 1 && PlaythroughHistory.Instance.HasCompletedEvent(rawData.ChangeCondition);
+                case 1: // 1: 특정 파라미터 이벤트 경험
+                    bool eventCompleted = PlaythroughHistory.Instance.GetEventCompletionState(rawData.ChangeCondition, out bool wasSuccess);
+                    if (eventCompleted)
+                    {
+                        // CSV의 IsConditionSuccess (0 또는 1)와 실제 성공 여부(bool)를 비교
+                        bool requiredState = (rawData.IsConditionSuccess == 1);
+                        isBranchTriggered = (wasSuccess == requiredState);
+                    }
+                    break;
+
+                case 2: // 2: 특정 서브 이벤트 그룹 경험
+                    isBranchTriggered = PlaythroughHistory.Instance.HasCompletedSubEventGroup(rawData.ChangeCondition);
+                    break;
+
+                case 3: // 3: 특정 전투 결과 경험
+                    // 이 데이터는 GameData에 저장되므로 PlayerData에서 직접 확인
+                    if (PlayerData != null)
+                    {
+                        isBranchTriggered = PlayerData.completedBattleResultIds.Contains(rawData.ChangeCondition);
+                    }
+                    break;
+
+                case 4: // 4: 특정 엔딩 경험
+                    isBranchTriggered = PlaythroughHistory.Instance.HasCompletedEnding(rawData.ChangeCondition);
+                    break;
+
+                default:
+                    isBranchTriggered = false;
+                    break;
+            }
+        }
+
 
         var fullEventData = new EventData
         {
@@ -747,6 +1241,62 @@ public class DataManager : MonoBehaviour
         return fullEventData;
     }
 
+    //서비 이벤트의 ID값을 이용하여 데이터를 가져오는 메서드
+    public FullSubEventData GetSubEventDataById(int eventID)
+    {
+        if (!subEventDataDict.TryGetValue(eventID, out var rawData))
+        {
+            Debug.LogError($"[DataManager] ID {eventID}에 해당하는 서브 이벤트 데이터를 찾을 수 없습니다.");
+            return null;
+        }
+
+        var fullEventData = new FullSubEventData
+        {
+            ID = rawData.ID,
+            SubStoryPac = rawData.SubStoryPac,
+            StoryNum = rawData.StoryNum,
+            Text_kr = rawData.Text_kr,
+
+            bgData = bgDataDict.TryGetValue(rawData.BG_ID, out var bg) ? bg : null,
+            sfxData = sfxDataDict.TryGetValue(rawData.SFX_ID, out var sfx) ? sfx : null,
+            backData = backDataDict.TryGetValue(rawData.Back_ID, out var back) ? back : null,
+            characterData = CharacterDataDict.TryGetValue(rawData.CharacterName, out var character) ? character : null,
+            characterImgData = characterImgDataDict.TryGetValue(rawData.CharacterImg_ID, out var img) ? img : null,
+
+            leftChoice = CreateSubChoice(rawData.AnswerLeftID),
+            rightChoice = CreateSubChoice(rawData.AnswerRightID)
+        };
+
+        return fullEventData;
+    }
+    //GetSubEventDataById 선택지 데이터를 만드는 메서드
+    private SubChoice CreateSubChoice(int answerID)
+    {
+        if (subEventAnswerDataDict.TryGetValue(answerID, out var rawData))
+        {
+            var choice = new SubChoice
+            {
+                answerID = rawData.AnswerID,
+                choiceText = rawData.Text_KR,
+                nextEventID = rawData.NextTextID,
+                outcome = new ChoiceOutcome
+                {
+                    parameterChanges = new List<ParameterChange>()
+                }
+            };
+
+            if (!string.IsNullOrEmpty(rawData.AnswerReward))
+            {
+                choice.outcome.parameterChanges = ParseRewardString(rawData.AnswerReward);
+            }
+
+            return choice;
+        }
+
+        Debug.LogError($"[DataManager] 서브 이벤트 AnswerID: {answerID}에 해당하는 데이터를 찾을 수 없습니다.");
+        return null;
+    }
+
     /// <summary>
     /// 단일 선택지(EventChoice) 객체를 생성합니다.
     /// </summary>
@@ -771,7 +1321,7 @@ public class DataManager : MonoBehaviour
                                        : (isBranch ? rawData.AnotherDenyReward2 : rawData.DenyReward2);
         int needType = isLeft ? (isBranch ? rawData.AnotherNeedType1 : rawData.NeedType1)
                                        : (isBranch ? rawData.AnotherNeedType2 : rawData.NeedType2);
-        int needValue = isLeft ? (isBranch ? rawData.AnotehrNeedValue1 : rawData.NeedValue1) // 'Anotehr' 오타 대응
+        int needValue = isLeft ? (isBranch ? rawData.AnotherNeedValue1 : rawData.NeedValue1)
                                        : (isBranch ? rawData.AnotherNeedValue2 : rawData.NeedValue2);
 
         // 선택지 텍스트 설정
@@ -885,110 +1435,6 @@ public class DataManager : MonoBehaviour
         };
     }
 
-
-    //데이터 테이블
-    [System.Serializable]
-    public class ParameterEventData
-    {
-        public int ID { get; set; }
-        public int RoundType { get; set; }
-        public int PageType { get; set; }
-        public int ConditionType { get; set; }
-        public int ChangeCondition { get; set; }
-        public int IsConditionSuccess { get; set; }
-        public int EventQuestion { get; set; }
-        public int LeftString { get; set; }
-        public int NeedType1 { get; set; }
-        public int NeedValue1 { get; set; }
-        public int AcceptReward1 { get; set; }
-        public int DenyReward1 { get; set; }
-        public int AcceptString1 { get; set; }
-        public int DenyString1 { get; set; }
-        public int RightString { get; set; }
-        public int NeedType2 { get; set; }
-        public int NeedValue2 { get; set; }
-        public int AcceptReward2 { get; set; }
-        public int DenyReward2 { get; set; }
-        public int AcceptString2 { get; set; }
-        public int DenyString2 { get; set; }
-        public int AnotherEventQuestion { get; set; }
-        public int AnotherLeftString { get; set; }
-        public int AnotherNeedType1 { get; set; }
-        public int AnotehrNeedValue1 { get; set; }
-        public int AnotherAcceptReward1 { get; set; }
-        public int AnotherDenyReward1 { get; set; }
-        public int AnotherAcceptString1 { get; set; }
-        public int AnotherDenyString1 { get; set; }
-        public int AnotherRightString { get; set; }
-        public int AnotherNeedType2 { get; set; }
-        public int AnotherNeedValue2 { get; set; }
-        public int AnotherAcceptReward2 { get; set; }
-        public int AnotherDenyReward2 { get; set; }
-        public int AnotherAcceptString2 { get; set; }
-        public int AnotherDenyString2 { get; set; }
-    }
-    [System.Serializable]
-    public class ParameterRewardData
-    {
-        public int ID { get; set; }
-        public int RewardType1 { get; set; }
-        public int RewardValue1 { get; set; }
-        public int RewardType2 { get; set; }
-        public int RewardValue2 { get; set; }
-        public int RewardType3 { get; set; }
-        public int RewardValue3 { get; set; }
-        public int RewardType4 { get; set; }
-        public int RewardValue4 { get; set; }
-        public int RewardType5 { get; set; }
-        public int RewardValue5 { get; set; }
-    }
-    [System.Serializable]
-    public class ParameterEventStringData
-    {
-        public int ID { get; set; }
-        public string BG { get; set; }
-        public string SoundEffect { get; set; }
-        public int CharacterName { get; set; }
-        public string CharacterImage { get; set; }
-        public int IsFinishString { get; set; }
-        public string String_kr { get; set; }
-    }
-    //룩업 테이블용 클래스 
-    [System.Serializable]
-    public class CharacterData
-    {
-        public string Chr_name { get; set; }
-        public int Chr_index { get; set; }
-    }
-
-    [System.Serializable]
-    public class RewardTypeData
-    {
-        public string RewardType { get; set; }
-        public int RewardType_index { get; set; }
-    }
-
-    [System.Serializable]
-    public class EventDataList
-    {
-        public int Appearance_Num { get; set; }
-        public string Appearance_Type { get; set; }
-        public int PageType_Num { get; set; }
-        public string PageType { get; set; }
-        public int Parameter_Num { get; set; }
-        public string Parameter_type { get; set; }
-        public int Event_Num { get; set; }
-        public string Event_Type { get; set; }
-        public int Cho_Num { get; set; }
-        public string Cho_txt { get; set; }
-    }
-    [System.Serializable]
-    public class RewardInfo
-    {
-        public string RewardType { get; set; }
-        public int RewardValue { get; set; }
-    }
-
     [System.Serializable]
     public class SubEventDataList
     {
@@ -1049,63 +1495,5 @@ public class DataManager : MonoBehaviour
         public string RightSelectString { get; set; }
         public string CharacterName { get; set; }
         public string End_Text { get; set; }
-    }
-
-    // PlayerPrefs를 사용하여 회차 기록을 관리하는 클래스
-    public class PlaythroughHistory
-    {
-        public static PlaythroughHistory Instance { get; private set; } = new PlaythroughHistory();
-
-        private const string CompletedEventsKey = "CompletedEvents";
-        private HashSet<int> completedEvents;
-
-        // 생성자에서 데이터 로드
-        private PlaythroughHistory()
-        {
-            Load();
-        }
-
-        private void Load()
-        {
-            completedEvents = new HashSet<int>();
-            string savedEvents = PlayerPrefs.GetString(CompletedEventsKey, "");
-            if (!string.IsNullOrEmpty(savedEvents))
-            {
-                foreach (var idStr in savedEvents.Split(','))
-                {
-                    if (int.TryParse(idStr, out int id))
-                    {
-                        completedEvents.Add(id);
-                    }
-                }
-            }
-            Debug.Log($"[PlaythroughHistory] 로드 완료. 완료된 이벤트 {completedEvents.Count}개");
-        }
-
-        private void Save()
-        {
-            string eventIds = string.Join(",", completedEvents);
-            PlayerPrefs.SetString(CompletedEventsKey, eventIds);
-            PlayerPrefs.Save(); // 확실한 저장을 위해 호출
-            Debug.Log($"[PlaythroughHistory] 저장 완료. 현재 완료된 이벤트: {eventIds}");
-        }
-
-        public bool HasCompletedEvent(int eventId) => completedEvents.Contains(eventId);
-
-        public void AddCompletedEvent(int eventId)
-        {
-            if (completedEvents.Add(eventId)) // 새로운 이벤트일 경우에만 저장
-            {
-                Save();
-            }
-        }
-
-        public void ClearHistory()
-        {
-            completedEvents.Clear();
-            PlayerPrefs.DeleteKey(CompletedEventsKey);
-            PlayerPrefs.Save();
-            Debug.Log("[PlaythroughHistory] 모든 기록이 삭제되었습니다.");
-        }
     }
 }

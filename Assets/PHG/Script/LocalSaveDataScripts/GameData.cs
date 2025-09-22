@@ -5,44 +5,53 @@ using System.Collections.Generic;
 [Serializable]
 public class GameData
 {
-    // --- ÁøÇà »óÅÂ ---
+    // --- ê²Œì„ ìƒíƒœ ---
      public GameState currentGameState;
-    public int playthroughCount;        // ÇöÀç È¸Â÷ (PlayerStats)
+    public int playthroughCount;        // í˜„ì¬ íš£ì°¨ (PlayerStats)
     public CommanderTrait activeTrait;
-    public int currentChapter;          // ÇöÀç Ã©ÅÍ (GameManager)
-    public int eventPlaylistIndex;      // ÇöÀç Ã©ÅÍÀÇ ÀÌº¥Æ® ÁøÇàµµ (EventManager)
-    public List<int> currentPlaylist;   // ÇöÀç Ã©ÅÍÀÇ ÀÌº¥Æ® ¸ñ·Ï (EventManager)
+    public int currentChapter;          // í˜„ì¬ ì±•í„° (GameManager)
+    public int eventPlaylistIndex;      // í˜„ì¬ ì±•í„°ì˜ ì´ë²¤íŠ¸ ì§„í–‰ë„ (EventManager)
+    public List<int> currentPlaylist;   // í˜„ì¬ ì±•í„°ì˜ ì´ë²¤íŠ¸ ëª©ë¡ (EventManager)
 
-    // --- ÆÄ¶ó¹ÌÅÍ ---
-    public int politics;                // Á¤Ä¡·Â
-    public int militaryPower;           // º´·Â
-    public int supplies;                // ¹°ÀÚ
-    public int leadership;              // ¸®´õ½Ê
-    public int warSituation;            // Àü¼¼
-    public int karma;                   // Ä«¸£¸¶
+    // --- íŒŒë¼ë¯¸í„° ---
+    public int politics;                // ì •ì¹˜ë ¥
+    public int militaryPower;           // ë³‘ë ¥
+    public int supplies;                // ë¬¼ì
+    public int leadership;              // ë¦¬ë”ì‹­
+    public int warSituation;            // ì „í™©
+    public int karma;                   // ì¹´ë¥´ë§ˆ
 
-    // --- ÇÃ·¡±× & ±â·Ï ---
-    public List<int> completedEventIds;        // ¿Ï·áÇÑ ÀÌº¥Æ® ID ¸ñ·Ï (PlayerStats)
-    public List<string> unlockedAchievements;  // ´Ş¼ºÇÑ ¾÷Àû ID ¸ñ·Ï
-    public List<string> completedEndings;      // º» ¿£µù ID ¸ñ·Ï
-    public List<int> playedSubEventGroups;     // ÇÃ·¹ÀÌÇÑ ¼­ºê ÀÌº¥Æ® ±×·ì (EventManager)
+    // --- í”Œë ˆì´ ê¸°ë¡ & ì—…ì  ---
+    public List<int> completedEventIds;        // ì™„ë£Œí•œ ì´ë²¤íŠ¸ ID ëª©ë¡ (PlayerStats)
+    public List<string> unlockedAchievements;  // ë‹¬ì„±í•œ ë„ì „ê³¼ì œ ID ëª©ë¡
+    public List<string> completedEndings;      // ë³¸ ì—”ë”© ID ëª©ë¡
+    public List<int> playedSubEventGroups;     // í”Œë ˆì´í•œ ì„œë¸Œ ì´ë²¤íŠ¸ ê·¸ë£¹ (EventManager)
+    public List<int> completedBattleResultIds; // ì™„ë£Œí•œ ì „íˆ¬ ê²°ê³¼ ID ëª©ë¡
+    public List<int> completedEndingIds;       // ì™„ë£Œí•œ ì—”ë”© ID ëª©ë¡
 
-    // --- ¸ŞÅ¸ µ¥ÀÌÅÍ ---
-    public bool isTutorialFinished;     // Æ©Åä¸®¾ó ¿Ï·á ¿©ºÎ
-    public float totalPlayTime;         // ÃÑ ÇÃ·¹ÀÌ ½Ã°£
-    public GameSettings settings;       // È¯°æ ¼³Á¤
+    // --- ê¸°íƒ€ ë°ì´í„° ---
+    public bool isTutorialFinished;     // íŠœí† ë¦¬ì–¼ ì™„ë£Œ ì—¬ë¶€
+    public float totalPlayTime;         // ì´ í”Œë ˆì´ ì‹œê°„
+    public GameSettings settings;       // í™˜ê²½ ì„¤ì •
 
-    // --- ¼¼ÀÌºêÆÄÀÏ ÃÖ½ÅÈ­ ºñ±³¿ë ÁöÇ¥ -- 9.9. ÀÌÇĞ±Ç Ãß°¡
+
+    // --- ê²Œì„ì˜¤ë²„ í›„ ë©”ì¸ë³µê·€ ì‹œ ì´ì–´í•˜ê¸°ì—ì„œ ì±•í„° ì²˜ìŒë¶€í„° ì¬ì‹œì‘í•˜ê¸° ìœ„í•œ í”Œë˜ê·¸ ---
+    public bool pendingRestartFromGameOver; // trueë©´ ë‹¤ìŒ ì´ì–´í•˜ê¸° ì‹œ ì±•í„° ì²˜ìŒë¶€í„° ì¬ì‹œì‘
+    public int pendingRestartChapter;       // ì¬ì‹œì‘í•  ì±•í„°(0ì´ë©´ ë¬´ì‹œ)
+
+     // --- ë™ê¸°í™”ë¥¼ ìœ„í•œ íƒ€ì„ìŠ¤íƒ¬í”„ -- 9.9. ì´í•™ê¶Œ ì¶”ê°€
     public long lastUpdated;
+    // ì„œë²„ ê¶Œìœ„ íƒ€ì„ìŠ¤íƒ¬í”„(UTC ms). Firebase RTDB ServerValue.Timestampë¡œ ì±„ì›Œì§
+    public long lastUpdatedServer;
 
     /// <summary>
-    /// »õ °ÔÀÓ ½ÃÀÛ ½Ã ±âº»°ª ¼³Á¤
+    ///     ê¸°ë³¸ ìƒì„±ì
     /// </summary>
     public GameData()
     {
-        // PlayerStats.InitializeStats() ³»¿ëÀ» ±â¹İÀ¸·Î ÃÊ±â°ª ¼³Á¤
+        // PlayerStats.InitializeStats()ì˜ ì´ˆê¸°ê°’ê³¼ ë™ì¼í•˜ê²Œ ì„¤ì •
         playthroughCount = 1;
-        activeTrait = CommanderTrait.Devost;// [Ãß°¡] ±âº» ÁöÈÖ°ü Æ¯¼ºÀ¸·Î ÃÊ±âÈ­
+        activeTrait = CommanderTrait.Devost;// [ì¶”ê°€] ê¸°ë³¸ ì§€íœ˜ê´€ íŠ¹ì„± ì´ˆê¸°í™”
         currentChapter = 1;
         eventPlaylistIndex = 0;
         currentPlaylist = new List<int>();
@@ -58,12 +67,18 @@ public class GameData
         unlockedAchievements = new List<string>();
         completedEndings = new List<string>();
         playedSubEventGroups = new List<int>();
+        completedBattleResultIds = new List<int>();
+        completedEndingIds = new List<int>();
 
         isTutorialFinished = false;
         totalPlayTime = 0f;
-   //     settings = new GameSettings();
+        settings = new GameSettings();
 
-        // »ı¼º½ÃÁ¡ ±âÁØ ÁöÇ¥ 9.9. ÀÌÇĞ±Ç Ãß°¡
+        pendingRestartFromGameOver = false;
+        pendingRestartChapter = 0;
+
+        // íƒ€ì„ìŠ¤íƒ¬í”„ 9.9. ì´í•™ê¶Œ ì¶”ê°€
         lastUpdated = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        lastUpdatedServer = 0;
     }
 }

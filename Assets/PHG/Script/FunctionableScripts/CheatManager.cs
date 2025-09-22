@@ -1,13 +1,13 @@
-// CheatManager.cs (»õ ½ºÅ©¸³Æ®)
+ï»¿// CheatManager.cs (ìƒˆ ìŠ¤í¬ë¦½íŠ¸)
 using UnityEngine;
 
 public class CheatManager : MonoBehaviour
 {
     public static CheatManager Instance { get; private set; }
-    [Header("Ä¡Æ® È°¼ºÈ­")]
+    [Header("ì¹˜íŠ¸ í™œì„±í™”")]
     [SerializeField] private bool enableCheats = true;
-    // [Header("¼³Á¤")]
-    // [Tooltip("ÀÌ ½ºÅ©¸³Æ®´Â ¿¡µğÅÍ¿Í °³¹ß ºôµå¿¡¼­¸¸ µ¿ÀÛÇÕ´Ï´Ù.")]
+    // [Header("ì„¤ì •")]
+    // [Tooltip("ì´ ìŠ¤í¬ë¦½íŠ¸ëŠ” ì—ë””í„°ì™€ ê°œë°œ ë¹Œë“œì—ì„œë§Œ ë™ì‘í•©ë‹ˆë‹¤.")]
     // public bool enableCheats = true;
 
     private void Awake()
@@ -27,73 +27,73 @@ public class CheatManager : MonoBehaviour
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     void Update()
     {
-        // PlayerStats ÀÎ½ºÅÏ½º°¡ ¾øÀ¸¸é ¾Æ¹«°Íµµ ÇÏÁö ¾ÊÀ½
-        if (PlayerStats.Instance == null)
+        // PlayerStats ì¸ìŠ¤í„´ìŠ¤ê°€ ì—†ìœ¼ë©´ ì•„ë¬´ê²ƒë„ í•˜ì§€ ì•ŠìŒ
+        if (GamePlayerStats.Instance == null)
         {
             return;
         }
 
-        // --- °³º° ÆÄ¶ó¹ÌÅÍ ¼³Á¤ (¼ıÀÚ 1~4) ---
-        // Shift¸¦ ´©¸£¸é 100, ¾È ´©¸£¸é 0À¸·Î ¼³Á¤
+        // --- ê°œë³„ íŒŒë¼ë¯¸í„° ì„¤ì • (ìˆ«ì 1~4) ---
+        // Shiftë¥¼ ëˆ„ë¥´ë©´ 100, ì•ˆ ëˆ„ë¥´ë©´ 0ìœ¼ë¡œ ì„¤ì •
         int value = Input.GetKey(KeyCode.LeftShift) ? 100 : 5;
 
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
-            PlayerStats.Instance.SetStat(ParameterType.Á¤Ä¡·Â, value);
+            GamePlayerStats.Instance.SetStat(ParameterType.ì •ì¹˜ë ¥, value);
         }
         if (Input.GetKeyDown(KeyCode.Alpha2))
         {
-            PlayerStats.Instance.SetStat(ParameterType.º´·Â, value);
+            GamePlayerStats.Instance.SetStat(ParameterType.ë³‘ë ¥, value);
         }
         if (Input.GetKeyDown(KeyCode.Alpha3))
         {
-            PlayerStats.Instance.SetStat(ParameterType.¹°ÀÚ, value);
+            GamePlayerStats.Instance.SetStat(ParameterType.ë¬¼ì, value);
         }
         if (Input.GetKeyDown(KeyCode.Alpha4))
         {
-            PlayerStats.Instance.SetStat(ParameterType.¸®´õ½Ê, value);
+            GamePlayerStats.Instance.SetStat(ParameterType.ë¦¬ë”ì‹­, value);
         }
 
-        // --- ÀüÃ¼ ÆÄ¶ó¹ÌÅÍ ¼³Á¤ (F1) ---
-        // Shift¸¦ ´©¸£¸é 100, ¾È ´©¸£¸é 1·Î ¼³Á¤
+        // --- ì „ì²´ íŒŒë¼ë¯¸í„° ì„¤ì • (F1) ---
+        // Shiftë¥¼ ëˆ„ë¥´ë©´ 100, ì•ˆ ëˆ„ë¥´ë©´ 1ë¡œ ì„¤ì •
         if (Input.GetKeyDown(KeyCode.F1))
         {
             int allValue = Input.GetKey(KeyCode.LeftShift) ? 100 : 1;
-            PlayerStats.Instance.SetStat(ParameterType.Á¤Ä¡·Â, allValue);
-            PlayerStats.Instance.SetStat(ParameterType.º´·Â, allValue);
-            PlayerStats.Instance.SetStat(ParameterType.¹°ÀÚ, allValue);
-            PlayerStats.Instance.SetStat(ParameterType.¸®´õ½Ê, allValue);
+            GamePlayerStats.Instance.SetStat(ParameterType.ì •ì¹˜ë ¥, allValue);
+            GamePlayerStats.Instance.SetStat(ParameterType.ë³‘ë ¥, allValue);
+            GamePlayerStats.Instance.SetStat(ParameterType.ë¬¼ì, allValue);
+            GamePlayerStats.Instance.SetStat(ParameterType.ë¦¬ë”ì‹­, allValue);
         }
 
-        // --- Àü¼¼(ÀüÈ²) ¼³Á¤ (F5, F6, F7) ---
+        // --- ì „ì„¸(ì „í™©) ì„¤ì • (F5, F6, F7) ---
         if (Input.GetKeyDown(KeyCode.F5))
         {
-            PlayerStats.Instance.SetStat(ParameterType.ÀüÈ², 10);
+            GamePlayerStats.Instance.SetStat(ParameterType.ì „í™©, 10);
         }
         if (Input.GetKeyDown(KeyCode.F6))
         {
-            PlayerStats.Instance.SetStat(ParameterType.ÀüÈ², 50);
+            GamePlayerStats.Instance.SetStat(ParameterType.ì „í™©, 50);
         }
         if (Input.GetKeyDown(KeyCode.F7))
         {
-            PlayerStats.Instance.SetStat(ParameterType.ÀüÈ², 90);
+            GamePlayerStats.Instance.SetStat(ParameterType.ì „í™©, 90);
         }
 
-        // ']' Å°¸¦ ´©¸£¸é ´ÙÀ½ ÀÌº¥Æ®·Î ³Ñ¾î°©´Ï´Ù.
+        // ']' í‚¤ë¥¼ ëˆ„ë¥´ë©´ ë‹¤ìŒ ì´ë²¤íŠ¸ë¡œ ë„˜ì–´ê°‘ë‹ˆë‹¤.
         if (Input.GetKeyDown(KeyCode.RightBracket))
         {
-            Debug.Log("Ä¡Æ® Å°: ´ÙÀ½ ÀÌº¥Æ®·Î ½ºÅµÇÕ´Ï´Ù.");
+            Debug.Log("ì¹˜íŠ¸ í‚¤: ë‹¤ìŒ ì´ë²¤íŠ¸ë¡œ ìŠ¤í‚µí•©ë‹ˆë‹¤.");
 
-            // ¸ŞÀÎ ½Ã³ª¸®¿À°¡ ½ÇÇà ÁßÀÎÁö ¸ÕÀú È®ÀÎ
+            // ë©”ì¸ ì‹œë‚˜ë¦¬ì˜¤ê°€ ì‹¤í–‰ ì¤‘ì¸ì§€ ë¨¼ì € í™•ì¸
             var mainScenarioManager = FindObjectOfType<MainScenarioManager>();
             if (mainScenarioManager != null && mainScenarioManager.IsScenarioRunning)
             {
                 mainScenarioManager.SkipToNextNode();
             }
-            // ±×·¸Áö ¾ÊÀ¸¸é ÀÏ¹İ ÀÌº¥Æ®(ÆÄ¶ó¹ÌÅÍ/¼­ºê) ½ºÅµ ½Ãµµ
+            // ê·¸ë ‡ì§€ ì•Šìœ¼ë©´ ì¼ë°˜ ì´ë²¤íŠ¸(íŒŒë¼ë¯¸í„°/ì„œë¸Œ) ìŠ¤í‚µ ì‹œë„
             else if (EventManager.Instance != null)
             {
-                // ÇöÀç UI ÀüÈ¯ È¿°ú µîÀ» ¹«½ÃÇÏ°í Áï½Ã ´ÙÀ½ ÅÏÀ» È£ÃâÇÕ´Ï´Ù.
+                // í˜„ì¬ UI ì „í™˜ íš¨ê³¼ ë“±ì„ ë¬´ì‹œí•˜ê³  ì¦‰ì‹œ ë‹¤ìŒ í„´ì„ í˜¸ì¶œí•©ë‹ˆë‹¤.
                 EventManager.Instance.PlayNextTurn();
             }
         }
@@ -106,13 +106,13 @@ public class CheatManager : MonoBehaviour
     {
         if (GameManager.instance != null)
         {
-            Debug.LogWarning("[CHEAT] ÇöÀç »óÅÂ¸¦ ½ºÅµÇÏ°í ´ÙÀ½À¸·Î ÁøÇàÇÕ´Ï´Ù.");
+            Debug.LogWarning("[CHEAT] í˜„ì¬ ìƒíƒœë¥¼ ìŠ¤í‚µí•˜ê³  ë‹¤ìŒìœ¼ë¡œ ì§„í–‰í•©ë‹ˆë‹¤.");
             GameManager.instance.ForceResetTransitionFlag();
             GameManager.instance.OnStateFinished();
         }
         else
         {
-            Debug.LogError("[CHEAT] GameManager ÀÎ½ºÅÏ½º¸¦ Ã£À» ¼ö ¾ø¾î ½ºÅµÇÒ ¼ö ¾ø½À´Ï´Ù.");
+            Debug.LogError("[CHEAT] GameManager ì¸ìŠ¤í„´ìŠ¤ë¥¼ ì°¾ì„ ìˆ˜ ì—†ì–´ ìŠ¤í‚µí•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
         }
     }
 #endif

@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8664065248447202581}
   - component: {fileID: 2885653658968932583}
-  - component: {fileID: 6381211522853900347}
+  - component: {fileID: 6229279284266878422}
   m_Layer: 0
   m_Name: SystemManager
   m_TagString: Untagged
@@ -45,7 +45,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d966cb75ffce07f4b82e1853ed499ea0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &6381211522853900347
+  MainStoryEvents: []
+--- !u!114 &6229279284266878422
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -54,6 +55,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 4846984296689265073}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 646ded10e7b7605409d99ec19d78d7a7, type: 3}
+  m_Script: {fileID: 11500000, guid: 8956480561557704193d4c17e5b5f365, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 

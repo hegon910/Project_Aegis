@@ -19,6 +19,7 @@ MonoBehaviour:
   startMonth: 12
   endYear: 1944
   endMonth: 6
+  chapterSummary: Chapter2
   victorySummary: "\uBB3C\uC790 \uBD80\uC871\uC774\uC9C0\uB9CC \uC798 \uC774\uACA8\uB0C8\uB2E4..\n\uC815\uB9AC\uAC00
     \uB418\uB294\uB300\uB85C \uBBF8\uC178\uC5D0\uAC8C \uC5F0\uB77D\uD574\uC57C\uACA0\uB2E4."
   drawSummary: "\uC798 \uACAC\uB38C\uB0C8\uB2E4. \uBB3C\uC790 \uBD80\uC871\uC758

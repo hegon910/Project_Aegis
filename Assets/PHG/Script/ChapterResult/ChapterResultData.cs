@@ -21,6 +21,9 @@ public class ChapterResultData : ScriptableObject
 
     [Header("결과별 요약 텍스트")]
     [TextArea(3, 5)]
+    public string chapterSummary;
+    
+    [TextArea(3, 5)]
     public string victorySummary;
 
     [TextArea(3, 5)]

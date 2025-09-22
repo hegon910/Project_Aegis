@@ -30,7 +30,6 @@ public class CutsceneManager : MonoBehaviour
     private Coroutine stepProcessCoroutine;
     private bool isCutsceneActive = false;
 
-    // <<<<<<< [수정 1] 실행 중인 모든 자식(연출) 코루틴을 추적하기 위한 리스트
     private List<Coroutine> runningEffectCoroutines = new List<Coroutine>();
 
     private void Awake()
@@ -72,30 +71,30 @@ public class CutsceneManager : MonoBehaviour
             clickIndicator.SetActive(isStepActive && !isVideoPlaying);
         }
 
+        // <<<<<<< [복원] '스킵'과 '다음'을 구분하는 로직
         if (isStepActive && !isVideoPlaying && Input.GetMouseButtonDown(0))
         {
             if (isSkippable)
             {
+                // 연출 진행 중일 때 클릭 -> 연출 스킵
                 SkipCurrentStepEffects();
             }
             else
             {
+                // 연출 종료 후 대기 상태일 때 클릭 -> 다음 스텝으로
                 PlayNextStep();
             }
         }
     }
 
-    // <<<<<<< [수정 2] 모든 실행 중인 코루틴(부모+자식)을 확실히 정리하는 헬퍼 함수
     private void StopAllRunningCoroutines()
     {
-        // 메인 스텝 코루틴 중지
         if (stepProcessCoroutine != null)
         {
             StopCoroutine(stepProcessCoroutine);
             stepProcessCoroutine = null;
         }
 
-        // 모든 개별 효과(자식) 코루틴들 중지
         foreach (var coroutine in runningEffectCoroutines)
         {
             if (coroutine != null)
@@ -108,7 +107,6 @@ public class CutsceneManager : MonoBehaviour
 
     private void PlayNextStep()
     {
-        // 다음 스텝으로 가기 전, 모든 코루틴을 확실히 정리
         StopAllRunningCoroutines();
 
         currentStepIndex++;
@@ -122,17 +120,15 @@ public class CutsceneManager : MonoBehaviour
         stepProcessCoroutine = StartCoroutine(ProcessStep(currentCutscene.steps[currentStepIndex]));
     }
 
+    // <<<<<<< [복원] 연출 스킵을 위한 메서드
     private void SkipCurrentStepEffects()
     {
-        // <<<<<<< [수정 3] 스킵 시에도 모든 코루틴을 정리하도록 변경
         StopAllRunningCoroutines();
-
-        // 현재 스텝의 최종 상태를 즉시 적용
         ApplyFinalState(currentCutscene.steps[currentStepIndex]);
-
-        isSkippable = false;
+        isSkippable = false; // 스킵 후에는 '다음' 상태가 되어야 하므로 false로 변경
     }
 
+    // <<<<<<< [복원] 스킵 시 최종 상태를 즉시 적용하는 메서드
     private void ApplyFinalState(CutsceneStep step)
     {
         if (step.enableImageEffect)
@@ -166,9 +162,8 @@ public class CutsceneManager : MonoBehaviour
     private IEnumerator ProcessStep(CutsceneStep step)
     {
         isStepActive = true;
-        isSkippable = true;
+        isSkippable = true; // 연출 시작, '스킵'이 가능한 상태
 
-        // <<<<<<< [수정 4] 새로운 스텝 시작 전, 추적 리스트를 초기화
         runningEffectCoroutines.Clear();
 
         if (dayText != null)
@@ -176,32 +171,35 @@ public class CutsceneManager : MonoBehaviour
             dayText.gameObject.SetActive(false);
         }
 
-        // <<<<<<< [수정 5] 자식 코루틴들을 시작하고, 추적 리스트에 추가
         if (step.enableImageEffect) runningEffectCoroutines.Add(StartCoroutine(ImageEffectCoroutine(step.imageData)));
         if (step.enableDialogueEffect) runningEffectCoroutines.Add(StartCoroutine(DialogueEffectCoroutine(step.dialogueData)));
         if (step.enableSoundEffect) runningEffectCoroutines.Add(StartCoroutine(SoundEffectCoroutine(step.soundData)));
         if (step.enableVideoEffect)
         {
             var videoCoroutine = StartCoroutine(VideoEffectCoroutine(step.videoData));
-            runningEffectCoroutines.Add(videoCoroutine); // 비디오 코루틴도 추적
+            runningEffectCoroutines.Add(videoCoroutine);
         }
         if (step.enableDayTextEffect)
         {
             runningEffectCoroutines.Add(StartCoroutine(DayTextEffectCoroutine(step.dayTextData)));
         }
 
-        // 모든 자식 코루틴이 끝날 때까지 기다립니다.
+        // 모든 '연출' 코루틴이 끝날 때까지 기다림
         foreach (var coroutine in runningEffectCoroutines)
         {
             yield return coroutine;
         }
 
+        // <<<<<<< [핵심 수정]
+        // 모든 연출이 끝났으므로, 이제부터의 클릭은 '다음'으로 넘기는 역할을 해야 함.
+        // 따라서 waitTime 이전에 isSkippable 상태를 false로 변경.
+        isSkippable = false;
+
         if (step.waitTime > 0)
         {
+            // 이 waitTime 동안 클릭하면 isSkippable가 false이므로 PlayNextStep()이 호출됨
             yield return new WaitForSeconds(step.waitTime);
         }
-
-        isSkippable = false;
 
         if (!step.waitForClick)
         {
@@ -311,7 +309,6 @@ public class CutsceneManager : MonoBehaviour
 
         isVideoPlaying = true;
 
-        // 비디오 재생이 끝날 때까지 기다림
         while (videoPlayer.isPlaying)
         {
             yield return null;
@@ -332,31 +329,22 @@ public class CutsceneManager : MonoBehaviour
         dayText.text = data.text;
         dayText.gameObject.SetActive(true);
 
-        float halfDuration = data.animationDuration / 2;
+        // --- 페이드인 로직 ---
+        // animationDuration 전체를 페이드인 시간으로 사용합니다.
+        float fadeInDuration = data.animationDuration;
         float timer = 0f;
         Color startColor = new Color(dayText.color.r, dayText.color.g, dayText.color.b, 0);
         Color endColor = new Color(dayText.color.r, dayText.color.g, dayText.color.b, 1);
 
-        timer = 0f;
-        while (timer < halfDuration)
+        // 페이드인 루프
+        while (timer < fadeInDuration)
         {
             timer += Time.deltaTime;
-            dayText.color = Color.Lerp(startColor, endColor, timer / halfDuration);
+            dayText.color = Color.Lerp(startColor, endColor, timer / fadeInDuration);
             yield return null;
         }
-        dayText.color = endColor;
+        dayText.color = endColor; // 페이드인 완료
 
-        yield return new WaitForSeconds(data.holdDuration);
-
-        timer = 0f;
-        while (timer < halfDuration)
-        {
-            timer += Time.deltaTime;
-            dayText.color = Color.Lerp(endColor, startColor, timer / halfDuration);
-            yield return null;
-        }
-        dayText.color = startColor;
-
-        dayText.gameObject.SetActive(false);
+        // Hold 및 페이드아웃 로직을 모두 제거하여 텍스트가 사라지지 않도록 합니다.
     }
 }

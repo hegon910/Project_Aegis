@@ -19,6 +19,7 @@ MonoBehaviour:
   startMonth: 12
   endYear: 1946
   endMonth: 6
+  chapterSummary: Chapter6
   victorySummary: "\uB4DC\uB514\uC5B4 \uC804\uC7C1\uC758 \uB05D\uC774 \uBCF4\uC778\uB2E4.
     \uC6B0\uB9B0 \uC798 \uC774\uACA8\uB0BC \uAC83\uC774\uB2E4."
   drawSummary: "\uC804\uC7C1\uC758 \uB05D\uC774 \uBCF4\uC5EC\uC628\uB2E4.\n\uC774\uBC88
