@@ -2,6 +2,7 @@
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 
 public class WarHUD : MonoBehaviour
 {
@@ -9,7 +10,8 @@ public class WarHUD : MonoBehaviour
     [SerializeField] WarTurnManager turnMgr;
     [SerializeField] WarPlayer player;
     [SerializeField] WarEnemy enemy;
-    
+    [SerializeField] private ChoiceCardSwipe choiceCard;
+
     [Header("Texts")]
     [SerializeField] TMP_Text turnTxt;     
     
@@ -27,6 +29,36 @@ public class WarHUD : MonoBehaviour
     [SerializeField] Image warSliderFill; // Ïä¨ÎùºÏù¥ÎçîÏùò Fill Image
     [SerializeField] Gradient warSliderGradient; // Ïä¨ÎùºÏù¥Îçî Í∞íÏóê Îî∞Îùº Î≥ÄÌï† ÏÉâÏÉÅ
 
+    [Header("Skill Description UI")]
+    [Tooltip("Ω∫≈≥ ≈Õƒ° πˆ∆∞")]
+    [SerializeField] private Button skillInfoButton;
+    [Tooltip("Ω∫≈≥ º≥∏Ì ∆–≥Œ")]
+    [SerializeField] private GameObject skillDescriptionPanel;
+    [Tooltip("Ω∫≈≥ º≥∏Ì ≈ÿΩ∫∆Æ")]
+    [SerializeField] private TMP_Text skillDescriptionText;
+
+    [Header("Feedback UI")]
+    [Tooltip("«‡µø ∞·∞˙ ««µÂπÈ ≈ÿΩ∫∆Æ (øπ: Ω∫≈≥ ªÁøÎ!)")]
+    [SerializeField] private TMP_Text actionFeedbackText;
+
+    private Coroutine feedbackCoroutine;
+
+
+    void Start()
+    {
+        if (skillInfoButton != null)
+        {
+            skillInfoButton.onClick.AddListener(ToggleSkillDescription);
+        }
+        if (skillDescriptionPanel != null)
+        {
+            skillDescriptionPanel.SetActive(false);
+        }
+        if (actionFeedbackText != null)
+        {
+            actionFeedbackText.gameObject.SetActive(false);
+        }
+    }
     void Update()
     {
         if (turnMgr)
@@ -53,6 +85,30 @@ public class WarHUD : MonoBehaviour
         UpdateWarSlider();
         UpdateSkillUI();
     }
+
+    public void ShowActionFeedback(string message, float duration = 1.5f)
+    {
+        // ¿ÃπÃ Ω««‡ ¡ﬂ¿Œ ««µÂπÈ ƒ⁄∑Á∆æ¿Ã ¿÷¥Ÿ∏È ¡ﬂ¡ˆΩ√≈µ¥œ¥Ÿ.
+        if (feedbackCoroutine != null)
+        {
+            StopCoroutine(feedbackCoroutine);
+        }
+        feedbackCoroutine = StartCoroutine(Co_ShowFeedbackText(message, duration));
+    }
+    private IEnumerator Co_ShowFeedbackText(string message, float duration)
+    {
+        if (actionFeedbackText != null)
+        {
+            actionFeedbackText.text = message;
+            actionFeedbackText.gameObject.SetActive(true);
+
+            yield return new WaitForSeconds(duration);
+
+            actionFeedbackText.gameObject.SetActive(false);
+            feedbackCoroutine = null;
+        }
+    }
+
     private void UpdateWarSlider()
     {
         // PlayerStats Ïù∏Ïä§ÌÑ¥Ïä§ÏôÄ warSliderÍ∞Ä Î™®Îëê Ìï†ÎãπÎêòÏóàÏùÑ ÎïåÎßå Ïã§Ìñâ
@@ -76,11 +132,19 @@ public class WarHUD : MonoBehaviour
     void UpdateSkillUI()
     {
         if (turnMgr == null) return;
+
         string currentSkillName = turnMgr.GetSkillName();
+        int cooldown = turnMgr.GetSkillCooldown();
+        bool isSkillAvailable = !string.IsNullOrEmpty(currentSkillName) && cooldown <= 0;
+
+        if (choiceCard != null)
+        {
+            choiceCard.SetGlow(isSkillAvailable);
+        }
+
         if (!string.IsNullOrEmpty(currentSkillName))
         {
             skillNameText.text = currentSkillName;
-            int cooldown = turnMgr.GetSkillCooldown();
             if (cooldown > 0)
             {
                 skillCooldownText.text = cooldown.ToString();
@@ -96,4 +160,19 @@ public class WarHUD : MonoBehaviour
             skillCooldownText.text = "";
         }
     }
+
+    public void ToggleSkillDescription()
+    {        
+        if (player == null || player.currentSkill == null || skillDescriptionPanel == null)
+        {
+            return;
+        }
+        bool isActive = skillDescriptionPanel.activeSelf;
+        skillDescriptionPanel.SetActive(!isActive);
+        if (!isActive)
+        {
+            skillDescriptionText.text = player.currentSkill.description;
+        }
+    }
+    
 }

@@ -47,7 +47,7 @@ public class WarPlayer : MonoBehaviour
         }
         Debug.Log("플레이어의 모든 버프와 실드가 초기화되었습니다.");
     }
-    public void Act(WarAction action)
+    public virtual void Act(WarAction action)
     {
         int extraForward = 0;
         // 행동이 공격이고 돌진 버프가 있다면
@@ -138,7 +138,7 @@ public class WarPlayer : MonoBehaviour
         }
     }
 
-    public void UseSkill(WarEnemy enemy, WarTurnManager turnManager)// 턴매니저랑 뭔가 겹치는데 모르겠네
+    public virtual void UseSkill(WarEnemy enemy, WarTurnManager turnManager)// 턴매니저랑 뭔가 겹치는데 모르겠네
     {
         Debug.Log("UseSkill 함수 호출됨.");
 
