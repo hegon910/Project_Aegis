@@ -141,7 +141,6 @@ public class GameManager : MonoBehaviour
         DataManager.Instance.LoadGame();
 
         await DataManager.Instance.InitializeDataAsync();
-        await DataManager.Instance.SubIntializeDataAsync();
 
         await DataManager.Instance.IsReady;
 

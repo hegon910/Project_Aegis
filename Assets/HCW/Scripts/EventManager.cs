@@ -16,7 +16,7 @@ public class EventManager : MonoBehaviour
     public static EventManager Instance { get; private set; }
 
     public static event Action<int> OnParameterEventReady;
-    public static event Action<DataManager.SubEventData> OnSubEventReady;
+    public static event Action<FullSubEventData> OnSubEventReady;
     public static event Action OnEventCycleCompleted;
 
     [Header("설정")]
@@ -123,7 +123,7 @@ public class EventManager : MonoBehaviour
                     if (subEventChain.Count > 0 && subEventChain.Count <= remainingSlots)
                     {
                         DataManager.Instance.PlayerData.playedSubEventGroups.Add(selectedPackAndGroup.groupId);
-                        DataManager.Instance.PlayerData.currentPlaylist.Add(subEventChain.First().Index);
+                        DataManager.Instance.PlayerData.currentPlaylist.Add(subEventChain.First().ID);
                         remainingSlots -= subEventChain.Count;
                         Debug.Log($"[EventManager] 서브 이벤트 체인 추가: 팩 {selectedPackAndGroup.packId}, 그룹 {selectedPackAndGroup.groupId} ({subEventChain.Count}턴 소모)");
                     }
@@ -200,7 +200,7 @@ public class EventManager : MonoBehaviour
         DataManager.Instance.SaveLocal();
 
         // 4. 준비된 이벤트를 발생시킵니다.
-        if (eventId < 10000)
+        if (eventId < 100000)
         {
             DisplaySubEvent(eventId);
         }
@@ -218,17 +218,12 @@ public class EventManager : MonoBehaviour
     private void DisplaySubEvent(int index)
     {
         currentSubEventIndex = index;
-        var data = DataManager.Instance.SubEvents.FirstOrDefault(e => e.Index == index);
+        var data = DataManager.Instance.FullSubEvents.FirstOrDefault(e => e.ID == index);
         if (data != null)
         {
             OnSubEventReady?.Invoke(data);
-            Debug.Log($"서브 이벤트 표시: (Index: {data.Index})");
-
-            if (data.IsFinish)
-            {
-                Debug.Log("서브 이벤트 체인 종료.");
-                currentState = EventManagerState.InCycle;
-            }
+            Debug.Log($"서브 이벤트 표시: (Index: {data.ID})");
+            currentState = EventManagerState.InSubEvent;
         }
     }
 
@@ -236,18 +231,23 @@ public class EventManager : MonoBehaviour
     {
         if (currentState != EventManagerState.InSubEvent) return;
 
-        var currentData = DataManager.Instance.SubEvents.FirstOrDefault(e => e.Index == currentSubEventIndex);
+        var currentData = DataManager.Instance.FullSubEvents.FirstOrDefault(e => e.ID == currentSubEventIndex);
         if (currentData == null) return;
+
+        SubChoice selectedChoice = isLeftChoice ? currentData.leftChoice : currentData.rightChoice;
+
+        if (selectedChoice != null && selectedChoice.outcome != null)
+        {
+            PlayerStats.Instance.ApplyChanges(selectedChoice.outcome.parameterChanges);
+        }
 
         DataManager.Instance.PlayerData.completedEventIds.Add(currentSubEventIndex);
 
-        int nextIndex = -1;
-        string nextIndexStr = isLeftChoice ? currentData.NextLeftSelectString : currentData.NextRightSelectString;
-        int.TryParse(nextIndexStr, out nextIndex);
+        int nextEventID = isLeftChoice ? currentData.leftChoice.nextEventID : currentData.rightChoice.nextEventID;
 
-        if (nextIndex > 0)
+        if (nextEventID > 0)
         {
-            DisplaySubEvent(nextIndex);
+            DisplaySubEvent(nextEventID);
         }
         else
         {
@@ -274,20 +274,20 @@ public class EventManager : MonoBehaviour
 
     private List<int> GetSubEventGroupsForPack(int packNumber)
     {
-        if (DataManager.Instance?.SubEvents == null) return new List<int>();
-        return DataManager.Instance.SubEvents
-            .Where(e => e.PackNumber == packNumber)
-            .Select(e => e.GroupNumber)
+        if (DataManager.Instance?.FullSubEvents == null) return new List<int>();
+        return DataManager.Instance.FullSubEvents
+            .Where(e => e.SubStoryPac == packNumber)
+            .Select(e => e.StoryNum)
             .Distinct()
             .ToList();
     }
 
-    private List<DataManager.SubEventData> GetSubEventChain(int packNumber, int groupNumber)
+    private List<FullSubEventData> GetSubEventChain(int packNumber, int groupNumber)
     {
-        if (DataManager.Instance?.SubEvents == null) return new List<DataManager.SubEventData>();
-        return DataManager.Instance.SubEvents
-            .Where(e => e.PackNumber == packNumber && e.GroupNumber == groupNumber)
-            .OrderBy(e => e.Index)
+        if (DataManager.Instance?.FullSubEvents == null) return new List<FullSubEventData>();
+        return DataManager.Instance.FullSubEvents
+            .Where(e => e.SubStoryPac == packNumber && e.StoryNum == groupNumber)
+            .OrderBy(e => e.ID)
             .ToList();
     }
 

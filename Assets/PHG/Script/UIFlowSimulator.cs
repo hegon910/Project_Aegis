@@ -18,7 +18,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     [SerializeField] private Image dimmerPanel;
 
     private EventData currentParameterEventData;
-    private SubEventData currentSubEventData;
+    private FullSubEventData currentSubEventData;
 
     [Header("튜토리얼")]
     [SerializeField] private GameObject tutorialPanel;
@@ -146,7 +146,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         );
     }
 
-    private void HandleSubEvent(SubEventData data)
+    private void HandleSubEvent(FullSubEventData data)
     {
         if (tutorialPanel != null && tutorialPanel.activeSelf)
         {
@@ -157,10 +157,10 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 
         DisplayEventUI(
             characterSprite: null,
-            characterName: data.CharacterName,
-            dialogue: data.QuestionString_kr,
-            leftChoice: data.LeftSelectString,
-            rightChoice: data.RightSelectString
+            characterName: data.characterData.Chr_Name,
+            dialogue: data.Text_kr,
+            leftChoice: data.leftChoice.choiceText,
+            rightChoice: data.rightChoice.choiceText
         );
     }
 
@@ -295,7 +295,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         if (resultData != null)
         {
             Debug.Log($"전투 결과 시뮬레이션: {resultData.Text_Kr}");
-            DataManager.Instance.RecordBattleResult(battleResultId);
+            //DataManager.Instance.RecordBattleResult(battleResultId);
         }
         else
         {
@@ -313,7 +313,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         if (endingData != null)
         {
             Debug.Log($"엔딩 시뮬레이션: {endingData.Text_Kr}");
-            DataManager.Instance.RecordEnding(endingId);
+            //DataManager.Instance.RecordEnding(endingId);
         }
         else
         {

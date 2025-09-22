@@ -42,7 +42,7 @@ public class StoryPackManager : MonoBehaviour
     // 임시로 스토리 팩 데이터를 초기화하는 함수
     private void InitializeStoryPackData()
     {
-        allStoryPacks.Add(new StoryPackInfo { packID = 1, packName = "기본 스토리 팩 1", isUnlocked = true });
+        allStoryPacks.Add(new StoryPackInfo { packID = 1000001, packName = "기본 스토리 팩 1", isUnlocked = true });
        // allStoryPacks.Add(new StoryPackInfo { packID = 2, packName = "기본 스토리 팩 2", isUnlocked = true });
        // allStoryPacks.Add(new StoryPackInfo { packID = 3, packName = "기본 스토리 팩 3", isUnlocked = true });
        // allStoryPacks.Add(new StoryPackInfo { packID = 4, packName = "미래의 스토리 팩 4", isUnlocked = false });

@@ -9,4 +9,5 @@ public class AnswerData
     public int NextTextID { get; set; }
     public string AnswerReward { get; set; }
     public string Font_Direction { get; set; }
+    public string Ending_Memoriar { get; set; }
 }
