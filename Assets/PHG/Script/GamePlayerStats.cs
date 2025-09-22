@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System;
 using System.Linq;
 
-public class PlayerStats : MonoBehaviour
+public class GamePlayerStats : MonoBehaviour
 {
-    public static PlayerStats Instance { get; private set; }
+    public static GamePlayerStats Instance { get; private set; }
 
     // private Dictionary<ParameterType, int> stats = new Dictionary<ParameterType, int>();
     // public int playthroughCount { get; set; } = 1;

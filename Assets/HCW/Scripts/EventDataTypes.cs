@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -95,7 +95,7 @@ public class ParameterSuccessCondition : SuccessCondition
 
     public override bool Evaluate()
     {
-        if (PlayerStats.Instance == null)
+        if (GamePlayerStats.Instance == null)
         {
             Debug.LogError("[ParameterSuccessCondition] PlayerStats가 null입니다.");
             return false;
@@ -107,7 +107,7 @@ public class ParameterSuccessCondition : SuccessCondition
             return true;
         }
 
-        float playerValue = PlayerStats.Instance.GetStat(targetParameter);
+        float playerValue = GamePlayerStats.Instance.GetStat(targetParameter);
 
         // 플레이어의 스탯이 요구치보다 높거나 같으면 무조건 성공
         if (playerValue >= requiredValue)

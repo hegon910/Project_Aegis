@@ -242,7 +242,7 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
         Debug.Log($"[MainScenarioManager] 선택지 처리 시작. 선택된 다음 노드 ID: {selectedChoice.nextEventID}");
         if (selectedChoice.outcome?.parameterChanges != null)
         {
-            PlayerStats.Instance.ApplyChanges(selectedChoice.outcome.parameterChanges);
+            GamePlayerStats.Instance.ApplyChanges(selectedChoice.outcome.parameterChanges);
         }
 
         StartCoroutine(TransitionToNextNode(selectedChoice.nextEventID));
