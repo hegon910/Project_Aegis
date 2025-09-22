@@ -70,6 +70,12 @@ public class StoryPackManager : MonoBehaviour
             // 안전장치: 데이터 미로딩 시 최소 1개 제공 (임시)
             allStoryPacks.Add(new StoryPackInfo { packID = 1001, packName = "팩 1001", isUnlocked = true });
         }
+      
+       // allStoryPacks.Add(new StoryPackInfo { packID = 2, packName = "기본 스토리 팩 2", isUnlocked = true });
+       // allStoryPacks.Add(new StoryPackInfo { packID = 3, packName = "기본 스토리 팩 3", isUnlocked = true });
+       // allStoryPacks.Add(new StoryPackInfo { packID = 4, packName = "미래의 스토리 팩 4", isUnlocked = false });
+       // allStoryPacks.Add(new StoryPackInfo { packID = 5, packName = "미래의 스토리 팩 5", isUnlocked = false });
+        // 새로운 팩이 추가될 때마다 여기에 추가
     }
 
     // 스토리 팩 데이터 기반으로 UI 카드들을 생성하고 배치하는 함수

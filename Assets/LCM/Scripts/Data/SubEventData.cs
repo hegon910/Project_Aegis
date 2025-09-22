@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
-public class AllSubEventData
+public class SubEventData
 {
     public int ID { get; set; }
     public int SubStoryPac { get; set; }

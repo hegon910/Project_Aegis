@@ -64,15 +64,15 @@ public class SimpleEventHistoryManager : MonoBehaviour
     /// <summary>
     /// 서브 이벤트 기록
     /// </summary>
-    private void OnSubEvent(DataManager.SubEventData subEventData)
+    private void OnSubEvent(FullSubEventData subEventData)
     {
         if (!enableRecording) return;
 
-        string title = subEventData.QuestionString_kr ?? $"서브 이벤트 {subEventData.Index}";
+        string title = subEventData.Text_kr ?? $"서브 이벤트 {subEventData.ID}";
         string description = "서브 이벤트가 발생했습니다.";
         string choice = "선택한 답변을 여기에 저장";
 
-        var record = new SimpleEventRecord(subEventData.Index, "Sub", 
+        var record = new SimpleEventRecord(subEventData.ID, "Sub", 
             DataManager.Instance.PlayerData.currentChapter, title, description, choice);
         
         eventHistory.Add(record);
