@@ -735,7 +735,16 @@ public class GameManager : MonoBehaviour
     }
     public void TutorialPanelTouched() { tutorialPanel.SetActive(true); tutorialText.SetActive(true); parameterTutorialPanel.SetActive(true); } 
     public void ParameterTutorialPanelTouched() { parameterTutorialPanel.SetActive(true); } 
-    public void OnTitlePanelTouched() { titlePanel.SetActive(false); }
+    public void OnTitlePanelTouched() 
+    { 
+        titlePanel.SetActive(false); 
+        
+        // 게스트 계정인 경우 경고 팝업 표시 (1회만)
+        if (FirebaseManager.Instance != null)
+        {
+            FirebaseManager.Instance.ShowGuestWarningPopup();
+        }
+    }
     private void OnAuthenticated(SignInStatus status) { ChangeState(GameState.MainMenu); continueButton.gameObject.SetActive(DataManager.Instance.CheckIfSaveDataExists()); if (status == SignInStatus.Success) { Debug.Log("구글 플레이 게임 서비스 로그인 성공!"); } else { Debug.LogError("구글 플레이 게임 서비스 로그인 실패: " + status); } if (FirebaseManager.Instance != null) FirebaseManager.Instance.GPGSLogin(); }
     public async void OnCommanderSelected(int commanderIndex)
     {
