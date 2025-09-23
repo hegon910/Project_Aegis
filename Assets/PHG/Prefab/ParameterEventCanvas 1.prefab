@@ -1138,7 +1138,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -48}
+  m_AnchoredPosition: {x: 0, y: -48.00003}
   m_SizeDelta: {x: 0, y: -672}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2419411262318223929
@@ -1973,6 +1973,7 @@ MonoBehaviour:
   turnMgr: {fileID: 6661931244282724803}
   player: {fileID: 480180370959937788}
   enemy: {fileID: 3002651465180752887}
+  choiceCard: {fileID: 0}
   turnTxt: {fileID: 7097742081640599512}
   pHpTxt: {fileID: 107826815208416028}
   pShieldTxt: {fileID: 6659644525071538459}
@@ -2012,6 +2013,10 @@ MonoBehaviour:
     m_ColorSpace: -1
     m_NumColorKeys: 2
     m_NumAlphaKeys: 2
+  skillInfoButton: {fileID: 0}
+  skillDescriptionPanel: {fileID: 0}
+  skillDescriptionText: {fileID: 0}
+  actionFeedbackText: {fileID: 0}
 --- !u!114 &7027850883725066764
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2737,6 +2742,7 @@ MonoBehaviour:
   player: {fileID: 480180370959937788}
   enemy: {fileID: 3002651465180752887}
   choiceCard: {fileID: 0}
+  warHUD: {fileID: 0}
   maxTurns: 30
   playerStartIndex: 6
   enemyStartIndex: 9
@@ -4348,6 +4354,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0647a7895e32ee042985496dbfcf4171, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  glowcard: {fileID: 0}
   card: {fileID: 9043630300150989689}
   canvas: {fileID: 0}
   minSwipeDistance: 140

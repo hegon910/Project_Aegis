@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
 using static DataManager;
 
 public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
@@ -158,19 +159,32 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         {
             tutorialPanel.SetActive(false);
         }
+        // 파라미터 이벤트에서 넘어온 경우인지 먼저 판별
+        bool cameFromParameterEvent = currentParameterEventData != null;
+
+        // 파라미터 이벤트 쪽 전환 코루틴이 진행 중이면 중단하여 페이드 연출을 막지 않도록 정리
+        StopAllCoroutines();
+
         currentParameterEventData = null;
         currentSubEventData = data;
 
-        string characterName = "이름 없음";
+        string characterName = "";
         if (data.characterData != null)
         {
-            characterName = data.characterData.Chr_Name ?? "이름 없음";
+            characterName = data.characterData.Chr_Name ?? "";
         }
 
         // null 체크 추가
         string dialogue = data.Text_kr ?? "대화 내용이 없습니다.";
         string leftChoiceText = data.leftChoice?.choiceText ?? "선택지 1";
         string rightChoiceText = data.rightChoice?.choiceText ?? "선택지 2";
+
+        // 파라미터 이벤트 도중 서브이벤트로 진입할 때는 페이드 아웃/인 연출 적용
+        if (cameFromParameterEvent && dimmerPanel != null)
+        {
+            StartCoroutine(FadeToBlackThenDisplaySubEvent(characterName, dialogue, leftChoiceText, rightChoiceText));
+            return;
+        }
 
         DisplayEventUI(
             characterSprite: null,
@@ -179,6 +193,33 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             leftChoice: leftChoiceText,
             rightChoice: rightChoiceText
         );
+    }
+
+    private IEnumerator FadeToBlackThenDisplaySubEvent(string characterName, string dialogue, string leftChoiceText, string rightChoiceText)
+    {
+        // 시작 상태 초기화 및 입력 차단
+        dimmerPanel.gameObject.SetActive(true);
+        dimmerPanel.raycastTarget = true;
+        dimmerPanel.DOKill();
+        dimmerPanel.color = new Color(0f, 0f, 0f, 0f);
+
+        // 페이드 아웃: 알파 1까지 2초
+        yield return dimmerPanel.DOFade(1f, 2f).SetUpdate(false).WaitForCompletion();
+        dimmerPanel.color = new Color(0f, 0f, 0f, 1f);
+
+        // 서브이벤트 UI로 전환
+        DisplayEventUI(
+            characterSprite: null,
+            characterName: characterName,
+            dialogue: dialogue,
+            leftChoice: leftChoiceText,
+            rightChoice: rightChoiceText
+        );
+
+        // 페이드 인
+        yield return dimmerPanel.DOFade(0f, 0.5f).SetUpdate(false).WaitForCompletion();
+        dimmerPanel.color = new Color(0f, 0f, 0f, 0f);
+        dimmerPanel.raycastTarget = false;
     }
 
     private void DisplayEventUI(Sprite characterSprite, string characterName, string dialogue, string leftChoice, string rightChoice)
@@ -205,7 +246,13 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 
         if (currentParameterEventData != null)
         {
+            // 널 가드
             var choice = isRightChoice ? currentParameterEventData.rightChoice : currentParameterEventData.leftChoice;
+            if (choice == null || choice.condition == null)
+            {
+                Debug.LogWarning("[UIFlowSimulator] HandleChoice: choice 또는 condition 이 null입니다.");
+                return;
+            }
             
             // [수정] 새로운 Evaluate 시그니처 호출
             bool success = choice.condition.Evaluate();
@@ -237,10 +284,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             // 파라미터 이벤트는 Ending_Memoriar 같은 플래그가 없으므로 기록하지 않음
 
             // [신규] 파라미터 이벤트 완료 기록
-            if (DataManager.Instance?.PlayerData?.completedEventIds != null)
-            {
-                DataManager.Instance.PlayerData.completedEventIds.Add(currentParameterEventData.id);
-            }
+            DataManager.Instance.PlayerData.completedEventIds.Add(currentParameterEventData.id);
 
             StartCoroutine(TransitionToNextEvent(outcome.outcomeText));
         }

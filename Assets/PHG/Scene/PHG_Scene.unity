@@ -12063,6 +12063,26 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -50
       objectReference: {fileID: 0}
+    - target: {fileID: 3821149163261324793, guid: 35ffc1fcedba8b54ab32683ea37b9b53, type: 3}
+      propertyPath: subEventFadeMaxAlpha
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3821149163261324793, guid: 35ffc1fcedba8b54ab32683ea37b9b53, type: 3}
+      propertyPath: subEventFadeInDuration
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3821149163261324793, guid: 35ffc1fcedba8b54ab32683ea37b9b53, type: 3}
+      propertyPath: subEventFadeOutDuration
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3821149163261324793, guid: 35ffc1fcedba8b54ab32683ea37b9b53, type: 3}
+      propertyPath: subEventDarkHoldDuration
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3821149163261324793, guid: 35ffc1fcedba8b54ab32683ea37b9b53, type: 3}
+      propertyPath: subEventFadeHalfDuration
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 4024120497922043929, guid: 35ffc1fcedba8b54ab32683ea37b9b53, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -40
@@ -12345,7 +12365,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8623274424159911619, guid: 35ffc1fcedba8b54ab32683ea37b9b53, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -48
+      value: -47.999985
       objectReference: {fileID: 0}
     - target: {fileID: 8675307538787256182, guid: 35ffc1fcedba8b54ab32683ea37b9b53, type: 3}
       propertyPath: m_IsActive
