@@ -49,12 +49,18 @@ public class SimpleEventHistoryManager : MonoBehaviour
     /// <summary>
     /// 메인이벤트 기록 (Ending_Memoriar 기준)
     /// </summary>
-    public void RecordMainEvent(int eventId, string dialogue, string selectedChoice, bool isEndingMemoriar)
+    public void RecordMainEvent(int eventId, string dialogue, string selectedChoice, bool isEndingMemoriar, string playDate, string playDuration)
     {
         if (!enableRecording) return;
 
-        var record = new SimpleEventRecord(eventId, 
-            DataManager.Instance.PlayerData.currentChapter, dialogue, selectedChoice, isEndingMemoriar);
+        var record = new SimpleEventRecord(
+            eventId, 
+            DataManager.Instance.PlayerData.currentChapter, 
+            dialogue, 
+            selectedChoice, 
+            playDate,
+            playDuration,
+            isEndingMemoriar);
         
         eventHistory.Add(record);
         Debug.Log($"[SimpleEventHistoryManager] 메인이벤트 기록: {dialogue} (Ending_Memoriar: {isEndingMemoriar})");
