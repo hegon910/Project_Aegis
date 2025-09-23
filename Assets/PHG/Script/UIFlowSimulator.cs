@@ -17,6 +17,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 
     [Header("연출 효과")]
     [SerializeField] private Image dimmerPanel;
+    [SerializeField] private Image subEventDimmerPanel;
 
     private EventData currentParameterEventData;
     private FullSubEventData currentSubEventData;
@@ -180,7 +181,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         string rightChoiceText = data.rightChoice?.choiceText ?? "선택지 2";
 
         // 파라미터 이벤트 도중 서브이벤트로 진입할 때는 페이드 아웃/인 연출 적용
-        if (cameFromParameterEvent && dimmerPanel != null)
+        if (cameFromParameterEvent && subEventDimmerPanel != null)
         {
             StartCoroutine(FadeToBlackThenDisplaySubEvent(characterName, dialogue, leftChoiceText, rightChoiceText));
             return;
@@ -197,15 +198,15 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 
     private IEnumerator FadeToBlackThenDisplaySubEvent(string characterName, string dialogue, string leftChoiceText, string rightChoiceText)
     {
-        // 시작 상태 초기화 및 입력 차단
-        dimmerPanel.gameObject.SetActive(true);
-        dimmerPanel.raycastTarget = true;
-        dimmerPanel.DOKill();
-        dimmerPanel.color = new Color(0f, 0f, 0f, 0f);
+        // 시작 상태 초기화 및 입력 차단 (서브이벤트 전용 디머 사용)
+        subEventDimmerPanel.gameObject.SetActive(true);
+        subEventDimmerPanel.raycastTarget = true;
+        subEventDimmerPanel.DOKill();
+        subEventDimmerPanel.color = new Color(0f, 0f, 0f, 0f);
 
         // 페이드 아웃: 알파 1까지 2초
-        yield return dimmerPanel.DOFade(1f, 2f).SetUpdate(false).WaitForCompletion();
-        dimmerPanel.color = new Color(0f, 0f, 0f, 1f);
+        yield return subEventDimmerPanel.DOFade(1f, 2f).SetUpdate(false).WaitForCompletion();
+        subEventDimmerPanel.color = new Color(0f, 0f, 0f, 1f);
 
         // 서브이벤트 UI로 전환
         DisplayEventUI(
@@ -217,9 +218,9 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         );
 
         // 페이드 인
-        yield return dimmerPanel.DOFade(0f, 0.5f).SetUpdate(false).WaitForCompletion();
-        dimmerPanel.color = new Color(0f, 0f, 0f, 0f);
-        dimmerPanel.raycastTarget = false;
+        yield return subEventDimmerPanel.DOFade(0f, 0.5f).SetUpdate(false).WaitForCompletion();
+        subEventDimmerPanel.color = new Color(0f, 0f, 0f, 0f);
+        subEventDimmerPanel.raycastTarget = false;
     }
 
     private void DisplayEventUI(Sprite characterSprite, string characterName, string dialogue, string leftChoice, string rightChoice)
