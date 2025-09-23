@@ -87,10 +87,10 @@ public class SimpleReplayPanel : MonoBehaviour
         var events = historyManager.GetEventHistory();
         
         // 상태 텍스트 업데이트
-        if (statusText != null)
-        {
-            statusText.text = $"총 {events.Count}개의 이벤트 기록";
-        }
+        //if (statusText != null)
+        //{
+        //    statusText.text = $"총 {events.Count}개의 이벤트 기록";
+        //}
 
         // 이벤트 아이템들 생성
         for (int i = 0; i < events.Count; i++)
@@ -200,7 +200,7 @@ public class SimpleReplayPanel : MonoBehaviour
             if (historyManager != null)
             {
                 var events = historyManager.GetEventHistory();
-                statusText.text = $"총 {events.Count}개의 이벤트 기록";
+                //statusText.text = $"총 {events.Count}개의 이벤트 기록";
             }
             else
             {

@@ -43,6 +43,10 @@ public class GameData
     public long lastUpdated;
     // 서버 권위 타임스탬프(UTC ms). Firebase RTDB ServerValue.Timestamp로 채워짐
     public long lastUpdatedServer;
+    
+    // --- 게스트 계정 마이그레이션 정보 ---
+    public bool isMigratedFromGuest;        // 게스트에서 연동된 계정인지 여부
+    public long migrationTimestamp;         // 마이그레이션된 시점의 타임스탬프
 
     /// <summary>
     ///     기본 생성자
@@ -80,5 +84,9 @@ public class GameData
         // 타임스탬프 9.9. 이학권 추가
         lastUpdated = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         lastUpdatedServer = 0;
+        
+        // 마이그레이션 정보 초기화
+        isMigratedFromGuest = false;
+        migrationTimestamp = 0;
     }
 }

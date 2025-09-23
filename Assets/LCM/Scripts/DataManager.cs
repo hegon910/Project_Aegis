@@ -515,6 +515,130 @@ public class DataManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 게스트 계정의 로컬 데이터를 서버로 마이그레이션
+    /// 계정 연동 시 호출됨
+    /// </summary>
+    public void UploadGuestDataToServer()
+    {
+        if (FirebaseManager.User == null)
+        {
+            Debug.LogError("[DataManager] Firebase 사용자가 없습니다. 업로드를 중단합니다.");
+            return;
+        }
+
+        if (PlayerData == null)
+        {
+            Debug.LogWarning("[DataManager] 업로드할 게임 데이터가 없습니다.");
+            return;
+        }
+
+        Debug.Log("[DataManager] 게스트 데이터를 서버로 마이그레이션 시작");
+        StartCoroutine(UploadGuestDataCoroutine());
+    }
+
+    /// <summary>
+    /// 게스트 데이터 업로드 코루틴
+    /// </summary>
+    private IEnumerator UploadGuestDataCoroutine()
+    {
+        string uid = FirebaseManager.User.UserId;
+        var dbRef = FirebaseDatabase.DefaultInstance.GetReference($"users/{uid}/playerData");
+
+        // 게스트 데이터에 마이그레이션 정보 추가
+        PlayerData.lastUpdated = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        PlayerData.isMigratedFromGuest = true;
+        PlayerData.migrationTimestamp = PlayerData.lastUpdated;
+
+        string json = JsonUtility.ToJson(PlayerData, true);
+        
+        Debug.Log($"[DataManager] 게스트 데이터 업로드 중... (UID: {uid})");
+        
+        var uploadTask = dbRef.SetRawJsonValueAsync(json);
+        yield return new WaitUntil(() => uploadTask.IsCompleted);
+
+        if (uploadTask.IsFaulted)
+        {
+            Debug.LogError($"[DataManager] 게스트 데이터 업로드 실패: {uploadTask.Exception}");
+            yield break;
+        }
+
+        // 서버 타임스탬프 설정
+        var updates = new Dictionary<string, object>
+        {
+            { "lastUpdatedServer", ServerValue.Timestamp }
+        };
+        var tsTask = dbRef.UpdateChildrenAsync(updates);
+        yield return new WaitUntil(() => tsTask.IsCompleted);
+
+        if (tsTask.IsFaulted)
+        {
+            Debug.LogError($"[DataManager] 서버 타임스탬프 설정 실패: {tsTask.Exception}");
+            yield break;
+        }
+
+        // 서버 타임스탬프를 로컬에 반영
+        var readTask = dbRef.Child("lastUpdatedServer").GetValueAsync();
+        yield return new WaitUntil(() => readTask.IsCompleted);
+
+        if (!readTask.IsFaulted && readTask.Result != null && 
+            long.TryParse(readTask.Result.Value?.ToString(), out var serverMillis))
+        {
+            PlayerData.lastUpdatedServer = serverMillis;
+            SaveLocal();
+        }
+
+        Debug.Log("[DataManager] 게스트 데이터 마이그레이션 완료");
+        
+        // 마이그레이션 완료 후 저장 방식 변경 (로컬 + 서버)
+        _hasSyncedWithServer = true;
+    }
+
+    /// <summary>
+    /// 게스트 계정용 로컬 전용 저장 (서버 동기화 없음)
+    /// </summary>
+    public void SaveLocalOnly()
+    {
+        if (PlayerData == null) return;
+        if (_suppressSavesUntilGameplay) return;
+        
+        PlayerData.lastUpdated = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        string json = JsonUtility.ToJson(PlayerData, true);
+
+        bool saveSuccess = EncryptionUtility.SaveEncryptedFile(_playerDataSavePath, json);
+        if (saveSuccess)
+        {
+            Debug.Log($"[DataManager] 게스트 전용 로컬 저장 완료: {_playerDataSavePath}");
+        }
+        else
+        {
+            Debug.LogError($"[DataManager] 게스트 데이터 저장 실패: {_playerDataSavePath}");
+        }
+    }
+
+    /// <summary>
+    /// 현재 저장 방식이 게스트 모드인지 확인
+    /// </summary>
+    public bool IsGuestMode()
+    {
+        return FirebaseManager.IsGuestAccount;
+    }
+
+    /// <summary>
+    /// 저장 방식에 따른 적절한 저장 메서드 호출
+    /// </summary>
+    public void SaveData()
+    {
+        if (IsGuestMode())
+        {
+            SaveLocalOnly();
+        }
+        else
+        {
+            SaveLocal();
+        }
+    }
+
+    /// <summary>
     /// 게임이 종료될 때 자동으로 데이터를 저장합니다.
     /// </summary>
     private void OnApplicationQuit()
