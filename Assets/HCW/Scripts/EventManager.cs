@@ -91,22 +91,19 @@ public class EventManager : MonoBehaviour
     {
         // [수정] DataManager의 플레이리스트를 비웁니다.
         DataManager.Instance.PlayerData.currentPlaylist.Clear();
-        List<int> tutorialEvents = new List<int>();
 
-        // [수정] 튜토리얼 이벤트는 1회차 1챕터에서만 우선적으로 등장하도록 수정
-        if (DataManager.Instance.PlayerData.playthroughCount == 1 && DataManager.Instance.PlayerData.currentChapter == 1)
-        {
-            var completedIds = new HashSet<int>(DataManager.Instance.PlayerData.completedEventIds);
-            tutorialEvents = DataManager.Instance.eventDataDict.Values
-                .Where(d => d.PageType == 1 && !completedIds.Contains(d.ID))
-                .Select(d => d.ID)
-                .ToList();
-            // 튜토리얼 이벤트를 추가 (나중에 서브이벤트와 일반 이벤트와 함께 24개로 구성)
-            DataManager.Instance.PlayerData.currentPlaylist.AddRange(tutorialEvents);
-            Debug.Log($"[EventManager] 1회차 1챕터에서 튜토리얼 이벤트 {tutorialEvents.Count}개 추가됨");
-        }
+        // 1. 일반 이벤트를 먼저 추가합니다. (8~14개)
+        var allCommonEvents = GetCommonParameterEvents();
+        int commonEventCount = UnityEngine.Random.Range(8, 15); // 8~14개
 
-        Debug.Log($"[EventManager] 튜토리얼 이벤트 추가 후: {DataManager.Instance.PlayerData.currentPlaylist.Count}개");
+        var selectedCommonEvents = allCommonEvents
+            .OrderBy(x => Guid.NewGuid()) // 무작위로 섞기
+            .Take(commonEventCount)
+            .ToList();
+
+        DataManager.Instance.PlayerData.currentPlaylist.AddRange(selectedCommonEvents);
+        Debug.Log($"[EventManager] 일반 이벤트 {selectedCommonEvents.Count}개 추가됨.");
+
 
         // 서브이벤트 추가 (제한 없이 모든 가능한 서브이벤트 추가)
         if (selectedPackNumbers != null && selectedPackNumbers.Count > 0)
@@ -194,22 +191,10 @@ public class EventManager : MonoBehaviour
 
 
         // 튜토리얼 이벤트가 가장 먼저 등장하도록 보장
-        if (DataManager.Instance.PlayerData.playthroughCount == 1 && DataManager.Instance.PlayerData.currentChapter == 1 && tutorialEvents.Count > 0)
-        {
-            // 튜토리얼 이벤트들을 앞쪽에 고정하고, 나머지만 랜덤하게 섞기
-            var tutorialIds = new HashSet<int>(tutorialEvents);
-            var tutorialInPlaylist = DataManager.Instance.PlayerData.currentPlaylist.Where(id => tutorialIds.Contains(id)).ToList();
-            var nonTutorialInPlaylist = DataManager.Instance.PlayerData.currentPlaylist.Where(id => !tutorialIds.Contains(id)).ToList();
-
-            // 튜토리얼 이벤트들을 순서대로 앞쪽에 배치하고, 나머지는 랜덤하게 섞어서 뒤에 배치
-            DataManager.Instance.PlayerData.currentPlaylist = tutorialInPlaylist.Concat(nonTutorialInPlaylist.OrderBy(x => Guid.NewGuid())).ToList();
-            Debug.Log($"[EventManager] 튜토리얼 이벤트 {tutorialInPlaylist.Count}개를 플레이리스트 앞쪽에 고정 배치");
-        }
-        else
-        {
-            // 일반적인 경우: 전체 플레이리스트를 랜덤하게 섞기
-            DataManager.Instance.PlayerData.currentPlaylist = DataManager.Instance.PlayerData.currentPlaylist.OrderBy(x => Guid.NewGuid()).ToList();
-        }
+        
+        // 일반적인 경우: 전체 플레이리스트를 랜덤하게 섞기
+        DataManager.Instance.PlayerData.currentPlaylist = DataManager.Instance.PlayerData.currentPlaylist.OrderBy(x => Guid.NewGuid()).ToList();
+       
 
         // totalEventsPerCycle에 도달할 때까지 파라미터 이벤트 추가
         Debug.Log($"[EventManager] 파라미터 이벤트 추가 시작 - 현재: {DataManager.Instance.PlayerData.currentPlaylist.Count}/{totalEventsPerCycle}");
@@ -263,7 +248,6 @@ public class EventManager : MonoBehaviour
 
         // 디버그: 플레이리스트 구성 상세 정보
         Debug.Log($"[EventManager] 플레이리스트 구성 상세:");
-        Debug.Log($"  - 튜토리얼 이벤트: {tutorialEvents.Count}개");
         Debug.Log($"  - totalEventsPerCycle 설정값: {totalEventsPerCycle}");
         Debug.Log($"  - 실제 플레이리스트 크기: {DataManager.Instance.PlayerData.currentPlaylist.Count}개");
     }
