@@ -91,6 +91,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private MainScenarioManager mainScenarioManager;
     [SerializeField] private UIPanelAnimator uiPanelAnimator;
     [SerializeField] private CardController cardController;
+    [SerializeField] private GameSessionManager gameSessionManager;
 
 
     [Header("지휘관 선택")]
@@ -145,6 +146,7 @@ public class GameManager : MonoBehaviour
         await DataManager.Instance.IsReady;
 
         EventManager.Instance.InitializeEventManager();
+
         if (loadingPanel != null)
         {
             loadingPanel.SetActive(false);
@@ -251,6 +253,10 @@ public class GameManager : MonoBehaviour
                 hasShownWarTutorialThisPlaythrough = false;
                 DataManager.Instance.PlayerData.currentChapter = 1;
                 EventManager.Instance.ResetEventManagerState();
+                if (gameSessionManager != null)
+                {
+                    gameSessionManager.EndSession();
+                }
                 nextState = GameState.MainMenu;
                 break;
         }
@@ -782,6 +788,11 @@ public class GameManager : MonoBehaviour
         var spm = FindObjectOfType<StoryPackManager>();
         var selectedPacksForNewGame = spm != null ? spm.GetSelectedPackIDs() : (DataManager.Instance.PlayerSettings != null ? DataManager.Instance.PlayerSettings.selectedSubEventPackIDs : null);
         Debug.Log($"[GameManager] 새게임 직전 선택 팩: {(selectedPacksForNewGame != null ? string.Join(", ", selectedPacksForNewGame) : "null")}, 개수: {selectedPacksForNewGame?.Count ?? -1}");
+        if (gameSessionManager != null)
+        {
+            gameSessionManager.StartSession();
+        }
+
         await EventManager.Instance.StartNewGame(selectedPacksForNewGame);
         OnStateFinished();
     }
@@ -790,6 +801,12 @@ public class GameManager : MonoBehaviour
     {
         if (_isGameOverActive) return; // 재진입 방지
         _isGameOverActive = true;
+
+        if (gameSessionManager != null)
+        {
+            gameSessionManager.EndSession();
+        }
+
         if (gameOverText != null)
         {
             gameOverText.text = reason;
@@ -998,6 +1015,11 @@ public class GameManager : MonoBehaviour
                     case GameState.GamePaused:
                         shouldSaveState = false;
                         break;
+                }
+
+                if (gameSessionManager != null)
+                {
+                    gameSessionManager.EndSession();
                 }
 
                 // [수정] 저장 가능한 상태일 때만 진행도를 저장합니다.

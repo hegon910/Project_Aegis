@@ -91,128 +91,11 @@ public class EventManager : MonoBehaviour
     {
         // [수정] DataManager의 플레이리스트를 비웁니다.
         DataManager.Instance.PlayerData.currentPlaylist.Clear();
-        List<int> tutorialEvents = new List<int>();
 
-        // [수정] 튜토리얼 이벤트는 1회차 1챕터에서만 우선적으로 등장하도록 수정
-        if (DataManager.Instance.PlayerData.playthroughCount == 1 && DataManager.Instance.PlayerData.currentChapter == 1)
-        {
-            var completedIds = new HashSet<int>(DataManager.Instance.PlayerData.completedEventIds);
-            tutorialEvents = DataManager.Instance.eventDataDict.Values
-                .Where(d => d.PageType == 1 && !completedIds.Contains(d.ID))
-                .Select(d => d.ID)
-                .ToList();
-            // 튜토리얼 이벤트를 추가 (나중에 서브이벤트와 일반 이벤트와 함께 24개로 구성)
-            DataManager.Instance.PlayerData.currentPlaylist.AddRange(tutorialEvents);
-            Debug.Log($"[EventManager] 1회차 1챕터에서 튜토리얼 이벤트 {tutorialEvents.Count}개 추가됨");
-        }
+        Debug.Log($"[EventManager] 플레이리스트 초기화 완료: {DataManager.Instance.PlayerData.currentPlaylist.Count}개");
 
-        Debug.Log($"[EventManager] 튜토리얼 이벤트 추가 후: {DataManager.Instance.PlayerData.currentPlaylist.Count}개");
-
-        // 서브이벤트 추가 (제한 없이 모든 가능한 서브이벤트 추가)
-        if (selectedPackNumbers != null && selectedPackNumbers.Count > 0)
-        {
-            if (DataManager.Instance.FullSubEvents == null || DataManager.Instance.FullSubEvents.Count == 0)
-            {
-                Debug.LogWarning("[EventManager] SubEvents 데이터가 비어 있어 서브 이벤트를 편성할 수 없습니다.");
-            }
-
-            Debug.Log($"[EventManager] 서브 편성 시작: 선택 팩 {string.Join(", ", selectedPackNumbers)}");
-
-            // 진단: 데이터에 존재하는 팩 넘버 요약
-            var distinctPacksInData = (DataManager.Instance.FullSubEvents ?? new List<FullSubEventData>())
-                .Select(e => e.SubStoryPac)
-                .Distinct()
-                .OrderBy(x => x)
-                .ToList();
-            Debug.Log($"[EventManager] 서브 데이터 내 팩 목록: [{string.Join(", ", distinctPacksInData)}]");
-
-            // 진단: 선택된 각 팩이 실제 데이터에 존재하는지 표시
-            foreach (var sel in selectedPackNumbers)
-            {
-                bool exists = distinctPacksInData.Contains(sel);
-                if (!exists)
-                {
-                    Debug.LogWarning($"[EventManager] 선택 팩 {sel}은(SubEvents.PackNumber) 데이터에 존재하지 않습니다.");
-                }
-            }
-            // 모든 선택된 팩에서 플레이 가능한 그룹들을 (팩 ID, 그룹 ID) 쌍으로 수집합니다.
-            var allAvailableGroups = new List<(int packId, int groupId)>();
-            foreach (var packNumber in selectedPackNumbers)
-            {
-                var groupsFromPack = GetSubEventGroupsForPack(packNumber)
-                    .Select(group => (packId: packNumber, groupId: group));
-                allAvailableGroups.AddRange(groupsFromPack);
-            }
-
-            // 이미 플레이한 그룹은 제외하고, 리스트를 무작위로 섞습니다.
-            var availableGroups = allAvailableGroups
-                .Where(pg => !DataManager.Instance.PlayerData.playedSubEventGroups.Contains(pg.groupId))
-                .OrderBy(x => Guid.NewGuid()) // 리스트 셔플
-                .ToList();
-
-            Debug.Log($"[EventManager] 서브 그룹 후보: 전체 {allAvailableGroups.Count}개, 미플레이 {availableGroups.Count}개");
-
-            if (availableGroups.Count > 0)
-            {
-                // 셔플된 그룹 목록을 순회하며 24개 제한을 고려하여 서브이벤트 체인을 추가
-                foreach (var selectedPackAndGroup in availableGroups)
-                {
-                    var subEventChain = GetSubEventChain(selectedPackAndGroup.packId, selectedPackAndGroup.groupId);
-                    if (subEventChain.Count > 0)
-                    {
-                        // 24개 제한 확인: 이 체인을 추가하면 초과하는지 체크
-                        int currentCount = DataManager.Instance.PlayerData.currentPlaylist.Count;
-                        if (currentCount + subEventChain.Count <= totalEventsPerCycle)
-                        {
-                            DataManager.Instance.PlayerData.playedSubEventGroups.Add(selectedPackAndGroup.groupId);
-                            // 서브이벤트 체인의 첫 번째 이벤트만 플레이리스트에 추가 (나머지는 체인으로 처리)
-                            DataManager.Instance.PlayerData.currentPlaylist.Add(subEventChain.First().ID);
-                            Debug.Log($"[EventManager] 서브 이벤트 체인 추가: 팩 {selectedPackAndGroup.packId}, 그룹 {selectedPackAndGroup.groupId} ({subEventChain.Count}턴 소모) - 첫 이벤트 ID: {subEventChain.First().ID}");
-                        }
-                        else
-                        {
-                            Debug.Log($"[EventManager] 서브 이벤트 체인 추가 건너뜀: 팩 {selectedPackAndGroup.packId}, 그룹 {selectedPackAndGroup.groupId} (추가 시 {currentCount + subEventChain.Count}개로 {totalEventsPerCycle}개 초과)");
-                        }
-                    }
-                    else
-                    {
-                        Debug.LogWarning($"[EventManager] 그룹 {selectedPackAndGroup.groupId} 체인 데이터 없음");
-                    }
-                }
-            }
-            else
-            {
-                Debug.LogWarning($"[EventManager] 선택된 팩 [{string.Join(", ", selectedPackNumbers)}]에 더 이상 진행할 수 있는 새 서브 이벤트 그룹이 없습니다.");
-            }
-        }
-        else
-        {
-            Debug.Log("[EventManager] 선택된 서브 팩이 없어 서브 이벤트 편성 생략");
-        }
-
-        Debug.Log($"[EventManager] 서브이벤트 추가 후: {DataManager.Instance.PlayerData.currentPlaylist.Count}개");
-
-
-        // 튜토리얼 이벤트가 가장 먼저 등장하도록 보장
-        if (DataManager.Instance.PlayerData.playthroughCount == 1 && DataManager.Instance.PlayerData.currentChapter == 1 && tutorialEvents.Count > 0)
-        {
-            // 튜토리얼 이벤트들을 앞쪽에 고정하고, 나머지만 랜덤하게 섞기
-            var tutorialIds = new HashSet<int>(tutorialEvents);
-            var tutorialInPlaylist = DataManager.Instance.PlayerData.currentPlaylist.Where(id => tutorialIds.Contains(id)).ToList();
-            var nonTutorialInPlaylist = DataManager.Instance.PlayerData.currentPlaylist.Where(id => !tutorialIds.Contains(id)).ToList();
-
-            // 튜토리얼 이벤트들을 순서대로 앞쪽에 배치하고, 나머지는 랜덤하게 섞어서 뒤에 배치
-            DataManager.Instance.PlayerData.currentPlaylist = tutorialInPlaylist.Concat(nonTutorialInPlaylist.OrderBy(x => Guid.NewGuid())).ToList();
-            Debug.Log($"[EventManager] 튜토리얼 이벤트 {tutorialInPlaylist.Count}개를 플레이리스트 앞쪽에 고정 배치");
-        }
-        else
-        {
-            // 일반적인 경우: 전체 플레이리스트를 랜덤하게 섞기
-            DataManager.Instance.PlayerData.currentPlaylist = DataManager.Instance.PlayerData.currentPlaylist.OrderBy(x => Guid.NewGuid()).ToList();
-        }
-
-        // totalEventsPerCycle에 도달할 때까지 파라미터 이벤트 추가
-        Debug.Log($"[EventManager] 파라미터 이벤트 추가 시작 - 현재: {DataManager.Instance.PlayerData.currentPlaylist.Count}/{totalEventsPerCycle}");
+        // 먼저 파라미터 이벤트로 24개를 채웁니다
+        Debug.Log($"[EventManager] 파라미터 이벤트 추가 시작 - 목표: {totalEventsPerCycle}개");
 
         while (DataManager.Instance.PlayerData.currentPlaylist.Count < totalEventsPerCycle)
         {
@@ -244,6 +127,132 @@ public class EventManager : MonoBehaviour
             Debug.Log($"[EventManager] 파라미터 이벤트 {toAdd}개 추가됨 (현재: {DataManager.Instance.PlayerData.currentPlaylist.Count}/{totalEventsPerCycle})");
         }
 
+        Debug.Log($"[EventManager] 파라미터 이벤트 추가 완료: {DataManager.Instance.PlayerData.currentPlaylist.Count}개");
+
+        // 서브이벤트 추가 (8번째~14번째 사이에 배치)
+        if (selectedPackNumbers != null && selectedPackNumbers.Count > 0)
+        {
+            if (DataManager.Instance.FullSubEvents == null || DataManager.Instance.FullSubEvents.Count == 0)
+            {
+                Debug.LogWarning("[EventManager] SubEvents 데이터가 비어 있어 서브 이벤트를 편성할 수 없습니다.");
+            }
+            else
+            {
+                Debug.Log($"[EventManager] 서브 편성 시작: 선택 팩 {string.Join(", ", selectedPackNumbers)}");
+
+                // 진단: 데이터에 존재하는 팩 넘버 요약
+                var distinctPacksInData = (DataManager.Instance.FullSubEvents ?? new List<FullSubEventData>())
+                    .Select(e => e.SubStoryPac)
+                    .Distinct()
+                    .OrderBy(x => x)
+                    .ToList();
+                Debug.Log($"[EventManager] 서브 데이터 내 팩 목록: [{string.Join(", ", distinctPacksInData)}]");
+
+                // 진단: 선택된 각 팩이 실제 데이터에 존재하는지 표시
+                foreach (var sel in selectedPackNumbers)
+                {
+                    bool exists = distinctPacksInData.Contains(sel);
+                    if (!exists)
+                    {
+                        Debug.LogWarning($"[EventManager] 선택 팩 {sel}은(SubEvents.PackNumber) 데이터에 존재하지 않습니다.");
+                    }
+                }
+
+                // 모든 선택된 팩에서 플레이 가능한 그룹들을 (팩 ID, 그룹 ID) 쌍으로 수집합니다.
+                var allAvailableGroups = new List<(int packId, int groupId)>();
+                foreach (var packNumber in selectedPackNumbers)
+                {
+                    var groupsFromPack = GetSubEventGroupsForPack(packNumber)
+                        .Select(group => (packId: packNumber, groupId: group));
+                    allAvailableGroups.AddRange(groupsFromPack);
+                }
+
+                // 이미 플레이한 그룹은 제외하고, 리스트를 무작위로 섞습니다.
+                var availableGroups = allAvailableGroups
+                    .Where(pg => !DataManager.Instance.PlayerData.playedSubEventGroups.Contains(pg.groupId))
+                    .OrderBy(x => Guid.NewGuid()) // 리스트 셔플
+                    .ToList();
+
+                Debug.Log($"[EventManager] 서브 그룹 후보: 전체 {allAvailableGroups.Count}개, 미플레이 {availableGroups.Count}개");
+
+                if (availableGroups.Count > 0)
+                {
+                    // 8번째~14번째 사이에 서브이벤트를 배치
+                    int subEventStartIndex = 7; // 8번째 (0-based index)
+                    int subEventEndIndex = 13;  // 14번째 (0-based index)
+                    
+                    // 서브이벤트를 배치할 위치들을 결정 (8~14번째 중에서 랜덤하게 선택)
+                    var subEventPositions = new List<int>();
+                    for (int i = subEventStartIndex; i <= subEventEndIndex; i++)
+                    {
+                        if (i < DataManager.Instance.PlayerData.currentPlaylist.Count)
+                        {
+                            subEventPositions.Add(i);
+                        }
+                    }
+                    
+                    // 서브이벤트 위치를 랜덤하게 섞기
+                    subEventPositions = subEventPositions.OrderBy(x => Guid.NewGuid()).ToList();
+                    
+                    Debug.Log($"[EventManager] 서브이벤트 배치 가능 위치: {string.Join(", ", subEventPositions)}");
+
+                    // 셔플된 그룹 목록을 순회하며 서브이벤트 체인을 배치
+                    int positionIndex = 0;
+                    int totalSubEventTurns = 0; // 서브이벤트가 소모할 총 턴 수
+                    
+                    foreach (var selectedPackAndGroup in availableGroups)
+                    {
+                        if (positionIndex >= subEventPositions.Count)
+                        {
+                            Debug.Log($"[EventManager] 서브이벤트 배치 위치가 모두 사용됨. 남은 그룹은 건너뜀.");
+                            break;
+                        }
+
+                        var subEventChain = GetSubEventChain(selectedPackAndGroup.packId, selectedPackAndGroup.groupId);
+                        if (subEventChain.Count > 0)
+                        {
+                            int targetPosition = subEventPositions[positionIndex];
+                            
+                            // 서브이벤트 체인이 24개 제한을 초과하지 않는지 확인
+                            // 서브이벤트 체인은 첫 번째 이벤트만 플레이리스트에 배치되고, 나머지는 체인으로 처리됨
+                            // 따라서 체인 길이만큼 턴을 소모하지만 플레이리스트에는 1개만 추가됨
+                            if (totalSubEventTurns + subEventChain.Count <= totalEventsPerCycle)
+                            {
+                                DataManager.Instance.PlayerData.playedSubEventGroups.Add(selectedPackAndGroup.groupId);
+                                
+                                // 해당 위치의 파라미터 이벤트를 서브이벤트로 교체
+                                DataManager.Instance.PlayerData.currentPlaylist[targetPosition] = subEventChain.First().ID;
+                                
+                                totalSubEventTurns += subEventChain.Count;
+                                
+                                Debug.Log($"[EventManager] 서브 이벤트 체인 배치: 팩 {selectedPackAndGroup.packId}, 그룹 {selectedPackAndGroup.groupId} ({subEventChain.Count}턴 소모) - 위치: {targetPosition + 1}번째, 첫 이벤트 ID: {subEventChain.First().ID}, 누적 서브이벤트 턴: {totalSubEventTurns}");
+                                
+                                positionIndex++;
+                            }
+                            else
+                            {
+                                Debug.Log($"[EventManager] 서브 이벤트 체인 배치 건너뜀: 팩 {selectedPackAndGroup.packId}, 그룹 {selectedPackAndGroup.groupId} (추가 시 {totalSubEventTurns + subEventChain.Count}턴으로 {totalEventsPerCycle}턴 초과)");
+                            }
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"[EventManager] 그룹 {selectedPackAndGroup.groupId} 체인 데이터 없음");
+                        }
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning($"[EventManager] 선택된 팩 [{string.Join(", ", selectedPackNumbers)}]에 더 이상 진행할 수 있는 새 서브 이벤트 그룹이 없습니다.");
+                }
+            }
+        }
+        else
+        {
+            Debug.Log("[EventManager] 선택된 서브 팩이 없어 서브 이벤트 편성 생략");
+        }
+
+        Debug.Log($"[EventManager] 서브이벤트 배치 완료: {DataManager.Instance.PlayerData.currentPlaylist.Count}개");
+
         // 안전장치: totalEventsPerCycle(24개) 제한 적용 (초과 시에만)
         if (DataManager.Instance.PlayerData.currentPlaylist.Count > totalEventsPerCycle)
         {
@@ -263,7 +272,7 @@ public class EventManager : MonoBehaviour
 
         // 디버그: 플레이리스트 구성 상세 정보
         Debug.Log($"[EventManager] 플레이리스트 구성 상세:");
-        Debug.Log($"  - 튜토리얼 이벤트: {tutorialEvents.Count}개");
+       //ebug.Log($"  - 튜토리얼 이벤트: {tutorialEvents.Count}개");
         Debug.Log($"  - totalEventsPerCycle 설정값: {totalEventsPerCycle}");
         Debug.Log($"  - 실제 플레이리스트 크기: {DataManager.Instance.PlayerData.currentPlaylist.Count}개");
     }
@@ -326,18 +335,7 @@ public class EventManager : MonoBehaviour
             // 4. 준비된 이벤트를 발생시킵니다. (ID 임계치 대신 데이터 존재로 분류)
             bool isSubByData = DataManager.Instance.FullSubEvents != null && DataManager.Instance.FullSubEvents.Any(e => e.ID == eventId);
 
-            // 튜토리얼 이벤트인지 확인 (PageType == 1)
-            bool isTutorialEvent = DataManager.Instance.eventDataDict.ContainsKey(eventId) &&
-                                  DataManager.Instance.eventDataDict[eventId].PageType == 1;
-
-            // 튜토리얼 이벤트는 서브이벤트와 겹치지 않도록 우선 처리
-            if (isTutorialEvent)
-            {
-                Debug.Log($"튜토리얼 이벤트(ID: {eventId}) 발생.");
-                OnParameterEventReady?.Invoke(eventId);
-                DataManager.Instance.PlayerData.completedEventIds.Add(eventId);
-            }
-            else if (isSubByData)
+            if (isSubByData)
             {
                 Debug.Log($"서브이벤트(ID: {eventId}) 발생.");
                 DisplaySubEvent(eventId);
