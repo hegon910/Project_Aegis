@@ -237,7 +237,10 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             // 파라미터 이벤트는 Ending_Memoriar 같은 플래그가 없으므로 기록하지 않음
 
             // [신규] 파라미터 이벤트 완료 기록
-            DataManager.Instance.PlayerData.completedEventIds.Add(currentParameterEventData.id);
+            if (DataManager.Instance?.PlayerData?.completedEventIds != null)
+            {
+                DataManager.Instance.PlayerData.completedEventIds.Add(currentParameterEventData.id);
+            }
 
             StartCoroutine(TransitionToNextEvent(outcome.outcomeText));
         }
