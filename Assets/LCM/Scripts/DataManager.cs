@@ -1189,7 +1189,10 @@ public class DataManager : MonoBehaviour
                     break;
 
                 case 4: // 4: 특정 엔딩 경험
-                    isBranchTriggered = PlaythroughHistory.Instance.HasCompletedEnding(rawData.ChangeCondition);
+                    if (PlayerData != null)
+                    {
+                        isBranchTriggered = PlayerData.completedEndingIds.Contains(rawData.ChangeCondition);
+                    }
                     break;
 
                 default:
