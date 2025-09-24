@@ -234,8 +234,7 @@ public class GameManager : MonoBehaviour
             case GameState.InBattle: nextState = GameState.InBattleResult; break;
             case GameState.InBattleResult: nextState = GameState.InChapterResult; break;
             case GameState.InChapterResult:
-                GamePlayerStats.Instance.SetStat(ParameterType.전황, 50);
-                DataManager.Instance.PlayerData.currentChapter++;
+                // 전황 초기화는 OnChapterResultConfirmed()에서 처리됨
 
                 // 6챕터(5회차 완료 후)가 되면 엔딩으로, 그 전까지는 이벤트 사이클로 돌아가 반복
                 if (DataManager.Instance.PlayerData.currentChapter > 6)
@@ -533,9 +532,12 @@ public class GameManager : MonoBehaviour
 
     public void OnChapterResultConfirmed()
     {
+        // 전황 수치를 다음 챕터를 위해 50으로 초기화
+        GamePlayerStats.Instance.SetStat(ParameterType.전황, 50);
+        DataManager.Instance.PlayerData.currentChapter++;
+        
         // OnClick 이벤트가 발생하면 다음 상태(다음 챕터)로 진행시킵니다.
         OnStateFinished();
-
     }
     private void RestoreGameState(GameState stateToRestore)
     {
@@ -797,7 +799,25 @@ public class GameManager : MonoBehaviour
         await EventManager.Instance.StartNewGame(selectedPacksForNewGame);
         OnStateFinished();
     }
-    private void StartDetailedResultSequence() { int warSituation = GamePlayerStats.Instance.GetStat(ParameterType.전황); GameOutcome outcome = (warSituation <= 19) ? GameOutcome.Defeat : (warSituation >= 81) ? GameOutcome.Victory : GameOutcome.Draw; int chapterIndex = CurrentChapter - 1; if (chapterIndex < chapterEndDataList.Count && chapterEndDataList[chapterIndex] != null) { chapterEndController.StartChapterEndSequence(chapterEndDataList[chapterIndex], outcome); } else { OnStateFinished(); } }
+    private void StartDetailedResultSequence() 
+    { 
+        int warSituation = GamePlayerStats.Instance.GetStat(ParameterType.전황); 
+        GameOutcome outcome = (warSituation <= 19) ? GameOutcome.Defeat : (warSituation >= 81) ? GameOutcome.Victory : GameOutcome.Draw; 
+        
+        // 디버그 로그 추가
+        Debug.Log($"[ChapterResult] 현재 전황 수치: {warSituation}");
+        Debug.Log($"[ChapterResult] 결정된 결과: {outcome} (기준: <=19 패배, >=81 승리, 그외 무승부)");
+        
+        int chapterIndex = CurrentChapter - 1; 
+        if (chapterIndex < chapterEndDataList.Count && chapterEndDataList[chapterIndex] != null) 
+        { 
+            chapterEndController.StartChapterEndSequence(chapterEndDataList[chapterIndex], outcome); 
+        } 
+        else 
+        { 
+            OnStateFinished(); 
+        } 
+    }
     public void GameOver(string reason)
     {
         if (_isGameOverActive) return; // 재진입 방지

@@ -1,0 +1,7 @@
+---
+description: |
+  Do not refactor without permission. 
+  Analyze the entire project code and then proceed with the work in alignment with the overall flow.
+globs: []
+alwaysApply: true
+---

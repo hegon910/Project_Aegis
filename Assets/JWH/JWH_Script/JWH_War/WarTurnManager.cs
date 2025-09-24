@@ -131,7 +131,7 @@ public class WarTurnManager : MonoBehaviour
         PlayerPrefs.DeleteKey("HasSeenWarTutorial");
         PlayerPrefs.Save();
 
-        bool isWin = resultLog.Contains("�¸�");
+        bool isWin = resultLog.Contains("승리");
         WarHistory.RecordWarResult(isWin); // ���� ����� ��� �ý��ۿ� ����
         var changes = new List<ParameterChange>//�Ķ���� ���� �߰��κ�
 
