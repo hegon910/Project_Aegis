@@ -91,7 +91,6 @@ public class GameManager : MonoBehaviour
     [SerializeField] private MainScenarioManager mainScenarioManager;
     [SerializeField] private UIPanelAnimator uiPanelAnimator;
     [SerializeField] private CardController cardController;
-    [SerializeField] private GameSessionManager gameSessionManager;
 
 
     [Header("지휘관 선택")]
@@ -127,7 +126,6 @@ public class GameManager : MonoBehaviour
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         EnsureCheatManagerExists();
 #endif
-		EnsureEventManagerExists();
     }
 
     private void OnEnable() { }
@@ -145,7 +143,6 @@ public class GameManager : MonoBehaviour
         await DataManager.Instance.InitializeDataAsync();
 
         await DataManager.Instance.IsReady;
-
 
         EventManager.Instance.InitializeEventManager();
         if (loadingPanel != null)
@@ -234,7 +231,8 @@ public class GameManager : MonoBehaviour
             case GameState.InBattle: nextState = GameState.InBattleResult; break;
             case GameState.InBattleResult: nextState = GameState.InChapterResult; break;
             case GameState.InChapterResult:
-                // 전황 초기화는 OnChapterResultConfirmed()에서 처리됨
+                GamePlayerStats.Instance.SetStat(ParameterType.전황, 50);
+                DataManager.Instance.PlayerData.currentChapter++;
 
                 // 6챕터(5회차 완료 후)가 되면 엔딩으로, 그 전까지는 이벤트 사이클로 돌아가 반복
                 if (DataManager.Instance.PlayerData.currentChapter > 6)
@@ -253,10 +251,6 @@ public class GameManager : MonoBehaviour
                 hasShownWarTutorialThisPlaythrough = false;
                 DataManager.Instance.PlayerData.currentChapter = 1;
                 EventManager.Instance.ResetEventManagerState();
-                if (gameSessionManager != null)
-                {
-                    gameSessionManager.EndSession();
-                }
                 nextState = GameState.MainMenu;
                 break;
         }
@@ -437,8 +431,47 @@ public class GameManager : MonoBehaviour
                 StartDetailedResultSequence();
                 break;
             case GameState.PlayingEndingCutscene:
-                CutsceneManager.OnCutsceneFinished += OnStateFinished;
-                cutsceneManager.StartCutscene(finalEndingCutscene);
+                // 멀티 엔딩 시스템을 사용하여 적절한 엔딩 결정
+                var endingData = MultiEndingSystem.Instance?.GetFinalEndingData();
+                
+                // 기존 finalEndingCutscene 대신 동적으로 결정된 엔딩 사용
+                if (endingData?.fullEndingData != null)
+                {
+                    // FullEndingData를 CutsceneData로 변환
+                    var cutsceneData = MultiEndingSystem.Instance.ConvertToCutsceneData(endingData.fullEndingData);
+                    
+                    if (cutsceneData != null)
+                    {
+                        Debug.Log($"[GameManager] 멀티 엔딩 재생: {endingData.endingType} - {endingData.route} - {endingData.branch}");
+                        CutsceneManager.OnCutsceneFinished += OnStateFinished;
+                        cutsceneManager.StartCutscene(cutsceneData);
+                    }
+                    else
+                    {
+                        // 변환 실패 시 폴백
+                        Debug.LogWarning("[GameManager] 엔딩 데이터 변환 실패, 기본 엔딩 사용");
+                        CutsceneManager.OnCutsceneFinished += OnStateFinished;
+                        cutsceneManager.StartCutscene(finalEndingCutscene);
+                    }
+                }
+                else
+                {
+                    // 폴백: 기존 엔딩 사용
+                    Debug.Log("[GameManager] 엔딩 데이터 없음, 기본 엔딩 사용");
+                    CutsceneManager.OnCutsceneFinished += OnStateFinished;
+                    cutsceneManager.StartCutscene(finalEndingCutscene);
+                }
+                
+                // 엔딩 기록 저장
+                if (DataManager.Instance?.PlayerData != null && endingData != null)
+                {
+                    string endingKey = $"{endingData.endingType}_{endingData.route}_{endingData.branch}";
+                    if (!DataManager.Instance.PlayerData.completedEndings.Contains(endingKey))
+                    {
+                        DataManager.Instance.PlayerData.completedEndings.Add(endingKey);
+                        DataManager.Instance.SaveLocal();
+                    }
+                }
                 break;
         }
 
@@ -532,12 +565,9 @@ public class GameManager : MonoBehaviour
 
     public void OnChapterResultConfirmed()
     {
-        // 전황 수치를 다음 챕터를 위해 50으로 초기화
-        GamePlayerStats.Instance.SetStat(ParameterType.전황, 50);
-        DataManager.Instance.PlayerData.currentChapter++;
-        
         // OnClick 이벤트가 발생하면 다음 상태(다음 챕터)로 진행시킵니다.
         OnStateFinished();
+
     }
     private void RestoreGameState(GameState stateToRestore)
     {
@@ -744,16 +774,7 @@ public class GameManager : MonoBehaviour
     }
     public void TutorialPanelTouched() { tutorialPanel.SetActive(true); tutorialText.SetActive(true); parameterTutorialPanel.SetActive(true); } 
     public void ParameterTutorialPanelTouched() { parameterTutorialPanel.SetActive(true); } 
-    public void OnTitlePanelTouched() 
-    { 
-        titlePanel.SetActive(false); 
-        
-        // 게스트 계정인 경우 경고 팝업 표시 (1회만)
-        if (FirebaseManager.Instance != null)
-        {
-            FirebaseManager.Instance.ShowGuestWarningPopup();
-        }
-    }
+    public void OnTitlePanelTouched() { titlePanel.SetActive(false); }
     private void OnAuthenticated(SignInStatus status) { ChangeState(GameState.MainMenu); continueButton.gameObject.SetActive(DataManager.Instance.CheckIfSaveDataExists()); if (status == SignInStatus.Success) { Debug.Log("구글 플레이 게임 서비스 로그인 성공!"); } else { Debug.LogError("구글 플레이 게임 서비스 로그인 실패: " + status); } if (FirebaseManager.Instance != null) FirebaseManager.Instance.GPGSLogin(); }
     public async void OnCommanderSelected(int commanderIndex)
     {
@@ -791,43 +812,14 @@ public class GameManager : MonoBehaviour
         var spm = FindObjectOfType<StoryPackManager>();
         var selectedPacksForNewGame = spm != null ? spm.GetSelectedPackIDs() : (DataManager.Instance.PlayerSettings != null ? DataManager.Instance.PlayerSettings.selectedSubEventPackIDs : null);
         Debug.Log($"[GameManager] 새게임 직전 선택 팩: {(selectedPacksForNewGame != null ? string.Join(", ", selectedPacksForNewGame) : "null")}, 개수: {selectedPacksForNewGame?.Count ?? -1}");
-        if (gameSessionManager != null)
-        {
-            gameSessionManager.StartSession();
-        }
-
         await EventManager.Instance.StartNewGame(selectedPacksForNewGame);
         OnStateFinished();
     }
-    private void StartDetailedResultSequence() 
-    { 
-        int warSituation = GamePlayerStats.Instance.GetStat(ParameterType.전황); 
-        GameOutcome outcome = (warSituation <= 19) ? GameOutcome.Defeat : (warSituation >= 81) ? GameOutcome.Victory : GameOutcome.Draw; 
-        
-        // 디버그 로그 추가
-        Debug.Log($"[ChapterResult] 현재 전황 수치: {warSituation}");
-        Debug.Log($"[ChapterResult] 결정된 결과: {outcome} (기준: <=19 패배, >=81 승리, 그외 무승부)");
-        
-        int chapterIndex = CurrentChapter - 1; 
-        if (chapterIndex < chapterEndDataList.Count && chapterEndDataList[chapterIndex] != null) 
-        { 
-            chapterEndController.StartChapterEndSequence(chapterEndDataList[chapterIndex], outcome); 
-        } 
-        else 
-        { 
-            OnStateFinished(); 
-        } 
-    }
+    private void StartDetailedResultSequence() { int warSituation = GamePlayerStats.Instance.GetStat(ParameterType.전황); GameOutcome outcome = (warSituation <= 19) ? GameOutcome.Defeat : (warSituation >= 81) ? GameOutcome.Victory : GameOutcome.Draw; int chapterIndex = CurrentChapter - 1; if (chapterIndex < chapterEndDataList.Count && chapterEndDataList[chapterIndex] != null) { chapterEndController.StartChapterEndSequence(chapterEndDataList[chapterIndex], outcome); } else { OnStateFinished(); } }
     public void GameOver(string reason)
     {
         if (_isGameOverActive) return; // 재진입 방지
         _isGameOverActive = true;
-
-        if (gameSessionManager != null)
-        {
-            gameSessionManager.EndSession();
-        }
-
         if (gameOverText != null)
         {
             gameOverText.text = reason;
@@ -947,7 +939,7 @@ public class GameManager : MonoBehaviour
             GameOver("리더십이 0이 되어 병사들이 따르지 않습니다.");
         }
     }
-	public void ResetAllGameData() { EventManager.Instance?.ResetEventManagerState(); if (battleTurnManager != null) battleTurnManager.ResetForNewBattle(); if (mainScenarioManager != null) mainScenarioManager.ResetScenarioState();
+    public void ResetAllGameData() { EventManager.Instance.ResetEventManagerState(); battleTurnManager.ResetForNewBattle(); mainScenarioManager.ResetScenarioState();
         // 파라미터 UI 잔상(토글/하이라이트) 제거
         var paramUI = FindObjectOfType<ParameterUIController>();
         if (paramUI != null) { paramUI.ClearAllToggles(); }
@@ -1009,16 +1001,6 @@ public class GameManager : MonoBehaviour
             Debug.Log("[GameManager] CheatManager가 없어 자동 생성했습니다 (에디터/개발 빌드 전용).");
         }
     }
-	private void EnsureEventManagerExists()
-	{
-		if (EventManager.Instance == null)
-		{
-			var emGo = new GameObject("EventManager_AutoSpawn");
-			emGo.AddComponent<EventManager>();
-			DontDestroyOnLoad(emGo);
-			Debug.Log("[GameManager] EventManager가 없어 자동 생성했습니다.");
-		}
-	}
     public void ShowConfirmation(string message, UnityAction confirmAction) { confirmationText.text = message; onConfirmAction = confirmAction; confirmationPanel.SetActive(true); }
     public void OnConfirm() { onConfirmAction?.Invoke(); confirmationPanel.SetActive(false); onConfirmAction = null; }
     public void OnCancel() { confirmationPanel.SetActive(false); onConfirmAction = null; }
@@ -1046,11 +1028,6 @@ public class GameManager : MonoBehaviour
                     case GameState.GamePaused:
                         shouldSaveState = false;
                         break;
-                }
-
-                if (gameSessionManager != null)
-                {
-                    gameSessionManager.EndSession();
                 }
 
                 // [수정] 저장 가능한 상태일 때만 진행도를 저장합니다.

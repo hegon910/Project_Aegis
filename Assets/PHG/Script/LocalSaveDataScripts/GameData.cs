@@ -34,6 +34,14 @@ public class GameData
     public float totalPlayTime;         // 총 플레이 시간
     public GameSettings settings;       // 환경 설정
 
+    // --- 멀티 엔딩 시스템 ---
+    public List<ChapterBattleResult> chapterBattleResults; // 챕터별 전투 결과
+    public bool hasHiddenEndingFlag; // 히든 엔딩 플래그
+    public int hiddenEndingChoiceCount; // 히든 엔딩을 위한 선택 횟수
+    
+    // --- 진엔딩 카운팅 ---
+    public int realEnding2ChoiceCount; // 2회차 진엔딩용 선택 카운트
+    public int realEnding3ChoiceCount; // 3회차 진엔딩용 선택 카운트
 
     // --- 게임오버 후 메인복귀 시 이어하기에서 챕터 처음부터 재시작하기 위한 플래그 ---
     public bool pendingRestartFromGameOver; // true면 다음 이어하기 시 챕터 처음부터 재시작
@@ -80,6 +88,15 @@ public class GameData
 
         pendingRestartFromGameOver = false;
         pendingRestartChapter = 0;
+
+        // 멀티 엔딩 시스템 초기화
+        chapterBattleResults = new List<ChapterBattleResult>();
+        hasHiddenEndingFlag = false;
+        hiddenEndingChoiceCount = 0;
+        
+        // 진엔딩 카운팅 초기화
+        realEnding2ChoiceCount = 0;
+        realEnding3ChoiceCount = 0;
 
         // 타임스탬프 9.9. 이학권 추가
         lastUpdated = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
