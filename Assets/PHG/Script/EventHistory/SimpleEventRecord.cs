@@ -16,10 +16,8 @@ public class SimpleEventRecord
     public bool isEndingMemoriar;          // Ending_Memoriar 여부
     public string timestamp;               // 발생 시간
     public bool isCompleted;               // 완료 여부
-    public string playDate;
-    public string playDuration;
 
-    public SimpleEventRecord(int id, int ch, string dialogue, string choice, string date, string duration,bool isEndingMemoriar = false)
+    public SimpleEventRecord(int id, int ch, string dialogue, string choice,bool isEndingMemoriar = false)
     {
         eventId = id;
         eventType = "Main"; // 메인이벤트만 기록
@@ -29,8 +27,6 @@ public class SimpleEventRecord
         this.isEndingMemoriar = isEndingMemoriar;
         timestamp = DateTime.Now.ToString("MM-dd HH:mm");
         isCompleted = true;
-        playDate = date;        // 추가된 필드
-        playDuration = duration;
     }
 }
 
