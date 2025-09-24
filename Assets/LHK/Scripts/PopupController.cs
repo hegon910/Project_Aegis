@@ -97,7 +97,7 @@ public class PopupController : MonoBehaviour
     {
         if (confirmDialogPanel == null) return;
 
-        confirmTitleText.text = "확인";
+        confirmTitleText.text = "";
         confirmMessageText.text = message;
         confirmButtonText.text = confirmText;
         cancelButtonText.text = cancelText;
