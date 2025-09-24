@@ -79,6 +79,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private ChapterResultController chapterEndController;
     [SerializeField] private List<ChapterResultData> chapterEndDataList;
     [SerializeField] private GameObject chapterResultPanel; // ChapterResultCanvas의 패널
+    [SerializeField] private GameOutcome lastChapterOutcome;
     public int CurrentChapter => DataManager.Instance?.PlayerData != null ? DataManager.Instance.PlayerData.currentChapter : 1;
 
     [Header("범용 확인 창")]
@@ -233,6 +234,13 @@ public class GameManager : MonoBehaviour
             case GameState.InBattle: nextState = GameState.InBattleResult; break;
             case GameState.InBattleResult: nextState = GameState.InChapterResult; break;
             case GameState.InChapterResult:
+                int warSituation = GamePlayerStats.Instance.GetStat(ParameterType.전황);
+                string battleOutcome = (warSituation <= 19) ? "패배" : (warSituation >= 81) ? "승리" : "무승부";
+
+                // 챕터별 전투 결과만 SimpleEventHistoryManager에 직접 기록합니다.
+                SimpleEventHistoryManager.Instance.RecordChapterOutcome(
+                    DataManager.Instance.PlayerData.currentChapter,
+                    battleOutcome);
                 GamePlayerStats.Instance.SetStat(ParameterType.전황, 50);
                 DataManager.Instance.PlayerData.currentChapter++;
 
@@ -255,7 +263,7 @@ public class GameManager : MonoBehaviour
                 EventManager.Instance.ResetEventManagerState();
                 if (gameSessionManager != null)
                 {
-                    gameSessionManager.EndSession();
+                    gameSessionManager.EndSession("Victory");
                 }
                 nextState = GameState.MainMenu;
                 break;
@@ -520,6 +528,12 @@ public class GameManager : MonoBehaviour
         // else PlayerStats.Instance.ApplyChanges(new List<ParameterChange> { new ParameterChange { parameterType = ParameterType.전황, valueChange = 0 } });
 
         // OnStateFinished()를 바로 호출하는 대신, InBattleResult 상태로 직접 변경
+
+        if (gameSessionManager != null)
+        {
+            gameSessionManager.EndSession(resultLog.Contains("승리") ? "Victory" : "Defeat");
+        }
+
         ChangeState(GameState.InBattleResult);
     }
 
@@ -787,7 +801,21 @@ public class GameManager : MonoBehaviour
         await EventManager.Instance.StartNewGame(selectedPacksForNewGame);
         OnStateFinished();
     }
-    private void StartDetailedResultSequence() { int warSituation = GamePlayerStats.Instance.GetStat(ParameterType.전황); GameOutcome outcome = (warSituation <= 19) ? GameOutcome.Defeat : (warSituation >= 81) ? GameOutcome.Victory : GameOutcome.Draw; int chapterIndex = CurrentChapter - 1; if (chapterIndex < chapterEndDataList.Count && chapterEndDataList[chapterIndex] != null) { chapterEndController.StartChapterEndSequence(chapterEndDataList[chapterIndex], outcome); } else { OnStateFinished(); } }
+    private void StartDetailedResultSequence() 
+    { 
+        int warSituation = GamePlayerStats.Instance.GetStat(ParameterType.전황);
+        lastChapterOutcome = (warSituation <= 19) ? GameOutcome.Defeat : (warSituation >= 81) ? GameOutcome.Victory : GameOutcome.Draw;
+        
+        int chapterIndex = CurrentChapter - 1;
+        if (chapterIndex < chapterEndDataList.Count && chapterEndDataList[chapterIndex] != null)
+        {
+            chapterEndController.StartChapterEndSequence(chapterEndDataList[chapterIndex], lastChapterOutcome);
+        }
+        else
+        {
+            OnStateFinished();
+        }
+    }
     public void GameOver(string reason)
     {
         if (_isGameOverActive) return; // 재진입 방지
@@ -795,7 +823,7 @@ public class GameManager : MonoBehaviour
 
         if (gameSessionManager != null)
         {
-            gameSessionManager.EndSession();
+            gameSessionManager.EndSession("패배");
         }
 
         if (gameOverText != null)
@@ -1010,7 +1038,7 @@ public class GameManager : MonoBehaviour
 
                 if (gameSessionManager != null)
                 {
-                    gameSessionManager.EndSession();
+                    gameSessionManager.EndSession("Quit");
                 }
 
                 // [수정] 저장 가능한 상태일 때만 진행도를 저장합니다.
