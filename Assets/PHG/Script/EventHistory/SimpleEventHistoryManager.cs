@@ -15,6 +15,7 @@ public class SimpleEventHistoryManager : MonoBehaviour
     [SerializeField] private bool enableLocalSave = true;
 
     private List<SimpleEventRecord> eventHistory = new List<SimpleEventRecord>();
+    private List<GamePlaythroughRecord> playthroughHistory = new List<GamePlaythroughRecord>();
     private string savePath;
 
     private void Awake()
@@ -58,8 +59,6 @@ public class SimpleEventHistoryManager : MonoBehaviour
             DataManager.Instance.PlayerData.currentChapter, 
             dialogue, 
             selectedChoice, 
-            playDate,
-            playDuration,
             isEndingMemoriar);
         
         eventHistory.Add(record);
@@ -70,6 +69,43 @@ public class SimpleEventHistoryManager : MonoBehaviour
         {
             SaveHistory();
         }
+    }
+
+    public void RecordPlaythrough(string date, string duration, int chapter, string outcome, List<SimpleEventRecord> events)
+    {
+        if (!enableRecording) return;
+
+        var record = new GamePlaythroughRecord(date, duration, chapter, outcome, events);
+        playthroughHistory.Add(record);
+
+        Debug.Log($"[SimpleEventHistoryManager] 플레이 기록 저장: {date}, {duration}, 결과: {outcome}");
+
+        if (enableLocalSave)
+        {
+            SaveHistory();
+        }
+    }
+
+    public void RecordChapterOutcome(int chapter, string outcome)
+    {
+        if (!enableRecording) return;
+
+        var record = new SimpleEventRecord(-1, chapter, "챕터 결산", outcome, false);
+
+        eventHistory.Add(record);
+
+        Debug.Log($"[SimpleEventHistoryManager] 챕터 기록: 챕터 {chapter} - {outcome}");
+
+        // 로컬 저장
+        if (enableLocalSave)
+        {
+            SaveHistory();
+        }
+    }
+
+    public List<GamePlaythroughRecord> GetPlaythroughHistory()
+    {
+        return new List<GamePlaythroughRecord>(playthroughHistory);
     }
 
     // 파라미터 이벤트와 서브 이벤트는 Ending_Memoriar 같은 플래그가 없으므로 별도 기록하지 않음
