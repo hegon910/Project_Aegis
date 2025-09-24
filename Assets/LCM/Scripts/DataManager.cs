@@ -46,9 +46,9 @@ public class DataManager : MonoBehaviour
     //전투 결과 이벤트
     public Dictionary<int, BattleResultData> battleResultDataDict;
     //엔딩 이벤트
-    public Dictionary<long, EndingEventData> endingEventDataDict;
-    public Dictionary<long, EndingCutScene> endingCutSceneDict;
-    public Dictionary<long, FullEndingData> FullendingDataDict;
+    public Dictionary<int, EndingEventData> endingEventDataDict;
+    public Dictionary<int, EndingCutScene> endingCutSceneDict;
+    public Dictionary<int, FullEndingData> FullendingDataDict;
     //회상 이벤트
     public Dictionary<int, EndingMemoriarData> endingMemoriarDataDict;
     //파라미터 이벤트 
@@ -817,7 +817,7 @@ public class DataManager : MonoBehaviour
                 Debug.LogError("[DataManager] 서브 이벤트 데이터 로딩 실패!");
             }
             Debug.Log("---------- [DataManager] 엔딩 데이터 가공 시작 ----------");
-            FullendingDataDict = new Dictionary<long, FullEndingData>();
+            FullendingDataDict = new Dictionary<int, FullEndingData>();
 
             foreach (var rawData in endingEventList) // endingEventList는 로드된 EndingEventData 목록
             {
@@ -1085,7 +1085,7 @@ public class DataManager : MonoBehaviour
         return null;
     }
 
-    public FullEndingData GetEndingData(long endingID)
+    public FullEndingData GetEndingData(int endingID)
     {
         if (!endingEventDataDict.TryGetValue(endingID, out var rawData))
         {
