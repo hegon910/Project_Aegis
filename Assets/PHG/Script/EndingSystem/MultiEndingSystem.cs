@@ -245,14 +245,14 @@ public class MultiEndingSystem : MonoBehaviour
     /// <summary>
     /// 현재 시스템의 EndingEventData와 연동하여 엔딩 ID 결정
     /// </summary>
-    public long GetEndingEventID()
+    public int GetEndingEventID()
     {
         var endingType = DetermineEndingType();
         var endingRoute = DetermineEndingRoute();
         var currentKarma = CalculateCurrentKarma();
         
         // 현재 EndingEventData.csv의 구조에 맞춰 엔딩 ID 결정
-        long baseEndingID = 50001; // 기본 승리 루트
+        int baseEndingID = 50001; // 기본 승리 루트
         
         // 루트에 따른 기본 ID 조정
         switch (endingRoute)
@@ -293,7 +293,7 @@ public class MultiEndingSystem : MonoBehaviour
             return null;
         }
 
-        long endingID = GetEndingEventID();
+        int endingID = GetEndingEventID();
         return DataManager.Instance.GetEndingData(endingID);
     }
 

@@ -53,6 +53,7 @@ public enum AchievementType
 /// </summary>
 public enum AchievementCategory
 {
+    All,
     General,        // 일반 업적
     Hidden,         // 히든 업적
     Special         // 특별 업적

@@ -1,0 +1,108 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3190236435255723304
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8540924420438729945}
+  - component: {fileID: 3894190510164047374}
+  - component: {fileID: 3738030750649016032}
+  - component: {fileID: 5336112302623425687}
+  m_Layer: 0
+  m_Name: AchivementManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8540924420438729945
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3190236435255723304}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -91.12654, y: 1331.956, z: 32.146748}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3894190510164047374
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3190236435255723304}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e558f42bfa8ee714a9fa686e4b0eaf12, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  allAchievements:
+  - achievementId: 
+    title: 
+    description: 
+    type: 0
+    category: 0
+    condition:
+      conditionType: 0
+      requiredValue: 0
+      requiredString: 
+      requireExactMatch: 0
+      requiredEndingType: 0
+      requiredEndingRoute: 0
+      requiredEndingBranch: 0
+      requiredBattleOutcome: 0
+      requiredPlaythroughCount: 0
+      requiredParameter: 0
+      requiredParameterValue: 0
+      requiredEventId: 0
+      requireEventSuccess: 0
+    reward:
+      rewardType: 0
+      rewardValue: 0
+      rewardDescription: 
+      rewardIcon: {fileID: 0}
+    isUnlocked: 0
+    isCompleted: 0
+    isRewardClaimed: 0
+    icon: {fileID: 0}
+    lockedIcon: {fileID: 0}
+    titleColor: {r: 0, g: 0, b: 0, a: 0}
+    descriptionColor: {r: 0, g: 0, b: 0, a: 0}
+  enableDebugLogs: 1
+  autoSaveOnUpdate: 1
+--- !u!114 &3738030750649016032
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3190236435255723304}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 267aa5029743dbc47a8e0dfe060cd554, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &5336112302623425687
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3190236435255723304}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0bd44412264d8a841a608b89bff3f51b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  initializeOnAwake: 1
+  showInitializationLog: 1

@@ -193,8 +193,6 @@ public class FirebaseManager : MonoBehaviour
             {
                 Debug.Log("[FirebaseManager] DataManager에 게스트 로그인 완료 알림 전송");
             }
-            
-            GameManager.instance.OnTitlePanelTouched();
         });
     }
 
@@ -231,8 +229,6 @@ public class FirebaseManager : MonoBehaviour
                         Debug.Log("[FirebaseManager] DataManager에 로그인 완료 알림 전송");
                        // DataManager.Instance.OnFirebaseLoginCompleted();
                     }
-
-                    GameManager.instance.OnTitlePanelTouched();
                 });
             }
             else
