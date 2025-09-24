@@ -106,6 +106,9 @@ public class GameManager : MonoBehaviour
     private bool subEventsEnabled = false;
     private bool hasShownWarTutorialThisPlaythrough = false;
     private bool isInitialized = false;
+    
+    [Header("Guest Login Popup System")]
+    [SerializeField] private PopupController popupController;
 
     private void Awake()
     {
@@ -127,7 +130,7 @@ public class GameManager : MonoBehaviour
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         EnsureCheatManagerExists();
 #endif
-		EnsureEventManagerExists();
+        EnsureEventManagerExists();
     }
 
     private void OnEnable() { }
@@ -136,6 +139,8 @@ public class GameManager : MonoBehaviour
     private async void Start()
     {
         await InitializeGameAndLoadData();
+        if (popupController == null)
+            popupController = FindObjectOfType<PopupController>();    
     }
 
     private async Task InitializeGameAndLoadData()

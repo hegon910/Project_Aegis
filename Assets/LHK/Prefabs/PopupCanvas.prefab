@@ -195,7 +195,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 100
   m_TargetDisplay: 0
 --- !u!114 &3463969941761485767
 MonoBehaviour:
@@ -249,18 +249,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7bbafc2696fb78545beef8cfc41c4526, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  alertDialogPanel: {fileID: 0}
-  confirmDialogPanel: {fileID: 0}
-  alertTitleText: {fileID: 0}
-  alertMessageText: {fileID: 0}
-  alertConfirmButton: {fileID: 0}
-  confirmTitleText: {fileID: 0}
-  confirmMessageText: {fileID: 0}
-  confirmButton: {fileID: 0}
-  cancelButton: {fileID: 0}
-  confirmButtonText: {fileID: 0}
-  cancelButtonText: {fileID: 0}
-  backgroundPanel: {fileID: 0}
+  alertDialogPanel: {fileID: 4796564133074460009}
+  confirmDialogPanel: {fileID: 7389304101661065546}
+  alertTitleText: {fileID: 4218706143655795414}
+  alertMessageText: {fileID: 8336182002401734842}
+  alertConfirmButton: {fileID: 8587032842862326698}
+  confirmTitleText: {fileID: 2055230538227694309}
+  confirmMessageText: {fileID: 4780409963327718968}
+  confirmButton: {fileID: 7254001123630103844}
+  cancelButton: {fileID: 7269749830547557835}
+  confirmButtonText: {fileID: 677715562665423231}
+  cancelButtonText: {fileID: 2444226367744312022}
+  backgroundPanel: {fileID: 3202253474658058712}
 --- !u!1 &1613733905639018500
 GameObject:
   m_ObjectHideFlags: 0
