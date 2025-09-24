@@ -53,6 +53,10 @@ public class WarTurnManager : MonoBehaviour
             skillCooldownTimer = player.currentSkill.cooltime;
             Debug.Log($"전투 시작! '{player.currentSkill.skillName}' 스킬의 초기 쿨타임({skillCooldownTimer}턴)이 적용");
         }
+        if (!battleEnded && enemy != null)
+        {
+            enemy.PrepareAndShowHint();
+        }
     }
 
 
@@ -131,7 +135,7 @@ public class WarTurnManager : MonoBehaviour
         PlayerPrefs.DeleteKey("HasSeenWarTutorial");
         PlayerPrefs.Save();
 
-        bool isWin = resultLog.Contains("�¸�");
+        bool isWin = resultLog.Contains("승리");
         WarHistory.RecordWarResult(isWin); // ���� ����� ��� �ý��ۿ� ����
         var changes = new List<ParameterChange>//�Ķ���� ���� �߰��κ�
 
@@ -194,7 +198,11 @@ public class WarTurnManager : MonoBehaviour
     IEnumerator Co_Turn(WarAction playerAction)
     {
         turnRunning = true;
-        var enemyAction = enemy.ChooseAction();
+        if (enemy != null)
+        {
+            enemy.HideHint();
+        }
+        var enemyAction = enemy.GetPreparedAction();
 
         bool playerActsFirst;
         switch ((playerAction, enemyAction))
@@ -291,6 +299,11 @@ public class WarTurnManager : MonoBehaviour
         CheckRingOutStatus();
         CheckWinLoseDrawAfterTurn();
         if (!battleEnded && currentTurn >= maxTurns) EndBattle("무승부 - 턴 제한 소진");
+        if (!battleEnded && enemy != null)
+        {
+            enemy.PrepareAndShowHint();
+        }
+
         if (choiceCard != null)
         {
             choiceCard.SetInteractable(true);
