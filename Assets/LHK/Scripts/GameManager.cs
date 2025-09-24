@@ -128,6 +128,7 @@ public class GameManager : MonoBehaviour
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         EnsureCheatManagerExists();
 #endif
+		EnsureEventManagerExists();
     }
 
     private void OnEnable() { }
@@ -146,8 +147,8 @@ public class GameManager : MonoBehaviour
 
         await DataManager.Instance.IsReady;
 
-        EventManager.Instance.InitializeEventManager();
 
+        EventManager.Instance.InitializeEventManager();
         if (loadingPanel != null)
         {
             loadingPanel.SetActive(false);
@@ -755,7 +756,16 @@ public class GameManager : MonoBehaviour
     }
     public void TutorialPanelTouched() { tutorialPanel.SetActive(true); tutorialText.SetActive(true); parameterTutorialPanel.SetActive(true); } 
     public void ParameterTutorialPanelTouched() { parameterTutorialPanel.SetActive(true); } 
-    public void OnTitlePanelTouched() { titlePanel.SetActive(false); }
+    public void OnTitlePanelTouched() 
+    { 
+        titlePanel.SetActive(false); 
+        
+        // 게스트 계정인 경우 경고 팝업 표시 (1회만)
+        if (FirebaseManager.Instance != null)
+        {
+            FirebaseManager.Instance.ShowGuestWarningPopup();
+        }
+    }
     private void OnAuthenticated(SignInStatus status) { ChangeState(GameState.MainMenu); continueButton.gameObject.SetActive(DataManager.Instance.CheckIfSaveDataExists()); if (status == SignInStatus.Success) { Debug.Log("구글 플레이 게임 서비스 로그인 성공!"); } else { Debug.LogError("구글 플레이 게임 서비스 로그인 실패: " + status); } if (FirebaseManager.Instance != null) FirebaseManager.Instance.GPGSLogin(); }
     public async void OnCommanderSelected(int commanderIndex)
     {
@@ -945,7 +955,7 @@ public class GameManager : MonoBehaviour
             GameOver("리더십이 0이 되어 병사들이 따르지 않습니다.");
         }
     }
-    public void ResetAllGameData() { EventManager.Instance.ResetEventManagerState(); battleTurnManager.ResetForNewBattle(); mainScenarioManager.ResetScenarioState();
+	public void ResetAllGameData() { EventManager.Instance?.ResetEventManagerState(); if (battleTurnManager != null) battleTurnManager.ResetForNewBattle(); if (mainScenarioManager != null) mainScenarioManager.ResetScenarioState();
         // 파라미터 UI 잔상(토글/하이라이트) 제거
         var paramUI = FindObjectOfType<ParameterUIController>();
         if (paramUI != null) { paramUI.ClearAllToggles(); }
@@ -1007,6 +1017,16 @@ public class GameManager : MonoBehaviour
             Debug.Log("[GameManager] CheatManager가 없어 자동 생성했습니다 (에디터/개발 빌드 전용).");
         }
     }
+	private void EnsureEventManagerExists()
+	{
+		if (EventManager.Instance == null)
+		{
+			var emGo = new GameObject("EventManager_AutoSpawn");
+			emGo.AddComponent<EventManager>();
+			DontDestroyOnLoad(emGo);
+			Debug.Log("[GameManager] EventManager가 없어 자동 생성했습니다.");
+		}
+	}
     public void ShowConfirmation(string message, UnityAction confirmAction) { confirmationText.text = message; onConfirmAction = confirmAction; confirmationPanel.SetActive(true); }
     public void OnConfirm() { onConfirmAction?.Invoke(); confirmationPanel.SetActive(false); onConfirmAction = null; }
     public void OnCancel() { confirmationPanel.SetActive(false); onConfirmAction = null; }

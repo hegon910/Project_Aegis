@@ -90,7 +90,13 @@ public class CheatManager : MonoBehaviour
             {
                 mainScenarioManager.SkipToNextNode();
             }
-            // 그렇지 않으면 일반 이벤트(파라미터/서브) 스킵 시도
+            // 서브이벤트가 진행 중인지 확인
+            else if (EventManager.Instance != null && EventManager.Instance.currentState == EventManagerState.InSubEvent)
+            {
+                Debug.Log("치트 키: 서브이벤트를 스킵합니다.");
+                SkipSubEvent();
+            }
+            // 그렇지 않으면 일반 이벤트(파라미터) 스킵 시도
             else if (EventManager.Instance != null)
             {
                 // 현재 UI 전환 효과 등을 무시하고 즉시 다음 턴을 호출합니다.
@@ -113,6 +119,22 @@ public class CheatManager : MonoBehaviour
         else
         {
             Debug.LogError("[CHEAT] GameManager 인스턴스를 찾을 수 없어 스킵할 수 없습니다.");
+        }
+    }
+
+    private void SkipSubEvent()
+    {
+        // UIFlowSimulator에서 현재 진행 중인 서브이벤트를 스킵
+        var uiFlowSimulator = FindObjectOfType<UIFlowSimulator>();
+        if (uiFlowSimulator != null)
+        {
+            // 서브이벤트의 첫 번째 선택지(왼쪽)를 자동으로 선택하여 스킵
+            uiFlowSimulator.HandleChoice(false);
+            Debug.Log("[CHEAT] 서브이벤트를 첫 번째 선택지로 스킵했습니다.");
+        }
+        else
+        {
+            Debug.LogError("[CHEAT] UIFlowSimulator를 찾을 수 없어 서브이벤트를 스킵할 수 없습니다.");
         }
     }
 #endif
