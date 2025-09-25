@@ -847,6 +847,11 @@ public class GameManager : MonoBehaviour
         var spm = FindObjectOfType<StoryPackManager>();
         var selectedPacksForNewGame = spm != null ? spm.GetSelectedPackIDs() : (DataManager.Instance.PlayerSettings != null ? DataManager.Instance.PlayerSettings.selectedSubEventPackIDs : null);
         Debug.Log($"[GameManager] 새게임 직전 선택 팩: {(selectedPacksForNewGame != null ? string.Join(", ", selectedPacksForNewGame) : "null")}, 개수: {selectedPacksForNewGame?.Count ?? -1}");
+        var sessionManager = FindObjectOfType<GameSessionManager>();
+        if (sessionManager != null)
+        {
+            sessionManager.StartSession();
+        }
         await EventManager.Instance.StartNewGame(selectedPacksForNewGame);
         OnStateFinished();
     }

@@ -14,6 +14,14 @@ public class ReplayDetailHandler : MonoBehaviour
     // 챕터별 결과를 표시할 6개의 Text 컴포넌트 배열
     public TextMeshProUGUI[] chapterResultTexts;
 
+    private void Awake()
+    {
+        if (detailPanel != null)
+        {
+            detailPanel.SetActive(false);
+        }
+    }
+
     public void ShowDetails(GamePlaythroughRecord record)
     {
         detailPanel.SetActive(true);

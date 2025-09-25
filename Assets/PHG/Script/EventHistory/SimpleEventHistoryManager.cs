@@ -89,11 +89,32 @@ public class SimpleEventHistoryManager : MonoBehaviour
         }
     }
 
+    public void RecordMainEvent(int eventId, string dialogue, string selectedChoice, string playDate, string playDuration, bool isEndingMemoriar)
+    {
+        if (!enableRecording) return;
+
+        // 여기서 SimpleEventRecord(int id, int ch, string dialogue, string choice, bool isEndingMemoriar) 생성자 사용
+        var record = new SimpleEventRecord(
+            eventId,
+            DataManager.Instance.PlayerData.currentChapter,
+            dialogue,
+            selectedChoice,
+            isEndingMemoriar);
+
+        eventHistory.Add(record);
+
+        if (enableLocalSave)
+        {
+            SaveHistory();
+        }
+    }
+
+    //챕터별 승무패 기록
     public void RecordChapterOutcome(int chapter, string outcome)
     {
         if (!enableRecording) return;
-        var record = new SimpleEventRecord(-1, chapter, "챕터 결산", outcome, false);
-        record.eventType = "BattleResult"; // 이벤트 타입 추가
+        var record = new SimpleEventRecord(chapter, outcome);
+
         eventHistory.Add(record);
         Debug.Log($"[SimpleEventHistoryManager] 챕터 기록: 챕터 {chapter} - {outcome}");
 
