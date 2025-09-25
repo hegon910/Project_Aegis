@@ -100,6 +100,22 @@ public class CheatManager : MonoBehaviour
             GamePlayerStats.Instance.SetStat(ParameterType.리더십, allValue);
         }
 
+        // --- 카르마 설정 (5, 6번 키) ---
+        if (Input.GetKeyDown(KeyCode.Alpha5))
+        {
+            int currentKarma = GamePlayerStats.Instance.GetStat(ParameterType.카르마);
+            int newKarma = Mathf.Max(0, currentKarma - 10);
+            GamePlayerStats.Instance.SetStat(ParameterType.카르마, newKarma);
+            Debug.Log($"[CHEAT] 카르마 10 감소: {currentKarma} → {newKarma}");
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha6))
+        {
+            int currentKarma = GamePlayerStats.Instance.GetStat(ParameterType.카르마);
+            int newKarma = currentKarma + 10;
+            GamePlayerStats.Instance.SetStat(ParameterType.카르마, newKarma);
+            Debug.Log($"[CHEAT] 카르마 10 증가: {currentKarma} → {newKarma}");
+        }
+
         // --- 전세(전황) 설정 (F5, F6, F7) ---
         if (Input.GetKeyDown(KeyCode.F5))
         {

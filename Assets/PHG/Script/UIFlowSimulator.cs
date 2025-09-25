@@ -277,10 +277,10 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 
             GamePlayerStats.Instance.ApplyChanges(finalChanges);
 
-            // [신규] 파라미터 이벤트 완료 기록 (성공/실패 여부 포함)
+            // [신규] 파라미터 이벤트 완료 기록 (HCW의 PlaythroughHistory는 성공/실패 구분 없음)
             if (PlaythroughHistory.Instance != null)
             {
-                PlaythroughHistory.Instance.RecordEventCompletion(currentParameterEventData.id, success);
+                PlaythroughHistory.Instance.RecordEventCompletion(currentParameterEventData.id);
             }
             // 파라미터 이벤트는 Ending_Memoriar 같은 플래그가 없으므로 기록하지 않음
 

@@ -193,18 +193,19 @@ public class CutsceneManager : MonoBehaviour
         // 연출이 끝났으므로 클릭 대기 상태로 변경
         isSkippable = false;
 
-        // 엔딩 연출에서는 자동으로 다음으로 넘어가지 않고 클릭을 기다림
-        // 마지막 스텝이 아닌 경우에만 클릭 대기
+        // 모든 스텝에서 클릭 대기를 하도록 수정 (스킵 기능 개선)
+        // 마지막 스텝이 아닌 경우 즉시 클릭 대기, 마지막 스텝도 클릭 대기
         if (currentStepIndex < currentCutscene.steps.Count - 1)
         {
-            // 다음 스텝이 있으면 클릭 대기
+            // 다음 스텝이 있으면 즉시 클릭 대기 (대기 시간 없음)
+            isSkippable = true; // 클릭으로 스킵 가능
             yield return null; // 한 프레임 대기 후 클릭 대기 상태로 전환
         }
         else
         {
-            // 마지막 스텝이면 자동으로 종료
-            yield return new WaitForSeconds(1.0f); // 잠깐 대기 후 자동 종료
-            PlayNextStep();
+            // 마지막 스텝도 클릭 대기 (자동 진행 없음)
+            isSkippable = true; // 클릭으로 스킵 가능
+            yield return null; // 한 프레임 대기 후 클릭 대기 상태로 전환
         }
     }
 

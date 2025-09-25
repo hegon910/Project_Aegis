@@ -216,11 +216,15 @@ public class MultiEndingSystem : MonoBehaviour
     }
 
     /// <summary>
-    /// 현재 카르마 수치 계산 (기본 50에서 시작)
+    /// 현재 카르마 수치 계산 (실제 게임 카르마 값 사용)
     /// </summary>
     public int CalculateCurrentKarma()
     {
-        return 50 + CalculateCurrentPlaythroughKarma();
+        if (GamePlayerStats.Instance != null)
+        {
+            return GamePlayerStats.Instance.GetStat(ParameterType.카르마);
+        }
+        return 50; // GamePlayerStats가 없을 경우 기본값
     }
 
     /// <summary>
@@ -324,7 +328,8 @@ public class MultiEndingSystem : MonoBehaviour
 
             foreach (var eventId in specialEventIds)
             {
-                if (PlaythroughHistory.Instance.GetEventCompletionState(eventId, out bool wasSuccess) && wasSuccess)
+                // HCW의 PlaythroughHistory는 성공/실패 구분이 없으므로 단순히 완료 여부만 확인
+                if (PlaythroughHistory.Instance.HasCompletedEvent(eventId))
                 {
                     successCount++;
                 }
@@ -397,26 +402,25 @@ public class MultiEndingSystem : MonoBehaviour
         var endingRoute = DetermineEndingRoute();
         var currentKarma = CalculateCurrentKarma();
         
-        // 스프레드시트에 따른 엔딩 시퀀스 매핑
+        // 스프레드시트에 따른 엔딩 시퀀스 매핑 (실제 스프레드시트 데이터 기반)
         var endingSequenceMap = new Dictionary<(EndingRoute, int), int>
         {
-            // 승리 루트 (1001)
-            { (EndingRoute.Victory, 2001), 50001 }, // 높은 카르마
-            { (EndingRoute.Victory, 2002), 50007 }, // 중간 카르마  
-            { (EndingRoute.Victory, 2003), 50013 }, // 낮은 카르마
+            // 승리 루트 (1001) - 스프레드시트 데이터 기반
+            { (EndingRoute.Victory, 2001), 50001 }, // 높은 카르마 (81이상)
+            { (EndingRoute.Victory, 2002), 50007 }, // 중간 카르마 (20-80)
+            { (EndingRoute.Victory, 2003), 50013 }, // 낮은 카르마 (19이하)
             
-            // 무승부 루트 (1002)
-            { (EndingRoute.Truce, 2001), 50019 }, // 높은 카르마
-            { (EndingRoute.Truce, 2002), 50025 }, // 중간 카르마
-            { (EndingRoute.Truce, 2003), 50031 }, // 낮은 카르마
+            // 무승부 루트 (1002) - 스프레드시트 데이터 기반
+            { (EndingRoute.Truce, 2001), 50078 }, // 높은 카르마 (50이상)
+            { (EndingRoute.Truce, 2002), 50085 }, // 낮은 카르마 (0-49)
             
-            // 패배 루트 (1003)
-            { (EndingRoute.Defeat, 2001), 50037 }, // 높은 카르마
-            { (EndingRoute.Defeat, 2002), 50043 }, // 중간 카르마
-            { (EndingRoute.Defeat, 2003), 50049 }, // 낮은 카르마
+            // 패배 루트는 스프레드시트에서 확인되지 않음 - 기본값 사용
+            { (EndingRoute.Defeat, 2001), 50001 }, // 기본값
+            { (EndingRoute.Defeat, 2002), 50001 }, // 기본값
+            { (EndingRoute.Defeat, 2003), 50001 }, // 기본값
         };
         
-        // 카르마에 따른 분류 (2001: 높음, 2002: 중간, 2003: 낮음)
+        // 카르마에 따른 분류 (스프레드시트 기준)
         int karmaCategory = GetKarmaCategory(currentKarma);
         
         // 시퀀스의 첫 번째 ID 결정
@@ -429,13 +433,13 @@ public class MultiEndingSystem : MonoBehaviour
     }
     
     /// <summary>
-    /// 카르마 수치에 따른 카테고리 반환 (2001: 높음, 2002: 중간, 2003: 낮음)
+    /// 카르마 수치에 따른 카테고리 반환 (스프레드시트 기준)
     /// </summary>
     private int GetKarmaCategory(int karma)
     {
-        if (karma >= 80) return 2001; // 높은 카르마
-        if (karma >= 50) return 2002; // 중간 카르마
-        return 2003; // 낮은 카르마
+        // 스프레드시트 기준: 50이상=2001, 0-49=2002
+        if (karma >= 50) return 2001; // 높은 카르마
+        return 2002; // 낮은 카르마
     }
 
     /// <summary>
@@ -655,23 +659,17 @@ public class MultiEndingSystem : MonoBehaviour
     {
         var sequence = new List<FullEndingData>();
         
-        // 스프레드시트에 따른 엔딩 시퀀스 매핑
+        // 스프레드시트에 따른 엔딩 시퀀스 매핑 (실제 데이터 기반)
         var endingSequences = new Dictionary<int, int[]>
         {
-            // 1001 엔딩 시퀀스들 (승리 루트)
-            { 50001, new int[] { 50001, 50002, 50003, 50004, 50005, 50006 } }, // 2001 카르마
-            { 50007, new int[] { 50007, 50008, 50009, 50010, 50011, 50012 } }, // 2002 카르마  
-            { 50013, new int[] { 50013, 50014, 50015, 50016, 50017, 50018 } }, // 2003 카르마
+            // 1001 엔딩 시퀀스들 (승리 루트) - 스프레드시트 데이터 기반
+            { 50001, new int[] { 50001, 50002, 50003, 50004, 50005, 50006 } }, // 2001 카르마 (81이상)
+            { 50007, new int[] { 50007, 50008, 50009, 50010, 50011, 50012 } }, // 2002 카르마 (20-80)
+            { 50013, new int[] { 50013, 50014, 50015, 50016, 50017, 50018 } }, // 2003 카르마 (19이하)
             
-            // 1002 엔딩 시퀀스들 (무승부 루트)
-            { 50019, new int[] { 50019, 50020, 50021, 50022, 50023, 50024 } }, // 2001 카르마
-            { 50025, new int[] { 50025, 50026, 50027, 50028, 50029, 50030 } }, // 2002 카르마
-            { 50031, new int[] { 50031, 50032, 50033, 50034, 50035, 50036 } }, // 2003 카르마
-            
-            // 1003 엔딩 시퀀스들 (패배 루트)
-            { 50037, new int[] { 50037, 50038, 50039, 50040, 50041, 50042 } }, // 2001 카르마
-            { 50043, new int[] { 50043, 50044, 50045, 50046, 50047, 50048 } }, // 2002 카르마
-            { 50049, new int[] { 50049, 50050, 50051, 50052, 50053, 50054 } }, // 2003 카르마
+            // 1002 엔딩 시퀀스들 (무승부 루트) - 스프레드시트 데이터 기반
+            { 50078, new int[] { 50078, 50079, 50080, 50081, 50082, 50083, 50084 } }, // 2001 카르마 (50-100)
+            { 50085, new int[] { 50085, 50086 } }, // 2002 카르마 (0-49)
         };
         
         // 시작 ID에 해당하는 시퀀스 찾기

@@ -385,7 +385,11 @@ public class DataManager : MonoBehaviour
         // 3. PlaythroughHistory가 사용하는 PlayerPrefs 기록 삭제
         if (global::PlaythroughHistory.Instance != null)
         {
-            global::PlaythroughHistory.Instance.ClearHistory();
+            // HCW의 PlaythroughHistory에는 ClearHistory 메서드가 없으므로 직접 PlayerPrefs 삭제
+            PlayerPrefs.DeleteKey("PlaythroughHistory_Events");
+            PlayerPrefs.DeleteKey("PlaythroughHistory_Endings");
+            PlayerPrefs.DeleteKey("PlaythroughHistory_BattleResult");
+            PlayerPrefs.Save();
         }
 
         // 초기화 직후에는 저장 생성/덮어쓰기 방지
@@ -1143,21 +1147,14 @@ public class DataManager : MonoBehaviour
                 case 1: // 1: 특정 파라미터 이벤트 경험
                     if (global::PlaythroughHistory.Instance != null)
                     {
-                        bool eventCompleted = global::PlaythroughHistory.Instance.GetEventCompletionState(rawData.ChangeCondition, out bool wasSuccess);
-                        if (eventCompleted)
-                        {
-                            // CSV의 IsConditionSuccess (0 또는 1)와 실제 성공 여부(bool)를 비교
-                            bool requiredState = (rawData.IsConditionSuccess == 1);
-                            isBranchTriggered = (wasSuccess == requiredState);
-                        }
+                        // HCW의 PlaythroughHistory는 성공/실패 구분이 없으므로 단순히 완료 여부만 확인
+                        isBranchTriggered = global::PlaythroughHistory.Instance.HasCompletedEvent(rawData.ChangeCondition);
                     }
                     break;
 
                 case 2: // 2: 특정 서브 이벤트 그룹 경험
-                    if (global::PlaythroughHistory.Instance != null)
-                    {
-                        isBranchTriggered = global::PlaythroughHistory.Instance.HasCompletedSubEventGroup(rawData.ChangeCondition);
-                    }
+                    // HCW의 PlaythroughHistory에는 서브 이벤트 그룹 기능이 없으므로 false
+                    isBranchTriggered = false;
                     break;
 
                 case 3: // 3: 특정 전투 결과 경험
@@ -1184,7 +1181,6 @@ public class DataManager : MonoBehaviour
         var fullEventData = new EventData
         {
             id = eventID,
-            //eventName = $"Event_{eventID}" // 임시 이름
         };
 
         // 분기 여부에 따라 적절한 질문 ID 선택
@@ -1454,7 +1450,7 @@ public class DataManager : MonoBehaviour
         public int AnotherAcceptReward2 { get; set; }
         public int AnotherDenyReward2 { get; set; }
         public int AnotherAcceptString2 { get; set; }
-        public int AnotherDenyReward2 { get; set; }
+        public int AnotherDenyString2 { get; set; }  // 이 줄이 올바른 이름입니다
     }
     [System.Serializable]
     public class ParameterRewardData
