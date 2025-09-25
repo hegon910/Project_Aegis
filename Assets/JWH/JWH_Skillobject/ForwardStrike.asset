@@ -16,7 +16,7 @@ MonoBehaviour:
   skillName: "\uC804\uBC29\uD3ED\uACA9"
   skillRank: 5
   description: "\uC804\uBC29\uC73C\uB85C \uD3ED\uACA9\uC744 \uD558\uC5EC \uC801\uAD70\uC5D0\uAC8C
-    4\uC758 \uD53C\uD574\uB97C \uC90D\uB2C8\uB2E4"
-  cooltime: 1
+    4\uC758 \uD53C\uD574\uB97C \uC90D\uB2C8\uB2E4."
+  cooltime: 3
   isSingleUsePerCombat: 0
   damage: 4
