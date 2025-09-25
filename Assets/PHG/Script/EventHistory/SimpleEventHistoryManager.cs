@@ -14,7 +14,10 @@ public class SimpleEventHistoryManager : MonoBehaviour
     [SerializeField] private bool enableRecording = true;
     [SerializeField] private bool enableLocalSave = true;
 
+
+    //챕터 이벤트 기록
     private List<SimpleEventRecord> eventHistory = new List<SimpleEventRecord>();
+    // 전체 플레이 기록
     private List<GamePlaythroughRecord> playthroughHistory = new List<GamePlaythroughRecord>();
     private string savePath;
 
@@ -89,14 +92,11 @@ public class SimpleEventHistoryManager : MonoBehaviour
     public void RecordChapterOutcome(int chapter, string outcome)
     {
         if (!enableRecording) return;
-
         var record = new SimpleEventRecord(-1, chapter, "챕터 결산", outcome, false);
-
+        record.eventType = "BattleResult"; // 이벤트 타입 추가
         eventHistory.Add(record);
-
         Debug.Log($"[SimpleEventHistoryManager] 챕터 기록: 챕터 {chapter} - {outcome}");
 
-        // 로컬 저장
         if (enableLocalSave)
         {
             SaveHistory();
@@ -148,14 +148,14 @@ public class SimpleEventHistoryManager : MonoBehaviour
     public void ClearHistory()
     {
         eventHistory.Clear();
-        
-        // 로컬 파일도 삭제
+        playthroughHistory.Clear(); // 전체 플레이 기록도 함께 초기화
+
         if (enableLocalSave && File.Exists(savePath))
         {
             File.Delete(savePath);
         }
-        
-        Debug.Log("[SimpleEventHistoryManager] 이벤트 기록이 초기화되었습니다.");
+
+        Debug.Log("[SimpleEventHistoryManager] 모든 기록이 초기화되었습니다.");
     }
 
     /// <summary>
@@ -167,9 +167,11 @@ public class SimpleEventHistoryManager : MonoBehaviour
 
         try
         {
-            var jsonData = JsonUtility.ToJson(new SerializableEventHistory(eventHistory), true);
+            // 모든 기록을 담는 래퍼 클래스 생성
+            var historyData = new SerializableHistory(eventHistory, playthroughHistory);
+            var jsonData = JsonUtility.ToJson(historyData, true);
             File.WriteAllText(savePath, jsonData);
-            Debug.Log($"[SimpleEventHistoryManager] 이벤트 기록이 저장되었습니다. ({eventHistory.Count}개)");
+            Debug.Log($"[SimpleEventHistoryManager] 모든 기록이 저장되었습니다. (이벤트: {eventHistory.Count}개, 플레이: {playthroughHistory.Count}개)");
         }
         catch (System.Exception ex)
         {
@@ -187,29 +189,31 @@ public class SimpleEventHistoryManager : MonoBehaviour
         try
         {
             var jsonData = File.ReadAllText(savePath);
-            var serializableHistory = JsonUtility.FromJson<SerializableEventHistory>(jsonData);
-            
-            if (serializableHistory != null && serializableHistory.records != null)
+            var historyData = JsonUtility.FromJson<SerializableHistory>(jsonData);
+
+            if (historyData != null)
             {
-                eventHistory = serializableHistory.records.ToList();
-                Debug.Log($"[SimpleEventHistoryManager] 이벤트 기록이 로드되었습니다. ({eventHistory.Count}개)");
+                // 로드된 데이터로 리스트 업데이트
+                eventHistory = historyData.eventRecords?.ToList() ?? new List<SimpleEventRecord>();
+                playthroughHistory = historyData.playthroughRecords?.ToList() ?? new List<GamePlaythroughRecord>();
+
+                Debug.Log($"[SimpleEventHistoryManager] 모든 기록이 로드되었습니다. (이벤트: {eventHistory.Count}개, 플레이: {playthroughHistory.Count}개)");
             }
         }
         catch (System.Exception ex)
         {
             Debug.LogError($"[SimpleEventHistoryManager] 로드 실패: {ex.Message}");
             eventHistory = new List<SimpleEventRecord>();
+            playthroughHistory = new List<GamePlaythroughRecord>();
         }
     }
 
     private void OnDestroy()
     {
-        // 마지막에 한 번 더 저장
         if (enableLocalSave)
         {
             SaveHistory();
         }
-        
         Debug.Log("[SimpleEventHistoryManager] 이벤트 기록 시스템이 종료되었습니다.");
     }
 }
