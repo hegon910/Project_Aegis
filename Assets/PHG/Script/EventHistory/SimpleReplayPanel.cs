@@ -13,7 +13,13 @@ public class SimpleReplayPanel : MonoBehaviour
     [SerializeField] private ScrollRect eventScrollRect;
     [SerializeField] private Transform eventListParent;
     [SerializeField] private TextMeshProUGUI statusText;
-    [SerializeField] private Button clearButton;
+
+
+    [Header("Prefab")]
+    [SerializeField] private GameObject recordButtonPrefab;
+
+    [Header("Detail Panel")]
+    [SerializeField] private ReplayDetailHandler detailHandler;
 
     private SimpleEventHistoryManager historyManager;
 
@@ -32,9 +38,6 @@ public class SimpleReplayPanel : MonoBehaviour
 
         if (closeButton != null)
             closeButton.onClick.AddListener(CloseReplayPanel);
-
-        if (clearButton != null)
-            clearButton.onClick.AddListener(ClearHistory);
 
         UpdateStatusText();
     }
@@ -77,64 +80,55 @@ public class SimpleReplayPanel : MonoBehaviour
 
         for (int i = records.Count - 1; i >= 0; i--)
         {
-            CreatePlaythroughItem(records[i]);
+            CreatePlaythroughItem(records[i], records.Count - 1 - i);
         }
     }
 
-    private void CreatePlaythroughItem(GamePlaythroughRecord record)
+    private void CreatePlaythroughItem(GamePlaythroughRecord record, int index)
     {
-        var recordItem = new GameObject($"RecordItem_{record.playDate}");
-        recordItem.transform.SetParent(eventListParent);
+        GameObject recordItem = Instantiate(recordButtonPrefab, eventListParent);
+        recordItem.name = $"RecordItem_{record.playDate}";
 
-        var rectTransform = recordItem.AddComponent<RectTransform>();
-        rectTransform.anchorMin = new Vector2(0, 1);
-        rectTransform.anchorMax = new Vector2(1, 1);
-        rectTransform.offsetMin = new Vector2(10, -50);
-        rectTransform.offsetMax = new Vector2(-10, 0);
-        rectTransform.anchoredPosition = new Vector2(0, -60 * (eventListParent.childCount - 1));
-
-        var image = recordItem.AddComponent<Image>();
-        image.color = new Color(0.1f, 0.1f, 0.1f, 0.8f);
-
-        string buttonText = $"{record.playDate} | {record.playDuration} | {record.outcome}";
-        var recordText = CreateText("RecordText", recordItem.transform, buttonText, 14, Color.white, new Vector2(0, 0), new Vector2(1, 1));
-
-        var button = recordItem.AddComponent<Button>();
-        button.targetGraphic = image;
-        button.onClick.AddListener(() => Debug.Log($"플레이 기록 클릭: {record.playDate}"));
-    }
-
-    private TextMeshProUGUI CreateText(string name, Transform parent, string text, int fontSize, Color color, Vector2 anchorMin, Vector2 anchorMax)
-    {
-        var textObj = new GameObject(name);
-        textObj.transform.SetParent(parent);
-
-        var rectTransform = textObj.AddComponent<RectTransform>();
-        rectTransform.anchorMin = anchorMin;
-        rectTransform.anchorMax = anchorMax;
-        rectTransform.offsetMin = new Vector2(10, 5);
-        rectTransform.offsetMax = new Vector2(-10, -5);
-
-        var textComponent = textObj.AddComponent<TextMeshProUGUI>();
-        textComponent.text = text;
-        textComponent.fontSize = fontSize;
-        textComponent.color = color;
-        textComponent.alignment = TextAlignmentOptions.Center;
-        textComponent.overflowMode = TextOverflowModes.Ellipsis;
-
-        return textComponent;
-    }
-
-    private void OnEventClicked(SimpleEventRecord eventRecord) { }
-
-    private void ClearHistory()
-    {
-        if (historyManager != null)
+        var rectTransform = recordItem.GetComponent<RectTransform>();
+        if (rectTransform != null)
         {
-            historyManager.ClearHistory();
-            RefreshPlaythroughList();
+            rectTransform.anchorMin = new Vector2(0, 1);
+            rectTransform.anchorMax = new Vector2(0, 1);
+            rectTransform.anchoredPosition = Vector2.zero;
+            rectTransform.sizeDelta = new Vector2(1000f, 100f);
+        }
+
+        TextMeshProUGUI recordText = recordItem.GetComponentInChildren<TextMeshProUGUI>();
+
+        if (recordText != null)
+        {
+            recordText.text = $"{record.playDate} | {record.playDuration} | {record.outcome}";
+        }
+        else
+        {
+            Debug.LogError($"[SimpleReplayPanel] 버튼 프리팹({recordButtonPrefab.name})에서 TextMeshProUGUI를 찾을 수 없습니다.");
+        }
+
+        Button button = recordItem.GetComponent<Button>();
+        if (button != null)
+        {
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(() => OnRecordClicked(record));
         }
     }
+
+    private void OnRecordClicked(GamePlaythroughRecord record)
+    {
+        if (detailHandler != null) // ReplayDetailHandler의 ShowDetails 호출
+        {
+            detailHandler.ShowDetails(record);
+        }
+        else
+        {
+            Debug.LogError("[SimpleReplayPanel] ReplayDetailHandler가 연결되지 않았습니다!");
+        }
+    }
+
 
     private void UpdateStatusText()
     {
