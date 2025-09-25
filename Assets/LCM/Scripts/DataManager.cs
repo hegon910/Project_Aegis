@@ -903,7 +903,6 @@ public class DataManager : MonoBehaviour
             StoryNum = rawData.StoryNum,
             LoopNum = rawData.LoopNum,
             dialogue = rawData.Text_kr,
-
         };
 
         //Chr_ID를 사용하여 캐릭터 이름 할당
@@ -938,7 +937,6 @@ public class DataManager : MonoBehaviour
         fullEventData.leftChoice = CreateMainChoice(rawData.AnswerLeftID);
         fullEventData.rightChoice = CreateMainChoice(rawData.AnswerRightID);
 
-
         //데이터 확인용 로그
         Debug.Log($"<color=cyan>[DataManager] 이벤트 ID {eventID} 로드 성공!</color>");
         Debug.Log($"<b>대화 내용:</b> \"{fullEventData.dialogue}\"");
@@ -957,6 +955,7 @@ public class DataManager : MonoBehaviour
 
         return fullEventData;
     }
+
     public NewMainEventData GetMainEventDataByStoryNum(int storyNum)
     {
         // mainEventData 딕셔너리의 모든 값들 중에서
@@ -1121,7 +1120,6 @@ public class DataManager : MonoBehaviour
         return fullEndingData;
     }
 
-
     // ID를 통해 파라미터 이벤트 데이터를 구성하고 반환하는 함수
     public EventData GetEventDataById(int eventID)
     {
@@ -1131,7 +1129,7 @@ public class DataManager : MonoBehaviour
             return null;
         }
 
-
+        // 분기 조건 확인: ChangeCondition 이벤트가 과거에 성공적으로 완료되었는지 여부
         bool isBranchTriggered = false;
         // PlaythroughHistory가 초기화되었는지 확인
         if (global::PlaythroughHistory.Instance != null)
@@ -1183,14 +1181,11 @@ public class DataManager : MonoBehaviour
             }
         }
 
-        // 과거 완료 여부는 위 switch에서 이미 계산됨
-
         var fullEventData = new EventData
         {
             id = eventID,
             //eventName = $"Event_{eventID}" // 임시 이름
         };
-
 
         // 분기 여부에 따라 적절한 질문 ID 선택
         int questionId = isBranchTriggered ? rawData.AnotherEventQuestion : rawData.EventQuestion;
@@ -1227,7 +1222,7 @@ public class DataManager : MonoBehaviour
         return fullEventData;
     }
 
-    //서비 이벤트의 ID값을 이용하여 데이터를 가져오는 메서드
+    //서브 이벤트의 ID값을 이용하여 데이터를 가져오는 메서드
     public FullSubEventData GetSubEventDataById(int eventID)
     {
         if (!subEventDataDict.TryGetValue(eventID, out var rawData))
@@ -1255,6 +1250,7 @@ public class DataManager : MonoBehaviour
 
         return fullEventData;
     }
+
     //GetSubEventDataById 선택지 데이터를 만드는 메서드
     private SubChoice CreateSubChoice(int answerID)
     {
@@ -1295,19 +1291,19 @@ public class DataManager : MonoBehaviour
         var choice = new EventChoice();
 
         // 선택지 텍스트, 성공/실패 결과 ID, 보상 ID 등을 분기 및 좌/우에 따라 결정
-        int choiceTextId = isLeft ? (isBranch ? rawData.AnotherLeftString : rawData.LeftString)
+        int choiceTextId      = isLeft ? (isBranch ? rawData.AnotherLeftString : rawData.LeftString)
                                        : (isBranch ? rawData.AnotherRightString : rawData.RightString);
-        int successStringId = isLeft ? (isBranch ? rawData.AnotherAcceptString1 : rawData.AcceptString1)
+        int successStringId   = isLeft ? (isBranch ? rawData.AnotherAcceptString1 : rawData.AcceptString1)
                                        : (isBranch ? rawData.AnotherAcceptString2 : rawData.AcceptString2);
-        int failStringId = isLeft ? (isBranch ? rawData.AnotherDenyString1 : rawData.DenyString1)
+        int failStringId      = isLeft ? (isBranch ? rawData.AnotherDenyString1 : rawData.DenyString1)
                                        : (isBranch ? rawData.AnotherDenyString2 : rawData.DenyString2);
-        int successRewardId = isLeft ? (isBranch ? rawData.AnotherAcceptReward1 : rawData.AcceptReward1)
+        int successRewardId   = isLeft ? (isBranch ? rawData.AnotherAcceptReward1 : rawData.AcceptReward1)
                                        : (isBranch ? rawData.AnotherAcceptReward2 : rawData.AcceptReward2);
-        int failRewardId = isLeft ? (isBranch ? rawData.AnotherDenyReward1 : rawData.DenyReward1)
+        int failRewardId      = isLeft ? (isBranch ? rawData.AnotherDenyReward1 : rawData.DenyReward1)
                                        : (isBranch ? rawData.AnotherDenyReward2 : rawData.DenyReward2);
-        int needType = isLeft ? (isBranch ? rawData.AnotherNeedType1 : rawData.NeedType1)
+        int needType          = isLeft ? (isBranch ? rawData.AnotherNeedType1 : rawData.NeedType1)
                                        : (isBranch ? rawData.AnotherNeedType2 : rawData.NeedType2);
-        int needValue = isLeft ? (isBranch ? rawData.AnotherNeedValue1 : rawData.NeedValue1)
+        int needValue         = isLeft ? (isBranch ? rawData.AnotehrNeedValue1 : rawData.NeedValue1) // 'Anotehr' 오타 대응
                                        : (isBranch ? rawData.AnotherNeedValue2 : rawData.NeedValue2);
 
         // 선택지 텍스트 설정
@@ -1336,10 +1332,8 @@ public class DataManager : MonoBehaviour
         {
             outcome.outcomeText = outcomeString.String_kr;
         }
-
         outcome.parameterChanges.AddRange(ConvertRewardsToParameterChanges(GetRewards(rewardId)));
         return outcome;
-
     }
 
     /// <summary>
@@ -1421,61 +1415,78 @@ public class DataManager : MonoBehaviour
         };
     }
 
-    // PlayerPrefs를 사용하여 회차 기록을 관리하는 클래스
-    public class PlaythroughHistory
+    //데이터 테이블
+    [System.Serializable]
+    public class ParameterEventData
     {
-        public static PlaythroughHistory Instance { get; private set; } = new PlaythroughHistory();
-
-        private const string CompletedEventsKey = "CompletedEvents";
-        private HashSet<int> completedEvents;
-
-        // 생성자에서 데이터 로드
-        private PlaythroughHistory()
-        {
-            Load();
-        }
-
-        private void Load()
-        {
-            completedEvents = new HashSet<int>();
-            string savedEvents = PlayerPrefs.GetString(CompletedEventsKey, "");
-            if (!string.IsNullOrEmpty(savedEvents))
-            {
-                foreach (var idStr in savedEvents.Split(','))
-                {
-                    if (int.TryParse(idStr, out int id))
-                    {
-                        completedEvents.Add(id);
-                    }
-                }
-            }
-            Debug.Log($"[PlaythroughHistory] 로드 완료. 완료된 이벤트 {completedEvents.Count}개");
-        }
-
-        private void Save()
-        {
-            string eventIds = string.Join(",", completedEvents);
-            PlayerPrefs.SetString(CompletedEventsKey, eventIds);
-            PlayerPrefs.Save(); // 확실한 저장을 위해 호출
-            Debug.Log($"[PlaythroughHistory] 저장 완료. 현재 완료된 이벤트: {eventIds}");
-        }
-
-        public bool HasCompletedEvent(int eventId) => completedEvents.Contains(eventId);
-
-        public void AddCompletedEvent(int eventId)
-        {
-            if (completedEvents.Add(eventId)) // 새로운 이벤트일 경우에만 저장
-            {
-                Save();
-            }
-        }
-
-        public void ClearHistory()
-        {
-            completedEvents.Clear();
-            PlayerPrefs.DeleteKey(CompletedEventsKey);
-            PlayerPrefs.Save();
-            Debug.Log("[PlaythroughHistory] 모든 기록이 삭제되었습니다.");
-        }
+        public int ID { get; set; }
+        public int RoundType { get; set; }
+        public int PageType { get; set; }
+        public int ConditionType { get; set; }
+        public int ChangeCondition { get; set; }
+        public int IsConditionSuccess { get; set; }
+        public int EventQuestion { get; set; }
+        public int LeftString { get; set; }
+        public int NeedType1 { get; set; }
+        public int NeedValue1 { get; set; }
+        public int AcceptReward1 { get; set; }
+        public int DenyReward1 { get; set; }
+        public int AcceptString1 { get; set; }
+        public int DenyString1 { get; set; }
+        public int RightString { get; set; }
+        public int NeedType2 { get; set; }
+        public int NeedValue2 { get; set; }
+        public int AcceptReward2 { get; set; }
+        public int DenyReward2 { get; set; }
+        public int AcceptString2 { get; set; }
+        public int DenyString2 { get; set; }
+        public int AnotherEventQuestion { get; set; }
+        public int AnotherLeftString { get; set; }
+        public int AnotherNeedType1 { get; set; }
+        public int AnotehrNeedValue1 { get; set; }
+        public int AnotherAcceptReward1 { get; set; }
+        public int AnotherDenyReward1 { get; set; }
+        public int AnotherAcceptString1 { get; set; }
+        public int AnotherDenyString1 { get; set; }
+        public int AnotherRightString { get; set; }
+        public int AnotherNeedType2 { get; set; }
+        public int AnotherNeedValue2 { get; set; }
+        public int AnotherAcceptReward2 { get; set; }
+        public int AnotherDenyReward2 { get; set; }
+        public int AnotherAcceptString2 { get; set; }
+        public int AnotherDenyReward2 { get; set; }
+    }
+    [System.Serializable]
+    public class ParameterRewardData
+    {
+        public int ID { get; set; }
+        public int RewardType1 { get; set; }
+        public int RewardValue1 { get; set; }
+        public int RewardType2 { get; set; }
+        public int RewardValue2 { get; set; }
+        public int RewardType3 { get; set; }
+        public int RewardValue3 { get; set; }
+        public int RewardType4 { get; set; }
+        public int RewardValue4 { get; set; }
+        public int RewardType5 { get; set; }
+        public int RewardValue5 { get; set; }
+    }
+    [System.Serializable]
+    public class ParameterEventStringData
+    {
+        public int ID { get; set; }
+        public string BG { get; set; }
+        public string SoundEffect { get; set; }
+        public int CharacterName { get; set; }
+        public string CharacterImage { get; set; }
+        public int IsFinishString { get; set; }
+        public string String_kr { get; set; }
+    }
+    //룩업 테이블용 클래스 
+    [System.Serializable]
+    public class CharacterData
+    {
+        public string Chr_name { get; set; }
+        public int Chr_index { get; set; }
     }
 }
