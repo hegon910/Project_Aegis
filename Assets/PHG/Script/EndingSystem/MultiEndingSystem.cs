@@ -287,14 +287,34 @@ public class MultiEndingSystem : MonoBehaviour
     /// </summary>
     public FullEndingData GetFullEndingData()
     {
-        if (DataManager.Instance == null)
-        {
-            Debug.LogError("[MultiEndingSystem] DataManager가 null입니다.");
-            return null;
-        }
+        var endingRoute = DetermineEndingRoute();
+        var currentKarma = CalculateCurrentKarma();
 
-        int endingID = GetEndingEventID();
-        return DataManager.Instance.GetEndingData(endingID);
+        string endingStringCode = ConvertRouteToEndingStringCode(endingRoute); 
+        int karmaRateCode = ConvertKarmaToRateCode(currentKarma); 
+
+        if (DataManager.Instance == null) return null;
+
+        return DataManager.Instance.FindFullEndingData(endingStringCode, karmaRateCode);
+    }
+
+    private string ConvertRouteToEndingStringCode(EndingRoute route)
+    {
+        return route switch
+        {
+            EndingRoute.Victory => "1001",
+            EndingRoute.Truce => "1002", // CSV의 실제 값 확인 필요
+            EndingRoute.Defeat => "1003", // CSV의 실제 값 확인 필요
+            _ => "1000" // 기본값
+        };
+    }
+
+    private int ConvertKarmaToRateCode(int karma)
+    {
+        if (karma >= 81) return 2001;
+        if (karma >= 20) return 2002;
+        // ... (나머지 카르마 범위에 대한 코드 매핑) ...
+        return 2003; // 기본값
     }
 
     /// <summary>
