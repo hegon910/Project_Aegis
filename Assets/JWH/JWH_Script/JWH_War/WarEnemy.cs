@@ -13,7 +13,7 @@ public class WarEnemy : MonoBehaviour
 
     [Header("Hint System")] 
     [Tooltip("적의 행동 힌트를 표시할 UI")]
-    [SerializeField] private TMP_Text actionHintText;
+    [SerializeField] private TMP_Text enemyInfoText;
 
     private WarAction nextAction; // 다음 행동 변수
 
@@ -45,21 +45,21 @@ public class WarEnemy : MonoBehaviour
     public void PrepareAndShowHint()
     {
         nextAction = ChooseAction(); // 다음 턴의 행동 결정
-        if (actionHintText != null)
+        if (enemyInfoText != null)
         {
             switch (nextAction)
             {
                 case WarAction.Attack:
-                    actionHintText.text = "적들이 분주하다";
+                    enemyInfoText.text = "적들이 분주하다";
                     break;
                 case WarAction.Defend:
-                    actionHintText.text = "적들이 잠잠하다";
+                    enemyInfoText.text = "적들이 잠잠하다";
                     break;
                 default:
-                    actionHintText.text = ""; // 그 외의 경우 텍스트 초기화
+                    enemyInfoText.text = ""; // 그 외의 경우 텍스트 초기화
                     break;
             }
-            actionHintText.gameObject.SetActive(true); // 힌트 보이기
+            enemyInfoText.gameObject.SetActive(true); // 힌트 보이기
         }
     }
 
@@ -70,9 +70,9 @@ public class WarEnemy : MonoBehaviour
 
     public void HideHint()
     {
-        if (actionHintText != null)
+        if (enemyInfoText != null)
         {
-            actionHintText.gameObject.SetActive(false);
+            enemyInfoText.gameObject.SetActive(false);
         }
     }
 
