@@ -10,6 +10,7 @@ public class WarTurnManager : MonoBehaviour
 
     [Header("UI References")]
     [SerializeField] private ChoiceCardSwipe choiceCard;
+    [SerializeField] private WarHUD warHUD;
 
     [Header("Turn Settings")]
     [SerializeField] int maxTurns = 30;
@@ -126,9 +127,14 @@ public class WarTurnManager : MonoBehaviour
     {
         if (battleEnded) return;
         battleEnded = true;
+
+        PlayerPrefs.DeleteKey("HasSeenWarTutorial");
+        PlayerPrefs.Save();
+
         bool isWin = resultLog.Contains("승리");
-        WarHistory.RecordWarResult(isWin); // 전투 결과를 기록 시스템에 저장
-        var changes = new List<ParameterChange>//파라미터 관련 추가부분
+        WarHistory.RecordWarResult(isWin); // ���� ����� ��� �ý��ۿ� ����
+        var changes = new List<ParameterChange>//�Ķ���� ���� �߰��κ�
+
         {
             new ParameterChange
             {
@@ -295,24 +301,28 @@ public class WarTurnManager : MonoBehaviour
 
     public void OnClick_PlayerSkill()
     {
-        Debug.Log("WarTurnManager OnClick_PlayerSkill() 호출됨 (스와이프 UP)");
+        if (warHUD == null) return;
 
         if (turnRunning || IsBattleEnded || player.currentSkill == null || skillCooldownTimer > 0)
         {
-            if (turnRunning) Debug.LogWarning("WarTurnManager 턴이 진행 중이라 스킬을 사용할 수 없습니다");
-            if (IsBattleEnded) Debug.LogWarning("WarTurnManager 전투가 종료되어 스킬을 사용할 수 없습니다");
-            if (player.currentSkill == null) Debug.LogWarning("WarTurnManager 장착된 스킬이 없습니다");
-            if (skillCooldownTimer > 0) Debug.LogWarning($"WarTurnManager 스킬 쿨타임이 {skillCooldownTimer}턴 남았습니다");
+            string reason = "��ų ��� �Ұ�";
+            if (turnRunning) reason = "���� �� ���� ��";
+            else if (player.currentSkill == null) reason = "������ ��ų ����";
+            else if (skillCooldownTimer > 0) reason = $"��Ÿ�� {skillCooldownTimer}�� ����";
+            warHUD.ShowActionFeedback(reason); 
+
             return;
         }
 
         SkillData usedSkill = player.currentSkill;
         if (usedSkill.isSingleUsePerCombat && usedSingleUseSkills.Contains(usedSkill))
         {
-            Debug.LogWarning($"'{usedSkill.skillName}' 스킬은 이번 전투에서 이미 사용했습니다");
+            warHUD.ShowActionFeedback("�̹� �������� �̹� ����� ��ų");
             return;
         }
-        Debug.Log($"WarTurnManager 모든 조건 통과. '{usedSkill.skillName}' 스킬 사용 시도");
+
+        warHUD.ShowActionFeedback($"{usedSkill.skillName} ���!");
+
 
         player.UseSkill(enemy, this);
         if (usedSkill.isSingleUsePerCombat)
@@ -320,7 +330,7 @@ public class WarTurnManager : MonoBehaviour
             usedSingleUseSkills.Add(usedSkill);
         }
         skillCooldownTimer = usedSkill.cooltime;
-        Debug.Log($"WarTurnManager 스킬 쿨타임 {skillCooldownTimer}턴으로 설정");
+
     }
 
     public string GetSkillName()

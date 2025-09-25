@@ -6678,6 +6678,7 @@ MonoBehaviour:
   cardController: {fileID: 3792245319616484241}
   parameterUIController: {fileID: 7469435009444936969}
   dimmerPanel: {fileID: 5712645947449799135}
+  subEventDimmerPanel: {fileID: 5712645947449799135}
   tutorialPanel: {fileID: 6948260885682369512}
   parameterTutoText: {fileID: 0}
   swipeTutorialImage: {fileID: 0}

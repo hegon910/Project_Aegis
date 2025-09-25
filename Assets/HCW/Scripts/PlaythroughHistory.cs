@@ -104,6 +104,21 @@ public class PlaythroughHistory : MonoBehaviour
         SaveHistory();
     }
 
+    public void ClearHistory()
+    {
+        _completedEventStates.Clear();
+        _completedSubEventGroupIds.Clear();
+        _completedEndingIds.Clear();
+        _lastBattleResult = default;
+
+        PlayerPrefs.DeleteKey(EventHistoryKey);
+        PlayerPrefs.DeleteKey(SubEventGroupHistoryKey);
+        PlayerPrefs.DeleteKey(EndingHistoryKey);
+        PlayerPrefs.DeleteKey(BattleResultKey);
+        PlayerPrefs.Save();
+        Debug.Log("[PlaythroughHistory] All history cleared.");
+    }
+
     // --- 데이터 직렬화/역직렬화 ---
 
     private const string EventHistoryKey = "PlaythroughHistory_EventStates"; // Key 이름 변경

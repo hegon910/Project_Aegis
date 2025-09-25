@@ -253,9 +253,32 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
             return;
         }
 
-
         MainEventChoice selectedChoice = isRightChoice ? currentNode.rightChoice : currentNode.leftChoice;
         Debug.Log($"[MainScenarioManager] 선택지 처리 시작. 선택된 다음 노드 ID: {selectedChoice.nextEventID}");
+
+        //회상 텍스트 저장
+        if (selectedChoice.isEndingMemoriar)
+        {
+            if (DataManager.Instance.endingMemoriarDataDict.TryGetValue(selectedChoice.ID, out var memoriarData))
+            {
+                DataManager.Instance.AddEndingMemoriar(memoriarData.Text_KR);
+                Debug.Log($"[DataManager] 엔딩 기억 조각 획득: {memoriarData.Text_KR}");
+            }
+        }
+
+        // 진엔딩 카운팅 로직 추가
+        if (selectedChoice.isCountingforRealEnding2)
+        {
+            DataManager.Instance.PlayerData.realEnding2ChoiceCount++;
+            Debug.Log($"[MainScenarioManager] 2회차 진엔딩 카운트 증가: {DataManager.Instance.PlayerData.realEnding2ChoiceCount}");
+        }
+
+        if (selectedChoice.isCountingforRealEnding3)
+        {
+            DataManager.Instance.PlayerData.realEnding3ChoiceCount++;
+            Debug.Log($"[MainScenarioManager] 3회차 진엔딩 카운트 증가: {DataManager.Instance.PlayerData.realEnding3ChoiceCount}");
+        }
+
         if (selectedChoice.outcome?.parameterChanges != null)
         {
             GamePlayerStats.Instance.ApplyChanges(selectedChoice.outcome.parameterChanges);

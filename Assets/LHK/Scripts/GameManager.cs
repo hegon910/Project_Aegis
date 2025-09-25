@@ -67,6 +67,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject subEventSelectPanel;
     [SerializeField] private TMPro.TextMeshProUGUI subEventSelectedText;
     [SerializeField] private GameObject warTutorialPanel;
+    [SerializeField] private GameObject achievementPanel;
 
     [Header("컷신 시스템")]
     [SerializeField] private CutsceneManager cutsceneManager;
@@ -105,6 +106,9 @@ public class GameManager : MonoBehaviour
     private bool subEventsEnabled = false;
     private bool hasShownWarTutorialThisPlaythrough = false;
     private bool isInitialized = false;
+    
+    [Header("Guest Login Popup System")]
+    [SerializeField] private PopupController popupController;
 
     private void Awake()
     {
@@ -126,6 +130,7 @@ public class GameManager : MonoBehaviour
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         EnsureCheatManagerExists();
 #endif
+
     }
 
     private void OnEnable() { }
@@ -134,6 +139,8 @@ public class GameManager : MonoBehaviour
     private async void Start()
     {
         await InitializeGameAndLoadData();
+        if (popupController == null)
+            popupController = FindObjectOfType<PopupController>();    
     }
 
     private async Task InitializeGameAndLoadData()
@@ -141,11 +148,21 @@ public class GameManager : MonoBehaviour
         DataManager.Instance.LoadGame();
 
         await DataManager.Instance.InitializeDataAsync();
-        await DataManager.Instance.SubIntializeDataAsync();
 
         await DataManager.Instance.IsReady;
 
-        EventManager.Instance.InitializeEventManager();
+        // EventManager.Instance가 준비될 때까지 기다림
+        await WaitForEventManagerReady();
+        
+        if (EventManager.Instance != null)
+        {
+            EventManager.Instance.InitializeEventManager();
+        }
+        else
+        {
+            Debug.LogError("[GameManager] EventManager.Instance가 여전히 null입니다. EventManager가 씬에 존재하는지 확인하세요.");
+        }
+        
         if (loadingPanel != null)
         {
             loadingPanel.SetActive(false);
@@ -153,10 +170,28 @@ public class GameManager : MonoBehaviour
 
         isInitialized = true;
 
-        ChangeState(GameState.MainMenu);
+        ChangeState(GameState.Title);
         if (Application.platform == RuntimePlatform.Android) PlayGamesPlatform.Instance.Authenticate(OnAuthenticated);
         else OnAuthenticated(SignInStatus.Success);
     }
+
+    private async Task WaitForEventManagerReady()
+    {
+        int maxWaitFrames = 60; // 최대 1초 (60프레임) 기다림
+        int waitFrames = 0;
+        
+        while (EventManager.Instance == null && waitFrames < maxWaitFrames)
+        {
+            await Task.Yield(); // 다음 프레임까지 대기
+            waitFrames++;
+        }
+        
+        if (EventManager.Instance == null)
+        {
+            Debug.LogWarning($"[GameManager] EventManager.Instance가 {maxWaitFrames}프레임 후에도 null입니다.");
+        }
+    }
+
     public int GetCurrentChapterPacID()
     {
         return mainStoryPacID;
@@ -302,7 +337,6 @@ public class GameManager : MonoBehaviour
         mainGameCanvas.SetActive(
             newState != GameState.Title &&
             newState != GameState.Login &&
-            newState != GameState.MainMenu &&
             newState != GameState.CommanderSelection);
 
         commanderSelectionCanvas.SetActive(newState == GameState.CommanderSelection);
@@ -460,8 +494,47 @@ public class GameManager : MonoBehaviour
                 StartDetailedResultSequence();
                 break;
             case GameState.PlayingEndingCutscene:
-                CutsceneManager.OnCutsceneFinished += OnStateFinished;
-                cutsceneManager.StartCutscene(finalEndingCutscene);
+                // 멀티 엔딩 시스템을 사용하여 적절한 엔딩 결정
+                var endingData = MultiEndingSystem.Instance?.GetFinalEndingData();
+                
+                // 기존 finalEndingCutscene 대신 동적으로 결정된 엔딩 사용
+                if (endingData?.fullEndingData != null)
+                {
+                    // FullEndingData를 CutsceneData로 변환
+                    var cutsceneData = MultiEndingSystem.Instance.ConvertToCutsceneData(endingData.fullEndingData);
+                    
+                    if (cutsceneData != null)
+                    {
+                        Debug.Log($"[GameManager] 멀티 엔딩 재생: {endingData.endingType} - {endingData.route} - {endingData.branch}");
+                        CutsceneManager.OnCutsceneFinished += OnStateFinished;
+                        cutsceneManager.StartCutscene(cutsceneData);
+                    }
+                    else
+                    {
+                        // 변환 실패 시 폴백
+                        Debug.LogWarning("[GameManager] 엔딩 데이터 변환 실패, 기본 엔딩 사용");
+                        CutsceneManager.OnCutsceneFinished += OnStateFinished;
+                        cutsceneManager.StartCutscene(finalEndingCutscene);
+                    }
+                }
+                else
+                {
+                    // 폴백: 기존 엔딩 사용
+                    Debug.Log("[GameManager] 엔딩 데이터 없음, 기본 엔딩 사용");
+                    CutsceneManager.OnCutsceneFinished += OnStateFinished;
+                    cutsceneManager.StartCutscene(finalEndingCutscene);
+                }
+                
+                // 엔딩 기록 저장
+                if (DataManager.Instance?.PlayerData != null && endingData != null)
+                {
+                    string endingKey = $"{endingData.endingType}_{endingData.route}_{endingData.branch}";
+                    if (!DataManager.Instance.PlayerData.completedEndings.Contains(endingKey))
+                    {
+                        DataManager.Instance.PlayerData.completedEndings.Add(endingKey);
+                        DataManager.Instance.SaveLocal();
+                    }
+                }
                 break;
         }
 
@@ -614,8 +687,8 @@ public class GameManager : MonoBehaviour
     {
         ShowConfirmation("모든 진행 상황과 설정이 삭제됩니다. 정말 새로 시작하시겠습니까?", () =>
         {
-            // [수정] DeleteLocalSaveData() 대신 DeleteAllLocalData()를 호출합니다.
-            DataManager.Instance.DeleteAllLocalData();
+            // 진행도만 삭제하여 Settings(서브이벤트 팩 선택)는 보존
+            DataManager.Instance.DeleteLocalSaveData();
 
             // 데이터를 모두 지운 후, 새 데이터 객체를 생성하고 게임을 시작합니다.
             DataManager.Instance.StartNewGame();
@@ -634,7 +707,8 @@ public class GameManager : MonoBehaviour
         ShowConfirmation("모든 진행 상황과 설정이 삭제됩니다. 정말 초기화하시겠습니까?", () =>
         {
             // 1. 모든 로컬 파일과 PlayerPrefs 기록 삭제
-            DataManager.Instance.DeleteAllLocalData();
+            // 진행도만 삭제하여 Settings 보존
+            DataManager.Instance.DeleteLocalSaveData();
 
             // 2. 메모리에 새로운 기본 데이터 객체를 즉시 생성하고 로드
             // StartNewGame은 새 GameData를 만들고 기본 파일까지 생성해줍니다.
@@ -763,8 +837,8 @@ public class GameManager : MonoBehaviour
     }
     public void TutorialPanelTouched() { tutorialPanel.SetActive(true); tutorialText.SetActive(true); parameterTutorialPanel.SetActive(true); } 
     public void ParameterTutorialPanelTouched() { parameterTutorialPanel.SetActive(true); } 
-    public void OnTitlePanelTouched() { titlePanel.SetActive(false); }
-    private void OnAuthenticated(SignInStatus status) { ChangeState(GameState.MainMenu); continueButton.gameObject.SetActive(DataManager.Instance.CheckIfSaveDataExists()); if (status == SignInStatus.Success) { Debug.Log("구글 플레이 게임 서비스 로그인 성공!"); } else { Debug.LogError("구글 플레이 게임 서비스 로그인 실패: " + status); } if (FirebaseManager.Instance != null) FirebaseManager.Instance.GPGSLogin(); }
+    public void OnTitlePanelTouched() { continueButton.gameObject.SetActive(DataManager.Instance.CheckIfSaveDataExists()); ChangeState(GameState.MainMenu); }
+    private void OnAuthenticated(SignInStatus status) { if (status == SignInStatus.Success) { Debug.Log("구글 플레이 게임 서비스 로그인 성공!"); } else { Debug.LogError("구글 플레이 게임 서비스 로그인 실패: " + status); } if (FirebaseManager.Instance != null) FirebaseManager.Instance.GPGSLogin(); }
     public async void OnCommanderSelected(int commanderIndex)
     {
         CommanderInfo selectedCommander = null;
@@ -795,8 +869,13 @@ public class GameManager : MonoBehaviour
         // 튜토리얼 플래그 및 UI 초기화 (데이터 리셋 후 오동작 방지)
         ResetTutorialFlagsAndUI();
 
-        // [수정] DataManager에 저장된 설정값을 사용합니다.
-        await EventManager.Instance.StartNewGame(DataManager.Instance.PlayerSettings.selectedSubEventPackIDs);
+        // [수정] 선택 저장을 StoryPackManager가 디스크에 먼저 저장하므로, 시작 직전에 설정을 다시 로드하여 동기화합니다.
+        DataManager.Instance.LoadSettings();
+        // StoryPackManager가 씬에 존재하면, 매니저를 통해 선택값을 우선 가져옵니다(동일 인스턴스 참조 강제).
+        var spm = FindObjectOfType<StoryPackManager>();
+        var selectedPacksForNewGame = spm != null ? spm.GetSelectedPackIDs() : (DataManager.Instance.PlayerSettings != null ? DataManager.Instance.PlayerSettings.selectedSubEventPackIDs : null);
+        Debug.Log($"[GameManager] 새게임 직전 선택 팩: {(selectedPacksForNewGame != null ? string.Join(", ", selectedPacksForNewGame) : "null")}, 개수: {selectedPacksForNewGame?.Count ?? -1}");
+        await EventManager.Instance.StartNewGame(selectedPacksForNewGame);
         OnStateFinished();
     }
     private void StartDetailedResultSequence() { int warSituation = GamePlayerStats.Instance.GetStat(ParameterType.전황); GameOutcome outcome = (warSituation <= 19) ? GameOutcome.Defeat : (warSituation >= 81) ? GameOutcome.Victory : GameOutcome.Draw; int chapterIndex = CurrentChapter - 1; if (chapterIndex < chapterEndDataList.Count && chapterEndDataList[chapterIndex] != null) { chapterEndController.StartChapterEndSequence(chapterEndDataList[chapterIndex], outcome); } else { OnStateFinished(); } }
@@ -1031,4 +1110,96 @@ public class GameManager : MonoBehaviour
 #endif
         });
     }
+
+    #region 업적 시스템 관련 메서드들
+    
+    /// <summary>
+    /// 업적 UI 열기
+    /// </summary>
+    public void OpenAchievementUI()
+    {
+        if (achievementPanel != null)
+        {
+            achievementPanel.SetActive(true);
+            
+            // AchievementUIManager 컴포넌트가 있다면 UI 새로고침
+            var achievementUIManager = achievementPanel.GetComponent<AchievementUIManager>();
+            if (achievementUIManager != null)
+            {
+                achievementUIManager.OpenAchievementUI();
+            }
+            
+            Debug.Log("[GameManager] 업적 UI가 열렸습니다.");
+        }
+        else
+        {
+            Debug.LogWarning("[GameManager] achievementPanel이 설정되지 않았습니다.");
+        }
+    }
+    
+    /// <summary>
+    /// 업적 UI 닫기
+    /// </summary>
+    public void CloseAchievementUI()
+    {
+        if (achievementPanel != null)
+        {
+            achievementPanel.SetActive(false);
+            Debug.Log("[GameManager] 업적 UI가 닫혔습니다.");
+        }
+    }
+    
+    /// <summary>
+    /// 특정 타입의 업적 UI 열기
+    /// </summary>
+    public void OpenAchievementUI(AchievementType type)
+    {
+        if (achievementPanel != null)
+        {
+            achievementPanel.SetActive(true);
+            
+            // AchievementUIManager 컴포넌트가 있다면 해당 타입으로 UI 열기
+            var achievementUIManager = achievementPanel.GetComponent<AchievementUIManager>();
+            if (achievementUIManager != null)
+            {
+                achievementUIManager.OpenAchievementUI(type);
+            }
+            
+            Debug.Log($"[GameManager] {type} 타입의 업적 UI가 열렸습니다.");
+        }
+        else
+        {
+            Debug.LogWarning("[GameManager] achievementPanel이 설정되지 않았습니다.");
+        }
+    }
+    
+    /// <summary>
+    /// 업적 UI 토글 (열림/닫힘 상태 전환)
+    /// </summary>
+    public void ToggleAchievementUI()
+    {
+        if (achievementPanel != null)
+        {
+            bool isActive = achievementPanel.activeSelf;
+            
+            if (isActive)
+            {
+                CloseAchievementUI();
+            }
+            else
+            {
+                OpenAchievementUI();
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 업적 UI가 현재 열려있는지 확인
+    /// </summary>
+    public bool IsAchievementUIOpen()
+    {
+        return achievementPanel != null && achievementPanel.activeSelf;
+    }
+    
+    #endregion
 }

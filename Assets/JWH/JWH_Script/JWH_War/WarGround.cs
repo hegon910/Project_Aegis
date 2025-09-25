@@ -45,11 +45,11 @@ public class WarGround : MonoBehaviour
     public Vector2 GetGroundPos(int laneIndex)
     {
         laneIndex = Mathf.Clamp(laneIndex, 0, laneLength - 1);
+        float totalGridWidth = laneLength * cellSize;
+        float remainingSpace = rectTransform.rect.width - totalGridWidth;
         float leftEdgeX = -rectTransform.rect.width * rectTransform.pivot.x;
-
-        float startOffsetX = leftEdgeX + (sideMargin * cellSize);
-        float targetX = startOffsetX + (laneIndex * cellSize) + (cellSize / 2);
-
+        float centeredStartX = leftEdgeX + (remainingSpace / 2);
+        float targetX = centeredStartX + (laneIndex * cellSize) + (cellSize / 2);
         float targetY = 0;
         return new Vector2(targetX, targetY);
     }

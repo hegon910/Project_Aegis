@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
 using static DataManager;
 
 public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
@@ -16,9 +17,10 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 
     [Header("연출 효과")]
     [SerializeField] private Image dimmerPanel;
+    [SerializeField] private Image subEventDimmerPanel;
 
     private EventData currentParameterEventData;
-    private SubEventData currentSubEventData;
+    private FullSubEventData currentSubEventData;
 
     [Header("튜토리얼")]
     [SerializeField] private GameObject tutorialPanel;
@@ -124,7 +126,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             return;
         }
 
-        string characterName = "이름 없음";
+        string characterName = "";
 
         if (DataManager.Instance.eventDataDict.TryGetValue(eventId, out var rawEventData))
         {
@@ -146,22 +148,79 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         );
     }
 
-    private void HandleSubEvent(SubEventData data)
+    private void HandleSubEvent(FullSubEventData data)
     {
+        if (data == null)
+        {
+            Debug.LogError("[UIFlowSimulator] HandleSubEvent: data가 null입니다.");
+            return;
+        }
+
         if (tutorialPanel != null && tutorialPanel.activeSelf)
         {
             tutorialPanel.SetActive(false);
         }
+        // 파라미터 이벤트에서 넘어온 경우인지 먼저 판별
+        bool cameFromParameterEvent = currentParameterEventData != null;
+
+        // 파라미터 이벤트 쪽 전환 코루틴이 진행 중이면 중단하여 페이드 연출을 막지 않도록 정리
+        StopAllCoroutines();
+
         currentParameterEventData = null;
         currentSubEventData = data;
 
+        string characterName = "";
+        if (data.characterData != null)
+        {
+            characterName = data.characterData.Chr_Name ?? "";
+        }
+
+        // null 체크 추가
+        string dialogue = data.Text_kr ?? "대화 내용이 없습니다.";
+        string leftChoiceText = data.leftChoice?.choiceText ?? "선택지 1";
+        string rightChoiceText = data.rightChoice?.choiceText ?? "선택지 2";
+
+        // 파라미터 이벤트 도중 서브이벤트로 진입할 때는 페이드 아웃/인 연출 적용
+        if (cameFromParameterEvent && subEventDimmerPanel != null)
+        {
+            StartCoroutine(FadeToBlackThenDisplaySubEvent(characterName, dialogue, leftChoiceText, rightChoiceText));
+            return;
+        }
+
         DisplayEventUI(
             characterSprite: null,
-            characterName: data.CharacterName,
-            dialogue: data.QuestionString_kr,
-            leftChoice: data.LeftSelectString,
-            rightChoice: data.RightSelectString
+            characterName: characterName,
+            dialogue: dialogue,
+            leftChoice: leftChoiceText,
+            rightChoice: rightChoiceText
         );
+    }
+
+    private IEnumerator FadeToBlackThenDisplaySubEvent(string characterName, string dialogue, string leftChoiceText, string rightChoiceText)
+    {
+        // 시작 상태 초기화 및 입력 차단 (서브이벤트 전용 디머 사용)
+        subEventDimmerPanel.gameObject.SetActive(true);
+        subEventDimmerPanel.raycastTarget = true;
+        subEventDimmerPanel.DOKill();
+        subEventDimmerPanel.color = new Color(0f, 0f, 0f, 0f);
+
+        // 페이드 아웃: 알파 1까지 2초
+        yield return subEventDimmerPanel.DOFade(1f, 2f).SetUpdate(false).WaitForCompletion();
+        subEventDimmerPanel.color = new Color(0f, 0f, 0f, 1f);
+
+        // 서브이벤트 UI로 전환
+        DisplayEventUI(
+            characterSprite: null,
+            characterName: characterName,
+            dialogue: dialogue,
+            leftChoice: leftChoiceText,
+            rightChoice: rightChoiceText
+        );
+
+        // 페이드 인
+        yield return subEventDimmerPanel.DOFade(0f, 0.5f).SetUpdate(false).WaitForCompletion();
+        subEventDimmerPanel.color = new Color(0f, 0f, 0f, 0f);
+        subEventDimmerPanel.raycastTarget = false;
     }
 
     private void DisplayEventUI(Sprite characterSprite, string characterName, string dialogue, string leftChoice, string rightChoice)
@@ -188,7 +247,13 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 
         if (currentParameterEventData != null)
         {
+            // 널 가드
             var choice = isRightChoice ? currentParameterEventData.rightChoice : currentParameterEventData.leftChoice;
+            if (choice == null || choice.condition == null)
+            {
+                Debug.LogWarning("[UIFlowSimulator] HandleChoice: choice 또는 condition 이 null입니다.");
+                return;
+            }
             
             // [수정] 새로운 Evaluate 시그니처 호출
             bool success = choice.condition.Evaluate();
@@ -213,14 +278,31 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             GamePlayerStats.Instance.ApplyChanges(finalChanges);
 
             // [신규] 파라미터 이벤트 완료 기록 (성공/실패 여부 포함)
-            PlaythroughHistory.Instance.RecordEventCompletion(currentParameterEventData.id, success);
+            if (PlaythroughHistory.Instance != null)
+            {
+                PlaythroughHistory.Instance.RecordEventCompletion(currentParameterEventData.id, success);
+            }
+            // 파라미터 이벤트는 Ending_Memoriar 같은 플래그가 없으므로 기록하지 않음
+
+            // [신규] 파라미터 이벤트 완료 기록
+            DataManager.Instance.PlayerData.completedEventIds.Add(currentParameterEventData.id);
 
             StartCoroutine(TransitionToNextEvent(outcome.outcomeText));
         }
         else if (currentSubEventData != null)
         {
-            EventManager.Instance.OnSubEventChoiceSelected(isRightChoice);
-            StartCoroutine(TransitionToNextEvent("선택지가 처리되었습니다."));
+            Debug.Log($"[UIFlowSimulator] 서브이벤트 선택 처리: isRightChoice={isRightChoice}");
+            
+            // 서브이벤트 선택지에서 결과 텍스트 가져오기
+            var choice = isRightChoice ? currentSubEventData.rightChoice : currentSubEventData.leftChoice;
+            string resultText = choice?.outcome?.outcomeText ?? "";
+            
+            // 파라미터 이벤트와 동일한 타이밍으로 결과 표시 후 다음 이벤트 진행
+            StartCoroutine(TransitionToNextSubEvent(resultText, isRightChoice));
+        }
+        else
+        {
+            Debug.LogWarning("[UIFlowSimulator] HandleChoice: 현재 이벤트 데이터가 null입니다.");
         }
     }
 
@@ -233,6 +315,13 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         if (cancelTransitions)
         {
             Debug.Log("UIFlowSimulator: 전환이 취소되었습니다.");
+            yield break;
+        }
+        
+        // 서브이벤트 체인 진행 중인지 확인
+        if (EventManager.Instance.currentState == EventManagerState.InSubEvent)
+        {
+            Debug.Log("UIFlowSimulator: 서브이벤트 체인이 진행 중이므로 대기합니다.");
             yield break;
         }
         
@@ -256,6 +345,38 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 
         Debug.Log("UIFlowSimulator: 다음 턴을 시작하도록 EventManager에 요청합니다.");
         EventManager.Instance.PlayNextTurn();
+    }
+
+    private IEnumerator TransitionToNextSubEvent(string resultText, bool isRightChoice)
+    {
+        // 파라미터 이벤트와 동일한 타이밍으로 결과 텍스트 표시
+        situationCardController.UpdateText(resultText);
+        yield return new WaitForSeconds(1.5f);
+        
+        // 대기 중에도 취소 플래그 체크
+        if (cancelTransitions)
+        {
+            Debug.Log("UIFlowSimulator: 서브이벤트 전환이 취소되었습니다.");
+            yield break;
+        }
+
+        // 게임 오버 상태인지 확인
+        if (IsGameOver())
+        {
+            Debug.Log("UIFlowSimulator: 게임 오버 상태이므로 서브이벤트를 진행하지 않습니다.");
+            yield break;
+        }
+
+        // 취소 플래그 재확인
+        if (cancelTransitions)
+        {
+            Debug.Log("UIFlowSimulator: 서브이벤트 전환이 취소되었습니다.");
+            yield break;
+        }
+
+        Debug.Log("UIFlowSimulator: 서브이벤트 선택을 EventManager에 전달합니다.");
+        // EventManager에서 다음 서브이벤트 처리 (UI 숨기기는 EventManager에서 관리)
+        EventManager.Instance.OnSubEventChoiceSelected(isRightChoice);
     }
 
     private bool IsGameOver()
@@ -294,7 +415,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         if (resultData != null)
         {
             Debug.Log($"전투 결과 시뮬레이션: {resultData.Text_Kr}");
-            DataManager.Instance.RecordBattleResult(battleResultId);
+            //DataManager.Instance.RecordBattleResult(battleResultId);
         }
         else
         {
@@ -312,7 +433,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         if (endingData != null)
         {
             Debug.Log($"엔딩 시뮬레이션: {endingData.Text_Kr}");
-            DataManager.Instance.RecordEnding(endingId);
+            //DataManager.Instance.RecordEnding(endingId);
         }
         else
         {
