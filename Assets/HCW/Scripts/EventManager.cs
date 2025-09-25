@@ -20,6 +20,8 @@ public class EventManager : MonoBehaviour
     public static event Action<int> OnParameterEventReady;
     public static event Action<FullSubEventData> OnSubEventReady;
     public static event Action OnEventCycleCompleted;
+    // 서브이벤트 종료 시 UI 페이드 아웃을 요청하는 이벤트 (duration: 초)
+    public static event Action<float> OnSubEventExitFadeRequested;
 
     [Header("설정")]
     [SerializeField] private int totalEventsPerCycle = 24;
@@ -392,7 +394,7 @@ public class EventManager : MonoBehaviour
         {
             Debug.LogError($"[EventManager] OnSubEventChoiceSelected: ID {currentSubEventIndex}에 해당하는 서브이벤트 데이터를 찾을 수 없습니다.");
             currentState = EventManagerState.InCycle;
-            PlayNextTurn();
+            StartCoroutine(TransitionFromSubEventToParameter());
             return;
         }
 
@@ -401,7 +403,7 @@ public class EventManager : MonoBehaviour
         {
             Debug.LogError($"[EventManager] OnSubEventChoiceSelected: 선택된 선택지가 null입니다. (isLeftChoice: {isLeftChoice})");
             currentState = EventManagerState.InCycle;
-            PlayNextTurn();
+            StartCoroutine(TransitionFromSubEventToParameter());
             return;
         }
 
@@ -423,7 +425,7 @@ public class EventManager : MonoBehaviour
             Debug.Log("[EventManager] 플레이리스트 끝에 도달했습니다. 서브이벤트 체인을 종료합니다.");
             subEventChainLength = 0; // 체인 길이 리셋
             currentState = EventManagerState.InCycle;
-            PlayNextTurn();
+            StartCoroutine(TransitionFromSubEventToParameter());
             return;
         }
 
@@ -444,7 +446,7 @@ public class EventManager : MonoBehaviour
                 Debug.LogWarning($"[EventManager] 다음 이벤트 ID {nextEventID}에 해당하는 데이터를 찾을 수 없습니다. 체인을 종료합니다.");
                 subEventChainLength = 0; // 체인 길이 리셋
                 currentState = EventManagerState.InCycle;
-                PlayNextTurn();
+                StartCoroutine(TransitionFromSubEventToParameter());
             }
         }
         else
@@ -452,8 +454,8 @@ public class EventManager : MonoBehaviour
             Debug.Log("[EventManager] 서브 이벤트 체인의 마지막입니다. 일반 이벤트로 돌아갑니다.");
             subEventChainLength = 0; // 체인 길이 리셋
             currentState = EventManagerState.InCycle;
-            // 서브이벤트 체인이 끝났으므로 다음 일반 이벤트로 진행
-            PlayNextTurn();
+            // 서브이벤트 체인이 끝났으므로 잠시 대기 후 다음 일반 이벤트로 진행
+            StartCoroutine(TransitionFromSubEventToParameter());
         }
     }
 
@@ -524,6 +526,15 @@ public class EventManager : MonoBehaviour
 
         // 다음 서브이벤트 표시
         DisplaySubEvent(nextEventID);
+    }
+
+    private IEnumerator TransitionFromSubEventToParameter()
+    {
+        // 서브이벤트 종료 시 UI에 페이드 아웃 요청 후 동일 시간만큼 대기
+        float fadeDuration = 0.5f;
+        OnSubEventExitFadeRequested?.Invoke(fadeDuration);
+        yield return new WaitForSeconds(fadeDuration);
+        PlayNextTurn();
     }
 
     /// <summary>

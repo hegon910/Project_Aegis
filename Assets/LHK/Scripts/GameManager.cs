@@ -654,7 +654,7 @@ public class GameManager : MonoBehaviour
         SetUIForState(stateToRestore);
 
         switch (stateToRestore)
-        {
+         {
             case GameState.InEventCycle:
                 EventManager.OnEventCycleCompleted += OnStateFinished;
 

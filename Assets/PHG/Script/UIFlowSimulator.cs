@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
@@ -33,18 +34,21 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     private bool cancelTransitions = false;
 
     private static bool hasShownChapter1ParameterTutorial = false;
+    private bool subEventExitFaded = false;
 
     // <<<<<<< [핵심 복원 1] 원본과 같이 OnEnable/OnDisable을 사용한 이벤트 구독으로 되돌립니다.
     private void OnEnable()
     {
         EventManager.OnParameterEventReady += HandleParameterEvent;
         EventManager.OnSubEventReady += HandleSubEvent;
+        EventManager.OnSubEventExitFadeRequested += OnSubEventExitFadeRequested;
     }
 
     private void OnDisable()
     {
         EventManager.OnParameterEventReady -= HandleParameterEvent;
         EventManager.OnSubEventReady -= HandleSubEvent;
+        EventManager.OnSubEventExitFadeRequested -= OnSubEventExitFadeRequested;
     }
 
     // <<<<<<< [삭제] 불필요해진 함수들을 삭제합니다.
@@ -139,8 +143,29 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             }
         }
 
+        // 파라미터 이벤트 초상 스프라이트 해석: Chr_name(이름) 기준 우선, 실패 시 CharacterImage 폴백
+        var parameterPortrait = ResolveParameterPortraitSprite(characterName);
+        if (parameterPortrait == null)
+        {
+            parameterPortrait = ResolveParameterPortraitSprite(currentParameterEventData.CharacterImage);
+        }
+
+        // 서브이벤트 종료로 인해 화면이 검게 페이드된 상태라면
+        if (subEventExitFaded && subEventDimmerPanel != null)
+        {
+            DisplayEventUI(
+                characterSprite: parameterPortrait,
+                characterName: characterName,
+                dialogue: currentParameterEventData.dialogue,
+                leftChoice: currentParameterEventData.leftChoice.choiceText,
+                rightChoice: currentParameterEventData.rightChoice.choiceText
+            );
+            StartCoroutine(FadeInAfterSubEventExit());
+            return;
+        }
+
         DisplayEventUI(
-            characterSprite: currentParameterEventData.eventSprite,
+            characterSprite: parameterPortrait,
             characterName: characterName,
             dialogue: currentParameterEventData.dialogue,
             leftChoice: currentParameterEventData.leftChoice.choiceText,
@@ -188,7 +213,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         }
 
         DisplayEventUI(
-            characterSprite: null,
+            characterSprite: ResolvePortraitSprite(data),
             characterName: characterName,
             dialogue: dialogue,
             leftChoice: leftChoiceText,
@@ -210,7 +235,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 
         // 서브이벤트 UI로 전환
         DisplayEventUI(
-            characterSprite: null,
+            characterSprite: ResolvePortraitSprite(currentSubEventData),
             characterName: characterName,
             dialogue: dialogue,
             leftChoice: leftChoiceText,
@@ -221,6 +246,100 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         yield return subEventDimmerPanel.DOFade(0f, 0.5f).SetUpdate(false).WaitForCompletion();
         subEventDimmerPanel.color = new Color(0f, 0f, 0f, 0f);
         subEventDimmerPanel.raycastTarget = false;
+    }
+
+    private void OnSubEventExitFadeRequested(float duration)
+    {
+        StopAllCoroutines();
+        StartCoroutine(FadeOutForSubEventExit(duration));
+    }
+
+    private IEnumerator FadeOutForSubEventExit(float duration)
+    {
+        if (subEventDimmerPanel == null)
+        {
+            yield break;
+        }
+
+        subEventDimmerPanel.gameObject.SetActive(true);
+        subEventDimmerPanel.raycastTarget = true;
+        subEventDimmerPanel.DOKill();
+        subEventDimmerPanel.color = new Color(0f, 0f, 0f, 0f);
+        if (duration > 0f)
+        {
+            yield return subEventDimmerPanel.DOFade(1f, duration).SetUpdate(false).WaitForCompletion();
+        }
+        else
+        {
+            subEventDimmerPanel.color = new Color(0f, 0f, 0f, 1f);
+            yield return null;
+        }
+        subEventExitFaded = true;
+    }
+
+    private IEnumerator FadeInAfterSubEventExit()
+    {
+        if (subEventDimmerPanel == null)
+        {
+            subEventExitFaded = false;
+            yield break;
+        }
+        // 페이드 인
+        yield return subEventDimmerPanel.DOFade(0f, 0.5f).SetUpdate(false).WaitForCompletion();
+        subEventDimmerPanel.color = new Color(0f, 0f, 0f, 0f);
+        subEventDimmerPanel.raycastTarget = false;
+        subEventExitFaded = false;
+    }
+
+    // 파라미터 이벤트 초상 스프라이트 결정: 기본은 Resources/Portraits/<IMGName> 우선, 호환 경로 및 정규화 처리
+    private Sprite ResolveParameterPortraitSprite(string imgName)
+    {
+        if (string.IsNullOrWhiteSpace(imgName)) return null;
+
+        // 정규화: 트림, 경로 분리, 확장자 제거
+        string cleaned = imgName.Trim();
+        string normalized = cleaned.Replace('\\', '/');
+        int lastSlash = normalized.LastIndexOf('/');
+        string lastSegment = lastSlash >= 0 ? normalized.Substring(lastSlash + 1) : normalized;
+        string baseName = Path.GetFileNameWithoutExtension(lastSegment);
+
+        // 1) 현재 배치 경로: Portraits/
+        var s = Resources.Load<Sprite>("Portraits/" + baseName);
+        if (s != null) return s;
+
+        // 2) 구 규칙 호환: Portrait/
+        s = Resources.Load<Sprite>("Portrait/" + baseName);
+        if (s != null) return s;
+
+        // 3) 원문 경로 무확장 시도
+        string rawNoExt = normalized;
+        int dot = rawNoExt.LastIndexOf('.');
+        if (dot > 0) rawNoExt = rawNoExt.Substring(0, dot);
+        s = Resources.Load<Sprite>(rawNoExt);
+        if (s != null) return s;
+
+        Debug.LogWarning($"[UIFlowSimulator] 파라미터 초상 로드 실패: '{imgName}' (시도: Portraits/{baseName}, Portrait/{baseName}, {rawNoExt})");
+        return null;
+    }
+
+    // 서브이벤트 초상 스프라이트 결정: CharacterImg_ID의 IMGName → Resources/Portraits/<IMGName>
+    private Sprite ResolvePortraitSprite(FullSubEventData data)
+    {
+        string imgName = data?.characterImgData?.IMGName;
+        if (!string.IsNullOrEmpty(imgName))
+        {
+            var s = Resources.Load<Sprite>($"Portraits/{imgName}");
+            if (s != null) return s;
+
+            // 예전 규칙(단수 폴더) 호환
+            s = Resources.Load<Sprite>($"Portrait/{imgName}");
+            if (s != null) return s;
+
+            // 원문 경로가 이미 포함된 경우 대비
+            s = Resources.Load<Sprite>(imgName);
+            if (s != null) return s;
+        }
+        return null;
     }
 
     private void DisplayEventUI(Sprite characterSprite, string characterName, string dialogue, string leftChoice, string rightChoice)
@@ -310,7 +429,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     private IEnumerator TransitionToNextEvent(string resultText)
     {
         situationCardController.UpdateText(resultText);
-        yield return new WaitForSeconds(1.5f);
+        yield return new WaitForSeconds(1.0f);
         
         // 대기 중에도 취소 플래그 체크
         if (cancelTransitions)
@@ -350,34 +469,19 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 
     private IEnumerator TransitionToNextSubEvent(string resultText, bool isRightChoice)
     {
-        // 파라미터 이벤트와 동일한 타이밍으로 결과 텍스트 표시
-        situationCardController.UpdateText(resultText);
-        yield return new WaitForSeconds(1.5f);
-        
-        // 대기 중에도 취소 플래그 체크
+        // 서브이벤트는 결과 텍스트 표시 및 대기 없이 즉시 다음으로 진행
         if (cancelTransitions)
         {
-            Debug.Log("UIFlowSimulator: 서브이벤트 전환이 취소되었습니다.");
             yield break;
         }
 
-        // 게임 오버 상태인지 확인
         if (IsGameOver())
         {
-            Debug.Log("UIFlowSimulator: 게임 오버 상태이므로 서브이벤트를 진행하지 않습니다.");
             yield break;
         }
 
-        // 취소 플래그 재확인
-        if (cancelTransitions)
-        {
-            Debug.Log("UIFlowSimulator: 서브이벤트 전환이 취소되었습니다.");
-            yield break;
-        }
-
-        Debug.Log("UIFlowSimulator: 서브이벤트 선택을 EventManager에 전달합니다.");
-        // EventManager에서 다음 서브이벤트 처리 (UI 숨기기는 EventManager에서 관리)
-        EventManager.Instance.OnSubEventChoiceSelected(isRightChoice);
+        EventManager.Instance.OnSubEventChoiceSelected(!isRightChoice);
+        yield break;
     }
 
     private bool IsGameOver()
