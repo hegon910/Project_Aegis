@@ -159,22 +159,6 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
             return;
         }
 
-        // 엔딩 분기점 확인
-        const int TRUE_ENDING_2ND_PLAYTHROUGH = 10000037;
-        const int TRUE_ENDING_3RD_PLAYTHROUGH = 10000065;
-        const int HIDDEN_ENDING_3RD_PLAYTHROUGH = 10000066;
-
-        switch (currentNode.StoryNum)
-        {
-            case TRUE_ENDING_2ND_PLAYTHROUGH:
-            case TRUE_ENDING_3RD_PLAYTHROUGH:
-            case HIDDEN_ENDING_3RD_PLAYTHROUGH:
-                Debug.Log($"[MainScenarioManager] 엔딩 노드에 도달했습니다. StoryNum: {currentNode.StoryNum}");
-                DataManager.Instance.RecordEnding(currentNode.StoryNum);
-                GameManager.instance.ChangeState(GameState.PlayingEndingCutscene);
-                return; // 엔딩 상태로 전환되었으므로 더 이상 노드를 표시하지 않음
-        }
-
         mainStoryUI.characterNameText.text = currentNode.characterData?.Chr_Name ?? "";
 
         // [변경] 초상 스프라이트 결정 로직 통합

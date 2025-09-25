@@ -1440,6 +1440,16 @@ public class DataManager : MonoBehaviour
         };
     }
 
+    public AnswerData GetAnswerData(int answerId)
+    {
+        if (answerDataDict.TryGetValue(answerId, out var data))
+        {
+            return data;
+        }
+        Debug.LogWarning($"[DataManager] AnswerID {answerId}에 해당하는 AnswerData를 찾을 수 없습니다.");
+        return null;
+    }
+
     // PlayerPrefs를 사용하여 회차 기록을 관리하는 클래스
     public class PlaythroughHistory
     {
