@@ -137,3 +137,4 @@ public class AchievementUIHelper : MonoBehaviour
         OpenAchievementUI(AchievementType.Collection);
     }
 }
+

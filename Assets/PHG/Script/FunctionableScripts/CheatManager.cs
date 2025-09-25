@@ -6,9 +6,11 @@ public class CheatManager : MonoBehaviour
     public static CheatManager Instance { get; private set; }
     [Header("치트 활성화")]
     [SerializeField] private bool enableCheats = true;
-    // [Header("설정")]
-    // [Tooltip("이 스크립트는 에디터와 개발 빌드에서만 동작합니다.")]
-    // public bool enableCheats = true;
+    
+    [Header("Multi Ending System 테스터")]
+    [SerializeField] private Canvas multiEndingTestCanvas;
+    [SerializeField] private MultiEndingSystemTester multiEndingTester;
+    private bool isMultiEndingTestActive = false;
 
     private void Awake()
     {
@@ -21,7 +23,34 @@ public class CheatManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+    }
 
+    private void Start()
+    {
+        // Multi Ending System 테스터 초기화
+        InitializeMultiEndingTester();
+    }
+
+    private void InitializeMultiEndingTester()
+    {
+        // MultiEndingSystemTester가 없으면 찾아서 할당
+        if (multiEndingTester == null)
+        {
+            multiEndingTester = FindObjectOfType<MultiEndingSystemTester>();
+        }
+        
+        // 캔버스가 없으면 MultiEndingSystemTester의 부모 캔버스를 찾아서 할당
+        if (multiEndingTestCanvas == null && multiEndingTester != null)
+        {
+            multiEndingTestCanvas = multiEndingTester.GetComponentInParent<Canvas>();
+        }
+        
+        // 초기에는 비활성화
+        if (multiEndingTestCanvas != null)
+        {
+            multiEndingTestCanvas.gameObject.SetActive(false);
+            isMultiEndingTestActive = false;
+        }
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -31,6 +60,12 @@ public class CheatManager : MonoBehaviour
         if (GamePlayerStats.Instance == null)
         {
             return;
+        }
+
+        // --- Multi Ending System 테스터 토글 (0번 키) ---
+        if (Input.GetKeyDown(KeyCode.Alpha0))
+        {
+            ToggleMultiEndingTester();
         }
 
         // --- 개별 파라미터 설정 (숫자 1~4) ---
@@ -108,6 +143,37 @@ public class CheatManager : MonoBehaviour
             SkipCurrentState();
         }
     }
+
+    /// <summary>
+    /// Multi Ending System 테스터를 토글합니다.
+    /// </summary>
+    private void ToggleMultiEndingTester()
+    {
+        // MultiEndingSystemTester가 없으면 다시 찾아보기
+        if (multiEndingTester == null)
+        {
+            multiEndingTester = FindObjectOfType<MultiEndingSystemTester>();
+        }
+        
+        // 캔버스가 없으면 MultiEndingSystemTester의 부모 캔버스를 찾아서 할당
+        if (multiEndingTestCanvas == null && multiEndingTester != null)
+        {
+            multiEndingTestCanvas = multiEndingTester.GetComponentInParent<Canvas>();
+        }
+        
+        if (multiEndingTestCanvas == null)
+        {
+            Debug.LogWarning("[CHEAT] Multi Ending System 테스터 캔버스를 찾을 수 없습니다.");
+            return;
+        }
+        
+        // 토글
+        isMultiEndingTestActive = !isMultiEndingTestActive;
+        multiEndingTestCanvas.gameObject.SetActive(isMultiEndingTestActive);
+        
+        Debug.Log($"[CHEAT] Multi Ending System 테스터 {(isMultiEndingTestActive ? "활성화" : "비활성화")}");
+    }
+
     public void SkipCurrentState()
     {
         if (GameManager.instance != null)

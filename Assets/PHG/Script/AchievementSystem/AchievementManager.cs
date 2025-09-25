@@ -141,12 +141,10 @@ public class AchievementManager : MonoBehaviour
     }
     
     /// <summary>
-    /// 엔딩 완료 시 업적 체크
+    /// 엔딩 완료 시 업적 체크 (수정된 메서드)
     /// </summary>
-    public void CheckEndingAchievements(EndingData endingData)
+    public void CheckEndingAchievements(EndingType endingType, EndingRoute endingRoute, int endingBranch, int playthrough)
     {
-        if (endingData == null) return;
-        
         foreach (var achievement in achievementDict.Values)
         {
             if (achievement.isCompleted) continue;
@@ -158,19 +156,25 @@ public class AchievementManager : MonoBehaviour
                 // 엔딩 타입 체크
                 if (achievement.condition.requiredEndingType != EndingType.General)
                 {
-                    isMatch &= endingData.endingType == achievement.condition.requiredEndingType;
+                    isMatch &= endingType == achievement.condition.requiredEndingType;
                 }
                 
                 // 엔딩 루트 체크
                 if (achievement.condition.requiredEndingRoute != EndingRoute.Victory)
                 {
-                    isMatch &= endingData.route == achievement.condition.requiredEndingRoute;
+                    isMatch &= endingRoute == achievement.condition.requiredEndingRoute;
                 }
                 
                 // 엔딩 분기 체크
                 if (achievement.condition.requiredEndingBranch > 0)
                 {
-                    isMatch &= endingData.branch == achievement.condition.requiredEndingBranch;
+                    isMatch &= endingBranch == achievement.condition.requiredEndingBranch;
+                }
+                
+                // 회차 체크 (필요한 경우)
+                if (achievement.condition.requiredPlaythroughCount > 0)
+                {
+                    isMatch &= playthrough == achievement.condition.requiredPlaythroughCount;
                 }
                 
                 if (isMatch)

@@ -71,12 +71,12 @@ public class CutsceneManager : MonoBehaviour
             clickIndicator.SetActive(isStepActive && !isVideoPlaying);
         }
 
-        // <<<<<<< [복원] '스킵'과 '다음'을 구분하는 로직
+        // 엔딩 연출용 클릭 로직
         if (isStepActive && !isVideoPlaying && Input.GetMouseButtonDown(0))
         {
             if (isSkippable)
             {
-                // 연출 진행 중일 때 클릭 -> 연출 스킵
+                // 연출 진행 중일 때 클릭 -> 현재 페이지 연출 즉시 완료
                 SkipCurrentStepEffects();
             }
             else
@@ -120,12 +120,12 @@ public class CutsceneManager : MonoBehaviour
         stepProcessCoroutine = StartCoroutine(ProcessStep(currentCutscene.steps[currentStepIndex]));
     }
 
-    // <<<<<<< [복원] 연출 스킵을 위한 메서드
+    // 엔딩 연출용: 현재 페이지 연출 즉시 완료
     private void SkipCurrentStepEffects()
     {
         StopAllRunningCoroutines();
         ApplyFinalState(currentCutscene.steps[currentStepIndex]);
-        isSkippable = false; // 스킵 후에는 '다음' 상태가 되어야 하므로 false로 변경
+        isSkippable = false; // 연출 완료 후 '다음' 상태로 변경
     }
 
     // <<<<<<< [복원] 스킵 시 최종 상태를 즉시 적용하는 메서드
@@ -162,7 +162,7 @@ public class CutsceneManager : MonoBehaviour
     private IEnumerator ProcessStep(CutsceneStep step)
     {
         isStepActive = true;
-        isSkippable = true; // 연출 시작, '스킵'이 가능한 상태
+        isSkippable = true; // 연출 시작, 클릭으로 현재 페이지 연출 완료 가능
 
         runningEffectCoroutines.Clear();
 
@@ -190,19 +190,20 @@ public class CutsceneManager : MonoBehaviour
             yield return coroutine;
         }
 
-        // <<<<<<< [핵심 수정]
-        // 모든 연출이 끝났으므로, 이제부터의 클릭은 '다음'으로 넘기는 역할을 해야 함.
-        // 따라서 waitTime 이전에 isSkippable 상태를 false로 변경.
+        // 연출이 끝났으므로 클릭 대기 상태로 변경
         isSkippable = false;
 
-        if (step.waitTime > 0)
+        // 엔딩 연출에서는 자동으로 다음으로 넘어가지 않고 클릭을 기다림
+        // 마지막 스텝이 아닌 경우에만 클릭 대기
+        if (currentStepIndex < currentCutscene.steps.Count - 1)
         {
-            // 이 waitTime 동안 클릭하면 isSkippable가 false이므로 PlayNextStep()이 호출됨
-            yield return new WaitForSeconds(step.waitTime);
+            // 다음 스텝이 있으면 클릭 대기
+            yield return null; // 한 프레임 대기 후 클릭 대기 상태로 전환
         }
-
-        if (!step.waitForClick)
+        else
         {
+            // 마지막 스텝이면 자동으로 종료
+            yield return new WaitForSeconds(1.0f); // 잠깐 대기 후 자동 종료
             PlayNextStep();
         }
     }
