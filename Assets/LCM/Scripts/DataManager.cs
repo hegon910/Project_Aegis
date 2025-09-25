@@ -668,8 +668,20 @@ public class DataManager : MonoBehaviour
 
     public async UniTask InitializeDataAsync()
     {
-        await AllEventInitializeDataAsync();
-        await ParameterEventInitializeDataAsync();
+        try
+        {
+            await AllEventInitializeDataAsync();
+            await ParameterEventInitializeDataAsync();
+            
+            // 모든 초기화가 완료된 후에만 _isReady를 설정
+            _isReady.TrySetResult(true);
+            Debug.Log("[DataManager] 모든 데이터 초기화가 완료되었습니다.");
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"[DataManager] 데이터 초기화 실패: {ex.Message}");
+            _isReady.TrySetException(ex);
+        }
     }
 
     public async UniTask AllEventInitializeDataAsync()
@@ -833,13 +845,12 @@ public class DataManager : MonoBehaviour
             }
             Debug.Log($"[DataManager] {FullendingDataDict.Count}개의 최종 엔딩 데이터를 가공하여 준비했습니다.");
 
-            _isReady.TrySetResult(true);
             Debug.Log("모든 이벤트 데이터가 성공적으로 로드되었습니다.");
         }
         catch (System.Exception ex)
         {
             Debug.LogError($"데이터 로드 실패: {ex.Message}");
-            _isReady.TrySetException(ex);
+            throw; // 상위 메서드에서 예외 처리하도록 전파
         }
     }
 
@@ -880,13 +891,12 @@ public class DataManager : MonoBehaviour
             eventDict = choTextList.GroupBy(c => c.Parameter_Num)
                                        .ToDictionary(g => g.Key, g => g.First().Parameter_type);
 
-            _isReady.TrySetResult(true);
             Debug.Log("모든 이벤트 데이터가 성공적으로 로드되었습니다.");
         }
         catch (System.Exception ex)
         {
             Debug.LogError($"데이터 로드 실패: {ex.Message}");
-            _isReady.TrySetException(ex);
+            throw; // 상위 메서드에서 예외 처리하도록 전파
         }
     }
 

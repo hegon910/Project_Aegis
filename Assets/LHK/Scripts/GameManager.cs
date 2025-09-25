@@ -110,6 +110,7 @@ public class GameManager : MonoBehaviour
     [Header("Guest Login Popup System")]
     [SerializeField] private PopupController popupController;
 
+
     private void Awake()
     {
         if (instance == null)
@@ -454,7 +455,11 @@ public class GameManager : MonoBehaviour
                     if (warTutorialPanel != null) warTutorialPanel.SetActive(true);
                 }
                 battleTurnManager.ResetForNewBattle();
-                battleTurnManager.OnBattleEnd += HandleBattleEnd;
+                // 전투 종료 시 결과 화면으로 진입하도록 이벤트 구독 복구
+                if (battleTurnManager != null)
+                {
+                    battleTurnManager.OnBattleEnd += HandleBattleEnd;
+                }
                 Debug.Log("2단계 OK: GameManager가 OnBattleEnd 신호를 구독했습니다.");
                 break;
             // InBattleResult 상태에 대한 로직 추가 (현재는 UI 표시 외에 특별한 동작 없음)
@@ -505,6 +510,14 @@ public class GameManager : MonoBehaviour
                     {
                         DataManager.Instance.PlayerData.completedEndings.Add(endingKey);
                         DataManager.Instance.SaveLocal();
+                    }
+                    
+                    // 업적 체크 - AchievementIntegration 직접 호출
+                    var achievementIntegration = FindObjectOfType<AchievementIntegration>();
+                    if (achievementIntegration != null)
+                    {
+                        achievementIntegration.OnLoopCompleted(DataManager.Instance.PlayerData.playthroughCount);
+                        Debug.Log($"[GameManager] 엔딩 완료 업적 체크: {endingData.endingType} - {endingData.route} - {endingData.branch}");
                     }
                 }
                 break;
@@ -635,12 +648,16 @@ public class GameManager : MonoBehaviour
                 break;
 
             case GameState.InBattle:
-                battleTurnManager.OnBattleEnd += HandleBattleEnd;
                 // 전투 시작 전 상태 초기화
                 if (battleTurnManager != null)
                 {
                     battleTurnManager.ResetForNewBattle();
                     Debug.Log("[GameManager] 전투 상태 초기화 완료");
+                }
+                // 복원 시에도 전투 종료 이벤트 구독 보장
+                if (battleTurnManager != null)
+                {
+                    battleTurnManager.OnBattleEnd += HandleBattleEnd;
                 }
                 break;
         }
@@ -666,6 +683,11 @@ public class GameManager : MonoBehaviour
             DataManager.Instance.StartNewGame();
             DataManager.Instance.LoadSettings(); // 삭제 후 새로 로드
             ResetAllGameData();
+            // 업적도 함께 초기화
+            if (AchievementManager.Instance != null)
+            {
+                AchievementManager.Instance.ResetAllAchievements();
+            }
             UnlockManager.ResetAllUnlocks();
             // [추가] 저장 데이터 초기화 직후 이어하기 버튼 즉시 숨김
             if (continueButton != null) continueButton.gameObject.SetActive(false);
@@ -690,6 +712,11 @@ public class GameManager : MonoBehaviour
 
             // 3. EventManager 등 다른 게임 시스템들의 상태 초기화
             ResetAllGameData();
+            // 업적도 함께 초기화
+            if (AchievementManager.Instance != null)
+            {
+                AchievementManager.Instance.ResetAllAchievements();
+            }
             UnlockManager.ResetAllUnlocks();
 
             // 4. 메인 메뉴로 돌아가 UI를 갱신합니다.
@@ -848,6 +875,11 @@ public class GameManager : MonoBehaviour
         var selectedPacksForNewGame = spm != null ? spm.GetSelectedPackIDs() : (DataManager.Instance.PlayerSettings != null ? DataManager.Instance.PlayerSettings.selectedSubEventPackIDs : null);
         Debug.Log($"[GameManager] 새게임 직전 선택 팩: {(selectedPacksForNewGame != null ? string.Join(", ", selectedPacksForNewGame) : "null")}, 개수: {selectedPacksForNewGame?.Count ?? -1}");
         await EventManager.Instance.StartNewGame(selectedPacksForNewGame);
+		// 업적: 새게임 시작 직후 회차 업적 즉시 체크
+		if (AchievementManager.Instance != null && DataManager.Instance?.PlayerData != null)
+		{
+			AchievementManager.Instance.CheckPlaythroughAchievements(DataManager.Instance.PlayerData.playthroughCount);
+		}
         OnStateFinished();
     }
     private void StartDetailedResultSequence() { int warSituation = GamePlayerStats.Instance.GetStat(ParameterType.전황); GameOutcome outcome = (warSituation <= 19) ? GameOutcome.Defeat : (warSituation >= 81) ? GameOutcome.Victory : GameOutcome.Draw; int chapterIndex = CurrentChapter - 1; if (chapterIndex < chapterEndDataList.Count && chapterEndDataList[chapterIndex] != null) { chapterEndController.StartChapterEndSequence(chapterEndDataList[chapterIndex], outcome); } else { OnStateFinished(); } }
@@ -1172,6 +1204,7 @@ public class GameManager : MonoBehaviour
     {
         return achievementPanel != null && achievementPanel.activeSelf;
     }
+    
     
     #endregion
 }

@@ -71,7 +71,7 @@ public class CutsceneManager : MonoBehaviour
             clickIndicator.SetActive(isStepActive && !isVideoPlaying);
         }
 
-        // 엔딩 연출용 클릭 로직
+        // 엔딩 연출용 클릭 로직 (단순화)
         if (isStepActive && !isVideoPlaying && Input.GetMouseButtonDown(0))
         {
             if (isSkippable)
@@ -126,6 +126,16 @@ public class CutsceneManager : MonoBehaviour
         StopAllRunningCoroutines();
         ApplyFinalState(currentCutscene.steps[currentStepIndex]);
         isSkippable = false; // 연출 완료 후 '다음' 상태로 변경
+        
+        // 연출 완료 후 자동으로 다음 스텝으로 진행
+        StartCoroutine(AutoAdvanceToNextStep());
+    }
+    
+    // 연출 완료 후 자동으로 다음 스텝으로 진행
+    private IEnumerator AutoAdvanceToNextStep()
+    {
+        yield return new WaitForSeconds(0.1f); // 짧은 대기 후 자동 진행
+        PlayNextStep();
     }
 
     // <<<<<<< [복원] 스킵 시 최종 상태를 즉시 적용하는 메서드
@@ -190,23 +200,9 @@ public class CutsceneManager : MonoBehaviour
             yield return coroutine;
         }
 
-        // 연출이 끝났으므로 클릭 대기 상태로 변경
-        isSkippable = false;
-
-        // 모든 스텝에서 클릭 대기를 하도록 수정 (스킵 기능 개선)
-        // 마지막 스텝이 아닌 경우 즉시 클릭 대기, 마지막 스텝도 클릭 대기
-        if (currentStepIndex < currentCutscene.steps.Count - 1)
-        {
-            // 다음 스텝이 있으면 즉시 클릭 대기 (대기 시간 없음)
-            isSkippable = true; // 클릭으로 스킵 가능
-            yield return null; // 한 프레임 대기 후 클릭 대기 상태로 전환
-        }
-        else
-        {
-            // 마지막 스텝도 클릭 대기 (자동 진행 없음)
-            isSkippable = true; // 클릭으로 스킵 가능
-            yield return null; // 한 프레임 대기 후 클릭 대기 상태로 전환
-        }
+        // 연출 완료 후 클릭 대기 상태로 변경 (단순화)
+        isSkippable = false; // 연출 완료 상태
+        yield return null; // 한 프레임 대기 후 클릭 대기 상태로 전환
     }
 
     private void FinishCutscene()

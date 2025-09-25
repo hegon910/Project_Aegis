@@ -245,6 +245,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             tutorialPanel.SetActive(false);
         }
 
+
         if (currentParameterEventData != null)
         {
             // 널 가드
@@ -429,15 +430,17 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     /// <param name="endingId">기록할 엔딩 ID</param>
     public void SimulateEnding(int endingId)
     {
-        var endingData = DataManager.Instance.GetEndingData(endingId);
-        if (endingData != null)
+        if (DataManager.Instance?.FullendingDataDict != null && 
+            DataManager.Instance.FullendingDataDict.TryGetValue(endingId, out var endingData))
         {
             Debug.Log($"엔딩 시뮬레이션: {endingData.Text_Kr}");
-            //DataManager.Instance.RecordEnding(endingId);
+            Debug.Log($"  - BG_ID: {endingData.bgData?.BG_ID ?? -1}");
+            Debug.Log($"  - CutScene_ID: {endingData.cutSceneData?.EndingCutScene_ID ?? -1}");
+            Debug.Log($"  - SFX_ID: {endingData.sfxData?.SFX_ID ?? -1}");
         }
         else
         {
-            Debug.LogError($"[UIFlowSimulator] ID {endingId}에 해당하는 엔딩 데이터를 찾을 수 없습니다.");
+            Debug.LogError($"[UIFlowSimulator] ID {endingId}에 해당하는 엔딩 데이터를 FullendingDataDict에서 찾을 수 없습니다.");
         }
     }
 }

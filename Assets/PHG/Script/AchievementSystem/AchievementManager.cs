@@ -21,6 +21,9 @@ public class AchievementManager : MonoBehaviour
     private Dictionary<string, AchievementData> achievementDict = new Dictionary<string, AchievementData>();
     private List<string> completedAchievementIds = new List<string>();
     private List<string> claimedRewardIds = new List<string>();
+
+	// 알림 누락 방지를 위한 해금 대기열 (구독자 준비 전 해금된 업적 보관)
+	private readonly Queue<AchievementData> pendingUnlockedQueue = new Queue<AchievementData>();
     
     // 이벤트
     public static event Action<AchievementData> OnAchievementUnlocked;
@@ -34,16 +37,81 @@ public class AchievementManager : MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject);
             InitializeAchievements();
+
+			// 업적 알림 매니저가 씬에 없다면 자동 생성하여 구독/표시 누락을 방지
+			EnsureNotificationManagerExists();
         }
         else
         {
             Destroy(gameObject);
         }
     }
+
+	/// <summary>
+	/// 업적 알림 매니저 자동 보장 (씬에 없으면 생성)
+	/// </summary>
+	private void EnsureNotificationManagerExists()
+	{
+		if (AchievementNotificationManager.Instance == null)
+		{
+			var go = new GameObject("AchievementNotificationManager_AutoSpawn");
+			go.AddComponent<AchievementNotificationManager>();
+			DontDestroyOnLoad(go);
+			Debug.Log("[AchievementManager] AchievementNotificationManager가 없어 자동 생성했습니다.");
+		}
+	}
     
     private void Start()
     {
         LoadAchievementProgress();
+    }
+
+	/// <summary>
+	/// 구독자 등록 시점 이전에 해금된 업적 알림을 회수하여 전달하기 위한 API
+	/// </summary>
+	public List<AchievementData> DequeueAllPendingUnlocked()
+	{
+        var list = new List<AchievementData>(pendingUnlockedQueue);
+		pendingUnlockedQueue.Clear();
+        if (enableDebugLogs)
+        {
+            Debug.Log($"[AchievementManager] 대기열 비우기: {list.Count}개 전달");
+        }
+		return list;
+	}
+
+    /// <summary>
+    /// 모든 업적 상태를 초기 상태로 리셋하고 저장합니다.
+    /// </summary>
+    public void ResetAllAchievements()
+    {
+        // 내부 상태 초기화
+        foreach (var kvp in achievementDict)
+        {
+            var ach = kvp.Value;
+            ach.isUnlocked = false;
+            ach.isCompleted = false;
+            ach.isRewardClaimed = false;
+            ach.unlockedDate = default;
+            ach.completedDate = default;
+        }
+
+        completedAchievementIds.Clear();
+        claimedRewardIds.Clear();
+
+        // 플레이어 데이터도 초기화
+        if (DataManager.Instance?.PlayerData != null)
+        {
+            DataManager.Instance.PlayerData.unlockedAchievements = new List<string>();
+        }
+
+        if (enableDebugLogs)
+        {
+            Debug.Log("[AchievementManager] 모든 업적이 초기화되었습니다.");
+        }
+
+        // 저장
+        SaveAchievementProgress();
     }
     
     /// <summary>
@@ -216,22 +284,12 @@ public class AchievementManager : MonoBehaviour
             if (achievement.condition.conditionType == ConditionType.BattleResult)
             {
                 bool isMatch = achievement.condition.requiredBattleOutcome == battleOutcome;
-                
-                // 첫 전투 조건 체크
-                if (isFirstBattle && achievement.achievementId.Contains("FirstBattle"))
-                {
-                    if (isMatch)
-                    {
-                        CompleteAchievement(achievement.achievementId);
-                    }
-                }
-                else if (!isFirstBattle && !achievement.achievementId.Contains("FirstBattle"))
-                {
-                    if (isMatch)
-                    {
-                        CompleteAchievement(achievement.achievementId);
-                    }
-                }
+
+				// 문자열 기반의 'FirstBattle' 이름 의존을 제거하고 결과 일치만으로 해금
+				if (isMatch)
+				{
+					CompleteAchievement(achievement.achievementId);
+				}
             }
         }
     }
@@ -323,6 +381,13 @@ public class AchievementManager : MonoBehaviour
             completedAchievementIds.Add(achievementId);
         }
         
+        // 이벤트 구독자 준비 전 누락 방지를 위해 대기열에 적재
+        pendingUnlockedQueue.Enqueue(achievement);
+        if (enableDebugLogs)
+        {
+            Debug.Log($"[AchievementManager] 해금 대기열 적재: {achievement.achievementId} (대기열={pendingUnlockedQueue.Count})");
+        }
+
         // 이벤트 발생
         OnAchievementUnlocked?.Invoke(achievement);
         OnAchievementCompleted?.Invoke(achievement);

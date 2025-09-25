@@ -117,6 +117,14 @@ public class MultiEndingSystemTester : MonoBehaviour
             Debug.Log($"  - 분기: {endingData.branch}");
             Debug.Log($"  - 제목: {endingData.title}");
             Debug.Log($"  - 설명: {endingData.description}");
+            
+            // FullEndingData 확인
+            if (endingData.fullEndingData != null)
+            {
+                Debug.Log($"  - 텍스트: {endingData.fullEndingData.Text_Kr}");
+                Debug.Log($"  - BG_ID: {endingData.fullEndingData.bgData?.BG_ID ?? -1}");
+                Debug.Log($"  - CutScene_ID: {endingData.fullEndingData.cutSceneData?.EndingCutScene_ID ?? -1}");
+            }
         }
         
         // CutsceneData 생성 테스트

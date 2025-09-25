@@ -342,19 +342,24 @@ public class MultiEndingSystem : MonoBehaviour
     }
 
     /// <summary>
-    /// 엔딩 루트 결정 (승리/무승부/패배)
+    /// 엔딩 루트 결정 (승리/무승부/패배) - 스프레드시트 기준
     /// </summary>
     public EndingRoute DetermineEndingRoute()
     {
         var totalScore = CalculateCurrentPlaythroughKarma();
         
-        if (totalScore >= 2) return EndingRoute.Victory;
-        if (totalScore <= -2) return EndingRoute.Defeat;
-        return EndingRoute.Truce;
+        // 스프레드시트 기준: 승리(1001), 무승부(1002), 패배는 명시되지 않음
+        // 전세 수치에 따른 루트 결정
+        var currentKarma = CalculateCurrentKarma();
+        
+        // 전세 수치가 81 이상이면 승리, 20-80이면 무승부, 19 이하면 패배로 간주
+        if (currentKarma >= 81) return EndingRoute.Victory;
+        if (currentKarma >= 20) return EndingRoute.Truce;
+        return EndingRoute.Defeat;
     }
 
     /// <summary>
-    /// 엔딩 분기 결정 (카르마 범위에 따라)
+    /// 엔딩 분기 결정 (카르마 범위에 따라) - 스프레드시트 기준
     /// </summary>
     public int DetermineEndingBranch(EndingRoute route)
     {
@@ -365,32 +370,31 @@ public class MultiEndingSystem : MonoBehaviour
             EndingRoute.Victory => GetVictoryBranch(currentKarma),
             EndingRoute.Defeat => GetDefeatBranch(currentKarma),
             EndingRoute.Truce => GetTruceBranch(currentKarma),
-            _ => 1
+            _ => 2001 // 기본값
         };
     }
 
     private int GetVictoryBranch(int karma)
     {
-        if (karma >= 81 && karma <= 100) return 1;
-        if (karma >= 20 && karma <= 80) return 2;
-        if (karma >= 0 && karma <= 19) return 3;
-        return 2; // 기본값
+        // 승리 루트 분기: 2001(81이상), 2002(20-80), 2003(19이하)
+        if (karma >= 81) return 2001;
+        if (karma >= 20) return 2002;
+        return 2003;
     }
 
     private int GetDefeatBranch(int karma)
     {
-        // 패배 루트 분기 로직
-        if (karma >= 0 && karma <= 19) return 1;
-        if (karma >= 20 && karma <= 80) return 2;
-        return 3; // 기본값
+        // 패배 루트 분기 (스프레드시트에 명시되지 않음)
+        if (karma >= 0 && karma <= 19) return 2001;
+        if (karma >= 20 && karma <= 80) return 2002;
+        return 2003; // 기본값
     }
 
     private int GetTruceBranch(int karma)
     {
-        // 무승부 루트 분기 로직
-        if (karma >= 50 && karma <= 100) return 1;
-        if (karma >= 0 && karma <= 49) return 2;
-        return 1; // 기본값
+        // 무승부 루트 분기: 2001(50이상), 2002(0-49)
+        if (karma >= 50) return 2001;
+        return 2002;
     }
 
     /// <summary>
@@ -421,7 +425,13 @@ public class MultiEndingSystem : MonoBehaviour
         };
         
         // 카르마에 따른 분류 (스프레드시트 기준)
-        int karmaCategory = GetKarmaCategory(currentKarma);
+        int karmaCategory = endingRoute switch
+        {
+            EndingRoute.Victory => GetKarmaCategory(currentKarma),
+            EndingRoute.Truce => GetTruceKarmaCategory(currentKarma),
+            EndingRoute.Defeat => GetKarmaCategory(currentKarma), // 패배도 승리와 동일한 카테고리 사용
+            _ => 2001
+        };
         
         // 시퀀스의 첫 번째 ID 결정
         var key = (endingRoute, karmaCategory);
@@ -437,9 +447,20 @@ public class MultiEndingSystem : MonoBehaviour
     /// </summary>
     private int GetKarmaCategory(int karma)
     {
-        // 스프레드시트 기준: 50이상=2001, 0-49=2002
-        if (karma >= 50) return 2001; // 높은 카르마
-        return 2002; // 낮은 카르마
+        // 스프레드시트 기준: 81이상=2001, 20-80=2002, 19이하=2003
+        if (karma >= 81) return 2001; // 높은 카르마 (승리 루트)
+        if (karma >= 20) return 2002; // 중간 카르마 (승리 루트)
+        return 2003; // 낮은 카르마 (승리 루트)
+    }
+    
+    /// <summary>
+    /// 무승부 루트의 카르마 수치에 따른 카테고리 반환 (스프레드시트 기준)
+    /// </summary>
+    private int GetTruceKarmaCategory(int karma)
+    {
+        // 무승부 루트 기준: 50이상=2001, 0-49=2002
+        if (karma >= 50) return 2001; // 높은 카르마 (무승부 루트)
+        return 2002; // 낮은 카르마 (무승부 루트)
     }
 
     /// <summary>
@@ -471,26 +492,26 @@ public class MultiEndingSystem : MonoBehaviour
     }
 
     /// <summary>
-    /// 카르마 범위에 따른 분기 오프셋 반환
+    /// 카르마 범위에 따른 분기 오프셋 반환 (스프레드시트 기준)
     /// </summary>
     private int GetBranchOffset(EndingRoute endingRoute, int karma)
     {
         if (endingRoute == EndingRoute.Victory)
         {
-            if (karma >= 81 && karma <= 100) return 0;      // 높은 카르마
-            else if (karma >= 20 && karma <= 80) return 1;  // 중간 카르마
-            else return 2;                                   // 낮은 카르마
+            if (karma >= 81) return 2001;      // 높은 카르마
+            else if (karma >= 20) return 2002;  // 중간 카르마
+            else return 2003;                   // 낮은 카르마
         }
         else if (endingRoute == EndingRoute.Truce)
         {
-            if (karma >= 50 && karma <= 100) return 0;      // 높은 카르마
-            else return 1;                                   // 낮은 카르마
+            if (karma >= 50) return 2001;      // 높은 카르마
+            else return 2002;                   // 낮은 카르마
         }
         else // Defeat
         {
-            if (karma >= 0 && karma <= 19) return 0;        // 매우 낮은 카르마
-            else if (karma >= 20 && karma <= 80) return 1;  // 중간 카르마
-            else return 2;                                   // 높은 카르마 (패배 루트에서)
+            if (karma >= 0 && karma <= 19) return 2001;        // 매우 낮은 카르마
+            else if (karma >= 20 && karma <= 80) return 2002;  // 중간 카르마
+            else return 2003;                                   // 높은 카르마 (패배 루트에서)
         }
     }
 
@@ -505,12 +526,17 @@ public class MultiEndingSystem : MonoBehaviour
             return null;
         }
 
+        if (DataManager.Instance.FullendingDataDict == null)
+        {
+            Debug.LogError("[MultiEndingSystem] FullendingDataDict가 초기화되지 않았습니다.");
+            return null;
+        }
+
         int endingID = GetEndingEventID();
         Debug.Log($"[MultiEndingSystem] 결정된 엔딩 ID: {endingID}");
         
-        var fullEndingData = DataManager.Instance.GetEndingData(endingID);
-        
-        if (fullEndingData != null)
+        // FullendingDataDict에서 직접 가져오기
+        if (DataManager.Instance.FullendingDataDict.TryGetValue(endingID, out var fullEndingData))
         {
             Debug.Log($"[MultiEndingSystem] 엔딩 데이터 로드 성공:");
             Debug.Log($"  - ID: {fullEndingData.ID}");
@@ -521,7 +547,13 @@ public class MultiEndingSystem : MonoBehaviour
         }
         else
         {
-            Debug.LogError($"[MultiEndingSystem] 엔딩 ID {endingID}에 대한 데이터를 찾을 수 없습니다.");
+            Debug.LogError($"[MultiEndingSystem] 엔딩 ID {endingID}에 대한 데이터를 FullendingDataDict에서 찾을 수 없습니다.");
+            // 폴백: 기존 GetEndingData 메서드 사용
+            fullEndingData = DataManager.Instance.GetEndingData(endingID);
+            if (fullEndingData != null)
+            {
+                Debug.Log("[MultiEndingSystem] 폴백 메서드로 엔딩 데이터를 찾았습니다.");
+            }
         }
         
         return fullEndingData;
@@ -653,11 +685,17 @@ public class MultiEndingSystem : MonoBehaviour
     }
     
     /// <summary>
-    /// 연속된 엔딩 시퀀스를 로드합니다
+    /// 연속된 엔딩 시퀀스를 로드합니다 (스프레드시트 데이터 기반)
     /// </summary>
     private List<FullEndingData> LoadEndingSequence(int startingID)
     {
         var sequence = new List<FullEndingData>();
+        
+        if (DataManager.Instance?.FullendingDataDict == null)
+        {
+            Debug.LogError("[MultiEndingSystem] DataManager의 FullendingDataDict가 초기화되지 않았습니다.");
+            return sequence;
+        }
         
         // 스프레드시트에 따른 엔딩 시퀀스 매핑 (실제 데이터 기반)
         var endingSequences = new Dictionary<int, int[]>
@@ -689,18 +727,17 @@ public class MultiEndingSystem : MonoBehaviour
             sequenceIDs = new int[] { startingID };
         }
         
-        // 시퀀스의 각 ID에 대해 데이터 로드
+        // 시퀀스의 각 ID에 대해 데이터 로드 (FullendingDataDict 사용)
         foreach (int id in sequenceIDs)
         {
-            var endingData = DataManager.Instance?.GetEndingData(id);
-            if (endingData != null)
+            if (DataManager.Instance.FullendingDataDict.TryGetValue(id, out var endingData))
             {
                 sequence.Add(endingData);
                 Debug.Log($"[MultiEndingSystem] 시퀀스 ID {id} 로드: '{endingData.Text_Kr}'");
             }
             else
             {
-                Debug.LogWarning($"[MultiEndingSystem] ID {id}에 대한 엔딩 데이터를 찾을 수 없습니다.");
+                Debug.LogWarning($"[MultiEndingSystem] ID {id}에 대한 엔딩 데이터를 FullendingDataDict에서 찾을 수 없습니다.");
             }
         }
         
