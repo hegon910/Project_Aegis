@@ -406,7 +406,25 @@ public class DataManager : MonoBehaviour
         ProgressResetService.ResetProgressAndHistory(clearPlaythroughHistory, resetPlaythroughCount, resetStats, resetChapter);
     }
 
+    /// <summary>
+    /// [신규] 특정 엔딩을 플레이어 데이터에 기록합니다.
+    /// </summary>
+    public void RecordEnding(int endingId)
+    {
+        if (PlayerData == null) return;
 
+        // 직전 엔딩 기록
+        PlayerData.lastEndingId = endingId;
+
+        // 이미 본 엔딩 목록에 없으면 추가
+        if (!PlayerData.completedEndingIds.Contains(endingId))
+        {
+            PlayerData.completedEndingIds.Add(endingId);
+        }
+
+        Debug.Log($"[DataManager] 엔딩 기록됨: ID {endingId}, 직전 엔딩 ID: {PlayerData.lastEndingId}");
+        SaveLocal();
+    }
 
     /// <summary>
     /// 서버와 로컬데이터 동기화
@@ -1171,9 +1189,10 @@ public class DataManager : MonoBehaviour
                     break;
 
                 case 4: // 4: 특정 엔딩 경험
-                    if (global::PlaythroughHistory.Instance != null)
+
+                    if (PlayerData != null)
                     {
-                        isBranchTriggered = global::PlaythroughHistory.Instance.HasCompletedEnding(rawData.ChangeCondition);
+                        isBranchTriggered = PlayerData.completedEndingIds.Contains(rawData.ChangeCondition);
                     }
                     break;
 
