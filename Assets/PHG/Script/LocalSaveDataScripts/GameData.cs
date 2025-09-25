@@ -8,6 +8,7 @@ public class GameData
     // --- 게임 상태 ---
      public GameState currentGameState;
     public int playthroughCount;        // 현재 횣차 (PlayerStats)
+    public int lastEndingId;            // 직전 회차에서 본 엔딩 ID
     public CommanderTrait activeTrait;
     public int currentChapter;          // 현재 챕터 (GameManager)
     public int eventPlaylistIndex;      // 현재 챕터의 이벤트 진행도 (EventManager)
@@ -51,6 +52,7 @@ public class GameData
     {
         // PlayerStats.InitializeStats()의 초기값과 동일하게 설정
         playthroughCount = 1;
+        lastEndingId = 0;
         activeTrait = CommanderTrait.Devost;// [추가] 기본 지휘관 특성 초기화
         currentChapter = 1;
         eventPlaylistIndex = 0;

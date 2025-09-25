@@ -460,9 +460,18 @@ public class DataManager : MonoBehaviour
     /// </summary>
     public void RecordEnding(int endingId)
     {
-        if (PlayerData == null || PlayerData.completedEndingIds.Contains(endingId)) return;
-        PlayerData.completedEndingIds.Add(endingId);
-        Debug.Log($"[DataManager] 엔딩 기록됨: ID {endingId}");
+        if (PlayerData == null) return;
+
+        // 직전 엔딩 기록
+        PlayerData.lastEndingId = endingId;
+
+        // 이미 본 엔딩 목록에 없으면 추가
+        if (!PlayerData.completedEndingIds.Contains(endingId))
+        {
+            PlayerData.completedEndingIds.Add(endingId);
+        }
+
+        Debug.Log($"[DataManager] 엔딩 기록됨: ID {endingId}, 직전 엔딩 ID: {PlayerData.lastEndingId}");
         SaveLocal();
     }
 
