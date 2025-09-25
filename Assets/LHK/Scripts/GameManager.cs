@@ -284,9 +284,37 @@ public class GameManager : MonoBehaviour
                 }
                 break;
             case GameState.PlayingEndingCutscene:
-                DataManager.Instance.PlayerData.playthroughCount++;
+                // 엔딩 분기 규칙
+                const int TRUE_ENDING_ID_2ND = 10000037; // 2회차 진엔딩 StoryNum
+                const int HIDDEN_ENDING_ID_3RD = 10000066; // 3회차 히든엔딩 StoryNum
+
+                var playerData = DataManager.Instance.PlayerData;
+
+                // 2회차에서 진엔딩을 못 봤다면 2회차를 다시 시작
+                if (playerData.playthroughCount == 2 && playerData.lastEndingId != TRUE_ENDING_ID_2ND)
+                {
+                    Debug.Log($"[분기] 2회차, 진엔딩({TRUE_ENDING_ID_2ND})이 아니므로 2회차를 다시 시작합니다. lastEndingId: {playerData.lastEndingId}");
+                    // 회차를 증가시키지 않고 현재 챕터만 1로 리셋
+                    playerData.currentChapter = 1;
+                }
+                // 3회차 이상에서 히든엔딩을 봤다면 게임 완전 초기화
+                else if (playerData.playthroughCount >= 3 && playerData.lastEndingId == HIDDEN_ENDING_ID_3RD)
+                {
+                    Debug.Log($"[분기] 3회차 이상, 히든엔딩({HIDDEN_ENDING_ID_3RD})을 봤으므로 게임을 초기화합니다.");
+                    // 새 게임 데이터로 덮어쓰고, 지휘관 선택 화면으로 이동
+                    DataManager.Instance.StartNewGame(); 
+                    ResetAllGameData();
+                    nextState = GameState.CommanderSelection;
+                    break; // 아래의 공통 로직을 건너뛰고 바로 상태 변경
+                }
+                else
+                {
+                    // 일반적인 다음 회차 진행
+                    playerData.playthroughCount++;
+                    playerData.currentChapter = 1;
+                }
+
                 hasShownWarTutorialThisPlaythrough = false;
-                DataManager.Instance.PlayerData.currentChapter = 1;
                 EventManager.Instance.ResetEventManagerState();
                 nextState = GameState.MainMenu;
                 break;
@@ -391,7 +419,7 @@ public class GameManager : MonoBehaviour
         // 변경된 리스트 정보로 설정을 저장합니다.
         DataManager.Instance.SaveSettings();
     }
-    private void ChangeState(GameState newState)
+    public void ChangeState(GameState newState)
     {
           if (newState == currentGameState) return;
         UnsubscribeFromCurrentStateEvent();
