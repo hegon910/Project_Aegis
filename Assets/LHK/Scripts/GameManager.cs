@@ -139,8 +139,6 @@ public class GameManager : MonoBehaviour
     private async void Start()
     {
         await InitializeGameAndLoadData();
-        if (popupController == null)
-            popupController = FindObjectOfType<PopupController>();    
     }
 
     private async Task InitializeGameAndLoadData()
@@ -580,7 +578,7 @@ public class GameManager : MonoBehaviour
                     if (!DataManager.Instance.PlayerData.completedEndings.Contains(endingKey))
                     {
                         DataManager.Instance.PlayerData.completedEndings.Add(endingKey);
-                        DataManager.Instance.SaveLocal();
+                        DataManager.Instance.SaveData();
                     }
                 }
                 break;
@@ -603,7 +601,7 @@ public class GameManager : MonoBehaviour
             // 실제 플레이 가능한 상태에 진입했으므로 저장 억제를 해제합니다.
             DataManager.Instance.AllowSavesFromNow();
             DataManager.Instance.PlayerData.currentGameState = currentGameState;
-            DataManager.Instance.SaveLocal();
+            DataManager.Instance.SaveData();
         }
     }
     public void OnclickSkip()
@@ -814,7 +812,7 @@ public class GameManager : MonoBehaviour
             DataManager.Instance.PlayerData.currentGameState = GameState.InEventCycle;
             DataManager.Instance.PlayerData.pendingRestartFromGameOver = false;
             DataManager.Instance.PlayerData.pendingRestartChapter = 0;
-            DataManager.Instance.SaveLocal();
+            DataManager.Instance.SaveData();
 
             // 튜토리얼 억제 및 즉시 숨김
             suppressTutorialOnce = true;
@@ -876,7 +874,7 @@ public class GameManager : MonoBehaviour
                     var dataToSave = DataManager.Instance.PlayerData;
                     dataToSave.currentGameState = this.currentGameState;
 
-                    DataManager.Instance.SaveLocal();
+                    DataManager.Instance.SaveData();
                 }
             }
             ChangeState(GameState.MainMenu);
@@ -912,7 +910,7 @@ public class GameManager : MonoBehaviour
         // 즉시 저장하여 이후 초기화 루틴이 덮어쓰지 않도록 보존
         if (DataManager.Instance?.PlayerData != null)
         {
-            DataManager.Instance.SaveLocal();
+            DataManager.Instance.SaveData();
         }
         // 튜토리얼 플래그 및 UI 초기화 (데이터 리셋 후 오동작 방지)
         ResetTutorialFlagsAndUI();
@@ -955,7 +953,7 @@ public class GameManager : MonoBehaviour
 			DataManager.Instance.PlayerData.pendingRestartFromGameOver = true;
 			DataManager.Instance.PlayerData.pendingRestartChapter = CurrentChapter;
 			DataManager.Instance.AllowSavesFromNow();
-			DataManager.Instance.SaveLocal();
+			DataManager.Instance.SaveData();
 		}
     }
     // 지연 노출 코루틴 제거 (원상복구)
@@ -969,7 +967,7 @@ public class GameManager : MonoBehaviour
         {
             DataManager.Instance.PlayerData.pendingRestartFromGameOver = true;
             DataManager.Instance.PlayerData.pendingRestartChapter = CurrentChapter;
-            DataManager.Instance.SaveLocal();
+            DataManager.Instance.SaveData();
         }
         ResetAllGameData();
         ChangeState(GameState.MainMenu);
@@ -1027,7 +1025,7 @@ public class GameManager : MonoBehaviour
         pd.currentGameState = GameState.InEventCycle;
         pd.pendingRestartFromGameOver = false;
         pd.pendingRestartChapter = 0;
-        DataManager.Instance.SaveLocal();
+        DataManager.Instance.SaveData();
 
         // 4) 상태 전환 및 첫 턴 시작
         // 데이터가 모두 안전하게 초기화된 뒤에 가드를 해제
@@ -1152,7 +1150,7 @@ public class GameManager : MonoBehaviour
                 if (shouldSaveState)
                 {
                     DataManager.Instance.PlayerData.currentGameState = this.currentGameState;
-                    DataManager.Instance.SaveLocal();
+                    DataManager.Instance.SaveData();
                 }
 
                 // 설정은 언제나 저장합니다.
