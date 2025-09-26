@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 [RequireComponent(typeof(RectTransform))]
 public class WarGround : MonoBehaviour
@@ -12,7 +13,7 @@ public class WarGround : MonoBehaviour
     [SerializeField] private float sideMargin = 0.5f;
     public float SideMargin => sideMargin;
 
-    [Tooltip("각 칸의 너비")]
+    [Tooltip("각 칸의 너비 (자동 계산)")]
     [SerializeField] private float cellSize;
 
     private RectTransform rectTransform;
@@ -20,17 +21,28 @@ public class WarGround : MonoBehaviour
     public int LaneLength => laneLength;
     public float CellSize => cellSize;
 
+    public event Action onGridUpdated;
+
     void Awake()
     {
         rectTransform = GetComponent<RectTransform>();
     }
 
-    void Start()
+    void OnEnable()
     {
-        CalculateCellSize();
+        CalculateAndNotify();
     }
 
-    public void CalculateCellSize()
+    void OnRectTransformDimensionsChange()
+    {
+        if (rectTransform == null)
+        {
+            rectTransform = GetComponent<RectTransform>();
+        }
+        CalculateAndNotify();
+    }
+
+    public void CalculateAndNotify()
     {
         if (rectTransform != null && laneLength > 0)
         {
@@ -40,6 +52,7 @@ public class WarGround : MonoBehaviour
                 cellSize = rectTransform.rect.width / totalDivisions;
             }
         }
+        onGridUpdated?.Invoke();
     }
 
     public Vector2 GetGroundPos(int laneIndex)
@@ -53,21 +66,4 @@ public class WarGround : MonoBehaviour
         float targetY = 0;
         return new Vector2(targetX, targetY);
     }
-
-
-    //  public class ReadOnlyAttribute : PropertyAttribute { }
-
 }
-
-#if UNITY_EDITOR
-//[UnityEditor.CustomPropertyDrawer(typeof(WarGround.ReadOnlyAttribute))]
-//public class ReadOnlyDrawer : UnityEditor.PropertyDrawer
-//{
-//    public override void OnGUI(Rect position, UnityEditor.SerializedProperty property, GUIContent label)
-//    {
-//        GUI.enabled = false;
-//        UnityEditor.EditorGUI.PropertyField(position, property, label, true);
-//        GUI.enabled = true;
-//    }
-//}
-#endif
