@@ -224,6 +224,19 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
 
         Debug.Log($"[MainScenarioManager] 선택지 처리 시작. 선택된 다음 노드 ID: {selectedChoice.nextEventID}");
 
+        if (SimpleEventHistoryManager.Instance != null)
+        {
+            // 선택지 직전의 대화와 선택된 선택지 텍스트를 기록합니다.
+            SimpleEventHistoryManager.Instance.RecordMainEvent(
+                currentNode.id, // 이벤트 ID
+                currentNode.dialogue, // 선택지 직전의 대사 (지문)
+                selectedChoice.choiceText, // 플레이어가 고른 선택지 텍스트
+                selectedChoice.isEndingMemoriar, // Ending_Memoriar 플래그
+                "", 
+                ""  
+            );
+        }
+
         // 회상 텍스트 저장
         if (selectedChoice.isEndingMemoriar)
         {

@@ -88,6 +88,7 @@ public class MultiEndingSystem : MonoBehaviour
     /// <param name="chapter">챕터 번호 (1-6)</param>
     /// <param name="battleResult">전투 결과 (승리/무승부/패배)</param>
     /// <param name="warSituation">전세 수치</param>
+
     public void RecordChapterResult(int chapter, GameOutcome battleResult, int warSituation)
     {
         // 챕터 범위 검증
@@ -227,10 +228,8 @@ public class MultiEndingSystem : MonoBehaviour
         return 50; // GamePlayerStats가 없을 경우 기본값
     }
 
-    /// <summary>
-    /// 전투 결과에 따른 카르마 포인트 계산
-    /// </summary>
-    public int GetKarmaPoints(GameOutcome outcome)
+    //전투 결과에 따른 카르마 포인트 계산
+    public int GetBattlePoints(GameOutcome outcome)
     {
         return outcome switch
         {
@@ -515,16 +514,16 @@ public class MultiEndingSystem : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// DataManager의 FullEndingData와 연동하여 엔딩 데이터 가져오기
-    /// </summary>
-    public FullEndingData GetFullEndingData()
+    private string ConvertRouteToEndingStringCode(EndingRoute route)
     {
-        if (DataManager.Instance == null)
+        return route switch
         {
-            Debug.LogError("[MultiEndingSystem] DataManager가 null입니다.");
-            return null;
-        }
+            EndingRoute.Victory => "1001",
+            EndingRoute.Truce => "1002", // CSV의 실제 값 확인 필요
+            EndingRoute.Defeat => "1003", // CSV의 실제 값 확인 필요
+            _ => "1002" // 기본값
+        };
+    }
 
         if (DataManager.Instance.FullendingDataDict == null)
         {
@@ -557,6 +556,18 @@ public class MultiEndingSystem : MonoBehaviour
         }
         
         return fullEndingData;
+    }
+
+    private int ConvertBranchToKarmaRateCode(int branch)
+    {
+        // branch 번호와 Karma_Rate 코드가 1:1로 매핑됨을 가정합니다.
+        return branch switch
+        {
+            1 => 2001,
+            2 => 2002,
+            3 => 2003,
+            _ => 2002 // 안전 장치
+        };
     }
 
     // ===== 호환성을 위한 메서드들 =====
