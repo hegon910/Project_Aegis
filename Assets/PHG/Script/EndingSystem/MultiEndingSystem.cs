@@ -41,12 +41,7 @@ public class MultiEndingSystem : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 챕터 전투 결과를 기록합니다
-    /// </summary>
-    /// <param name="chapter">챕터 번호</param>
-    /// <param name="battleResult">전투 결과 (승리/무승부/패배)</param>
-    /// <param name="warSituation">전세 수치</param>
+    //챕터 결과 기록
     public void RecordChapterResult(int chapter, GameOutcome battleResult, int warSituation)
     {
         var result = new ChapterBattleResult
@@ -54,7 +49,7 @@ public class MultiEndingSystem : MonoBehaviour
             chapter = chapter,
             outcome = battleResult,
             warSituation = warSituation,
-            karmaPoints = GetKarmaPoints(battleResult)
+            BattlePoints = GetBattlePoints(battleResult)
         };
 
         // 기존 같은 챕터 결과가 있으면 교체
@@ -65,14 +60,20 @@ public class MultiEndingSystem : MonoBehaviour
         }
 
         chapterResults.Add(result);
-        
-        Debug.Log($"[MultiEndingSystem] 챕터 {chapter} 결과 기록: {battleResult} (전세: {warSituation}, 카르마: {result.karmaPoints})");
+
+        if (DataManager.Instance?.PlayerData != null)
+        {
+            DataManager.Instance.PlayerData.chapterBattleResults =
+                new List<ChapterBattleResult>(chapterResults);
+
+            DataManager.Instance.SaveLocal();
+        }
+
+        Debug.Log($"[MultiEndingSystem] 챕터 {chapter} 결과 기록: {battleResult} (전세: {warSituation}, 카르마: {result.BattlePoints})");
     }
 
-    /// <summary>
-    /// 전투 결과에 따른 카르마 포인트 계산
-    /// </summary>
-    public int GetKarmaPoints(GameOutcome outcome)
+    //전투 결과에 따른 카르마 포인트 계산
+    public int GetBattlePoints(GameOutcome outcome)
     {
         return outcome switch
         {
@@ -88,7 +89,7 @@ public class MultiEndingSystem : MonoBehaviour
     /// </summary>
     public int CalculateTotalKarma()
     {
-        return chapterResults.Sum(r => r.karmaPoints);
+        return chapterResults.Sum(r => r.BattlePoints);
     }
 
     /// <summary>
@@ -242,58 +243,14 @@ public class MultiEndingSystem : MonoBehaviour
         return selectedEnding;
     }
 
-    /// <summary>
-    /// 현재 시스템의 EndingEventData와 연동하여 엔딩 ID 결정
-    /// </summary>
-    public int GetEndingEventID()
+
+    public FullEndingData GetFullEndingData(EndingData selectedEnding)
     {
-        var endingType = DetermineEndingType();
-        var endingRoute = DetermineEndingRoute();
-        var currentKarma = CalculateCurrentKarma();
-        
-        // 현재 EndingEventData.csv의 구조에 맞춰 엔딩 ID 결정
-        int baseEndingID = 50001; // 기본 승리 루트
-        
-        // 루트에 따른 기본 ID 조정
-        switch (endingRoute)
-        {
-            case EndingRoute.Victory:
-                baseEndingID = 50001; // 승리 루트
-                break;
-            case EndingRoute.Truce:
-                baseEndingID = 50019; // 무승부 루트 (예상)
-                break;
-            case EndingRoute.Defeat:
-                baseEndingID = 50013; // 패배 루트 (예상)
-                break;
-        }
-        
-        // 카르마 범위에 따른 세부 엔딩 결정
-        if (endingRoute == EndingRoute.Victory)
-        {
-            if (currentKarma >= 81 && currentKarma <= 100)
-                return baseEndingID; // 높은 카르마 승리 엔딩
-            else if (currentKarma >= 20 && currentKarma <= 80)
-                return baseEndingID + 6; // 중간 카르마 승리 엔딩
-            else
-                return baseEndingID + 12; // 낮은 카르마 승리 엔딩
-        }
-        
-        return baseEndingID;
-    }
+        if (DataManager.Instance == null || selectedEnding == null) return null;
 
-    /// <summary>
-    /// DataManager의 FullEndingData와 연동하여 엔딩 데이터 가져오기
-    /// </summary>
-    public FullEndingData GetFullEndingData()
-    {
-        var endingRoute = DetermineEndingRoute();
-        var currentKarma = CalculateCurrentKarma();
+        string endingStringCode = ConvertRouteToEndingStringCode(selectedEnding.route);
 
-        string endingStringCode = ConvertRouteToEndingStringCode(endingRoute); 
-        int karmaRateCode = ConvertKarmaToRateCode(currentKarma); 
-
-        if (DataManager.Instance == null) return null;
+        int karmaRateCode = ConvertBranchToKarmaRateCode(selectedEnding.branch);
 
         return DataManager.Instance.FindFullEndingData(endingStringCode, karmaRateCode);
     }
@@ -305,16 +262,20 @@ public class MultiEndingSystem : MonoBehaviour
             EndingRoute.Victory => "1001",
             EndingRoute.Truce => "1002", // CSV의 실제 값 확인 필요
             EndingRoute.Defeat => "1003", // CSV의 실제 값 확인 필요
-            _ => "1000" // 기본값
+            _ => "1002" // 기본값
         };
     }
 
-    private int ConvertKarmaToRateCode(int karma)
+    private int ConvertBranchToKarmaRateCode(int branch)
     {
-        if (karma >= 81) return 2001;
-        if (karma >= 20) return 2002;
-        // ... (나머지 카르마 범위에 대한 코드 매핑) ...
-        return 2003; // 기본값
+        // branch 번호와 Karma_Rate 코드가 1:1로 매핑됨을 가정합니다.
+        return branch switch
+        {
+            1 => 2001,
+            2 => 2002,
+            3 => 2003,
+            _ => 2002 // 안전 장치
+        };
     }
 
     /// <summary>
@@ -358,7 +319,7 @@ public class MultiEndingSystem : MonoBehaviour
         Debug.Log("챕터별 결과:");
         foreach (var result in chapterResults.OrderBy(r => r.chapter))
         {
-            Debug.Log($"  챕터 {result.chapter}: {result.outcome} (전세: {result.warSituation}, 카르마: {result.karmaPoints})");
+            Debug.Log($"  챕터 {result.chapter}: {result.outcome} (전세: {result.warSituation}, 카르마: {result.BattlePoints})");
         }
     }
 
@@ -415,7 +376,7 @@ public class ChapterBattleResult
     public int chapter;
     public GameOutcome outcome;
     public int warSituation;
-    public int karmaPoints;
+    public int BattlePoints;
 }
 
 /// <summary>

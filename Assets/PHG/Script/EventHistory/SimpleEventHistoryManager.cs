@@ -16,7 +16,7 @@ public class SimpleEventHistoryManager : MonoBehaviour
 
 
     //챕터 이벤트 기록
-    private List<SimpleEventRecord> eventHistory = new List<SimpleEventRecord>();
+    public List<SimpleEventRecord> eventHistory = new List<SimpleEventRecord>();
     // 전체 플레이 기록
     private List<GamePlaythroughRecord> playthroughHistory = new List<GamePlaythroughRecord>();
     private string savePath;

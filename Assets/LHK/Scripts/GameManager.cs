@@ -466,41 +466,53 @@ public class GameManager : MonoBehaviour
                 StartDetailedResultSequence();
                 break;
             case GameState.PlayingEndingCutscene:
-                // 멀티 엔딩 시스템을 사용하여 적절한 엔딩 결정
-                var endingData = MultiEndingSystem.Instance?.GetFinalEndingData();
-                
-                // 기존 finalEndingCutscene 대신 동적으로 결정된 엔딩 사용
-                if (endingData?.fullEndingData != null)
+                var selectedEndingTemplate = MultiEndingSystem.Instance?.GetFinalEndingData();
+
+                FullEndingData finalContentData = null;
+                if (selectedEndingTemplate != null)
                 {
-                    // FullEndingData를 CutsceneData로 변환
-                    var cutsceneData = MultiEndingSystem.Instance.ConvertToCutsceneData(endingData.fullEndingData);
-                    
-                    if (cutsceneData != null)
-                    {
-                        Debug.Log($"[GameManager] 멀티 엔딩 재생: {endingData.endingType} - {endingData.route} - {endingData.branch}");
-                        CutsceneManager.OnCutsceneFinished += OnStateFinished;
-                        cutsceneManager.StartCutscene(cutsceneData);
-                    }
-                    else
-                    {
-                        // 변환 실패 시 폴백
-                        Debug.LogWarning("[GameManager] 엔딩 데이터 변환 실패, 기본 엔딩 사용");
-                        CutsceneManager.OnCutsceneFinished += OnStateFinished;
-                        cutsceneManager.StartCutscene(finalEndingCutscene);
-                    }
+                    finalContentData = MultiEndingSystem.Instance.GetFullEndingData(selectedEndingTemplate);
+                }
+
+                CutsceneData cutsceneToPlay = null;
+                if (finalContentData != null)
+                {
+                    cutsceneToPlay = MultiEndingSystem.Instance.ConvertToCutsceneData(finalContentData);
+                }
+
+                if (cutsceneToPlay != null)
+                {
+                    Debug.Log($"[GameManager] 멀티 엔딩 재생: {selectedEndingTemplate.endingType} - {selectedEndingTemplate.route} - {selectedEndingTemplate.branch}");
+                    CutsceneManager.OnCutsceneFinished += OnStateFinished;
+                    cutsceneManager.StartCutscene(cutsceneToPlay);
                 }
                 else
                 {
-                    // 폴백: 기존 엔딩 사용
-                    Debug.Log("[GameManager] 엔딩 데이터 없음, 기본 엔딩 사용");
+                    Debug.LogWarning("[GameManager] 엔딩 데이터 로드/변환 실패. 기본 엔딩 사용.");
                     CutsceneManager.OnCutsceneFinished += OnStateFinished;
                     cutsceneManager.StartCutscene(finalEndingCutscene);
                 }
-                
-                // 엔딩 기록 저장
-                if (DataManager.Instance?.PlayerData != null && endingData != null)
+
+                //회상기록
+                string finalOutcome = selectedEndingTemplate != null ?$"{selectedEndingTemplate.endingType} ({selectedEndingTemplate.route})" : "Final End";
+
+                GameSessionManager sessionManager = GetComponent<GameSessionManager>();
+
+                if (sessionManager != null)
                 {
-                    string endingKey = $"{endingData.endingType}_{endingData.route}_{endingData.branch}";
+                    sessionManager.EndSession(finalOutcome);
+                    Debug.Log("[GameManager] GameSessionManager를 통해 회차 기록을 완료했습니다.");
+                }
+                else
+                {
+                    Debug.LogError("[GameManager] GameSessionManager 컴포넌트 참조 오류! 회상 기록이 누락됩니다.");
+                }
+
+
+                // 엔딩 기록 저장
+                if (DataManager.Instance?.PlayerData != null && selectedEndingTemplate != null)
+                {
+                    string endingKey = $"{selectedEndingTemplate.endingType}_{selectedEndingTemplate.route}_{selectedEndingTemplate.branch}";
                     if (!DataManager.Instance.PlayerData.completedEndings.Contains(endingKey))
                     {
                         DataManager.Instance.PlayerData.completedEndings.Add(endingKey);
@@ -845,7 +857,9 @@ public class GameManager : MonoBehaviour
         DataManager.Instance.LoadSettings();
         // StoryPackManager가 씬에 존재하면, 매니저를 통해 선택값을 우선 가져옵니다(동일 인스턴스 참조 강제).
         var spm = FindObjectOfType<StoryPackManager>();
-        var selectedPacksForNewGame = spm != null ? spm.GetSelectedPackIDs() : (DataManager.Instance.PlayerSettings != null ? DataManager.Instance.PlayerSettings.selectedSubEventPackIDs : null);
+        var selectedPacksForNewGame = spm != null ? 
+            spm.GetSelectedPackIDs() : (DataManager.Instance.PlayerSettings != null ? 
+            DataManager.Instance.PlayerSettings.selectedSubEventPackIDs : null);
         Debug.Log($"[GameManager] 새게임 직전 선택 팩: {(selectedPacksForNewGame != null ? string.Join(", ", selectedPacksForNewGame) : "null")}, 개수: {selectedPacksForNewGame?.Count ?? -1}");
         var sessionManager = FindObjectOfType<GameSessionManager>();
         if (sessionManager != null)
