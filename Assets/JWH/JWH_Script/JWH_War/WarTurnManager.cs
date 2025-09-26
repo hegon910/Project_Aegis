@@ -153,9 +153,12 @@ public class WarTurnManager : MonoBehaviour
         if (achievementIntegration != null)
         {
             GameOutcome battleOutcome = isWin ? GameOutcome.Victory : (resultLog.Contains("무승부") ? GameOutcome.Draw : GameOutcome.Defeat);
-            bool isFirstBattle = DataManager.Instance?.PlayerData?.playthroughCount == 1 && DataManager.Instance?.PlayerData?.currentChapter == 1;
+            // 첫 전투 판별: 1회차 1챕터에서 첫 번째 전투인지 확인
+            bool isFirstBattle = DataManager.Instance?.PlayerData?.playthroughCount == 1 && 
+                                DataManager.Instance?.PlayerData?.currentChapter == 1 &&
+                                (DataManager.Instance?.PlayerData?.completedBattleResultIds?.Count ?? 0) == 0;
             achievementIntegration.OnBattleResult(battleOutcome, isFirstBattle);
-            Debug.Log($"[WarTurnManager] 전투 결과 업적 체크: {battleOutcome}, 첫 전투: {isFirstBattle}");
+            Debug.Log($"[WarTurnManager] 전투 결과 업적 체크: {battleOutcome}, 첫 전투: {isFirstBattle} (회차: {DataManager.Instance?.PlayerData?.playthroughCount}, 챕터: {DataManager.Instance?.PlayerData?.currentChapter}, 완료된 전투 수: {DataManager.Instance?.PlayerData?.completedBattleResultIds?.Count ?? 0})");
         }
         
         Debug.Log(resultLog);

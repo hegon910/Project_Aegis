@@ -10,17 +10,14 @@ public class AchievementIntegration : MonoBehaviour
     private static bool _bootPlaythroughChecked;
     private async void Start()
     {
-        // 부팅 직후 1회차 시작 업적 누락 방지용 안전 체크
+        // 부팅 직후 업적 체크는 제거 - 새게임 시작 시에만 체크하도록 변경
         await UniTask.Yield();
         if (_bootPlaythroughChecked) return;
         _bootPlaythroughChecked = true;
 
-        var play = DataManager.Instance?.PlayerData?.playthroughCount ?? 0;
-        if (play > 0 && AchievementManager.Instance != null)
-        {
-            AchievementManager.Instance.CheckPlaythroughAchievements(play);
-            Debug.Log($"[AchievementIntegration] 부팅 체크로 회차 시작 업적 확인: {play}회차");
-        }
+        // 게임 부팅 시에는 회차 시작 업적을 체크하지 않음
+        // 새게임 시작 시에만 체크하도록 GameManager에서 처리
+        Debug.Log("[AchievementIntegration] 부팅 완료 - 회차 시작 업적은 새게임 시작 시에만 체크됩니다.");
     }
 
     private void Awake()

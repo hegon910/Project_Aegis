@@ -245,11 +245,48 @@ public class AchievementManager : MonoBehaviour
                     isMatch &= playthrough == achievement.condition.requiredPlaythroughCount;
                 }
                 
+                // 파라미터 조건 체크 (카르마 등)
+                if (achievement.condition.requiredParameter != ParameterType.None && 
+                    achievement.condition.requiredParameterValue > 0)
+                {
+                    if (DataManager.Instance?.PlayerData != null)
+                    {
+                        int currentValue = GetParameterValue(achievement.condition.requiredParameter);
+                        isMatch &= currentValue >= achievement.condition.requiredParameterValue;
+                    }
+                }
+                
                 if (isMatch)
                 {
                     CompleteAchievement(achievement.achievementId);
                 }
             }
+        }
+    }
+    
+    /// <summary>
+    /// 파라미터 값 가져오기
+    /// </summary>
+    private int GetParameterValue(ParameterType parameterType)
+    {
+        if (DataManager.Instance?.PlayerData == null) return 0;
+        
+        switch (parameterType)
+        {
+            case ParameterType.카르마:
+                return DataManager.Instance.PlayerData.karma;
+            case ParameterType.정치력:
+                return DataManager.Instance.PlayerData.politics;
+            case ParameterType.병력:
+                return DataManager.Instance.PlayerData.militaryPower;
+            case ParameterType.물자:
+                return DataManager.Instance.PlayerData.supplies;
+            case ParameterType.리더십:
+                return DataManager.Instance.PlayerData.leadership;
+            case ParameterType.전황:
+                return DataManager.Instance.PlayerData.warSituation;
+            default:
+                return 0;
         }
     }
     

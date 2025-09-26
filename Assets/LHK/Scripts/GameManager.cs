@@ -967,9 +967,12 @@ public class GameManager : MonoBehaviour
         var selectedPacksForNewGame = spm != null ? spm.GetSelectedPackIDs() : (DataManager.Instance.PlayerSettings != null ? DataManager.Instance.PlayerSettings.selectedSubEventPackIDs : null);
         Debug.Log($"[GameManager] 새게임 직전 선택 팩: {(selectedPacksForNewGame != null ? string.Join(", ", selectedPacksForNewGame) : "null")}, 개수: {selectedPacksForNewGame?.Count ?? -1}");
         await EventManager.Instance.StartNewGame(selectedPacksForNewGame);
-		// 업적: 새게임 시작 직후 회차 업적 즉시 체크
+		
+		// 업적: 새게임 시작 직후 회차 업적 체크
+		// 새게임 시작 시 playthroughCount는 1로 설정되므로 1회차 시작 업적이 해금됨
 		if (AchievementManager.Instance != null && DataManager.Instance?.PlayerData != null)
 		{
+			Debug.Log($"[GameManager] 새게임 시작 - 회차 업적 체크: {DataManager.Instance.PlayerData.playthroughCount}회차");
 			AchievementManager.Instance.CheckPlaythroughAchievements(DataManager.Instance.PlayerData.playthroughCount);
 		}
         OnStateFinished();
