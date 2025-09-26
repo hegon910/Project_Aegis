@@ -100,6 +100,28 @@ public class DataManager : MonoBehaviour
     private void Start() /// 9.9. 이학권 추가
     {
         FirebaseAuth.DefaultInstance.StateChanged += OnAuthStateChanged;
+        
+        // FirebaseManager의 로그인 타입 복원을 기다린 후 동기화 시도
+        StartCoroutine(WaitForFirebaseManagerAndTrySync());
+    }
+    
+    private System.Collections.IEnumerator WaitForFirebaseManagerAndTrySync()
+    {
+        // FirebaseManager가 초기화될 때까지 대기
+        yield return new WaitUntil(() => FirebaseManager.Instance != null);
+        
+        // FirebaseManager 초기화 완료 이벤트 구독
+        bool initialized = false;
+        System.Action onInitialized = () => initialized = true;
+        FirebaseManager.OnFirebaseManagerInitialized += onInitialized;
+        
+        // 초기화 완료까지 대기
+        yield return new WaitUntil(() => initialized);
+        
+        // 이벤트 구독 해제
+        FirebaseManager.OnFirebaseManagerInitialized -= onInitialized;
+        
+        Debug.Log("[DataManager] FirebaseManager 초기화 완료, 동기화 시도");
         TrySyncIfLoggedIn();
     }
 

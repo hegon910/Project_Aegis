@@ -33,6 +33,9 @@ public class FirebaseManager : MonoBehaviour
     // 이벤트
     public static event Action<LoginType> OnLoginStateChanged;
     public static event Action OnGuestWarningShown;
+    
+    // FirebaseManager 초기화 완료 이벤트
+    public static event Action OnFirebaseManagerInitialized;
 
 #if UNITY_EDITOR
     [Header("Login Input Field")]
@@ -81,6 +84,9 @@ public class FirebaseManager : MonoBehaviour
             
             // 저장된 로그인 타입 복원
             RestoreLoginType();
+            
+            // 초기화 완료 알림
+            OnFirebaseManagerInitialized?.Invoke();
         });
     }
 
