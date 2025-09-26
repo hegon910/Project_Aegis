@@ -139,8 +139,6 @@ public class GameManager : MonoBehaviour
     private async void Start()
     {
         await InitializeGameAndLoadData();
-        if (popupController == null)
-            popupController = FindObjectOfType<PopupController>();    
     }
 
     private async Task InitializeGameAndLoadData()
