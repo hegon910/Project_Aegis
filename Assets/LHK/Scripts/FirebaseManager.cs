@@ -188,6 +188,11 @@ public class FirebaseManager : MonoBehaviour
             SetLoginType(LoginType.Guest);
             
             Debug.Log($"익명 로그인 완료: {User.UserId}");
+            Debug.Log($"=== 현재 에디터 익명 계정 정보 ===");
+            Debug.Log($"UID: {User.UserId}");
+            Debug.Log($"생성 시간: {User.Metadata.CreationTimestamp}");
+            Debug.Log($"마지막 로그인: {User.Metadata.LastSignInTimestamp}");
+            Debug.Log($"=== Firebase Console에서 이 UID를 검색하세요 ===");
             
             // DataManager에 로그인 완료 알림
             if (DataManager.Instance != null)
