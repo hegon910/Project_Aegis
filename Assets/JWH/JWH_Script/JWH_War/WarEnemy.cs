@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class WarEnemy : MonoBehaviour
 {
@@ -9,6 +10,13 @@ public class WarEnemy : MonoBehaviour
     [Header("AI & Info")]
     [SerializeField, Range(0f, 1f)] protected float attackChance = 0.5f;
     [SerializeField] private int rank = 1;
+
+    [Header("Hint System")] 
+    [Tooltip("적의 행동 힌트를 표시할 UI")]
+    [SerializeField] private TMP_Text enemyInfoText;
+
+    private WarAction nextAction; // 다음 행동 변수
+
 
     public int Rank => rank;
     public WarController Ctrl => controller;
@@ -34,7 +42,39 @@ public class WarEnemy : MonoBehaviour
         Debug.LogWarning("기본 충돌 로직");
     }
 
+    public void PrepareAndShowHint()
+    {
+        nextAction = ChooseAction(); // 다음 턴의 행동 결정
+        if (enemyInfoText != null)
+        {
+            switch (nextAction)
+            {
+                case WarAction.Attack:
+                    enemyInfoText.text = "적들이 분주하다";
+                    break;
+                case WarAction.Defend:
+                    enemyInfoText.text = "적들이 잠잠하다";
+                    break;
+                default:
+                    enemyInfoText.text = ""; // 그 외의 경우 텍스트 초기화
+                    break;
+            }
+            enemyInfoText.gameObject.SetActive(true); // 힌트 보이기
+        }
+    }
 
+    public WarAction GetPreparedAction()
+    {
+        return nextAction;
+    }
+
+    public void HideHint()
+    {
+        if (enemyInfoText != null)
+        {
+            enemyInfoText.gameObject.SetActive(false);
+        }
+    }
 
     public void KillByRingOut()
     {

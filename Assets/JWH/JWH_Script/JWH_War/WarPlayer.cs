@@ -12,7 +12,7 @@ public class WarPlayer : MonoBehaviour
     
 
     [Header("Skill & Buffs")]
-    public string equippedSkillID;
+    public string equippedSkillID;//스킬변경 건드리는 부분
     [System.NonSerialized] public SkillData currentSkill;
     public SkillDatabase skillDatabase;
     [System.NonSerialized] public bool AttackShieldBuff = false;

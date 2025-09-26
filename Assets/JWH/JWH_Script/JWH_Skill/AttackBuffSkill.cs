@@ -6,7 +6,7 @@ using UnityEngine;
 public class AttackBuffSkill : SkillData
 {
     [Header("버프 설정")]
-    public int attackStacks = 3; // 턴수
+    public int attackStacks = 2; // 턴수
 
     public override void Activate(WarPlayer player, WarEnemy enemy, WarTurnManager turnManager)
     {

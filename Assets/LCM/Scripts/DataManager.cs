@@ -1443,6 +1443,18 @@ public class DataManager : MonoBehaviour
     //데이터 테이블
     [System.Serializable]
     public class ParameterEventData
+    public AnswerData GetAnswerData(int answerId)
+    {
+        if (answerDataDict.TryGetValue(answerId, out var data))
+        {
+            return data;
+        }
+        Debug.LogWarning($"[DataManager] AnswerID {answerId}에 해당하는 AnswerData를 찾을 수 없습니다.");
+        return null;
+    }
+
+    // PlayerPrefs를 사용하여 회차 기록을 관리하는 클래스
+    public class PlaythroughHistory
     {
         public int ID { get; set; }
         public int RoundType { get; set; }
