@@ -1443,6 +1443,44 @@ public class DataManager : MonoBehaviour
     //데이터 테이블
     [System.Serializable]
     public class ParameterEventData
+    {
+        public int ID { get; set; }
+        public int RoundType { get; set; }
+        public int PageType { get; set; }
+        public int ConditionType { get; set; }
+        public int ChangeCondition { get; set; }
+        public int EventQuestion { get; set; }
+        public int LeftString { get; set; }
+        public int NeedType1 { get; set; }
+        public int NeedValue1 { get; set; }
+        public int AcceptReward1 { get; set; }
+        public int DenyReward1 { get; set; }
+        public int AcceptString1 { get; set; }
+        public int DenyString1 { get; set; }
+        public int RightString { get; set; }
+        public int NeedType2 { get; set; }
+        public int NeedValue2 { get; set; }
+        public int AcceptReward2 { get; set; }
+        public int DenyReward2 { get; set; }
+        public int AcceptString2 { get; set; }
+        public int DenyString2 { get; set; }
+        public int AnotherEventQuestion { get; set; }
+        public int AnotherLeftString { get; set; }
+        public int AnotherNeedType1 { get; set; }
+        public int AnotehrNeedValue1 { get; set; }
+        public int AnotherAcceptReward1 { get; set; }
+        public int AnotherDenyReward1 { get; set; }
+        public int AnotherAcceptString1 { get; set; }
+        public int AnotherDenyString1 { get; set; }
+        public int AnotherRightString { get; set; }
+        public int AnotherNeedType2 { get; set; }
+        public int AnotherNeedValue2 { get; set; }
+        public int AnotherAcceptReward2 { get; set; }
+        public int AnotherDenyReward2 { get; set; }  // 이 줄이 올바른 이름입니다
+        public int AnotherAcceptString2 { get; set; }
+        public int AnotherDenyString2 { get; set; }
+
+    }
     public AnswerData GetAnswerData(int answerId)
     {
         if (answerDataDict.TryGetValue(answerId, out var data))

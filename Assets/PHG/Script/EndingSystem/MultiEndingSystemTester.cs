@@ -49,23 +49,23 @@ public class MultiEndingSystemTester : MonoBehaviour
         MultiEndingSystem.OnNewLoopStarted -= OnNewLoopStarted;
     }
 
-    private void TestChapter(int chapter, GameOutcome outcome, int warSituation)
+private void TestChapter(int chapter, GameOutcome outcome, int warSituation)
+{
+    if (MultiEndingSystem.Instance == null)
     {
-        if (MultiEndingSystem.Instance == null)
-        {
-            Debug.LogError("MultiEndingSystem.Instance가 null입니다!");
-            return;
-        }
-
-        // 챕터 강제 점프
-        MultiEndingSystem.Instance.SetCurrentChapter(chapter);
-
-        // 챕터 결과 기록
-        MultiEndingSystem.Instance.RecordChapterResult(chapter, outcome, warSituation);
-        
-        Debug.Log($"[테스트] 챕터 {chapter}로 점프하고 결과 기록: {outcome} (전세: {warSituation})");
-        UpdateUI();
+        Debug.LogError("MultiEndingSystem.Instance가 null입니다!");
+        return;
     }
+
+    // 챕터 강제 점프
+    MultiEndingSystem.Instance.SetCurrentChapter(chapter);
+
+    // 챕터 결과 기록
+    MultiEndingSystem.Instance.RecordChapterResult(chapter, outcome, warSituation);
+    
+    Debug.Log($"[테스트] 챕터 {chapter}로 점프하고 결과 기록: {outcome} (전세: {warSituation})");
+    UpdateUI();
+}
 
     private void ResetSystem()
     {
@@ -141,37 +141,38 @@ public class MultiEndingSystemTester : MonoBehaviour
         UpdateUI();
     }
 
-    private void UpdateUI()
+ private void UpdateUI()
+{
+    if (MultiEndingSystem.Instance == null) return;
+
+    var status = MultiEndingSystem.Instance.GetCurrentLoopStatus();
+    
+    if (statusText)
     {
-        if (MultiEndingSystem.Instance == null) return;
-
-        var status = MultiEndingSystem.Instance.GetCurrentLoopStatus();
-        
-        if (statusText)
-        {
-            statusText.text = $"회차: {status.currentPlaythrough}\n" +
-                            $"챕터: {status.currentChapter}\n" +
-                            $"완료된 챕터: {status.completedChapters}/6\n" +
-                            $"루프 완료: {(status.isLoopCompleted ? "예" : "아니오")}";
-        }
-
-        if (karmaText)
-        {
-            karmaText.text = $"현재 회차 카르마: {status.totalKarma}\n" +
-                           $"현재 카르마: {status.currentKarma}";
-        }
-
-        if (endingText)
-        {
-            var endingType = MultiEndingSystem.Instance.DetermineEndingType();
-            var endingRoute = MultiEndingSystem.Instance.DetermineEndingRoute();
-            var endingBranch = MultiEndingSystem.Instance.DetermineEndingBranch(endingRoute);
-            
-            endingText.text = $"엔딩 타입: {endingType}\n" +
-                            $"엔딩 루트: {endingRoute}\n" +
-                            $"엔딩 분기: {endingBranch}";
-        }
+        // currentChapter를 사용하여 현재 진행 상황 표시
+        statusText.text = $"회차: {status.currentPlaythrough}\n" +
+                        $"챕터: {status.currentChapter}/6\n" +
+                        $"완료된 챕터: {status.currentChapter}/6\n" +
+                        $"루프 완료: {(status.isLoopCompleted ? "예" : "아니오")}";
     }
+
+    if (karmaText)
+    {
+        karmaText.text = $"현재 회차 카르마: {status.totalKarma}\n" +
+                       $"현재 카르마: {status.currentKarma}";
+    }
+
+    if (endingText)
+    {
+        var endingType = MultiEndingSystem.Instance.DetermineEndingType();
+        var endingRoute = MultiEndingSystem.Instance.DetermineEndingRoute();
+        var endingBranch = MultiEndingSystem.Instance.DetermineEndingBranch(endingRoute);
+        
+        endingText.text = $"엔딩 타입: {endingType}\n" +
+                        $"엔딩 루트: {endingRoute}\n" +
+                        $"엔딩 분기: {endingBranch}";
+    }
+}
 
     private void OnLoopCompleted(int playthrough)
     {

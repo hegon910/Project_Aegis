@@ -764,18 +764,35 @@ public class MultiEndingSystem : MonoBehaviour
     /// 현재 루프 상태 정보 반환
     /// </summary>
     public LoopStatus GetCurrentLoopStatus()
+{
+    int completedChapters = 0;
+    if (playthroughResults.ContainsKey(currentPlaythrough))
     {
-        return new LoopStatus
+        var results = playthroughResults[currentPlaythrough];
+        // 연속된 챕터의 완료 수 계산
+        for (int i = 1; i <= maxChapters; i++)
         {
-            currentPlaythrough = currentPlaythrough,
-            currentChapter = currentChapter,
-            isLoopCompleted = isLoopCompleted,
-            totalKarma = CalculateCurrentPlaythroughKarma(),
-            currentKarma = CalculateCurrentKarma(),
-            completedChapters = playthroughResults.ContainsKey(currentPlaythrough) ? 
-                playthroughResults[currentPlaythrough].Count : 0
-        };
+            if (results.Any(r => r.chapter == i))
+            {
+                completedChapters = i;
+            }
+            else
+            {
+                break;
+            }
+        }
     }
+
+    return new LoopStatus
+    {
+        currentPlaythrough = currentPlaythrough,
+        currentChapter = currentChapter,
+        isLoopCompleted = isLoopCompleted,
+        totalKarma = CalculateCurrentPlaythroughKarma(),
+        currentKarma = CalculateCurrentKarma(),
+        completedChapters = completedChapters
+    };
+}
 
     /// <summary>
     /// 특정 회차의 상세 정보 반환
@@ -846,6 +863,31 @@ public class MultiEndingSystem : MonoBehaviour
 
         Debug.Log($"[MultiEndingSystem] 현재 챕터를 {chapter}로 설정했습니다.");
     }
+
+    public void SetCurrentPlaythrough(int playthrough)
+{
+    if (playthrough < 1)
+    {
+        Debug.LogError($"[MultiEndingSystem] 잘못된 회차 번호: {playthrough}. 1 이상이어야 합니다.");
+        return;
+    }
+
+    currentPlaythrough = playthrough;
+    
+    // DataManager와 동기화
+    if (DataManager.Instance?.PlayerData != null)
+    {
+        DataManager.Instance.PlayerData.playthroughCount = playthrough;
+    }
+
+    // 현재 회차의 결과 리스트 초기화 (없으면)
+    if (!playthroughResults.ContainsKey(currentPlaythrough))
+    {
+        playthroughResults[currentPlaythrough] = new List<ChapterBattleResult>();
+    }
+
+    Debug.Log($"[MultiEndingSystem] 현재 회차를 {playthrough}로 설정했습니다.");
+}
 
     // 테스트용 메서드들
     [ContextMenu("Test Chapter 1 Victory")]

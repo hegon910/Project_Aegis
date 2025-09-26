@@ -499,10 +499,14 @@ public class EventManager : MonoBehaviour
         if (DataManager.Instance?.eventDataDict.Values == null || DataManager.Instance.PlayerData == null) return new List<int>();
 
         var completedIds = new HashSet<int>(DataManager.Instance.PlayerData.completedEventIds);
+        
+        // [수정] 파라미터 이벤트는 회차 구분 없이 모든 이벤트 사용 (RoundType 필터링 제거)
         var newEvents = DataManager.Instance.eventDataDict.Values
-       .Where(d => d.PageType == 0 && !completedIds.Contains(d.ID))
-       .Select(d => d.ID)
-       .ToList();
+            .Where(d => d.PageType == 0 && !completedIds.Contains(d.ID))
+            .Select(d => d.ID)
+            .ToList();
+
+        Debug.Log($"[EventManager] 사용 가능한 파라미터 이벤트: {newEvents.Count}개 (회차 구분 없음)");
 
         // 신규 이벤트가 있으면 우선 사용, 없으면 모든 이벤트 사용
         if (newEvents.Count > 0)

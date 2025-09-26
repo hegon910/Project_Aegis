@@ -348,11 +348,17 @@ public class GameManager : MonoBehaviour
                     // 일반적인 다음 회차 진행
                     playerData.playthroughCount++;
                     playerData.currentChapter = 1;
+                    
+                    // [수정] 엔딩 완료 후 타이틀 화면으로 돌아가도록 변경
+                    // CommanderSelection 대신 MainMenu로 이동하여 이어하기 버튼을 통해 2회차 시작
+                    playerData.currentGameState = GameState.MainMenu;
+                    nextState = GameState.MainMenu;
+                    break; // 아래의 공통 로직을 건너뛰고 바로 상태 변경
                 }
-
+                
                 hasShownWarTutorialThisPlaythrough = false;
                 EventManager.Instance.ResetEventManagerState();
-                nextState = GameState.CommanderSelection; // Changed from MainMenu to CommanderSelection
+                nextState = GameState.PlayingOpeningCutscene; // CommanderSelection 대신
                 break;
         }
 
@@ -812,6 +818,16 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        // 다회차 시작 로직 추가
+        if (DataManager.Instance.PlayerData.currentGameState == GameState.MainMenu && 
+            DataManager.Instance.PlayerData.playthroughCount > 1 && 
+            DataManager.Instance.PlayerData.currentChapter == 1)
+        {
+            // 다회차 시작: 지휘관 정보 복원 및 게임 시작
+            StartNextPlaythroughWithSameCommander();
+            return;
+        }
+
         // 게임오버 후 메인복귀 상태라면, 이어하기 시 챕터 처음부터 재시작
         if (DataManager.Instance.PlayerData.pendingRestartFromGameOver)
         {
@@ -842,6 +858,15 @@ public class GameManager : MonoBehaviour
         }
 
         var stateToRestore = DataManager.Instance.PlayerData.currentGameState;
+        
+        // [추가] 2회차 이상에서 CommanderSelection 상태인 경우 자동으로 지휘관 선택
+        if (stateToRestore == GameState.CommanderSelection && 
+            DataManager.Instance.PlayerData.playthroughCount > 1)
+        {
+            StartNextPlaythroughWithSameCommander();
+            return;
+        }
+
         // 비플레이 상태는 이어하기 대상에서 제외하고 버튼 숨김
         switch (stateToRestore)
         {
@@ -1271,4 +1296,57 @@ public class GameManager : MonoBehaviour
     
     
     #endregion
+
+    private void StartNextPlaythroughWithSameCommander()
+    {
+        var playerData = DataManager.Instance.PlayerData;
+        
+        // 기존 지휘관 정보 복원
+        if (GamePlayerStats.Instance != null)
+        {
+            // 저장된 지휘관 특성으로 CommanderInfo 찾기
+            var selectedCommander = GetCommanderByTrait(playerData.activeTrait);
+            if (selectedCommander != null)
+            {
+                // 기존 SetActiveCommander 함수 사용
+                GamePlayerStats.Instance.SetActiveCommander(selectedCommander);
+                
+                // 지휘관별 초기 스탯 조정 적용
+                if (selectedCommander.initialStatAdjustments.Count > 0)
+                {
+                    GamePlayerStats.Instance.ApplyChanges(selectedCommander.initialStatAdjustments);
+                }
+            }
+        }
+        
+        // 튜토리얼 억제 (2회차 이상이므로)
+        suppressTutorialOnce = true;
+        if (tutorialPanel != null) tutorialPanel.SetActive(false);
+        if (parameterTutorialPanel != null) parameterTutorialPanel.SetActive(false);
+        if (uiFlowSimulator != null) uiFlowSimulator.MarkParameterTutorialShown();
+        
+        // 업적 체크 (회차 업적)
+        if (AchievementManager.Instance != null)
+        {
+            AchievementManager.Instance.CheckPlaythroughAchievements(playerData.playthroughCount);
+        }
+        
+        // 바로 게임 시작 상태로 이동
+        ChangeState(GameState.PlayingOpeningCutscene);
+    }
+
+    private CommanderInfo GetCommanderByTrait(CommanderTrait trait)
+    {
+        switch (trait)
+        {
+            case CommanderTrait.Devost:
+                return Commander1Button?.GetComponent<CommanderInfo>();
+            case CommanderTrait.Wille:
+                return Commander2Button?.GetComponent<CommanderInfo>();
+            case CommanderTrait.Risard:
+                return Commander3Button?.GetComponent<CommanderInfo>();
+            default:
+                return Commander1Button?.GetComponent<CommanderInfo>(); // 기본값
+        }
+    }
 }
