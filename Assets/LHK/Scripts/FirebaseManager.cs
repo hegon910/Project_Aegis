@@ -182,8 +182,9 @@ public class FirebaseManager : MonoBehaviour
                 Debug.LogError("익명 로그인 실패: " + task.Exception);
                 return;
             }
-            
-            User = task.Result.User;
+
+            Firebase.Auth.AuthResult result = task.Result;
+            User = result.User;
             SetLoginType(LoginType.Guest);
             
             Debug.Log($"익명 로그인 완료: {User.UserId}");
@@ -192,6 +193,7 @@ public class FirebaseManager : MonoBehaviour
             if (DataManager.Instance != null)
             {
                 Debug.Log("[FirebaseManager] DataManager에 게스트 로그인 완료 알림 전송");
+                // 게스트 계정이므로 서버 동기화는 하지 않음
             }
         });
     }
@@ -223,11 +225,12 @@ public class FirebaseManager : MonoBehaviour
                     
                     Debug.Log($"Firebase 인증완료: {User.DisplayName} ({User.UserId})");
 
-                    // DataManager에 로그인 완료 알림
+                    // DataManager에 로그인 완료 알림 및 서버 동기화 시작
                     if (DataManager.Instance != null)
                     {
-                        Debug.Log("[FirebaseManager] DataManager에 로그인 완료 알림 전송");
-                       // DataManager.Instance.OnFirebaseLoginCompleted();
+                        Debug.Log("[FirebaseManager] DataManager에 GPGS 로그인 완료 알림 전송");
+                        // GPGS 로그인 완료 후 서버 동기화 시작
+                        DataManager.Instance.OnFirebaseLoginCompleted();
                     }
                 });
             }

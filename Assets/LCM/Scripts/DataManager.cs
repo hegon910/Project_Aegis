@@ -111,11 +111,29 @@ public class DataManager : MonoBehaviour
     private void TrySyncIfLoggedIn() /// 9.9. 이학권 추가
     {
         var user = FirebaseAuth.DefaultInstance.CurrentUser;
+        Debug.Log($"[DataManager] TrySyncIfLoggedIn 호출 - User: {user?.UserId}, HasSynced: {_hasSyncedWithServer}, IsGuest: {FirebaseManager.IsGuestAccount}, LoginType: {FirebaseManager.CurrentLoginType}");
+        
         if (user != null && !_hasSyncedWithServer && !FirebaseManager.IsGuestAccount)
         {
+            Debug.Log("[DataManager] 서버 동기화 시작");
             _hasSyncedWithServer = true;
             StartCoroutine(SyncWithServer(user.UserId));
         }
+        else
+        {
+            if (user == null) Debug.Log("[DataManager] Firebase User가 null입니다");
+            if (_hasSyncedWithServer) Debug.Log("[DataManager] 이미 서버 동기화를 완료했습니다");
+            if (FirebaseManager.IsGuestAccount) Debug.Log("[DataManager] 게스트 계정이므로 서버 동기화를 건너뜁니다");
+        }
+    }
+
+    /// <summary>
+    /// Firebase 로그인 완료 시 호출되는 메서드
+    /// </summary>
+    public void OnFirebaseLoginCompleted()
+    {
+        Debug.Log("[DataManager] Firebase 로그인 완료 알림 수신");
+        TrySyncIfLoggedIn();
     }
 
     /// <summary>
