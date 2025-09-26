@@ -2,20 +2,28 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class WarHistory
-{
+
+    public static class WarHistory
+    {
     public static List<bool> results = new List<bool>();
-    private const int maxRecords = 6; // 기록칸수
+    private const int maxRecords = 6; // 한 회차당 최대 기록할 전투 수
+
+
     public static void RecordWarResult(bool didWin)
     {
-        // 리스트에 새로운 결과를 추가
-        results.Add(didWin);
+        if (results.Count >= maxRecords)
+        {
+            Debug.LogWarning($"전투 기록이 최대 {maxRecords}개에 도달하여 더 이상 기록하지 않습니다");
+            return;
+        }
 
-        // 가장 오래된 기록을 삭제인데 초기화 하지 않을까?
-        //if (results.Count > maxRecords)
-        //{
-        //    results.RemoveAt(0);
-        //}
-        //Debug.Log($"전투 결과 기록됨: {(didWin ? "승리" : "패배")}. 현재 기록 수: {results.Count}개");
+        results.Add(didWin);
+        Debug.Log($"전투 결과 기록됨: {(didWin ? "승리" : "패배")}. 현재 기록 수: {results.Count} / {maxRecords}개");
+    }
+
+    public static void ResetHistory()
+    {
+        results.Clear();
+        Debug.Log("전투 기록(WarHistory)이 초기화");
     }
 }
