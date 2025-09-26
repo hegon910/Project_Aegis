@@ -1005,6 +1005,39 @@ public class DataManager : MonoBehaviour
         return foundData;
     }
 
+    /// <summary>
+    /// 회차와 스토리 번호를 모두 고려하여 메인 이벤트 데이터를 찾습니다.
+    /// </summary>
+    public NewMainEventData GetMainEventDataByStoryNumAndLoop(int storyNum, int loopNum)
+    {
+        // 먼저 LoopNum과 StoryNum이 모두 일치하는 데이터를 찾습니다.
+        var foundData = mainEventData.Values
+                                     .Where(data => data.StoryNum == storyNum && data.LoopNum == loopNum)
+                                     .OrderBy(data => data.id)
+                                     .FirstOrDefault();
+
+        if (foundData != null)
+        {
+            Debug.Log($"[DataManager] LoopNum {loopNum}, StoryNum {storyNum}에 해당하는 이벤트 데이터를 찾았습니다. ID: {foundData.id}");
+            return foundData;
+        }
+
+        // LoopNum이 일치하는 데이터가 없으면 StoryNum만으로 찾습니다.
+        foundData = mainEventData.Values
+                                 .Where(data => data.StoryNum == storyNum)
+                                 .OrderBy(data => data.id)
+                                 .FirstOrDefault();
+
+        if (foundData != null)
+        {
+            Debug.Log($"[DataManager] StoryNum {storyNum}에 해당하는 이벤트 데이터를 찾았습니다 (LoopNum 무시). ID: {foundData.id}, LoopNum: {foundData.LoopNum}");
+            return foundData;
+        }
+
+        Debug.LogError($"[DataManager] LoopNum {loopNum}, StoryNum {storyNum}에 해당하는 이벤트 데이터를 찾을 수 없습니다.");
+        return null;
+    }
+
     private List<ParameterChange> ParseRewardString(string rewardString)
     {
         var changes = new List<ParameterChange>();
@@ -1088,19 +1121,6 @@ public class DataManager : MonoBehaviour
         }
 
         return choice;
-    }
-
-    public FullEndingData FindFullEndingData(string endingString, int karmaRate)
-    {
-        // FullendingDataDict.Values를 순회하며 조건에 맞는 데이터를 찾습니다.
-        var result = FullendingDataDict.Values.FirstOrDefault(data =>
-            data.EndingString == endingString && data.Karma_Rate == karmaRate);
-
-        if (result == null)
-        {
-            Debug.LogWarning($"[DataManager] 조건에 맞는 엔딩 데이터 (String: {endingString}, Karma: {karmaRate})를 찾을 수 없습니다.");
-        }
-        return result;
     }
 
     public void AddEndingMemoriar(string text)

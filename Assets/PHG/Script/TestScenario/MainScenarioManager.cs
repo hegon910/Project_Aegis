@@ -66,17 +66,21 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
     public void BeginScenarioFromStart()
     {
         int currentChapter = GameManager.instance.CurrentChapter;
-        int startStoryNum = GameManager.instance.GetCurrentChapterStartStoryNum();
+        int currentPlaythrough = DataManager.Instance.PlayerData.playthroughCount;
+        int startStoryNum = GetPlaythroughSpecificStoryNum(currentChapter, currentPlaythrough);
 
         if (startStoryNum > 0)
         {
-            // 1. StoryNum으로 첫 번째 데이터 노드를 찾아옵니다.
-            NewMainEventData firstNode = DataManager.Instance.GetMainEventDataByStoryNum(startStoryNum);
+            // 1. 회차별 LoopNum 계산
+            int loopNum = GetPlaythroughSpecificLoopNum(currentPlaythrough);
+            
+            // 2. StoryNum과 LoopNum으로 첫 번째 데이터 노드를 찾아옵니다.
+            NewMainEventData firstNode = DataManager.Instance.GetMainEventDataByStoryNumAndLoop(startStoryNum, loopNum);
 
             // 2. 찾아온 노드가 유효하고, 그 노드의 ID가 있다면
             if (firstNode != null && firstNode.id > 0)
             {
-                Debug.Log($"[MainScenarioManager] {currentChapter}챕터 스토리를 시작합니다. (시작 StoryNum: {startStoryNum}, 시작 ID: {firstNode.id})");
+                Debug.Log($"[MainScenarioManager] {currentChapter}챕터 {currentPlaythrough}회차 스토리를 시작합니다. (시작 StoryNum: {startStoryNum}, 시작 ID: {firstNode.id}, 찾은 LoopNum: {firstNode.LoopNum}, 요청한 LoopNum: {loopNum})");
                 uiAnimator.ShowMainStoryView();
                 IsScenarioRunning = true;
                 mainStoryUI.panelRoot.SetActive(true);
@@ -86,15 +90,39 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
             }
             else
             {
-                Debug.LogWarning($"[MainScenarioManager] StoryNum {startStoryNum}에 해당하는 데이터를 찾았으나, 유효한 ID가 없습니다. 스토리 단계를 건너뜁니다.");
+                Debug.LogWarning($"[MainScenarioManager] StoryNum {startStoryNum}, LoopNum {currentPlaythrough}에 해당하는 데이터를 찾았으나, 유효한 ID가 없습니다. 스토리 단계를 건너뜁니다.");
                 EndScenario();
             }
         }
         else
         {
-            Debug.LogWarning($"[MainScenarioManager] {currentChapter}챕터에 해당하는 시작 StoryNum을 찾을 수 없습니다. 스토리 단계를 건너뜁니다.");
+            Debug.LogWarning($"[MainScenarioManager] {currentChapter}챕터 {currentPlaythrough}회차에 해당하는 시작 StoryNum을 찾을 수 없습니다. 스토리 단계를 건너뜁니다.");
             EndScenario();
         }
+    }
+
+    /// <summary>
+    /// 회차별로 다른 스토리 번호를 반환합니다.
+    /// </summary>
+    private int GetPlaythroughSpecificStoryNum(int chapter, int playthrough)
+    {
+        // 기본 스토리 번호 (1회차용)
+        int baseStoryNum = GameManager.instance.GetCurrentChapterStartStoryNum();
+        
+        // 회차별 StoryNum 계산
+        int playthroughStoryNum = baseStoryNum + (playthrough - 1) * 9; // 1회차=10000001, 2회차=10000010, 3회차=10000019
+        
+        Debug.Log($"[MainScenarioManager] 회차별 스토리 번호 계산: 챕터={chapter}, 회차={playthrough}, 기본={baseStoryNum}, 최종={playthroughStoryNum}");
+        
+        return playthroughStoryNum;
+    }
+    
+    /// <summary>
+    /// 회차별로 다른 LoopNum을 반환합니다.
+    /// </summary>
+    private int GetPlaythroughSpecificLoopNum(int playthrough)
+    {
+        return 100 + playthrough; // 1회차=101, 2회차=102, 3회차=103...
     }
 
     private void EndScenario()

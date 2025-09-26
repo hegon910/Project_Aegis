@@ -241,6 +241,20 @@ public class MultiEndingSystem : MonoBehaviour
     }
 
     /// <summary>
+    /// 전투 결과에 따른 카르마 포인트 계산 (루프 시스템용)
+    /// </summary>
+    public int GetKarmaPoints(GameOutcome outcome)
+    {
+        return outcome switch
+        {
+            GameOutcome.Victory => victoryPoint,
+            GameOutcome.Defeat => defeatPoint,
+            GameOutcome.Draw => drawPoint,
+            _ => 0
+        };
+    }
+
+    /// <summary>
     /// 현재 전세 수치에 따른 전투 결과 결정
     /// </summary>
     public GameOutcome DetermineBattleOutcome(int warSituation)
@@ -398,9 +412,25 @@ public class MultiEndingSystem : MonoBehaviour
 
     /// <summary>
     /// 데이터 테이블에서 직접 엔딩 시퀀스의 첫 번째 ID를 결정합니다
+    /// GameManager의 엔딩 분기 로직과 연동
     /// </summary>
     public int GetEndingEventID()
     {
+        // GameManager에서 결정된 엔딩 ID를 우선 사용
+        if (DataManager.Instance?.PlayerData != null)
+        {
+            int gameManagerEndingId = DataManager.Instance.PlayerData.lastEndingId;
+            Debug.Log($"[MultiEndingSystem] GameManager에서 결정된 엔딩 ID: {gameManagerEndingId}");
+            
+            // GameManager 엔딩 ID를 실제 엔딩 이벤트 ID로 변환
+            int actualEndingEventId = ConvertGameManagerEndingIdToEventId(gameManagerEndingId);
+            if (actualEndingEventId != -1)
+            {
+                return actualEndingEventId;
+            }
+        }
+        
+        // 폴백: 기존 로직 사용
         var endingType = DetermineEndingType();
         var endingRoute = DetermineEndingRoute();
         var currentKarma = CalculateCurrentKarma();
@@ -439,6 +469,34 @@ public class MultiEndingSystem : MonoBehaviour
         Debug.Log($"[MultiEndingSystem] 엔딩 시퀀스 첫 번째 ID 결정: {firstEndingID} (타입: {endingType}, 루트: {endingRoute}, 카르마: {currentKarma}, 카테고리: {karmaCategory})");
         
         return firstEndingID;
+    }
+    
+    /// <summary>
+    /// GameManager의 엔딩 ID를 실제 엔딩 이벤트 ID로 변환
+    /// </summary>
+    private int ConvertGameManagerEndingIdToEventId(int gameManagerEndingId)
+    {
+        // GameManager 엔딩 ID -> 실제 엔딩 이벤트 ID 매핑
+        // 문서 기준: 1001(일반), 1002(2회차 진엔딩), 1003(3회차 진엔딩)
+        switch (gameManagerEndingId)
+        {
+            case 1001: // 1회차 일반 엔딩
+                // 전세 수치에 따라 다른 엔딩 시퀀스 선택
+                var currentKarma = CalculateCurrentKarma();
+                if (currentKarma >= 81) return 50001; // 승리 엔딩
+                if (currentKarma >= 20) return 50007; // 중간 엔딩
+                return 50013; // 패배 엔딩
+                
+            case 1002: // 2회차 진엔딩 (휴전 엔딩)
+                return 50078; // 무승부 루트 시작 ID
+                
+            case 1003: // 3회차 진엔딩 (히든 엔딩)
+                return 50078; // 현재는 무승부 루트와 동일 (추후 확장 가능)
+                
+            default:
+                Debug.LogWarning($"[MultiEndingSystem] 알 수 없는 GameManager 엔딩 ID: {gameManagerEndingId}");
+                return -1;
+        }
     }
     
     /// <summary>
@@ -525,6 +583,11 @@ public class MultiEndingSystem : MonoBehaviour
         };
     }
 
+    /// <summary>
+    /// 데이터 테이블에서 직접 FullEndingData를 가져옵니다
+    /// </summary>
+    public FullEndingData GetFullEndingData()
+    {
         if (DataManager.Instance.FullendingDataDict == null)
         {
             Debug.LogError("[MultiEndingSystem] FullendingDataDict가 초기화되지 않았습니다.");
@@ -556,6 +619,37 @@ public class MultiEndingSystem : MonoBehaviour
         }
         
         return fullEndingData;
+    }
+
+    /// <summary>
+    /// 호환성을 위한 GetFullEndingData 오버로드 (EndingData 매개변수 사용)
+    /// </summary>
+    public FullEndingData GetFullEndingData(EndingData selectedEnding)
+    {
+        if (selectedEnding == null)
+        {
+            Debug.LogWarning("[MultiEndingSystem] selectedEnding이 null입니다. 기본 GetFullEndingData를 호출합니다.");
+            return GetFullEndingData();
+        }
+
+        if (DataManager.Instance == null)
+        {
+            Debug.LogError("[MultiEndingSystem] DataManager.Instance가 null입니다.");
+            return null;
+        }
+
+        string endingStringCode = ConvertRouteToEndingStringCode(selectedEnding.route);
+        int karmaRateCode = ConvertBranchToKarmaRateCode(selectedEnding.branch);
+
+        if (int.TryParse(endingStringCode, out int endingId))
+        {
+            return DataManager.Instance.GetEndingData(endingId);
+        }
+        else
+        {
+            Debug.LogError($"[MultiEndingSystem] 엔딩 코드 '{endingStringCode}'를 정수로 변환할 수 없습니다.");
+            return null;
+        }
     }
 
     private int ConvertBranchToKarmaRateCode(int branch)
