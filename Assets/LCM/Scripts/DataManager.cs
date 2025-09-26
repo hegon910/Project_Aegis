@@ -1077,6 +1077,19 @@ public class DataManager : MonoBehaviour
         return choice;
     }
 
+    public FullEndingData FindFullEndingData(string endingString, int karmaRate)
+    {
+        // FullendingDataDict.Values를 순회하며 조건에 맞는 데이터를 찾습니다.
+        var result = FullendingDataDict.Values.FirstOrDefault(data =>
+            data.EndingString == endingString && data.Karma_Rate == karmaRate);
+
+        if (result == null)
+        {
+            Debug.LogWarning($"[DataManager] 조건에 맞는 엔딩 데이터 (String: {endingString}, Karma: {karmaRate})를 찾을 수 없습니다.");
+        }
+        return result;
+    }
+
     public void AddEndingMemoriar(string text)
     {
         // 중복을 방지하거나 필요한 로직을 추가할 수 있습니다.

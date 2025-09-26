@@ -36,7 +36,7 @@ public class GameSessionManager : MonoBehaviour
         {
             // 현재 챕터와 이벤트 기록을 가져와 함께 저장
             int currentChapter = DataManager.Instance.PlayerData.currentChapter;
-            List<SimpleEventRecord> eventList = SimpleEventHistoryManager.Instance.GetEventsByChapter(currentChapter);
+            List<SimpleEventRecord> eventList = SimpleEventHistoryManager.Instance.GetEventHistory();
 
             SimpleEventHistoryManager.Instance.RecordPlaythrough(playDate, playDurationString, currentChapter, outcome, eventList);
         }
