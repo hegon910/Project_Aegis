@@ -588,21 +588,37 @@ public class GameManager : MonoBehaviour
     //  전투 종료 시 호출되는 함수 변경
     private void HandleBattleEnd(string resultLog)
     {
-        // 결과 텍스트 설정
         if (battleResultText != null)
         {
-            battleResultText.text = resultLog; // BattleTurnManager에서 "승리" 또는 "패배" 텍스트를 넘겨주는 것을 가정
+            battleResultText.text = resultLog; 
         }
 
-        // 스탯을 추가 혹은 감소 조정하는 것으로 변경
-        // if (resultLog.Contains("승리")) PlayerStats.Instance.ApplyChanges(new List<ParameterChange> { new ParameterChange { parameterType = ParameterType.전황, valueChange = +20 } });
-        // else if (resultLog.Contains("패배")) PlayerStats.Instance.ApplyChanges(new List<ParameterChange> { new ParameterChange { parameterType = ParameterType.전황, valueChange = -20 } });
-        // else PlayerStats.Instance.ApplyChanges(new List<ParameterChange> { new ParameterChange { parameterType = ParameterType.전황, valueChange = 0 } });
+        string outcome = ParseOutcome(resultLog);
+        int currentChapter = DataManager.Instance.PlayerData.currentChapter;
 
-        // OnStateFinished()를 바로 호출하는 대신, InBattleResult 상태로 직접 변경
+        if (SimpleEventHistoryManager.Instance != null)
+        {
+            SimpleEventHistoryManager.Instance.RecordChapterOutcome(currentChapter, outcome);
+            Debug.Log($"[GameManager] 챕터 {currentChapter}의 전투 결과({outcome})를 기록했습니다.");
+        }
         ChangeState(GameState.InBattleResult);
     }
-
+    private string ParseOutcome(string resultLog)
+    {
+        if (resultLog.Contains("승리"))
+        {
+            return "승리";
+        }
+        if (resultLog.Contains("패배"))
+        {
+            return "패배";
+        }
+        if (resultLog.Contains("무승부"))
+        {
+            return "무승부";
+        }
+        return "알 수 없음"; // 예외 처리
+    }
     // BattleResultPanel의 버튼이 호출할 공개 함수
     public void OnBattleResultConfirmed()
     {
