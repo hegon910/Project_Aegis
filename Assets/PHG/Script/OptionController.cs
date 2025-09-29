@@ -163,7 +163,7 @@ public class OptionController : MonoBehaviour
         if (DataManager.Instance?.PlayerData?.settings != null)
         {
             DataManager.Instance.PlayerData.settings.bgmVolume = value;
-            DataManager.Instance.SaveLocal();
+            DataManager.Instance.SaveData();
         }
         
         // 실제 오디오 볼륨 적용
@@ -177,7 +177,7 @@ public class OptionController : MonoBehaviour
         if (DataManager.Instance?.PlayerData?.settings != null)
         {
             DataManager.Instance.PlayerData.settings.sfxVolume = value;
-            DataManager.Instance.SaveLocal();
+            DataManager.Instance.SaveData();
         }
         
         // 실제 오디오 볼륨 적용

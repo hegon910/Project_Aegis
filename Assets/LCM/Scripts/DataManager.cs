@@ -100,6 +100,28 @@ public class DataManager : MonoBehaviour
     private void Start() /// 9.9. 이학권 추가
     {
         FirebaseAuth.DefaultInstance.StateChanged += OnAuthStateChanged;
+        
+        // FirebaseManager의 로그인 타입 복원을 기다린 후 동기화 시도
+        StartCoroutine(WaitForFirebaseManagerAndTrySync());
+    }
+    
+    private System.Collections.IEnumerator WaitForFirebaseManagerAndTrySync()
+    {
+        // FirebaseManager가 초기화될 때까지 대기
+        yield return new WaitUntil(() => FirebaseManager.Instance != null);
+        
+        // FirebaseManager 초기화 완료 이벤트 구독
+        bool initialized = false;
+        System.Action onInitialized = () => initialized = true;
+        FirebaseManager.OnFirebaseManagerInitialized += onInitialized;
+        
+        // 초기화 완료까지 대기
+        yield return new WaitUntil(() => initialized);
+        
+        // 이벤트 구독 해제
+        FirebaseManager.OnFirebaseManagerInitialized -= onInitialized;
+        
+        Debug.Log("[DataManager] FirebaseManager 초기화 완료, 동기화 시도");
         TrySyncIfLoggedIn();
     }
 
@@ -111,11 +133,29 @@ public class DataManager : MonoBehaviour
     private void TrySyncIfLoggedIn() /// 9.9. 이학권 추가
     {
         var user = FirebaseAuth.DefaultInstance.CurrentUser;
-        if (user != null && !_hasSyncedWithServer)
+        Debug.Log($"[DataManager] TrySyncIfLoggedIn 호출 - User: {user?.UserId}, HasSynced: {_hasSyncedWithServer}, IsGuest: {FirebaseManager.IsGuestAccount}, LoginType: {FirebaseManager.CurrentLoginType}");
+        
+        if (user != null && !_hasSyncedWithServer && !FirebaseManager.IsGuestAccount)
         {
+            Debug.Log("[DataManager] 서버 동기화 시작");
             _hasSyncedWithServer = true;
             StartCoroutine(SyncWithServer(user.UserId));
         }
+        else
+        {
+            if (user == null) Debug.Log("[DataManager] Firebase User가 null입니다");
+            if (_hasSyncedWithServer) Debug.Log("[DataManager] 이미 서버 동기화를 완료했습니다");
+            if (FirebaseManager.IsGuestAccount) Debug.Log("[DataManager] 게스트 계정이므로 서버 동기화를 건너뜁니다");
+        }
+    }
+
+    /// <summary>
+    /// Firebase 로그인 완료 시 호출되는 메서드
+    /// </summary>
+    public void OnFirebaseLoginCompleted()
+    {
+        Debug.Log("[DataManager] Firebase 로그인 완료 알림 수신");
+        TrySyncIfLoggedIn();
     }
 
     /// <summary>
@@ -427,7 +467,7 @@ public class DataManager : MonoBehaviour
         }
 
         Debug.Log($"[DataManager] 엔딩 기록됨: ID {endingId}, 직전 엔딩 ID: {PlayerData.lastEndingId}");
-        SaveLocal();
+        SaveData();
     }
 
     /// <summary>
@@ -653,10 +693,12 @@ public class DataManager : MonoBehaviour
     {
         if (IsGuestMode())
         {
+            Debug.Log("[DataManager] 게스트 모드: 로컬 전용 저장");
             SaveLocalOnly();
         }
         else
         {
+            Debug.Log("[DataManager] 정식 계정: 로컬 저장 (서버 동기화는 별도 처리)");
             SaveLocal();
         }
     }
@@ -670,7 +712,7 @@ public class DataManager : MonoBehaviour
         // PlayerData가 null이 아닐 때만 저장 로직을 실행하여 예외를 방지합니다.
         if (PlayerData != null && !_suppressSavesUntilGameplay)
         {
-            SaveLocal();
+            SaveData();
         }
     }
 

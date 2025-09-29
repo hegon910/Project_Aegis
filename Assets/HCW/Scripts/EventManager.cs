@@ -267,7 +267,7 @@ public class EventManager : MonoBehaviour
         subEventChainLength = 0; // 새 사이클 시작 시 체인 길이 리셋
         currentState = EventManagerState.InCycle;
 
-        DataManager.Instance.SaveLocal();
+        DataManager.Instance.SaveData();
 
 
         Debug.Log($"[EventManager] 사이클 시작 (회차: {DataManager.Instance.PlayerData.playthroughCount}). 최종 플레이리스트: {DataManager.Instance.PlayerData.currentPlaylist.Count}개 (목표: {totalEventsPerCycle}개)");
@@ -331,7 +331,7 @@ public class EventManager : MonoBehaviour
 
             // 3. 변경된 인덱스를 포함하여 즉시 저장합니다.
             Debug.Log($"다음 이벤트 진행. 인덱스 {DataManager.Instance.PlayerData.eventPlaylistIndex}로 변경 후 저장.");
-            DataManager.Instance.SaveLocal();
+            DataManager.Instance.SaveData();
 
 
             // 4. 준비된 이벤트를 발생시킵니다. (ID 임계치 대신 데이터 존재로 분류)
@@ -367,7 +367,7 @@ public class EventManager : MonoBehaviour
             // 체인 내에서 다음 서브이벤트로 진행할 때마다 체인 길이와 플레이리스트 인덱스 증가
             subEventChainLength++;
             DataManager.Instance.PlayerData.eventPlaylistIndex++;
-            DataManager.Instance.SaveLocal(); // 인덱스 변경사항 저장
+            DataManager.Instance.SaveData(); // 인덱스 변경사항 저장
         }
 
         Debug.Log($"[EventManager] 서브이벤트 체인 길이: {subEventChainLength} (전체 플레이리스트: {DataManager.Instance.PlayerData.eventPlaylistIndex}/{DataManager.Instance.PlayerData.currentPlaylist.Count})");

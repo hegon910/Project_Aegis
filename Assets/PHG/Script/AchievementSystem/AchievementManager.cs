@@ -204,7 +204,7 @@ public class AchievementManager : MonoBehaviour
         
         if (autoSaveOnUpdate)
         {
-            DataManager.Instance.SaveLocal();
+            DataManager.Instance.SaveData();
         }
     }
     

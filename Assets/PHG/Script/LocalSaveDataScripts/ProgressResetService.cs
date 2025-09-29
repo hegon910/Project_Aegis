@@ -74,7 +74,7 @@ public static class ProgressResetService
             prevSuppress = (bool)suppressField.GetValue(dm);
             suppressField.SetValue(dm, false);
         }
-        dm.SaveLocal();
+        dm.SaveData();
         if (suppressField != null)
         {
             suppressField.SetValue(dm, prevSuppress);
