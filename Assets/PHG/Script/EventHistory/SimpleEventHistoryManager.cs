@@ -53,21 +53,23 @@ public class SimpleEventHistoryManager : MonoBehaviour
     /// <summary>
     /// 메인이벤트 기록 (Ending_Memoriar 기준)
     /// </summary>
-    public void RecordMainEvent(int eventId, string dialogue, string selectedChoice, bool isEndingMemoriar, string playDate, string playDuration)
+    public void RecordMainEvent(int eventId, string dialogue, string selectedChoice, bool isEndingMemoriar)
     {
         if (!enableRecording) return;
 
+        // SimpleEventRecord는 dialogue, choice, isEndingMemoriar 등의 핵심 정보만 저장합니다.
         var record = new SimpleEventRecord(
-            eventId, 
-            DataManager.Instance.PlayerData.currentChapter, 
-            dialogue, 
-            selectedChoice, 
+            eventId,
+            DataManager.Instance.PlayerData.currentChapter,
+            dialogue,
+            selectedChoice,
             isEndingMemoriar);
-        
+
         eventHistory.Add(record);
         Debug.Log($"[SimpleEventHistoryManager] 메인이벤트 기록: {dialogue} (Ending_Memoriar: {isEndingMemoriar})");
-        
-        // 로컬 저장
+
+        // 이벤트가 기록될 때마다 저장하는 것은 파일 I/O 측면에서 비효율적일 수 있습니다.
+        // 하지만 현재 로직을 유지한다면:
         if (enableLocalSave)
         {
             SaveHistory();
@@ -82,26 +84,6 @@ public class SimpleEventHistoryManager : MonoBehaviour
         playthroughHistory.Add(record);
 
         Debug.Log($"[SimpleEventHistoryManager] 플레이 기록 저장: {date}, {duration}, 결과: {outcome}");
-
-        if (enableLocalSave)
-        {
-            SaveHistory();
-        }
-    }
-
-    public void RecordMainEvent(int eventId, string dialogue, string selectedChoice, string playDate, string playDuration, bool isEndingMemoriar)
-    {
-        if (!enableRecording) return;
-
-        // 여기서 SimpleEventRecord(int id, int ch, string dialogue, string choice, bool isEndingMemoriar) 생성자 사용
-        var record = new SimpleEventRecord(
-            eventId,
-            DataManager.Instance.PlayerData.currentChapter,
-            dialogue,
-            selectedChoice,
-            isEndingMemoriar);
-
-        eventHistory.Add(record);
 
         if (enableLocalSave)
         {
