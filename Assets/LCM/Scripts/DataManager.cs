@@ -1169,6 +1169,7 @@ public class DataManager : MonoBehaviour
         var fullEndingData = new FullEndingData
         {
             ID = rawData.ID,
+            PlayThrough = rawData.PlayThrough,
             EndingString = rawData.EndingString,
             Karma_Rate = rawData.Karma_Rate,
             Text_Kr = rawData.Text_Kr,

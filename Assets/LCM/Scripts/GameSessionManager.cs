@@ -34,11 +34,11 @@ public class GameSessionManager : MonoBehaviour
         // SimpleEventHistoryManager에 플레이 기록을 전달하여 저장
         if (SimpleEventHistoryManager.Instance != null)
         {
-            // 현재 챕터와 이벤트 기록을 가져와 함께 저장
-            int currentChapter = DataManager.Instance.PlayerData.currentChapter;
+            // 현재 회차와 이벤트 기록을 가져와 함께 저장
+            int playthroughCount = DataManager.Instance.PlayerData.playthroughCount;
             List<SimpleEventRecord> eventList = SimpleEventHistoryManager.Instance.GetEventHistory();
 
-            SimpleEventHistoryManager.Instance.RecordPlaythrough(playDate, playDurationString, currentChapter, outcome, eventList);
+            SimpleEventHistoryManager.Instance.RecordPlaythrough(playDate, playDurationString, playthroughCount, outcome, eventList);
         }
 
     }

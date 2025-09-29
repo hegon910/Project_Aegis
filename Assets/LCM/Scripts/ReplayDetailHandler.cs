@@ -29,7 +29,7 @@ public class ReplayDetailHandler : MonoBehaviour
 
         playDateText.text = $"플레이 날짜: {record.playDate}";
         playDurationText.text = $"플레이 시간: {record.playDuration}";
-        playthroughInfoText.text = $"회차 정보: {record.finalChapter} {record.outcome}";
+        playthroughInfoText.text = $"회차 정보: {record.playthroughCount}회차 {record.outcome}";
 
         // 결과와 이벤트 기록 섹션 업데이트
         UpdateChapterResults(record.eventHistory);
