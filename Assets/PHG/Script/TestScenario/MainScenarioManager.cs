@@ -202,6 +202,9 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
             mainStoryUI.characterImage.color = Color.clear;
         }
 
+        // 음향 재생 (BGM과 SFX)
+        PlayEventAudio(currentNode);
+
         if (typingCoroutine != null) StopCoroutine(typingCoroutine);
         typingCoroutine = StartCoroutine(TypeText(currentNode.dialogue));
 
@@ -316,6 +319,39 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
             yield return new WaitForSeconds(typingSpeed);
         }
         typingCoroutine = null;
+    }
+
+    // 현재 재생 중인 BGM ID를 추적
+    private int currentBGMId = 0;
+    
+    /// <summary>
+    /// 이벤트 데이터에서 음향을 재생합니다.
+    /// </summary>
+    /// <param name="eventData">이벤트 데이터</param>
+    private void PlayEventAudio(NewMainEventData eventData)
+    {
+        if (eventData == null) return;
+
+        // BGM 재생 (같은 BGM이 아닌 경우에만 재생)
+        if (eventData.bgData != null && eventData.bgData.BG_ID != 0)
+        {
+            if (AudioManager.Instance != null && currentBGMId != eventData.bgData.BG_ID)
+            {
+                AudioManager.Instance.PlayBGMByID(eventData.bgData.BG_ID);
+                currentBGMId = eventData.bgData.BG_ID;
+                Debug.Log($"[MainScenarioManager] BGM 재생: {eventData.bgData.BGName} (ID: {eventData.bgData.BG_ID})");
+            }
+        }
+
+        // SFX 재생
+        if (eventData.sfxData != null && eventData.sfxData.SFX_ID != 0)
+        {
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlaySFXByID(eventData.sfxData.SFX_ID);
+                Debug.Log($"[MainScenarioManager] SFX 재생: {eventData.sfxData.SFXName} (ID: {eventData.sfxData.SFX_ID})");
+            }
+        }
     }
 
     // IChoiceHandler 인터페이스의 나머지 함수들

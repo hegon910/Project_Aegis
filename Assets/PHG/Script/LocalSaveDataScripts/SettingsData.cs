@@ -15,6 +15,8 @@ public class SettingsData
 {
     public List<int> selectedSubEventPackIDs; // 여러 ID를 저장할 수 있도록 List<int>로 변경
     public GameSettings settings;
+    // 지휘관 해금 목록을 설정에 보관하여 새 게임 시에도 보존되도록 함
+    public List<int> unlockedCommanderTraitIds;
 
     /// <summary>
     /// 새 설정 파일 생성 시 기본값
@@ -23,5 +25,7 @@ public class SettingsData
     {
         selectedSubEventPackIDs = new List<int>(); // 빈 리스트로 초기화
         settings = new GameSettings();
+        // 기본값: Devost(0)만 해금
+        unlockedCommanderTraitIds = new List<int> { 0 };
     }
 }

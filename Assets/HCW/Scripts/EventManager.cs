@@ -375,9 +375,41 @@ public class EventManager : MonoBehaviour
         var data = DataManager.Instance.FullSubEvents.FirstOrDefault(e => e.ID == index);
         if (data != null)
         {
+            // 서브이벤트 음향 재생
+            PlaySubEventAudio(data);
+            
             OnSubEventReady?.Invoke(data);
             Debug.Log($"서브 이벤트 표시: (Index: {data.ID})");
             currentState = EventManagerState.InSubEvent;
+        }
+    }
+
+    /// <summary>
+    /// 서브이벤트 데이터에서 음향을 재생합니다.
+    /// </summary>
+    /// <param name="eventData">서브이벤트 데이터</param>
+    private void PlaySubEventAudio(FullSubEventData eventData)
+    {
+        if (eventData == null) return;
+
+        // BGM 재생
+        if (eventData.bgData != null && eventData.bgData.BG_ID != 0)
+        {
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlayBGMByID(eventData.bgData.BG_ID);
+                Debug.Log($"[EventManager] 서브이벤트 BGM 재생: {eventData.bgData.BGName} (ID: {eventData.bgData.BG_ID})");
+            }
+        }
+
+        // SFX 재생
+        if (eventData.sfxData != null && eventData.sfxData.SFX_ID != 0)
+        {
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlaySFXByID(eventData.sfxData.SFX_ID);
+                Debug.Log($"[EventManager] 서브이벤트 SFX 재생: {eventData.sfxData.SFXName} (ID: {eventData.sfxData.SFX_ID})");
+            }
         }
     }
 

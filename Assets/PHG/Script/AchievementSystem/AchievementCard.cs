@@ -194,7 +194,7 @@ public class AchievementCard : MonoBehaviour
     /// <summary>
     /// 보상 버튼 클릭 이벤트
     /// </summary>
-    private void OnRewardButtonClicked()
+    public void OnRewardButtonClicked()
     {
         if (Achievement.isCompleted && !Achievement.isRewardClaimed)
         {

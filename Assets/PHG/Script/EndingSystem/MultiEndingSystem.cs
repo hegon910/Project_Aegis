@@ -487,11 +487,33 @@ public class MultiEndingSystem : MonoBehaviour
                 if (currentKarma >= 20) return 50007; // 중간 엔딩
                 return 50013; // 패배 엔딩
                 
-            case 1002: // 2회차 진엔딩 (휴전 엔딩)
-                return 50078; // 무승부 루트 시작 ID
-                
-            case 1003: // 3회차 진엔딩 (히든 엔딩)
-                return 50078; // 현재는 무승부 루트와 동일 (추후 확장 가능)
+            case 1002: // 2회차 진엔딩 (기획: 승리 루트 조건 충족 시)
+                {
+                    // 전세(카르마) 기준으로 승리 루트의 시작 ID를 선택
+                    var currentKarmaForTrue2 = CalculateCurrentKarma();
+                    if (currentKarmaForTrue2 >= 81) return 50001; // 승리-상 (81+)
+                    if (currentKarmaForTrue2 >= 20) return 50007; // 승리-중 (20-80)
+                    return 50013; // 승리-하 (<=19)
+                }
+            case 1003: // 3회차 진엔딩 (기획: 점수/카르마 충족 시)
+                {
+                    // 3회차 이상은 MultiEndingSystem의 루트 결정 사용: Victory/Truce/Defeat 각각에 맞는 시작 ID 산출
+                    var route = DetermineEndingRoute();
+                    var karma = CalculateCurrentKarma();
+                    if (route == EndingRoute.Victory)
+                    {
+                        if (karma >= 81) return 50001;
+                        if (karma >= 20) return 50007;
+                        return 50013;
+                    }
+                    if (route == EndingRoute.Truce)
+                    {
+                        if (karma >= 50) return 50078; // 무승부-상
+                        return 50085; // 무승부-하
+                    }
+                    // 패배 루트는 스프레드시트 미명시: 보수적으로 승리-중과 동일 시퀀스로 폴백
+                    return 50007;
+                }
                 
             default:
                 Debug.LogWarning($"[MultiEndingSystem] 알 수 없는 GameManager 엔딩 ID: {gameManagerEndingId}");

@@ -115,6 +115,10 @@ public class OptionController : MonoBehaviour
         UpdateButtonStates();
     }
     
+    // 임시 볼륨 값 저장 (CONFIRM 버튼을 눌렀을 때만 실제 저장)
+    private float tempBGMVolume;
+    private float tempSFXVolume;
+    
     private void InitializeUI()
     {
         // 슬라이더 초기값 설정
@@ -123,14 +127,18 @@ public class OptionController : MonoBehaviour
             var settings = DataManager.Instance.PlayerData.settings;
             bgmVolumeSlider.value = settings.bgmVolume;
             sfxVolumeSlider.value = settings.sfxVolume;
+            tempBGMVolume = settings.bgmVolume;
+            tempSFXVolume = settings.sfxVolume;
         }
         else
         {
             bgmVolumeSlider.value = 1f;
             sfxVolumeSlider.value = 1f;
+            tempBGMVolume = 1f;
+            tempSFXVolume = 1f;
         }
         
-        // 슬라이더 이벤트 연결
+        // 슬라이더 이벤트 연결 (임시 값만 업데이트)
         bgmVolumeSlider.onValueChanged.AddListener(OnBGMVolumeChanged);
         sfxVolumeSlider.onValueChanged.AddListener(OnSFXVolumeChanged);
         
@@ -160,13 +168,10 @@ public class OptionController : MonoBehaviour
     
     private void OnBGMVolumeChanged(float value)
     {
-        if (DataManager.Instance?.PlayerData?.settings != null)
-        {
-            DataManager.Instance.PlayerData.settings.bgmVolume = value;
-            DataManager.Instance.SaveData();
-        }
+        // 임시 값만 업데이트 (저장하지 않음)
+        tempBGMVolume = value;
         
-        // 실제 오디오 볼륨 적용
+        // 실제 오디오 볼륨 적용 (미리보기용)
         AudioManager.Instance?.SetBGMVolume(value);
         
         UpdateVolumeTexts();
@@ -174,13 +179,10 @@ public class OptionController : MonoBehaviour
     
     private void OnSFXVolumeChanged(float value)
     {
-        if (DataManager.Instance?.PlayerData?.settings != null)
-        {
-            DataManager.Instance.PlayerData.settings.sfxVolume = value;
-            DataManager.Instance.SaveData();
-        }
+        // 임시 값만 업데이트 (저장하지 않음)
+        tempSFXVolume = value;
         
-        // 실제 오디오 볼륨 적용
+        // 실제 오디오 볼륨 적용 (미리보기용)
         AudioManager.Instance?.SetSFXVolume(value);
         
         UpdateVolumeTexts();
@@ -280,6 +282,43 @@ public class OptionController : MonoBehaviour
         
         color.a = endAlpha;
         text.color = color;
+    }
+    
+    /// <summary>
+    /// CONFIRM 버튼을 눌렀을 때 호출 - 임시 볼륨 값을 실제로 저장
+    /// </summary>
+    public void OnConfirmButtonClicked()
+    {
+        if (DataManager.Instance?.PlayerData?.settings != null)
+        {
+            DataManager.Instance.PlayerData.settings.bgmVolume = tempBGMVolume;
+            DataManager.Instance.PlayerData.settings.sfxVolume = tempSFXVolume;
+            DataManager.Instance.SaveData();
+            Debug.Log($"[OptionController] 볼륨 설정 저장됨 - BGM: {tempBGMVolume:F2}, SFX: {tempSFXVolume:F2}");
+        }
+    }
+    
+    /// <summary>
+    /// 옵션 창이 닫힐 때 호출 - 원래 값으로 되돌리기
+    /// </summary>
+    public void OnOptionsClosed()
+    {
+        // 원래 저장된 값으로 되돌리기
+        if (DataManager.Instance?.PlayerData?.settings != null)
+        {
+            var settings = DataManager.Instance.PlayerData.settings;
+            bgmVolumeSlider.value = settings.bgmVolume;
+            sfxVolumeSlider.value = settings.sfxVolume;
+            tempBGMVolume = settings.bgmVolume;
+            tempSFXVolume = settings.sfxVolume;
+            
+            // 오디오 볼륨도 원래 값으로 되돌리기
+            AudioManager.Instance?.SetBGMVolume(settings.bgmVolume);
+            AudioManager.Instance?.SetSFXVolume(settings.sfxVolume);
+            
+            UpdateVolumeTexts();
+            Debug.Log("[OptionController] 옵션 창 닫힘 - 원래 값으로 되돌림");
+        }
     }
     
     // 외부에서 호출할 수 있는 메서드들

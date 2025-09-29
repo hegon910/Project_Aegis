@@ -65,6 +65,10 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     public void BeginFlow(bool startFirstTurn = true)
     {
         cancelTransitions = false; // 새 플로우 시작 시 코루틴 허용
+        
+        // BGM 상태 리셋
+        isParameterEventBGMPlaying = false;
+        
         if (parameterUIController != null)
         {
             parameterUIController.InitializeAndDisplayStats();
@@ -129,6 +133,9 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             Debug.LogError($"ID({eventId})에 해당하는 파라미터 이벤트 데이터를 찾을 수 없습니다.");
             return;
         }
+
+        // 파라미터 이벤트 BGM 재생 (CommandCenter)
+        PlayParameterEventBGM();
 
         string characterName = "";
 
@@ -407,7 +414,17 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             // [신규] 파라미터 이벤트 완료 기록
             DataManager.Instance.PlayerData.completedEventIds.Add(currentParameterEventData.id);
 
-            StartCoroutine(TransitionToNextEvent(outcome.outcomeText));
+            // 다음 이벤트가 파라미터 이벤트가 아닐 때만 BGM 페이드 아웃
+            if (IsNextEventParameterEvent())
+            {
+                // 다음 이벤트도 파라미터 이벤트이므로 BGM 페이드 아웃 없이 전환
+                StartCoroutine(TransitionToNextEvent(outcome.outcomeText));
+            }
+            else
+            {
+                // 다음 이벤트가 서브이벤트이므로 BGM 페이드 아웃 후 전환
+                StartCoroutine(FadeOutBGMAndTransition(outcome.outcomeText));
+            }
         }
         else if (currentSubEventData != null)
         {
@@ -417,13 +434,102 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             var choice = isRightChoice ? currentSubEventData.rightChoice : currentSubEventData.leftChoice;
             string resultText = choice?.outcome?.outcomeText ?? "";
             
-            // 파라미터 이벤트와 동일한 타이밍으로 결과 표시 후 다음 이벤트 진행
-            StartCoroutine(TransitionToNextSubEvent(resultText, isRightChoice));
+            // 서브이벤트 완료 시 BGM 페이드 아웃
+            StartCoroutine(FadeOutBGMAndTransitionToSubEvent(resultText, isRightChoice));
         }
         else
         {
             Debug.LogWarning("[UIFlowSimulator] HandleChoice: 현재 이벤트 데이터가 null입니다.");
         }
+    }
+
+    // 파라미터 이벤트 BGM 재생 상태 추적
+    private bool isParameterEventBGMPlaying = false;
+    
+    /// <summary>
+    /// 파라미터 이벤트용 BGM을 재생합니다 (CommandCenter).
+    /// </summary>
+    private void PlayParameterEventBGM()
+    {
+        if (AudioManager.Instance != null)
+        {
+            // 이미 파라미터 이벤트 BGM이 재생 중이면 재생하지 않음
+            if (isParameterEventBGMPlaying)
+            {
+                Debug.Log("[UIFlowSimulator] 파라미터 이벤트 BGM이 이미 재생 중입니다.");
+                return;
+            }
+            
+            // 기존 BGM을 중지
+            AudioManager.Instance.StopBGM();
+            
+            // CommandCenter BGM을 직접 로드해서 재생
+            AudioClip commandCenterClip = Resources.Load<AudioClip>("Audio/BGM/CommandCenter");
+            if (commandCenterClip != null)
+            {
+                AudioManager.Instance.PlayBGM(commandCenterClip);
+                isParameterEventBGMPlaying = true;
+                Debug.Log("[UIFlowSimulator] 파라미터 이벤트 BGM 재생: CommandCenter");
+            }
+            else
+            {
+                Debug.LogError("[UIFlowSimulator] CommandCenter BGM 파일을 찾을 수 없습니다.");
+            }
+        }
+    }
+
+    /// <summary>
+    /// 다음 이벤트가 파라미터 이벤트인지 확인합니다.
+    /// </summary>
+    /// <returns>다음 이벤트가 파라미터 이벤트이면 true</returns>
+    private bool IsNextEventParameterEvent()
+    {
+        if (EventManager.Instance == null || DataManager.Instance == null) return false;
+        
+        // 현재 플레이리스트 인덱스가 범위를 벗어나면 false
+        if (DataManager.Instance.PlayerData.eventPlaylistIndex >= DataManager.Instance.PlayerData.currentPlaylist.Count)
+            return false;
+        
+        int nextEventId = DataManager.Instance.PlayerData.currentPlaylist[DataManager.Instance.PlayerData.eventPlaylistIndex];
+        
+        // 서브이벤트인지 확인 (서브이벤트가 아니면 파라미터 이벤트)
+        bool isSubEvent = DataManager.Instance.FullSubEvents != null && 
+                         DataManager.Instance.FullSubEvents.Any(e => e.ID == nextEventId);
+        
+        return !isSubEvent; // 서브이벤트가 아니면 파라미터 이벤트
+    }
+
+    /// <summary>
+    /// BGM을 페이드 아웃시키고 다음 이벤트로 전환합니다.
+    /// </summary>
+    /// <param name="outcomeText">결과 텍스트</param>
+    private IEnumerator FadeOutBGMAndTransition(string outcomeText)
+    {
+        // BGM 페이드 아웃 시작
+        if (AudioManager.Instance != null)
+        {
+            StartCoroutine(AudioManager.Instance.FadeOutBGM(1.0f)); // 1초 동안 페이드 아웃
+        }
+
+        // 페이드 아웃과 동시에 결과 텍스트 표시
+        yield return StartCoroutine(TransitionToNextEvent(outcomeText));
+    }
+
+    /// <summary>
+    /// BGM을 페이드 아웃시키고 서브이벤트로 전환합니다.
+    /// </summary>
+    /// <param name="resultText">결과 텍스트</param>
+    /// <param name="isRightChoice">오른쪽 선택지 여부</param>
+    private IEnumerator FadeOutBGMAndTransitionToSubEvent(string resultText, bool isRightChoice)
+    {
+        // BGM 페이드 아웃 시작
+        if (AudioManager.Instance != null)
+        {
+            StartCoroutine(AudioManager.Instance.FadeOutBGM(1.0f)); // 1초 동안 페이드 아웃
+        }
+
+        // 페이드 아웃과 동시에 결과 텍스트 표시
+        yield return StartCoroutine(TransitionToNextSubEvent(resultText, isRightChoice));
     }
 
     private IEnumerator TransitionToNextEvent(string resultText)

@@ -282,7 +282,7 @@ public class GameManager : MonoBehaviour
                 }
                 break;
             case GameState.PlayingEndingCutscene:
-                // 엔딩 분기 규칙 - 문서 기준으로 수정
+                // 엔딩 분기 규칙 - 기획서 기준 일치화
                 const int NORMAL_ENDING_ID = 1001; // 1회차 일반 엔딩 (EndingString 1001)
                 const int TRUE_ENDING_ID_2ND = 1002; // 2회차 진엔딩 (EndingString 1002)
                 const int TRUE_ENDING_ID_3RD = 1003; // 3회차 진엔딩 (EndingString 1003)
@@ -290,72 +290,74 @@ public class GameManager : MonoBehaviour
                 var playerData = DataManager.Instance.PlayerData;
                 int determinedEndingId = NORMAL_ENDING_ID; // 기본은 일반 엔딩
 
-                if (playerData.playthroughCount == 2)
+                // MultiEndingSystem의 점수/루트 기반 판단을 신뢰
+                var endingType = MultiEndingSystem.Instance?.DetermineEndingType() ?? EndingType.General;
+                var endingRoute = MultiEndingSystem.Instance?.DetermineEndingRoute() ?? EndingRoute.Truce;
+
+                if (playerData.playthroughCount == 1)
                 {
-                    // 2회차에서는 2회차 진엔딩 조건만 확인
-                    if (playerData.realEnding2ChoiceCount > 0)
+                    determinedEndingId = NORMAL_ENDING_ID;
+                }
+                else if (playerData.playthroughCount == 2)
+                {
+                    // 기획: 2회차 +4점 이상 AND 승리 루트일 때 진엔딩
+                    // DetermineEndingType이 True이고, DetermineEndingRoute가 Victory일 때 2회차 진엔딩으로 간주
+                    if (endingType == EndingType.True && endingRoute == EndingRoute.Victory)
                     {
                         determinedEndingId = TRUE_ENDING_ID_2ND;
                     }
+                    else
+                    {
+                        determinedEndingId = NORMAL_ENDING_ID;
+                    }
                 }
-                else if (playerData.playthroughCount >= 3) // 3회차 이상
+                else // 3회차 이상: MultiEndingSystem의 True/Hidden 기준 사용
                 {
-                    // 3회차 이상에서는 진엔딩 조건 확인
-                    if (playerData.realEnding3ChoiceCount > 0)
+                    if (endingType == EndingType.True || endingType == EndingType.Hidden)
                     {
                         determinedEndingId = TRUE_ENDING_ID_3RD;
                     }
+                    else
+                    {
+                        determinedEndingId = NORMAL_ENDING_ID;
+                    }
                 }
-                // else (playthroughCount == 1 or other cases not explicitly handled)
-                // determinedEndingId remains NORMAL_ENDING_ID
 
                 // 결정된 엔딩 ID 기록
                 DataManager.Instance.RecordEnding(determinedEndingId);
 
-                // 이제 기록된 lastEndingId를 기반으로 분기 로직 실행
-                // 2회차에서 진엔딩을 못 봤다면 2회차를 다시 시작
+                // 회차 진행/리셋 처리 로직은 기존 흐름 유지하되, 결정된 ID에 맞춰 동작
                 if (playerData.playthroughCount == 2 && playerData.lastEndingId != TRUE_ENDING_ID_2ND)
                 {
                     Debug.Log($"[분기] 2회차, 진엔딩({TRUE_ENDING_ID_2ND})이 아니므로 2회차를 다시 시작합니다. lastEndingId: {playerData.lastEndingId}");
-                    
-                    // 2회차 재시작을 위한 상태 초기화
                     playerData.currentChapter = 1;
-                    playerData.currentGameState = GameState.MainMenu; // 게임 상태를 MainMenu로 초기화
-                    
-                    // 이벤트 관련 상태 초기화
+                    playerData.currentGameState = GameState.MainMenu;
                     playerData.completedEventIds.Clear();
                     playerData.eventPlaylistIndex = 0;
                     playerData.currentPlaylist.Clear();
-                    
-                    // 진엔딩 카운트 리셋
+                    // 선택 카운트 리셋은 유지
                     playerData.realEnding2ChoiceCount = 0;
-                    
                     Debug.Log("[분기] 2회차 재시작을 위한 상태 초기화 완료");
                 }
-                // 3회차 이상에서 진엔딩을 봤다면 게임 완전 초기화 (히든엔딩은 현재 1003으로 통합)
                 else if (playerData.playthroughCount >= 3 && playerData.lastEndingId == TRUE_ENDING_ID_3RD)
                 {
                     Debug.Log($"[분기] 3회차 이상, 진엔딩({TRUE_ENDING_ID_3RD})을 봤으므로 게임을 초기화합니다.");
-                    // 새 게임 데이터로 덮어쓰고, 지휘관 선택 화면으로 이동
-                    DataManager.Instance.StartNewGame(); 
+                    DataManager.Instance.StartNewGame();
                     ResetAllGameData();
                     nextState = GameState.CommanderSelection;
-                    break; // 아래의 공통 로직을 건너뛰고 바로 상태 변경
+                    break;
                 }
                 else
                 {
                     // 일반적인 다음 회차 진행
                     playerData.playthroughCount++;
                     playerData.currentChapter = 1;
-                    
-                    // [수정] 다음 회차를 위한 게임 상태 설정
-                    // 타이틀화면으로 돌아가도록 설정
                     playerData.currentGameState = GameState.MainMenu;
                 }
-                
+
                 hasShownWarTutorialThisPlaythrough = false;
                 EventManager.Instance.ResetEventManagerState();
-                nextState = GameState.MainMenu; // 타이틀화면으로 돌아가기
+                nextState = GameState.MainMenu;
                 break;
         }
 
@@ -387,6 +389,16 @@ public class GameManager : MonoBehaviour
         chapterResultPanel.SetActive(newState == GameState.InChapterResult);
         optionCanvas.SetActive(newState == GameState.GamePaused);
         gameOverPanel.SetActive(false);
+
+        // 메인화면으로 이동할 때 BGM 즉시 중단
+        if (newState == GameState.MainMenu || newState == GameState.Title || newState == GameState.Login)
+        {
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.StopBGM();
+                Debug.Log("[GameManager] 메인화면으로 이동하여 BGM을 중단했습니다.");
+            }
+        }
 
         // 이어하기 복원 직후에는 어떤 튜토리얼도 표시하지 않음 (한 번만 동작)
         if (!suppressTutorialOnce)
@@ -763,6 +775,15 @@ public class GameManager : MonoBehaviour
     {
         ShowConfirmation("모든 진행 상황과 설정이 삭제됩니다. 정말 새로 시작하시겠습니까?", () =>
         {
+			// 새 게임 전 현재 해금 상태를 보존
+			var preservedUnlockedTraits = new List<CommanderTrait>();
+			foreach (CommanderTrait trait in System.Enum.GetValues(typeof(CommanderTrait)))
+			{
+				if (UnlockManager.IsUnlocked(trait))
+				{
+					preservedUnlockedTraits.Add(trait);
+				}
+			}
             // 진행도만 삭제하여 Settings(서브이벤트 팩 선택)는 보존
             DataManager.Instance.DeleteLocalSaveData();
 
@@ -770,12 +791,11 @@ public class GameManager : MonoBehaviour
             DataManager.Instance.StartNewGame();
             DataManager.Instance.LoadSettings(); // 삭제 후 새로 로드
             ResetAllGameData();
-            // 업적도 함께 초기화
-            if (AchievementManager.Instance != null)
-            {
-                AchievementManager.Instance.ResetAllAchievements();
-            }
-            UnlockManager.ResetAllUnlocks();
+			// 보존된 해금 상태 재적용 (혹시 초기화된 경우 대비)
+			foreach (var trait in preservedUnlockedTraits)
+			{
+				UnlockManager.Unlock(trait);
+			}
             // [추가] 저장 데이터 초기화 직후 이어하기 버튼 즉시 숨김
             if (continueButton != null) continueButton.gameObject.SetActive(false);
             ChangeState(GameState.CommanderSelection);
@@ -797,14 +817,14 @@ public class GameManager : MonoBehaviour
             // LoadSettings는 파일이 없으면 새 SettingsData를 만들어줍니다.
             DataManager.Instance.LoadSettings();
 
-            // 3. EventManager 등 다른 게임 시스템들의 상태 초기화
+			// 3. EventManager 등 다른 게임 시스템들의 상태 초기화
             ResetAllGameData();
-            // 업적도 함께 초기화
-            if (AchievementManager.Instance != null)
-            {
-                AchievementManager.Instance.ResetAllAchievements();
-            }
-            UnlockManager.ResetAllUnlocks();
+			// 전체 초기화에서는 업적/해금 모두 초기화
+			if (AchievementManager.Instance != null)
+			{
+				AchievementManager.Instance.ResetAllAchievements();
+			}
+			UnlockManager.ResetAllUnlocks();
 
             // 4. 메인 메뉴로 돌아가 UI를 갱신합니다.
             // (예: '이어하기' 버튼이 사라지는 등 초기화된 상태를 시각적으로 보여줌)
