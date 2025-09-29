@@ -1,17 +1,18 @@
-using System.Collections;
-using System.Collections.Generic;
-using DG.Tweening;
 using UnityEngine;
+using DG.Tweening;
+using System;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 
 public enum WarAction { None, Attack, Defend }
 
 public class WarController : MonoBehaviour
 {
     [Header("Movement")]
-    [SerializeField] float moveSpeed = 100f;    // 초당 이동 속도
-    [SerializeField] int forwardDist = 4;       // 전진 시 이동할 칸 수
-    [SerializeField] int backwardDist = 1;      // 후퇴 시 이동할 칸 수
-    [SerializeField] int direction = 1;         // 이동 방향 (플레이어: 1, 적: -1)
+    [SerializeField] float moveSpeed = 100f;
+    [SerializeField] int forwardDist = 4;
+    [SerializeField] int backwardDist = 1;
+    [SerializeField] int direction = 1;
 
     [Header("Stats")]
     [SerializeField] private int maxHp = 5;
@@ -20,20 +21,21 @@ public class WarController : MonoBehaviour
 
     WarGround ground;
     int currentIndex;
-    Coroutine coMove;
+
+    // 이동 취소를 위한 CancellationTokenSource
+    private CancellationTokenSource moveCts;
 
     public int CurrentIndex => currentIndex;
     public int Direction => direction;
-    public bool IsBusy => coMove != null;
+    // IsBusy 프로퍼티는 더 이상 필요 없습니다.
 
-    // --- 스탯 접근 프로퍼티 ---
     public int MaxHP { get => maxHp; set => maxHp = value; }
     public int CurrentHP { get => currentHp; set => currentHp = value; }
     public int AttackPower { get => attackPower; set => attackPower = value; }
 
     public void Init(WarGround ground, int startIndex)
     {
-        this.ground = ground; //
+        this.ground = ground;
         currentIndex = startIndex;
         GetComponent<RectTransform>().anchoredPosition = ground.GetGroundPos(currentIndex);
     }
@@ -42,16 +44,15 @@ public class WarController : MonoBehaviour
     {
         currentHp = maxHp;
         Init(ground, startIndex);
-        Debug.Log($"{gameObject.name}의 상태가 초기화되었습니다. (HP: {currentHp}, 위치: {startIndex})");
     }
 
     public void TakeDamage(int amount)
     {
         currentHp = Mathf.Max(0, currentHp - amount);
-        Debug.Log($"{gameObject.name}이(가) {amount} 데미지를 받아 HP가 {currentHp}이(가) 됨");
     }
 
-    public void DoAction(WarAction action, int extraForwardDist = 0)
+    // DoAction을 async UniTask를 반환하도록 변경
+    public async UniTask DoActionAsync(WarAction action, int extraForwardDist = 0)
     {
         int intendedIndex = currentIndex;
         switch (action)
@@ -64,54 +65,72 @@ public class WarController : MonoBehaviour
                 break;
         }
         int targetIndex = Mathf.Clamp(intendedIndex, 0, ground.LaneLength - 1);
-        MoveTo(targetIndex);
+        await MoveToAsync(targetIndex);
     }
 
-    public void CrushResult(int targetIndex) => MoveTo(targetIndex, true);
-
-    void MoveTo(int targetIndex, bool isCrush = false)
+    // CrushResult도 async UniTask를 반환하도록 변경
+    public async UniTask CrushResultAsync(int targetIndex)
     {
-        if (coMove != null) StopCoroutine(coMove);
-        coMove = StartCoroutine(Co_MoveTo(targetIndex, isCrush));
+        await MoveToAsync(targetIndex, true);
     }
 
+    // 이동 중단을 위해 StopMovement를 CancellationToken을 사용하도록 수정
     public void StopMovement()
     {
-        if (coMove != null)
-        {
-            StopCoroutine(coMove);
-            coMove = null;
-        }
+        moveCts?.Cancel();
     }
-    IEnumerator Co_MoveTo(int targetIndex, bool isCrush)
+
+    // Co_MoveTo 코루틴을 async UniTask 메소드로 완전 대체
+    private async UniTask MoveToAsync(int targetIndex, bool isCrush = false)
     {
-        currentIndex = targetIndex;
-        Vector2 targetPos = ground.GetGroundPos(targetIndex);
+        // 이전 작업을 취소하고 새로운 CancellationTokenSource 생성
+        moveCts?.Cancel();
+        moveCts = new CancellationTokenSource();
+        var token = moveCts.Token;
+
         RectTransform rect = GetComponent<RectTransform>();
 
-        if (isCrush)
+        try
         {
-            rect.DOAnchorPos(targetPos, 0.2f)
-                .SetEase(Ease.OutQuad)
-                .onComplete = () =>
-                {
-                    rect.DOShakePosition(0.1f, 5, 10, 90);
-                };
-
-            yield return new WaitForSeconds(0.3f);
-        }
-        else
-        {
-            while (Vector2.Distance(rect.anchoredPosition, targetPos) > 1f)
+            if (isCrush)
             {
-                rect.anchoredPosition = Vector2.MoveTowards(
-                    rect.anchoredPosition, targetPos, moveSpeed * Time.deltaTime
-                );
-                yield return null;
+                Vector2 targetPos = ground.GetGroundPos(targetIndex);
+                currentIndex = targetIndex;
+                await rect.DOAnchorPos(targetPos, 0.2f).SetEase(Ease.OutQuad).ToUniTask(cancellationToken: token);
+                await rect.DOShakePosition(0.1f, 5, 10, 90).ToUniTask(cancellationToken: token);
             }
-            rect.anchoredPosition = targetPos;
-        }
+            else
+            {
+                // 이동 중에는 currentIndex가 계속 갱신되어야 충돌 판정이 정확합니다.
+                // 부드러운 이동 루프
+                Vector2 targetPos = ground.GetGroundPos(targetIndex);
+                while (Vector2.Distance(rect.anchoredPosition, targetPos) > 1f)
+                {
+                    token.ThrowIfCancellationRequested(); // 작업 취소 확인
+                    rect.anchoredPosition = Vector2.MoveTowards(rect.anchoredPosition, targetPos, moveSpeed * Time.deltaTime);
 
-        coMove = null;
+                    float currentX = rect.anchoredPosition.x;
+                    float totalGridWidth = ground.LaneLength * ground.CellSize;
+                    float remainingSpace = rect.rect.width - totalGridWidth;
+                    float leftEdgeX = -rect.rect.width * rect.pivot.x;
+                    float centeredStartX = leftEdgeX + (remainingSpace / 2);
+
+                    currentIndex = Mathf.Clamp(Mathf.FloorToInt((currentX - centeredStartX) / ground.CellSize), 0, ground.LaneLength - 1);
+
+                    await UniTask.Yield(PlayerLoopTiming.Update, token);
+                }
+                rect.anchoredPosition = targetPos;
+                currentIndex = targetIndex;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // 이동이 중단되면 여기로 옵니다.
+        }
+        finally
+        {
+            moveCts?.Dispose();
+            moveCts = null;
+        }
     }
 }
