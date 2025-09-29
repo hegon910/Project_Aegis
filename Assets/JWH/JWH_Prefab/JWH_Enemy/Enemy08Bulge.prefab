@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 2133970515076568027}
   - component: {fileID: -3519295816317485448}
   m_Layer: 5
-  m_Name: SpecialEnemy
+  m_Name: Enemy08Bulge
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -60,7 +60,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.39596844, g: 0, b: 1, a: 1}
+  m_Color: {r: 1, g: 0.06575376, b: 0, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -95,7 +95,7 @@ MonoBehaviour:
   direction: -1
   maxHp: 7
   currentHp: 7
-  attackPower: 2
+  attackPower: 1
 --- !u!114 &-3519295816317485448
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -109,20 +109,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   controller: {fileID: 0}
-  attackChance: 0.7
-  rank: 6
+  attackChance: 0.89
+  rank: 4
+  enemyInfoText: {fileID: 0}
+  attackHints: []
+  defendHints: []
   attackVsAttack:
     playerDamage: 2
-    playerKnockback: 2
-    enemyDamage: 1
+    playerKnockback: 1
+    enemyBaseDamage: 0
     enemyKnockback: 1
   playerAttackVsEnemyDefend:
-    playerDamage: 2
-    playerKnockback: 2
-    enemyDamage: 0
-    enemyKnockback: 0
+    playerDamage: 0
+    playerKnockback: 0
+    enemyBaseDamage: 0
+    enemyKnockback: 2
   playerDefendVsEnemyAttack:
     playerDamage: 0
     playerKnockback: 1
-    enemyDamage: 0
-    enemyKnockback: 0
+    enemyBaseDamage: 0
+    enemyKnockback: 1
