@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class WarTurnManager : MonoBehaviour
@@ -56,6 +57,10 @@ public class WarTurnManager : MonoBehaviour
         if (!battleEnded && enemy != null)
         {
             enemy.PrepareAndShowHint();
+        }
+        if (warHUD != null)
+        {
+            warHUD.UpdateAllUI();
         }
     }
 
@@ -123,7 +128,7 @@ public class WarTurnManager : MonoBehaviour
 
         currentTurn++;
         Debug.Log($"Turn {currentTurn}/{maxTurns} 시작 - Player Action: {playerAction}");
-        StartCoroutine(Co_Turn(playerAction));
+        TurnFlowAsync(playerAction).Forget();
         if (battleEnded) return;
     }
 
@@ -195,121 +200,87 @@ public class WarTurnManager : MonoBehaviour
         }
     }
 
-    IEnumerator Co_Turn(WarAction playerAction)
+    async UniTask TurnFlowAsync(WarAction playerAction)
     {
         turnRunning = true;
-        if (enemy != null)
-        {
-            enemy.HideHint();
-        }
+        enemy?.HideHint();
         var enemyAction = enemy.GetPreparedAction();
 
         bool playerActsFirst;
         switch ((playerAction, enemyAction))
         {
-            case (WarAction.Attack, WarAction.Defend):
-                playerActsFirst = false;
-                Debug.Log("행동 순서: 적 선공 (방어)");
-                break;
-
-            default:
-                playerActsFirst = true;
-                Debug.Log("행동 순서: 플레이어 선공");
-                break;
+            case (WarAction.Attack, WarAction.Defend): playerActsFirst = false; break;
+            default: playerActsFirst = true; break;
         }
 
+        // 이동과 충돌 감시를 병렬로 실행
         if (playerActsFirst)
         {
-            // 플레이어 이동 시작
-            player.Act(playerAction);
-            while (player.IsBusy)
-            {
-                if (player.Ctrl.CurrentIndex >= enemy.Ctrl.CurrentIndex)
-                {
-                    player.Ctrl.StopMovement(); // 충돌 시 즉시 멈춤
-                    enemy.Ctrl.StopMovement();  // 상대도 멈춤
-                    Debug.Log("이동 중 충돌! 플레이어 이동을 중단합니다.");
-                    break;
-                }
-                yield return null; 
-            }
-
+            await ProcessMoveWithCollisionCheck(player.ActAsync(playerAction));
             if (player.Ctrl.CurrentIndex < enemy.Ctrl.CurrentIndex)
             {
-                enemy.Act(enemyAction);
-                while (enemy.IsBusy)
-                {
-                    if (player.Ctrl.CurrentIndex >= enemy.Ctrl.CurrentIndex)
-                    {
-                        player.Ctrl.StopMovement();
-                        enemy.Ctrl.StopMovement();
-                        Debug.Log("이동 중 충돌! 적 이동을 중단합니다.");
-                        break;
-                    }
-                    yield return null;
-                }
+                await ProcessMoveWithCollisionCheck(enemy.ActAsync(enemyAction));
             }
         }
-        else // 적이 먼저 행동하는 경우
+        else
         {
-            enemy.Act(enemyAction);
-            while (enemy.IsBusy)
-            {
-                if (player.Ctrl.CurrentIndex >= enemy.Ctrl.CurrentIndex)
-                {
-                    player.Ctrl.StopMovement();
-                    enemy.Ctrl.StopMovement();
-                    Debug.Log("이동 중 충돌! 적 이동을 중단합니다.");
-                    break;
-                }
-                yield return null;
-            }
-
+            await ProcessMoveWithCollisionCheck(enemy.ActAsync(enemyAction));
             if (player.Ctrl.CurrentIndex < enemy.Ctrl.CurrentIndex)
             {
-                player.Act(playerAction);
-                while (player.IsBusy)
-                {
-                    if (player.Ctrl.CurrentIndex >= enemy.Ctrl.CurrentIndex)
-                    {
-                        player.Ctrl.StopMovement();
-                        enemy.Ctrl.StopMovement();
-                        Debug.Log("이동 중 충돌! 플레이어 이동을 중단합니다.");
-                        break;
-                    }
-                    yield return null;
-                }
+                await ProcessMoveWithCollisionCheck(player.ActAsync(playerAction));
             }
         }
+
+        // 최종 충돌 처리
         int pIdx = player.Ctrl.CurrentIndex;
         int eIdx = enemy.Ctrl.CurrentIndex;
 
         if (pIdx >= eIdx)
         {
             int meet = Mathf.Clamp(Mathf.RoundToInt((pIdx + eIdx) * 0.5f), 0, ground.LaneLength - 1);
-            player.Ctrl.CrushResult(meet);
-            enemy.Ctrl.CrushResult(meet);
 
-            yield return new WaitWhile(() => player.IsBusy || enemy.IsBusy);
-
+            // 두 캐릭터의 충돌 애니메이션을 동시에 실행 모두 끝날 때까지 대기
+            await UniTask.WhenAll(
+                player.Ctrl.CrushResultAsync(meet),
+                enemy.Ctrl.CrushResultAsync(meet)
+            );
             enemy.HandleCollision(player, playerAction, enemyAction);
         }
 
+        // 턴 종료
         Debug.Log($"Turn {currentTurn} End / Player Index: {player.Ctrl.CurrentIndex}, Enemy Index: {enemy.Ctrl.CurrentIndex}");
         CheckRingOutStatus();
         CheckWinLoseDrawAfterTurn();
         if (!battleEnded && currentTurn >= maxTurns) EndBattle("무승부 - 턴 제한 소진");
+
         if (!battleEnded && enemy != null)
         {
             enemy.PrepareAndShowHint();
         }
-
+        if (warHUD != null)
+        {
+            warHUD.UpdateAllUI();
+        }
         if (choiceCard != null)
         {
             choiceCard.SetInteractable(true);
         }
-
         turnRunning = false;
+    }
+
+    async UniTask ProcessMoveWithCollisionCheck(UniTask moveTask)
+    {
+        while (!moveTask.Status.IsCompleted())
+        {
+            if (player.Ctrl.CurrentIndex >= enemy.Ctrl.CurrentIndex)
+            {
+                player.Ctrl.StopMovement();
+                enemy.Ctrl.StopMovement();
+                Debug.Log("이동 중 충돌! 모든 이동을 중단합니다.");
+                break;
+            }
+            await UniTask.Yield(); // 다음 프레임
+        }
     }
 
     public void OnClick_PlayerSkill()
