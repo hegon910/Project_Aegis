@@ -7,7 +7,11 @@ public class WarTurnManager : MonoBehaviour
 {
     [SerializeField] WarGround ground;
     [SerializeField] WarPlayer player;
-    [SerializeField] WarEnemy enemy;
+    [Header("챕터별 적 설정")]
+    [SerializeField] private List<ChapterEnemyPool> chapterEnemies;
+    //[SerializeField] WarEnemy enemy;
+    private WarEnemy enemy;
+
 
     [Header("UI References")]
     [SerializeField] private ChoiceCardSwipe choiceCard;
@@ -24,6 +28,10 @@ public class WarTurnManager : MonoBehaviour
     [Header("Character Start Positions")]
     [SerializeField] int playerStartIndex = 6;
     [SerializeField] int enemyStartIndex = 9;
+
+    
+
+    
 
     public void OnClick_PlayerAttack() { if (!turnRunning && !IsBattleEnded) GoStartTurn(WarAction.Attack); }
     public void OnClick_PlayerDefend() { if (!turnRunning && !IsBattleEnded) GoStartTurn(WarAction.Defend); }
@@ -67,6 +75,27 @@ public class WarTurnManager : MonoBehaviour
 
     public void ResetForNewBattle(int newMaxTurns = 30)
     {
+
+        if (GameManager.instance != null && GameManager.instance.CurrentChapter == 1)
+        {
+            WarHistory.ResetHistory();
+        }
+        if (enemy != null)
+        {
+            Destroy(enemy.gameObject);
+        }
+        int chapterIndex = GameManager.instance.CurrentChapter - 1;
+        if (chapterIndex < 0 || chapterIndex >= chapterEnemies.Count || chapterEnemies[chapterIndex].enemyPrefabs.Count == 0)
+        {
+            Debug.LogError($"챕터 {chapterIndex + 1}에 설정된 적이 없음");
+            return;
+        }
+        List<CustomEnemy> enemyPool = chapterEnemies[chapterIndex].enemyPrefabs;
+        CustomEnemy selectedEnemyPrefab = enemyPool[Random.Range(0, enemyPool.Count)];
+        enemy = Instantiate(selectedEnemyPrefab);
+        Debug.Log($"챕터 {chapterIndex + 1} 전투 시작! 등장한 적: {enemy.name}");
+
+
         // 전투 상태 초기화
         maxTurns = newMaxTurns;
         currentTurn = 0;
@@ -324,6 +353,13 @@ public class WarTurnManager : MonoBehaviour
             return player.currentSkill.skillName;
         }
         return null;
+    }
+
+    [System.Serializable]
+    public class ChapterEnemyPool
+    {
+        public string chapterName;
+        public List<CustomEnemy> enemyPrefabs;
     }
 
     //외부로 턴 정보 넘길예정 아마 승패쪽에서

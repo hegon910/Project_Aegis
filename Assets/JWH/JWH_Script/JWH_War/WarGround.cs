@@ -21,7 +21,7 @@ public class WarGround : MonoBehaviour
     public int LaneLength => laneLength;
     public float CellSize => cellSize;
 
-    public event Action onGridUpdated;
+    public event Action OnGridUpdated;
 
     void Awake()
     {
@@ -52,7 +52,7 @@ public class WarGround : MonoBehaviour
                 cellSize = rectTransform.rect.width / totalDivisions;
             }
         }
-        onGridUpdated?.Invoke();
+        OnGridUpdated?.Invoke();
     }
 
     public Vector2 GetGroundPos(int laneIndex)
