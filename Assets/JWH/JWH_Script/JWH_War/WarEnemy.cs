@@ -1,7 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
+using Cysharp.Threading.Tasks;
 using TMPro;
+using UnityEngine;
 
 public class WarEnemy : MonoBehaviour
 {
@@ -21,8 +22,10 @@ public class WarEnemy : MonoBehaviour
     public int Rank => rank;
     public WarController Ctrl => controller;
     public bool IsDead => controller != null && controller.CurrentHP <= 0;
-    public bool IsBusy => controller != null && controller.IsBusy;
-    public void Act(WarAction action) => controller.DoAction(action);
+    public async UniTask ActAsync(WarAction action)
+    {
+        await controller.DoActionAsync(action);
+    }
 
     protected virtual void Awake()
     {

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Cysharp.Threading.Tasks;
 
 [System.Serializable]
 public class CollisionOutcome
@@ -107,7 +108,7 @@ public class CustomEnemy : WarEnemy
         // 밀림 적용
         if (outcome.playerKnockback > 0)
         {
-            player.Ctrl.CrushResult(player.Ctrl.CurrentIndex - outcome.playerKnockback);
+            player.Ctrl.CrushResultAsync(player.Ctrl.CurrentIndex - outcome.playerKnockback).Forget();
         }
         int finalEnemyKnockback = outcome.enemyKnockback;
         if (playerAction == WarAction.Attack && player.KnockbackBuff)
@@ -119,7 +120,7 @@ public class CustomEnemy : WarEnemy
 
         if (finalEnemyKnockback > 0)
         {
-            this.Ctrl.CrushResult(this.Ctrl.CurrentIndex + finalEnemyKnockback);
+            this.Ctrl.CrushResultAsync(this.Ctrl.CurrentIndex + finalEnemyKnockback).Forget();
         }
     }
 }
