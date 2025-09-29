@@ -36,6 +36,11 @@ public class FirebaseManager : MonoBehaviour
     
     // FirebaseManager 초기화 완료 이벤트
     public static event Action OnFirebaseManagerInitialized;
+    
+    // 개발 모드 설정
+    [Header("Development Settings")]
+    [SerializeField] private bool enableDevelopmentMode = true;
+    [SerializeField] private bool showLoginChoiceInDevelopment = true;
 
 #if UNITY_EDITOR
     [Header("Login Input Field")]
@@ -46,6 +51,13 @@ public class FirebaseManager : MonoBehaviour
     [SerializeField] GameObject funtionPanel;
     [SerializeField] Button emailLoginButton;
 #endif
+
+    [Header("Development Login Choice UI")]
+    [SerializeField] private GameObject loginChoicePanel;
+    [SerializeField] private Button gpgsLoginButton;
+    [SerializeField] private Button guestLoginButton;
+    [SerializeField] private TextMeshProUGUI loginChoiceTitle;
+    [SerializeField] private TextMeshProUGUI loginChoiceDescription;
 
     private void Awake()
     {
@@ -81,6 +93,9 @@ public class FirebaseManager : MonoBehaviour
 #if !UNITY_EDITOR
             PlayGamesPlatform.Activate();
 #endif
+            
+            // 개발 모드에서 로그인 선택 UI 설정
+            SetupDevelopmentLoginChoice();
             
             // 저장된 로그인 타입 복원
             RestoreLoginType();
@@ -424,4 +439,154 @@ public class FirebaseManager : MonoBehaviour
         PlayerPrefs.DeleteKey("HasShownGuestWarning");
         PlayerPrefs.Save();
     }
+    
+    #region Development Mode Functions
+    
+    /// <summary>
+    /// 개발 모드에서 로그인 선택 UI 설정
+    /// </summary>
+    private void SetupDevelopmentLoginChoice()
+    {
+        // 개발 모드가 비활성화되어 있으면 기존 로직 실행
+        if (!enableDevelopmentMode || !showLoginChoiceInDevelopment)
+        {
+            StartProductionLoginFlow();
+            return;
+        }
+        
+        // 이미 로그인되어 있으면 선택 UI를 보여주지 않음
+        if (IsLoggedIn)
+        {
+            Debug.Log("[FirebaseManager] 이미 로그인되어 있습니다. 개발 모드 선택 UI를 건너뜁니다.");
+            return;
+        }
+        
+        // 로그인 선택 UI 설정
+        SetupLoginChoiceUI();
+        
+        // 로그인 선택 UI 표시
+        ShowLoginChoiceUI();
+    }
+    
+    /// <summary>
+    /// 로그인 선택 UI 설정
+    /// </summary>
+    private void SetupLoginChoiceUI()
+    {
+        if (loginChoicePanel == null)
+        {
+            Debug.LogWarning("[FirebaseManager] 로그인 선택 패널이 설정되지 않았습니다.");
+            return;
+        }
+        
+        // 버튼 이벤트 연결
+        if (gpgsLoginButton != null)
+        {
+            gpgsLoginButton.onClick.RemoveAllListeners();
+            gpgsLoginButton.onClick.AddListener(OnGPGSLoginSelected);
+        }
+        
+        if (guestLoginButton != null)
+        {
+            guestLoginButton.onClick.RemoveAllListeners();
+            guestLoginButton.onClick.AddListener(OnGuestLoginSelected);
+        }
+        
+        // UI 텍스트 설정
+        if (loginChoiceTitle != null)
+        {
+            loginChoiceTitle.text = "로그인 방식 선택";
+        }
+        
+        if (loginChoiceDescription != null)
+        {
+            loginChoiceDescription.text = "개발 모드: 로그인 방식을 선택하세요.\n\n• GPGS 로그인: Google Play Games Services 계정으로 로그인\n• 게스트 로그인: 익명 계정으로 로그인 (나중에 연동 가능)";
+        }
+    }
+    
+    /// <summary>
+    /// 로그인 선택 UI 표시
+    /// </summary>
+    private void ShowLoginChoiceUI()
+    {
+        if (loginChoicePanel != null)
+        {
+            loginChoicePanel.SetActive(true);
+            Debug.Log("[FirebaseManager] 개발 모드: 로그인 선택 UI 표시");
+        }
+    }
+    
+    /// <summary>
+    /// 로그인 선택 UI 숨기기
+    /// </summary>
+    private void HideLoginChoiceUI()
+    {
+        if (loginChoicePanel != null)
+        {
+            loginChoicePanel.SetActive(false);
+            Debug.Log("[FirebaseManager] 로그인 선택 UI 숨김");
+        }
+    }
+    
+    /// <summary>
+    /// GPGS 로그인 선택 시 호출
+    /// </summary>
+    private void OnGPGSLoginSelected()
+    {
+        Debug.Log("[FirebaseManager] 개발 모드: GPGS 로그인 선택됨");
+        HideLoginChoiceUI();
+        GPGSLogin();
+    }
+    
+    /// <summary>
+    /// 게스트 로그인 선택 시 호출
+    /// </summary>
+    private void OnGuestLoginSelected()
+    {
+        Debug.Log("[FirebaseManager] 개발 모드: 게스트 로그인 선택됨");
+        HideLoginChoiceUI();
+        AnonymousLogin();
+    }
+    
+    /// <summary>
+    /// 출시용 로그인 플로우 시작 (기존 로직)
+    /// </summary>
+    private void StartProductionLoginFlow()
+    {
+        Debug.Log("[FirebaseManager] 출시용 로그인 플로우 시작");
+        
+        // 기존 로직: GPGS 로그인 시도 → 실패 시 게스트 로그인
+        GPGSLogin();
+    }
+    
+    /// <summary>
+    /// 개발 모드 설정 변경 (런타임에서도 가능)
+    /// </summary>
+    public void SetDevelopmentMode(bool enabled)
+    {
+        enableDevelopmentMode = enabled;
+        Debug.Log($"[FirebaseManager] 개발 모드: {(enabled ? "활성화" : "비활성화")}");
+    }
+    
+    /// <summary>
+    /// 로그인 선택 UI 표시 설정 변경
+    /// </summary>
+    public void SetShowLoginChoice(bool show)
+    {
+        showLoginChoiceInDevelopment = show;
+        Debug.Log($"[FirebaseManager] 로그인 선택 UI: {(show ? "표시" : "숨김")}");
+    }
+    
+    /// <summary>
+    /// 개발 모드에서 로그인 선택 UI 다시 표시 (테스트용)
+    /// </summary>
+    public void ShowLoginChoiceAgain()
+    {
+        if (enableDevelopmentMode && showLoginChoiceInDevelopment)
+        {
+            ShowLoginChoiceUI();
+        }
+    }
+    
+    #endregion
 }
