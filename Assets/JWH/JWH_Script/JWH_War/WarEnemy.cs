@@ -16,6 +16,12 @@ public class WarEnemy : MonoBehaviour
     [Tooltip("적의 행동 힌트를 표시할 UI")]
     [SerializeField] private TMP_Text enemyInfoText;
 
+    [Tooltip("공격 표시할 무작위 힌트 목록")]
+    [SerializeField] private List<string> attackHints;
+
+    [Tooltip("방어 표시할 무작위 힌트 목록")]
+    [SerializeField] private List<string> defendHints;
+
     private WarAction nextAction; // 다음 행동 변수
 
 
@@ -53,10 +59,10 @@ public class WarEnemy : MonoBehaviour
             switch (nextAction)
             {
                 case WarAction.Attack:
-                    enemyInfoText.text = "적들이 분주하다";
+                    enemyInfoText.text = GetRandomHint(attackHints);
                     break;
                 case WarAction.Defend:
-                    enemyInfoText.text = "적들이 잠잠하다";
+                    enemyInfoText.text = GetRandomHint(defendHints);
                     break;
                 default:
                     enemyInfoText.text = ""; // 그 외의 경우 텍스트 초기화
@@ -64,6 +70,19 @@ public class WarEnemy : MonoBehaviour
             }
             enemyInfoText.gameObject.SetActive(true); // 힌트 보이기
         }
+    }
+
+    private string GetRandomHint(List<string> hintList)
+    {
+        // 리스트가 비어있으면 오류 방지를 위해 빈 문자열을 반환합니다.
+        if (hintList == null || hintList.Count == 0)
+        {
+            return "힌트가 없습니다.";
+        }
+
+        // 0부터 리스트의 크기 -1 사이의 무작위 인덱스를 선택합니다.
+        int randomIndex = Random.Range(0, hintList.Count);
+        return hintList[randomIndex];
     }
 
     public WarAction GetPreparedAction()
