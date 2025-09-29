@@ -10,6 +10,7 @@ public class ReplayDetailHandler : MonoBehaviour
     public TextMeshProUGUI playDateText;
     public TextMeshProUGUI playDurationText;
     public TextMeshProUGUI playthroughInfoText;
+    public TextMeshProUGUI detailedMemoirText;
 
     // 챕터별 결과를 표시할 6개의 Text 컴포넌트 배열
     public TextMeshProUGUI[] chapterResultTexts;
@@ -28,10 +29,44 @@ public class ReplayDetailHandler : MonoBehaviour
 
         playDateText.text = $"플레이 날짜: {record.playDate}";
         playDurationText.text = $"플레이 시간: {record.playDuration}";
-        playthroughInfoText.text = $"회차 정보: {record.outcome}";
+        playthroughInfoText.text = $"회차 정보: {record.finalChapter} {record.outcome}";
 
         // 결과와 이벤트 기록 섹션 업데이트
         UpdateChapterResults(record.eventHistory);
+
+        BuildDetailedHistoryText(record.eventHistory);
+    }
+
+
+    //선택지 데이터 출력
+    private void BuildDetailedHistoryText(List<SimpleEventRecord> events)
+    {
+        if (detailedMemoirText == null) return;
+
+        System.Text.StringBuilder sb = new System.Text.StringBuilder();
+        bool foundMemoir = false;
+
+        foreach (var record in events)
+        {
+            if (record.eventType == "BattleResult") continue;
+
+            if (record.isCompleted)
+            {
+                foundMemoir = true;
+
+                sb.AppendLine("------------------------------------");
+                sb.AppendLine($"<size=110%> 챕터 {record.chapter} 중요 선택</size>");
+                sb.AppendLine($"지문: {record.dialogue}");
+                sb.AppendLine($"선택: <color=#FFFF00>{record.selectedChoice}</color>");
+            }
+        }
+
+        if (!foundMemoir)
+        {
+            sb.AppendLine("해당 회차에서 기록된 중요 선택지(Memoriar)가 없습니다.");
+        }
+
+        detailedMemoirText.text = sb.ToString();
     }
 
     private void UpdateChapterResults(List<SimpleEventRecord> events)

@@ -947,7 +947,20 @@ public class GameManager : MonoBehaviour
         await EventManager.Instance.StartNewGame(selectedPacksForNewGame);
         OnStateFinished();
     }
-    private void StartDetailedResultSequence() { int warSituation = GamePlayerStats.Instance.GetStat(ParameterType.전황); GameOutcome outcome = (warSituation <= 19) ? GameOutcome.Defeat : (warSituation >= 81) ? GameOutcome.Victory : GameOutcome.Draw; int chapterIndex = CurrentChapter - 1; if (chapterIndex < chapterEndDataList.Count && chapterEndDataList[chapterIndex] != null) { chapterEndController.StartChapterEndSequence(chapterEndDataList[chapterIndex], outcome); } else { OnStateFinished(); } }
+    private void StartDetailedResultSequence() 
+    { 
+        int warSituation = GamePlayerStats.Instance.GetStat(ParameterType.전황); 
+        GameOutcome outcome = (warSituation <= 19) ? GameOutcome.Defeat : (warSituation >= 81) ?  GameOutcome.Victory : GameOutcome.Draw; 
+        int chapterIndex = CurrentChapter - 1; 
+        if (chapterIndex < chapterEndDataList.Count && chapterEndDataList[chapterIndex] != null) 
+        { 
+            chapterEndController.StartChapterEndSequence(chapterEndDataList[chapterIndex], outcome); 
+        } 
+        else 
+        { 
+            OnStateFinished(); 
+        } 
+    }
     public void GameOver(string reason)
     {
         if (_isGameOverActive) return; // 재진입 방지

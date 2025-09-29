@@ -84,25 +84,19 @@ public class MultiEndingSystem : MonoBehaviour
         };
     }
 
-    /// <summary>
     /// 현재까지의 총 카르마 점수 계산
-    /// </summary>
     public int CalculateTotalKarma()
     {
         return chapterResults.Sum(r => r.BattlePoints);
     }
 
-    /// <summary>
     /// 현재 카르마 수치 계산 (기본 50에서 시작)
-    /// </summary>
     public int CalculateCurrentKarma()
     {
         return 50 + CalculateTotalKarma();
     }
 
-    /// <summary>
     /// 현재 전세 수치에 따른 전투 결과 결정
-    /// </summary>
     public GameOutcome DetermineBattleOutcome(int warSituation)
     {
         if (warSituation <= 19) return GameOutcome.Defeat;
@@ -110,9 +104,7 @@ public class MultiEndingSystem : MonoBehaviour
         return GameOutcome.Draw;
     }
 
-    /// <summary>
     /// 엔딩 타입 결정
-    /// </summary>
     public EndingType DetermineEndingType()
     {
         var playthroughCount = DataManager.Instance.PlayerData.playthroughCount;
@@ -152,9 +144,7 @@ public class MultiEndingSystem : MonoBehaviour
         return EndingType.General;
     }
 
-    /// <summary>
     /// 히든 엔딩 플래그 확인
-    /// </summary>
     private bool HasHiddenEndingFlag()
     {
         // 예: 특정 이벤트에서 올바른 선택을 3회 이상 했는지 확인
@@ -162,9 +152,7 @@ public class MultiEndingSystem : MonoBehaviour
         return false; // 임시로 false 반환
     }
 
-    /// <summary>
     /// 엔딩 루트 결정 (승리/무승부/패배)
-    /// </summary>
     public EndingRoute DetermineEndingRoute()
     {
         var totalScore = CalculateTotalKarma();
@@ -174,9 +162,7 @@ public class MultiEndingSystem : MonoBehaviour
         return EndingRoute.Truce;
     }
 
-    /// <summary>
     /// 엔딩 분기 결정 (카르마 범위에 따라)
-    /// </summary>
     public int DetermineEndingBranch(EndingRoute route)
     {
         var currentKarma = CalculateCurrentKarma();
@@ -210,9 +196,7 @@ public class MultiEndingSystem : MonoBehaviour
         return 1;
     }
 
-    /// <summary>
     /// 최종 엔딩 데이터 결정
-    /// </summary>
     public EndingData GetFinalEndingData()
     {
         var endingType = DetermineEndingType();
@@ -278,9 +262,7 @@ public class MultiEndingSystem : MonoBehaviour
         };
     }
 
-    /// <summary>
     /// 기본 엔딩 생성 (안전장치)
-    /// </summary>
     private EndingData CreateDefaultEnding()
     {
         return new EndingData
@@ -294,18 +276,14 @@ public class MultiEndingSystem : MonoBehaviour
         };
     }
 
-    /// <summary>
     /// 챕터 결과 초기화 (새 게임 시작 시)
-    /// </summary>
     public void ResetChapterResults()
     {
         chapterResults.Clear();
         Debug.Log("[MultiEndingSystem] 챕터 결과 초기화 완료");
     }
 
-    /// <summary>
     /// 디버그 정보 출력
-    /// </summary>
     [ContextMenu("Print Debug Info")]
     public void PrintDebugInfo()
     {
@@ -323,10 +301,8 @@ public class MultiEndingSystem : MonoBehaviour
         }
     }
 
-    /// <summary>
     /// FullEndingData를 CutsceneData로 변환 (임시 구현)
     /// TODO: 실제 이미지와 사운드 데이터를 연결하는 로직 구현 필요
-    /// </summary>
     public CutsceneData ConvertToCutsceneData(FullEndingData fullEndingData)
     {
         if (fullEndingData == null) return null;

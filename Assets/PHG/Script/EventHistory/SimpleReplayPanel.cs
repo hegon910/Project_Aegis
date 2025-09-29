@@ -102,7 +102,7 @@ public class SimpleReplayPanel : MonoBehaviour
 
         if (recordText != null)
         {
-            recordText.text = $"{record.playDate} | {record.playDuration} | {record.outcome}";
+            recordText.text = $"{record.playDate} | {record.playDuration} | {record.finalChapter} {record.outcome}";
         }
         else
         {
