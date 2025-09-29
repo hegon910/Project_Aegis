@@ -139,8 +139,6 @@ public class GameManager : MonoBehaviour
     private async void Start()
     {
         await InitializeGameAndLoadData();
-        if (popupController == null)
-            popupController = FindObjectOfType<PopupController>();    
     }
 
     private async Task InitializeGameAndLoadData()
@@ -283,11 +281,75 @@ public class GameManager : MonoBehaviour
                 }
                 break;
             case GameState.PlayingEndingCutscene:
-                DataManager.Instance.PlayerData.playthroughCount++;
+                // 엔딩 분기 규칙
+                const int NORMAL_ENDING_ID = 1; // 일반 엔딩 ID
+                const int TRUE_ENDING_ID_2ND = 2; // 2회차 진엔딩 ID
+                const int TRUE_ENDING_ID_3RD = 3; // 3회차 진엔딩 ID
+                const int HIDDEN_ENDING_ID_3RD = 4; // 3회차 히든엔딩 ID (임시, 확인 필요)
+
+                var playerData = DataManager.Instance.PlayerData;
+                int determinedEndingId = NORMAL_ENDING_ID; // 기본은 일반 엔딩
+
+                if (playerData.playthroughCount == 2)
+                {
+                    // 2회차에서는 2회차 진엔딩 조건만 확인
+                    if (playerData.realEnding2ChoiceCount > 0)
+                    {
+                        determinedEndingId = TRUE_ENDING_ID_2ND;
+                    }
+                }
+                else if (playerData.playthroughCount >= 3) // 3회차 이상
+                {
+                    // 3회차 이상에서는 히든 엔딩 조건 먼저 확인 (우선순위 높음)
+                    // TODO: 히든 엔딩 조건 추가 (예: playerData.hiddenEndingChoiceCount > 0)
+                    // if (playerData.hiddenEndingChoiceCount > 0)
+                    // {
+                    //     determinedEndingId = HIDDEN_ENDING_ID_3RD;
+                    // }
+                    // else if (playerData.realEnding3ChoiceCount > 0) // 히든 엔딩 조건 미충족 시 3회차 진엔딩 조건 확인
+                    // { 
+                    //     determinedEndingId = TRUE_ENDING_ID_3RD;
+                    // }
+                    // For now, without hidden ending condition, just check 3rd playthrough true ending
+                    if (playerData.realEnding3ChoiceCount > 0)
+                    {
+                        determinedEndingId = TRUE_ENDING_ID_3RD;
+                    }
+                }
+                // else (playthroughCount == 1 or other cases not explicitly handled)
+                // determinedEndingId remains NORMAL_ENDING_ID
+
+                // 결정된 엔딩 ID 기록
+                DataManager.Instance.RecordEnding(determinedEndingId);
+
+                // 이제 기록된 lastEndingId를 기반으로 분기 로직 실행
+                // 2회차에서 진엔딩을 못 봤다면 2회차를 다시 시작
+                if (playerData.playthroughCount == 2 && playerData.lastEndingId != TRUE_ENDING_ID_2ND)
+                {
+                    Debug.Log($"[분기] 2회차, 진엔딩({TRUE_ENDING_ID_2ND})이 아니므로 2회차를 다시 시작합니다. lastEndingId: {playerData.lastEndingId}");
+                    // 회차를 증가시키지 않고 현재 챕터만 1로 리셋
+                    playerData.currentChapter = 1;
+                }
+                // 3회차 이상에서 히든엔딩을 봤다면 게임 완전 초기화
+                else if (playerData.playthroughCount >= 3 && playerData.lastEndingId == HIDDEN_ENDING_ID_3RD)
+                {
+                    Debug.Log($"[분기] 3회차 이상, 히든엔딩({HIDDEN_ENDING_ID_3RD})을 봤으므로 게임을 초기화합니다.");
+                    // 새 게임 데이터로 덮어쓰고, 지휘관 선택 화면으로 이동
+                    DataManager.Instance.StartNewGame(); 
+                    ResetAllGameData();
+                    nextState = GameState.CommanderSelection;
+                    break; // 아래의 공통 로직을 건너뛰고 바로 상태 변경
+                }
+                else
+                {
+                    // 일반적인 다음 회차 진행
+                    playerData.playthroughCount++;
+                    playerData.currentChapter = 1;
+                }
+
                 hasShownWarTutorialThisPlaythrough = false;
-                DataManager.Instance.PlayerData.currentChapter = 1;
                 EventManager.Instance.ResetEventManagerState();
-                nextState = GameState.MainMenu;
+                nextState = GameState.CommanderSelection; // Changed from MainMenu to CommanderSelection
                 break;
         }
 
@@ -390,7 +452,7 @@ public class GameManager : MonoBehaviour
         // 변경된 리스트 정보로 설정을 저장합니다.
         DataManager.Instance.SaveSettings();
     }
-    private void ChangeState(GameState newState)
+    public void ChangeState(GameState newState)
     {
           if (newState == currentGameState) return;
         UnsubscribeFromCurrentStateEvent();
@@ -516,7 +578,7 @@ public class GameManager : MonoBehaviour
                     if (!DataManager.Instance.PlayerData.completedEndings.Contains(endingKey))
                     {
                         DataManager.Instance.PlayerData.completedEndings.Add(endingKey);
-                        DataManager.Instance.SaveLocal();
+                        DataManager.Instance.SaveData();
                     }
                 }
                 break;
@@ -539,7 +601,7 @@ public class GameManager : MonoBehaviour
             // 실제 플레이 가능한 상태에 진입했으므로 저장 억제를 해제합니다.
             DataManager.Instance.AllowSavesFromNow();
             DataManager.Instance.PlayerData.currentGameState = currentGameState;
-            DataManager.Instance.SaveLocal();
+            DataManager.Instance.SaveData();
         }
     }
     public void OnclickSkip()
@@ -766,7 +828,7 @@ public class GameManager : MonoBehaviour
             DataManager.Instance.PlayerData.currentGameState = GameState.InEventCycle;
             DataManager.Instance.PlayerData.pendingRestartFromGameOver = false;
             DataManager.Instance.PlayerData.pendingRestartChapter = 0;
-            DataManager.Instance.SaveLocal();
+            DataManager.Instance.SaveData();
 
             // 튜토리얼 억제 및 즉시 숨김
             suppressTutorialOnce = true;
@@ -828,7 +890,7 @@ public class GameManager : MonoBehaviour
                     var dataToSave = DataManager.Instance.PlayerData;
                     dataToSave.currentGameState = this.currentGameState;
 
-                    DataManager.Instance.SaveLocal();
+                    DataManager.Instance.SaveData();
                 }
             }
             ChangeState(GameState.MainMenu);
@@ -864,7 +926,7 @@ public class GameManager : MonoBehaviour
         // 즉시 저장하여 이후 초기화 루틴이 덮어쓰지 않도록 보존
         if (DataManager.Instance?.PlayerData != null)
         {
-            DataManager.Instance.SaveLocal();
+            DataManager.Instance.SaveData();
         }
         // 튜토리얼 플래그 및 UI 초기화 (데이터 리셋 후 오동작 방지)
         ResetTutorialFlagsAndUI();
@@ -907,7 +969,7 @@ public class GameManager : MonoBehaviour
 			DataManager.Instance.PlayerData.pendingRestartFromGameOver = true;
 			DataManager.Instance.PlayerData.pendingRestartChapter = CurrentChapter;
 			DataManager.Instance.AllowSavesFromNow();
-			DataManager.Instance.SaveLocal();
+			DataManager.Instance.SaveData();
 		}
     }
     // 지연 노출 코루틴 제거 (원상복구)
@@ -921,7 +983,7 @@ public class GameManager : MonoBehaviour
         {
             DataManager.Instance.PlayerData.pendingRestartFromGameOver = true;
             DataManager.Instance.PlayerData.pendingRestartChapter = CurrentChapter;
-            DataManager.Instance.SaveLocal();
+            DataManager.Instance.SaveData();
         }
         ResetAllGameData();
         ChangeState(GameState.MainMenu);
@@ -979,7 +1041,7 @@ public class GameManager : MonoBehaviour
         pd.currentGameState = GameState.InEventCycle;
         pd.pendingRestartFromGameOver = false;
         pd.pendingRestartChapter = 0;
-        DataManager.Instance.SaveLocal();
+        DataManager.Instance.SaveData();
 
         // 4) 상태 전환 및 첫 턴 시작
         // 데이터가 모두 안전하게 초기화된 뒤에 가드를 해제
@@ -1104,7 +1166,7 @@ public class GameManager : MonoBehaviour
                 if (shouldSaveState)
                 {
                     DataManager.Instance.PlayerData.currentGameState = this.currentGameState;
-                    DataManager.Instance.SaveLocal();
+                    DataManager.Instance.SaveData();
                 }
 
                 // 설정은 언제나 저장합니다.

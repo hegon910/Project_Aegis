@@ -10,9 +10,9 @@ public class AppearCard : MonoBehaviour
 
     [Header("활성 이미지")]
     [Tooltip("왼쪽이미지")]
-    [SerializeField] private Image leftIndicatorImage;
+    [SerializeField] private Image leftcardImage;
     [Tooltip("오른쪽이미지")]
-    [SerializeField] private Image rightIndicatorImage;
+    [SerializeField] private Image rightcardImage;
 
     [Header("거리설정")]
     [Tooltip("이미지가 활성화 전 거리")]
@@ -31,8 +31,8 @@ public class AppearCard : MonoBehaviour
         initialCardPosition = cardRect.anchoredPosition;
 
         // 투명
-        if (leftIndicatorImage != null) SetIndicatorAlpha(leftIndicatorImage, 0f);
-        if (rightIndicatorImage != null) SetIndicatorAlpha(rightIndicatorImage, 0f);
+        if (leftcardImage != null) SetIndicatorAlpha(leftcardImage, 0f);
+        if (rightcardImage != null) SetIndicatorAlpha(rightcardImage, 0f);
     }
 
     void Update()
@@ -44,19 +44,19 @@ public class AppearCard : MonoBehaviour
         // 왼쪽 드래그
         if (deltaX < 0)
         {
-            if (leftIndicatorImage != null) SetIndicatorAlpha(leftIndicatorImage, ratio);
-            if (rightIndicatorImage != null) SetIndicatorAlpha(rightIndicatorImage, 0f); // 반대쪽은 투명하게
+            if (leftcardImage != null) SetIndicatorAlpha(leftcardImage, ratio);
+            if (rightcardImage != null) SetIndicatorAlpha(rightcardImage, 0f); // 반대쪽은 투명하게
         }
         // 오른쪽 드래그
         else if (deltaX > 0)
         {
-            if (rightIndicatorImage != null) SetIndicatorAlpha(rightIndicatorImage, ratio);
-            if (leftIndicatorImage != null) SetIndicatorAlpha(leftIndicatorImage, 0f); // 반대쪽은 투명하게
+            if (rightcardImage != null) SetIndicatorAlpha(rightcardImage, ratio);
+            if (leftcardImage != null) SetIndicatorAlpha(leftcardImage, 0f); // 반대쪽은 투명하게
         }
         else // 중앙
         {
-            if (leftIndicatorImage != null) SetIndicatorAlpha(leftIndicatorImage, 0f);
-            if (rightIndicatorImage != null) SetIndicatorAlpha(rightIndicatorImage, 0f);
+            if (leftcardImage != null) SetIndicatorAlpha(leftcardImage, 0f);
+            if (rightcardImage != null) SetIndicatorAlpha(rightcardImage, 0f);
         }
     }
 

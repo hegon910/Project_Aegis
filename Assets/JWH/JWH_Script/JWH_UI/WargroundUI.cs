@@ -5,29 +5,31 @@ using TMPro;
 public class WarGroundUI : MonoBehaviour
 {
     [Header("참조 및 프리팹")]
-    [Tooltip("눈금선 프리팹")]
     [SerializeField] private GameObject dividerPrefab;
-
-    [Tooltip("숫자 프리팹")]
     [SerializeField] private GameObject numberPrefab;
 
     [Header("컨테이너 (UI가 들어갈 곳)")]
-    [Tooltip("생성된 눈금선들을 담을 부모 오브젝트")]
     [SerializeField] private Transform dividersContainer;
-
-    [Tooltip("생성된 숫자들을 담을 부모 오브젝트")]
     [SerializeField] private Transform numbersContainer;
 
     [Header("마커 오프셋")]
-    [Tooltip("숫자가 눈금선 기준으로 표시될 Y축 높이")]
     [SerializeField] private float numberYOffset = 30f;
 
     private WarGround warGround;
 
-    void Start()
+    void Awake()
     {
         warGround = GetComponent<WarGround>();
-        GenerateMarkers();
+    }
+
+    void OnEnable()
+    {
+        warGround.onGridUpdated += GenerateMarkers;
+    }
+
+    void OnDisable()
+    {
+        warGround.onGridUpdated -= GenerateMarkers;
     }
 
     void ClearMarkers()
@@ -44,8 +46,8 @@ public class WarGroundUI : MonoBehaviour
 
     public void GenerateMarkers()
     {
-        if (warGround == null) warGround = GetComponent<WarGround>();
         if (dividerPrefab == null || numberPrefab == null) return;
+        if (warGround.CellSize <= 0) return; // 셀 크기가 아직 계산되지 않았다면 실행하지 않음
 
         ClearMarkers();
 
@@ -63,7 +65,6 @@ public class WarGroundUI : MonoBehaviour
             dividerRect.anchoredPosition = new Vector2(lineX, 0);
         }
 
-
         for (int i = 0; i < warGround.LaneLength - 2; i++)
         {
             int numberValue = i + 1;
@@ -73,7 +74,7 @@ public class WarGroundUI : MonoBehaviour
             RectTransform numberRect = numberObj.GetComponent<RectTransform>();
 
             Vector2 numberPos = warGround.GetGroundPos(laneIndex);
-            numberPos.y += numberYOffset; // Y축 오프셋 적용
+            numberPos.y += numberYOffset;
 
             numberRect.anchoredPosition = numberPos;
 
@@ -85,3 +86,4 @@ public class WarGroundUI : MonoBehaviour
         }
     }
 }
+
