@@ -37,6 +37,9 @@ public class CustomEnemy : WarEnemy
     [Tooltip("플레이어의 시작 위치 인덱스")]
     public int playerStartPos = 6;
 
+    [Tooltip("이 적과 싸울 때의 최대 턴 수")]
+    public int maxTurns = 30;
+
     public override WarAction ChooseAction()
     {
         // 현재 위치(인덱스)가 14이면 무조건 공격을 선택합니다.
