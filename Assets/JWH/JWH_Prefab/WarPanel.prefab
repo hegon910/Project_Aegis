@@ -4622,7 +4622,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   controller: {fileID: 5939541314283381738}
-  maxShield: 3
+  maxShield: 5
   currentShield: 0
   equippedSkillID: CounterAttack
   skillDatabase: {fileID: 11400000, guid: 1bf50a35dc2094643aeeb527a7aef982, type: 2}
