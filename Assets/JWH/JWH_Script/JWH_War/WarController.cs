@@ -27,7 +27,6 @@ public class WarController : MonoBehaviour
 
     public int CurrentIndex => currentIndex;
     public int Direction => direction;
-    // IsBusy 프로퍼티는 더 이상 필요 없습니다.
 
     public int MaxHP { get => maxHp; set => maxHp = value; }
     public int CurrentHP { get => currentHp; set => currentHp = value; }
@@ -51,7 +50,6 @@ public class WarController : MonoBehaviour
         currentHp = Mathf.Max(0, currentHp - amount);
     }
 
-    // DoAction을 async UniTask를 반환하도록 변경
     public async UniTask DoActionAsync(WarAction action, int extraForwardDist = 0)
     {
         int intendedIndex = currentIndex;
@@ -68,22 +66,18 @@ public class WarController : MonoBehaviour
         await MoveToAsync(targetIndex);
     }
 
-    // CrushResult도 async UniTask를 반환하도록 변경
     public async UniTask CrushResultAsync(int targetIndex)
     {
         await MoveToAsync(targetIndex, true);
     }
 
-    // 이동 중단을 위해 StopMovement를 CancellationToken을 사용하도록 수정
     public void StopMovement()
     {
         moveCts?.Cancel();
     }
 
-    // Co_MoveTo 코루틴을 async UniTask 메소드로 완전 대체
     private async UniTask MoveToAsync(int targetIndex, bool isCrush = false)
     {
-        // 이전 작업을 취소하고 새로운 CancellationTokenSource 생성
         moveCts?.Cancel();
         moveCts = new CancellationTokenSource();
         var token = moveCts.Token;
@@ -101,8 +95,6 @@ public class WarController : MonoBehaviour
             }
             else
             {
-                // 이동 중에는 currentIndex가 계속 갱신되어야 충돌 판정이 정확합니다.
-                // 부드러운 이동 루프
                 Vector2 targetPos = ground.GetGroundPos(targetIndex);
                 while (Vector2.Distance(rect.anchoredPosition, targetPos) > 1f)
                 {

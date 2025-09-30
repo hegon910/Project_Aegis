@@ -170,8 +170,18 @@ public class GameManager : MonoBehaviour
         isInitialized = true;
 
         ChangeState(GameState.Title);
-        if (Application.platform == RuntimePlatform.Android) PlayGamesPlatform.Instance.Authenticate(OnAuthenticated);
-        else OnAuthenticated(SignInStatus.Success);
+        
+        // FirebaseManager 초기화 완료를 기다린 후 로그인 처리
+        if (FirebaseManager.Instance != null)
+        {
+            // FirebaseManager가 이미 초기화되어 있으면 바로 로그인 처리
+            HandleLoginFlow();
+        }
+        else
+        {
+            // FirebaseManager 초기화를 기다림
+            FirebaseManager.OnFirebaseManagerInitialized += HandleLoginFlow;
+        }
     }
 
     private async Task WaitForEventManagerReady()
@@ -499,8 +509,17 @@ public class GameManager : MonoBehaviour
         switch (newState)
         {
             case GameState.Login:
-                if (Application.platform == RuntimePlatform.Android) PlayGamesPlatform.Instance.Authenticate(OnAuthenticated);
-                else OnAuthenticated(SignInStatus.Success);
+                // FirebaseManager를 통해 로그인 처리 (중복 방지)
+                Debug.Log("[GameManager] Login 상태 - FirebaseManager를 통해 로그인 처리");
+                if (FirebaseManager.Instance != null)
+                {
+                    // FirebaseManager가 개발 모드에서 로그인 선택 UI를 표시하도록 함
+                    // (FirebaseManager에서 자동으로 처리됨)
+                }
+                else
+                {
+                    Debug.LogError("[GameManager] FirebaseManager 인스턴스가 없습니다!");
+                }
                 break;
             case GameState.PlayingOpeningCutscene:
                 CutsceneManager.OnCutsceneFinished += OnStateFinished;
@@ -963,7 +982,47 @@ public class GameManager : MonoBehaviour
     public void TutorialPanelTouched() { tutorialPanel.SetActive(true); tutorialText.SetActive(true); parameterTutorialPanel.SetActive(true); } 
     public void ParameterTutorialPanelTouched() { parameterTutorialPanel.SetActive(true); } 
     public void OnTitlePanelTouched() { continueButton.gameObject.SetActive(DataManager.Instance.CheckIfSaveDataExists()); ChangeState(GameState.MainMenu); }
-    private void OnAuthenticated(SignInStatus status) { if (status == SignInStatus.Success) { Debug.Log("구글 플레이 게임 서비스 로그인 성공!"); } else { Debug.LogError("구글 플레이 게임 서비스 로그인 실패: " + status); } if (FirebaseManager.Instance != null) FirebaseManager.Instance.GPGSLogin(); }
+    /// <summary>
+    /// FirebaseManager 초기화 완료 후 로그인 플로우 처리
+    /// </summary>
+    private void HandleLoginFlow()
+    {
+        Debug.Log("[GameManager] 로그인 플로우 시작");
+        
+        // FirebaseManager의 로그인 상태 변경 이벤트 구독
+        FirebaseManager.OnLoginStateChanged += OnLoginStateChanged;
+        
+        // 이미 로그인되어 있으면 바로 메인 메뉴로
+        if (FirebaseManager.IsLoggedIn)
+        {
+            Debug.Log("[GameManager] 이미 로그인되어 있음. 메인 메뉴로 이동");
+            ChangeState(GameState.MainMenu);
+        }
+        // FirebaseManager가 개발 모드에서 로그인 선택 UI를 표시하도록 함
+        // (FirebaseManager에서 자동으로 처리됨)
+    }
+    
+    /// <summary>
+    /// 로그인 상태 변경 시 호출
+    /// </summary>
+    private void OnLoginStateChanged(LoginType loginType)
+    {
+        Debug.Log($"[GameManager] 로그인 상태 변경: {loginType}");
+        
+        if (loginType != LoginType.None)
+        {
+            // 로그인 완료 시 메인 메뉴로 이동
+            ChangeState(GameState.MainMenu);
+        }
+    }
+    
+    /// <summary>
+    /// 기존 OnAuthenticated 메서드 (호환성을 위해 유지하되 사용하지 않음)
+    /// </summary>
+    private void OnAuthenticated(SignInStatus status) 
+    { 
+        Debug.LogWarning("[GameManager] OnAuthenticated 호출됨 - 이 메서드는 더 이상 사용되지 않습니다. FirebaseManager를 통해 로그인하세요.");
+    }
     public async void OnCommanderSelected(int commanderIndex)
     {
         CommanderInfo selectedCommander = null;

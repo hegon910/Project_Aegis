@@ -92,7 +92,7 @@ public class CustomEnemy : WarEnemy
             finalDamage = Mathf.Max(0, finalDamage);
             if (player.enhancedAttackStacks > 0)
             {
-                finalDamage += 2;
+                finalDamage += 1;
                 player.enhancedAttackStacks--;
             }
             if (finalDamage > 0)
