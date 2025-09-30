@@ -947,7 +947,7 @@ public class GameManager : MonoBehaviour
         // 로그인 완료 전에는 메인 메뉴로 넘어가지 않음
         if (!hasCompletedLogin)
         {
-            Debug.Log("[GameManager] 로그인이 완료되지 않았습니다. 먼저 로그인 방식을 선택/완료하세요.");
+            Debug.Log("[GameManager] 로그인이 완료되지 않았습니다. 먼저 로그인을 완료하세요.");
             return;
         }
         
@@ -992,6 +992,7 @@ public class GameManager : MonoBehaviour
             ChangeState(GameState.Title);
         }
     }
+    
     
     /// <summary>
     /// 기존 OnAuthenticated 메서드 (호환성을 위해 유지하되 사용하지 않음)
