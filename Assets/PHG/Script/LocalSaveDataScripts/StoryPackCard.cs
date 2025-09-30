@@ -45,8 +45,7 @@ public class StoryPackCard : MonoBehaviour
         {
             // 내가 선택되었음을 Manager에게 알림
             onClickCallback?.Invoke(PackID);
-            // UI 상태를 즉시 반전 (선택 -> 해제, 해제 -> 선택)
-            SetSelected(!checkmarkIcon.activeSelf);
+            // UI 업데이트는 Manager에서 처리하도록 함
         }
     }
 

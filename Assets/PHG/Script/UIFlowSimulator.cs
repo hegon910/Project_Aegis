@@ -134,8 +134,12 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             return;
         }
 
-        // 파라미터 이벤트 BGM 재생 (CommandCenter)
-        PlayParameterEventBGM();
+        // 파라미터 이벤트 BGM 재생: 서브이벤트에서 막 돌아왔거나 아직 미재생일 때만 재생
+        bool cameFromSubEvent = subEventExitFaded;
+        if (cameFromSubEvent || !isParameterEventBGMPlaying)
+        {
+            PlayParameterEventBGM();
+        }
 
         string characterName = "";
 
@@ -422,8 +426,8 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             }
             else
             {
-                // 다음 이벤트가 서브이벤트이므로 BGM 페이드 아웃 후 전환
-                StartCoroutine(FadeOutBGMAndTransition(outcome.outcomeText));
+            // 다음 이벤트가 서브이벤트이므로 BGM 페이드 아웃 후 전환 (시각적 페이드 유지)
+            StartCoroutine(FadeOutBGMAndTransition(outcome.outcomeText));
             }
         }
         else if (currentSubEventData != null)
@@ -434,7 +438,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             var choice = isRightChoice ? currentSubEventData.rightChoice : currentSubEventData.leftChoice;
             string resultText = choice?.outcome?.outcomeText ?? "";
             
-            // 서브이벤트 완료 시 BGM 페이드 아웃
+            // 서브이벤트 완료 시 BGM 페이드 아웃 후 전환 (시각적 페이드 유지)
             StartCoroutine(FadeOutBGMAndTransitionToSubEvent(resultText, isRightChoice));
         }
         else
@@ -453,23 +457,15 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     {
         if (AudioManager.Instance != null)
         {
-            // 이미 파라미터 이벤트 BGM이 재생 중이면 재생하지 않음
-            if (isParameterEventBGMPlaying)
-            {
-                Debug.Log("[UIFlowSimulator] 파라미터 이벤트 BGM이 이미 재생 중입니다.");
-                return;
-            }
-            
-            // 기존 BGM을 중지
+            // 항상 기존 BGM을 즉시 중지하고 CommandCenter로 전환
             AudioManager.Instance.StopBGM();
             
-            // CommandCenter BGM을 직접 로드해서 재생
             AudioClip commandCenterClip = Resources.Load<AudioClip>("Audio/BGM/CommandCenter");
             if (commandCenterClip != null)
             {
                 AudioManager.Instance.PlayBGM(commandCenterClip);
                 isParameterEventBGMPlaying = true;
-                Debug.Log("[UIFlowSimulator] 파라미터 이벤트 BGM 재생: CommandCenter");
+                Debug.Log("[UIFlowSimulator] 파라미터 이벤트 BGM 재생: CommandCenter (강제 전환)");
             }
             else
             {
@@ -508,7 +504,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         // BGM 페이드 아웃 시작
         if (AudioManager.Instance != null)
         {
-            StartCoroutine(AudioManager.Instance.FadeOutBGM(1.0f)); // 1초 동안 페이드 아웃
+            StartCoroutine(AudioManager.Instance.FadeOutBGM(0.5f)); // 0.5초 동안 페이드 아웃
         }
 
         // 페이드 아웃과 동시에 결과 텍스트 표시
@@ -525,7 +521,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         // BGM 페이드 아웃 시작
         if (AudioManager.Instance != null)
         {
-            StartCoroutine(AudioManager.Instance.FadeOutBGM(1.0f)); // 1초 동안 페이드 아웃
+            StartCoroutine(AudioManager.Instance.FadeOutBGM(0.5f)); // 0.5초 동안 페이드 아웃
         }
 
         // 페이드 아웃과 동시에 결과 텍스트 표시

@@ -25,6 +25,7 @@ public class GameData
     // --- 플레이 기록 & 업적 ---
     public List<int> completedEventIds;        // 완료한 이벤트 ID 목록 (PlayerStats)
     public List<string> unlockedAchievements;  // 달성한 도전과제 ID 목록
+    public List<string> claimedAchievementIds; // 수령 완료한 업적 ID 목록
     public List<string> completedEndings;      // 본 엔딩 ID 목록
     public List<int> playedSubEventGroups;     // 플레이한 서브 이벤트 그룹 (EventManager)
     public List<int> completedBattleResultIds; // 완료한 전투 결과 ID 목록
@@ -79,6 +80,7 @@ public class GameData
 
         completedEventIds = new List<int>();
         unlockedAchievements = new List<string>();
+        claimedAchievementIds = new List<string>();
         completedEndings = new List<string>();
         playedSubEventGroups = new List<int>();
         completedBattleResultIds = new List<int>();

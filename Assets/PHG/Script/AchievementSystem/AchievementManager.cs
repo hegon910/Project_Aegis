@@ -185,6 +185,17 @@ public class AchievementManager : MonoBehaviour
                 achievement.completedDate = DateTime.Now;
             }
         }
+
+        // [보강] 수령 상태 로드: GameData.claimedAchievementIds를 기준으로 반영
+        if (playerData.claimedAchievementIds == null)
+        {
+            playerData.claimedAchievementIds = new List<string>();
+        }
+        foreach (var kvp in achievementDict)
+        {
+            var ach = kvp.Value;
+            ach.isRewardClaimed = playerData.claimedAchievementIds.Contains(ach.achievementId);
+        }
         
         if (enableDebugLogs)
         {
@@ -201,10 +212,21 @@ public class AchievementManager : MonoBehaviour
         
         var playerData = DataManager.Instance.PlayerData;
         playerData.unlockedAchievements = new List<string>(completedAchievementIds);
+
+        // [보강] 수령 상태 저장: GameData.claimedAchievementIds에 동기화
+        playerData.claimedAchievementIds = achievementDict.Values
+            .Where(a => a.isRewardClaimed)
+            .Select(a => a.achievementId)
+            .ToList();
         
         if (autoSaveOnUpdate)
         {
-            DataManager.Instance.SaveData();
+            // 업적 저장 시점엔 저장 억제 플래그를 해제하여 디스크 반영이 누락되지 않도록 보장
+            if (DataManager.Instance != null)
+            {
+                DataManager.Instance.AllowSavesFromNow();
+                DataManager.Instance.SaveData();
+            }
         }
     }
     
@@ -477,7 +499,7 @@ public class AchievementManager : MonoBehaviour
             Debug.Log($"[AchievementManager] 보상 수령: '{achievement.title}' - {achievement.reward.rewardDescription}");
         }
         
-        // 저장
+        // 저장: 재시작 후 재수령 방지를 위해 즉시 저장
         SaveAchievementProgress();
         
         return true;
@@ -491,8 +513,9 @@ public class AchievementManager : MonoBehaviour
         switch (reward.rewardType)
         {
             case RewardType.Currency:
-                // 화폐 보상 적용
-                Debug.Log($"[AchievementManager] 화폐 보상: {reward.rewardValue}");
+                // 재화 보상 적용
+                CurrencyManager.AddCurrency(reward.rewardValue);
+                Debug.Log($"[AchievementManager] 재화 보상: {reward.rewardValue}개 획득!");
                 break;
             case RewardType.Item:
                 // 아이템 보상 적용
@@ -507,8 +530,9 @@ public class AchievementManager : MonoBehaviour
                 Debug.Log($"[AchievementManager] 해금 보상: {reward.rewardDescription}");
                 break;
             case RewardType.Experience:
-                // 경험치 보상 적용
-                Debug.Log($"[AchievementManager] 경험치 보상: {reward.rewardValue}");
+                // 경험치 보상 적용 (재화로 처리)
+                CurrencyManager.AddCurrency(reward.rewardValue);
+                Debug.Log($"[AchievementManager] 경험치 보상: {reward.rewardValue}개 획득!");
                 break;
         }
     }

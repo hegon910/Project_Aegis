@@ -60,6 +60,17 @@ public class CommanderCarouselController : MonoBehaviour
         InputManager.OnDrag += HandleDrag;
         InputManager.OnDragEnd += HandleDragEnd;
         InputManager.OnClick += HandleClick; // 짧은 클릭 감지를 위해 복원
+
+        // 패널이 다시 활성화될 때, 해금 상태/버튼 상태를 즉시 반영
+        if (commanderInfos != null && commanderInfos.Count > 0)
+        {
+            try
+            {
+                UpdateAllLockOverlays();
+                UpdateCenterCardState();
+            }
+            catch { }
+        }
     }
 
     void OnDisable()

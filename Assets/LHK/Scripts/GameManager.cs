@@ -68,6 +68,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TMPro.TextMeshProUGUI subEventSelectedText;
     [SerializeField] private GameObject warTutorialPanel;
     [SerializeField] private GameObject achievementPanel;
+        [SerializeField] private ShopUI shopUI;
 
     [Header("컷신 시스템")]
     [SerializeField] private CutsceneManager cutsceneManager;
@@ -228,10 +229,37 @@ public class GameManager : MonoBehaviour
     //서브이벤트 패널을 열고 닫을 함수
     public void ToggleSubEventPanel(bool isOpen)
     {
-        // [수정] 이 함수는 이제 단순히 패널을 켜고 끄는 역할만 합니다.
+        if (isOpen)
+        {
+            // 패널을 열 때는 검증 없이 바로 열기
+            if (subEventSelectPanel != null)
+            {
+                subEventSelectPanel.SetActive(true);
+            }
+        }
+        else
+        {
+            // 패널을 닫을 때는 서브이벤트팩 선택 검증
+            var storyPackManager = FindObjectOfType<StoryPackManager>();
+            if (storyPackManager != null && !storyPackManager.CanClosePanel())
+            {
+                // 검증 실패 시 패널을 닫지 않음
+                return;
+            }
+            
+            if (subEventSelectPanel != null)
+            {
+                subEventSelectPanel.SetActive(false);
+            }
+        }
+    }
+
+    // 서브이벤트 패널을 검증 없이 직접 닫는 함수 (StoryPackManager에서 사용)
+    public void CloseSubEventPanelDirectly()
+    {
         if (subEventSelectPanel != null)
         {
-            subEventSelectPanel.SetActive(isOpen);
+            subEventSelectPanel.SetActive(false);
         }
     }
 
@@ -400,13 +428,15 @@ public class GameManager : MonoBehaviour
         optionCanvas.SetActive(newState == GameState.GamePaused);
         gameOverPanel.SetActive(false);
 
-        // 메인화면으로 이동할 때 BGM 즉시 중단
+        // 메인화면으로 이동할 때 BGM 처리
         if (newState == GameState.MainMenu || newState == GameState.Title || newState == GameState.Login)
         {
             if (AudioManager.Instance != null)
             {
                 AudioManager.Instance.StopBGM();
                 Debug.Log("[GameManager] 메인화면으로 이동하여 BGM을 중단했습니다.");
+                
+                // 메인메뉴 상태일 때는 BGM을 재생하지 않음 (메인 스토리에서 재생됨)
             }
         }
 
@@ -491,6 +521,14 @@ public class GameManager : MonoBehaviour
     public void ChangeState(GameState newState)
     {
           if (newState == currentGameState) return;
+        // 파라미터 이벤트 사이클에서 벗어날 때(전투/컷신/결과 등) BGM 즉시 정지
+        if (currentGameState == GameState.InEventCycle && newState != GameState.InEventCycle)
+        {
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.StopBGM();
+            }
+        }
         UnsubscribeFromCurrentStateEvent();
 
         currentGameState = newState;
@@ -792,6 +830,19 @@ public class GameManager : MonoBehaviour
 
     public void OnClickNewGameFromScratch()
     {
+        // 서브이벤트팩 선택 검증
+        DataManager.Instance.LoadSettings();
+        var selectedPacks = DataManager.Instance.PlayerSettings?.selectedSubEventPackIDs;
+        
+        Debug.Log($"[GameManager] 새 게임 시작 전 서브이벤트팩 검증 - 선택된 팩: {(selectedPacks != null ? string.Join(", ", selectedPacks) : "null")}, 개수: {selectedPacks?.Count ?? 0}");
+        
+        if (selectedPacks == null || selectedPacks.Count == 0)
+        {
+            Debug.LogError("[GameManager] 서브이벤트팩이 선택되지 않았습니다. 새 게임을 시작할 수 없습니다.");
+            ShowConfirmation("최소 1개의 서브이벤트팩을 선택해야 새 게임을 시작할 수 있습니다.", () => { });
+            return;
+        }
+
         ShowConfirmation("모든 진행 상황과 설정이 삭제됩니다. 정말 새로 시작하시겠습니까?", () =>
         {
 			// 새 게임 전 현재 해금 상태를 보존
@@ -827,14 +878,20 @@ public class GameManager : MonoBehaviour
         ShowConfirmation("모든 진행 상황과 설정이 삭제됩니다. 정말 초기화하시겠습니까?", () =>
         {
             // 1. 모든 로컬 파일과 PlayerPrefs 기록 삭제
-            // 진행도만 삭제하여 Settings 보존
+            // 진행도와 설정 모두 삭제
             DataManager.Instance.DeleteLocalSaveData();
 
             // 2. 메모리에 새로운 기본 데이터 객체를 즉시 생성하고 로드
             // StartNewGame은 새 GameData를 만들고 기본 파일까지 생성해줍니다.
             DataManager.Instance.StartNewGame();
-            // LoadSettings는 파일이 없으면 새 SettingsData를 만들어줍니다.
+            // LoadSettings는 파일이 없으면 새 SettingsData를 만들어주지만,
+            // 디버그 전체 초기화에서는 '설정'도 완전 초기화가 필요하므로 강제로 새로 생성/저장합니다.
             DataManager.Instance.LoadSettings();
+            DataManager.Instance.PlayerSettings = new SettingsData();
+            // 서브이벤트팩은 기본값(1번 팩)으로 유지
+            DataManager.Instance.PlayerSettings.selectedSubEventPackIDs = new List<int> { 1 };
+            // 여기서 저장: 구매 이력(purchasedShopItemIds), 스토리팩 해금(unlockedStoryPackIds), 지휘관 해금 목록 등 초기화값이 파일에 반영됨
+            DataManager.Instance.SaveSettings();
 
 			// 3. EventManager 등 다른 게임 시스템들의 상태 초기화
             ResetAllGameData();
@@ -852,6 +909,12 @@ public class GameManager : MonoBehaviour
             ChangeState(GameState.MainMenu);
             // UI 상태 강제 갱신 (지휘관 잠금 표시/파라미터 토글 초기화 등)
             StartCoroutine(RefreshUINextFrame());
+
+            // [추가] 상점 즉시 재초기화하여 구매 상태가 즉시 반영되도록 함
+            if (ShopManager.Instance != null)
+            {
+                ShopManager.Instance.ReinitializeNow();
+            }
         });
     }
     public void OnClickContinueGame()
@@ -1449,6 +1512,13 @@ public class GameManager : MonoBehaviour
         
         // 바로 게임 시작 상태로 이동
         ChangeState(GameState.PlayingOpeningCutscene);
+    }
+
+
+    
+    public void OpenShop()
+    {
+        shopUI.OpenShop();
     }
 
     private CommanderInfo GetCommanderByTrait(CommanderTrait trait)

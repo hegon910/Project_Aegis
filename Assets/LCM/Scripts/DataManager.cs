@@ -18,7 +18,7 @@ public class DataManager : MonoBehaviour
     public static DataManager Instance { get; private set; }
 
     public GameData PlayerData { get; private set; }
-    public SettingsData PlayerSettings { get; private set; }
+    public SettingsData PlayerSettings { get; set; }
     private string _playerDataSavePath;
     private string _settingsSavePath;
     private bool _hasSyncedWithServer; // 9.9. 이학권 추가
@@ -313,6 +313,7 @@ public class DataManager : MonoBehaviour
                 {
                     Debug.LogWarning("모든 설정 파일 로드 시도 실패, 기본 설정을 생성합니다.");
                     PlayerSettings = new SettingsData();
+                    Debug.Log($"[DataManager] 기본 설정 생성 후 서브이벤트팩: {string.Join(", ", PlayerSettings.selectedSubEventPackIDs)}");
                     return;
                 }
 
@@ -326,18 +327,48 @@ public class DataManager : MonoBehaviour
                 {
                     Debug.LogWarning("설정 파일이 손상되어 기본 설정을 생성합니다.");
                     PlayerSettings = new SettingsData();
+                    Debug.Log($"[DataManager] 손상된 파일로 인한 기본 설정 생성 후 서브이벤트팩: {string.Join(", ", PlayerSettings.selectedSubEventPackIDs)}");
+                }
+                
+                // 서브이벤트팩이 선택되지 않았으면 기본 팩(1000001) 자동 선택
+                if (PlayerSettings.selectedSubEventPackIDs == null || PlayerSettings.selectedSubEventPackIDs.Count == 0)
+                {
+                    const int defaultPackId = 1000001;
+                    Debug.Log($"[DataManager] 서브이벤트팩이 선택되지 않아 기본 팩 {defaultPackId}을(를) 자동 선택합니다.");
+                    PlayerSettings.selectedSubEventPackIDs = new List<int> { defaultPackId };
+                    SaveSettings();
                 }
             }
             catch (Exception ex)
             {
                 Debug.LogError($"설정 로드 실패: {ex.Message}. 기본 설정으로 재설정합니다.");
                 PlayerSettings = new SettingsData();
+                Debug.Log($"[DataManager] 예외로 인한 기본 설정 생성 후 서브이벤트팩: {string.Join(", ", PlayerSettings.selectedSubEventPackIDs)}");
+                
+                // 서브이벤트팩이 선택되지 않았으면 기본 팩(1000001) 자동 선택
+                if (PlayerSettings.selectedSubEventPackIDs == null || PlayerSettings.selectedSubEventPackIDs.Count == 0)
+                {
+                    const int defaultPackId = 1000001;
+                    Debug.Log($"[DataManager] 서브이벤트팩이 선택되지 않아 기본 팩 {defaultPackId}을(를) 자동 선택합니다.");
+                    PlayerSettings.selectedSubEventPackIDs = new List<int> { defaultPackId };
+                    SaveSettings();
+                }
             }
         }
         else
         {
             Debug.Log("설정 파일 없음, 기본 설정 생성.");
             PlayerSettings = new SettingsData();
+            Debug.Log($"[DataManager] 파일 없음으로 인한 기본 설정 생성 후 서브이벤트팩: {string.Join(", ", PlayerSettings.selectedSubEventPackIDs)}");
+            
+            // 서브이벤트팩이 선택되지 않았으면 기본 팩(1000001) 자동 선택
+            if (PlayerSettings.selectedSubEventPackIDs == null || PlayerSettings.selectedSubEventPackIDs.Count == 0)
+            {
+                const int defaultPackId = 1000001;
+                Debug.Log($"[DataManager] 서브이벤트팩이 선택되지 않아 기본 팩 {defaultPackId}을(를) 자동 선택합니다.");
+                PlayerSettings.selectedSubEventPackIDs = new List<int> { defaultPackId };
+                SaveSettings();
+            }
         }
     }
     /// <summary>

@@ -37,6 +37,8 @@ public class EventManager : MonoBehaviour
 
     private int currentSubEventIndex;
     private int subEventChainLength = 0; // 서브이벤트 체인 길이 추적
+    private bool lastEventWasSubEvent = false; // 직전 이벤트가 서브인지 추적
+    private int lastSubEventBgmId = -1; // 서브이벤트 BGM 중복 재생 방지
     // 서브이벤트 체인 길이 제한 제거 - 기획에서 24개 안 넘도록 조절
 
     // 이벤트 매니저 싱글톤
@@ -340,13 +342,26 @@ public class EventManager : MonoBehaviour
             if (isSubByData)
             {
                 Debug.Log($"서브이벤트(ID: {eventId}) 발생.");
+                // 파라미터에서 서브로 넘어갈 때만 즉시 정지
+                if (!lastEventWasSubEvent && AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.StopBGM();
+                }
                 DisplaySubEvent(eventId);
             }
             else
             {
                 Debug.Log($"파라미터 이벤트(ID: {eventId}) 발생.");
+                // 서브에서 파라미터로 전환될 때만 즉시 정지 후 CommandCenter 재생
+                if (lastEventWasSubEvent && AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.StopBGM();
+                    AudioManager.Instance.PlayBGMByName("CommandCenter");
+                    lastSubEventBgmId = -1;
+                }
                 OnParameterEventReady?.Invoke(eventId);
                 DataManager.Instance.PlayerData.completedEventIds.Add(eventId);
+                lastEventWasSubEvent = false;
             }
         }
     }
@@ -375,12 +390,13 @@ public class EventManager : MonoBehaviour
         var data = DataManager.Instance.FullSubEvents.FirstOrDefault(e => e.ID == index);
         if (data != null)
         {
-            // 서브이벤트 음향 재생
+            // 서브이벤트 음향 재생 (중복 방지)
             PlaySubEventAudio(data);
             
             OnSubEventReady?.Invoke(data);
             Debug.Log($"서브 이벤트 표시: (Index: {data.ID})");
             currentState = EventManagerState.InSubEvent;
+            lastEventWasSubEvent = true;
         }
     }
 
@@ -397,8 +413,12 @@ public class EventManager : MonoBehaviour
         {
             if (AudioManager.Instance != null)
             {
-                AudioManager.Instance.PlayBGMByID(eventData.bgData.BG_ID);
-                Debug.Log($"[EventManager] 서브이벤트 BGM 재생: {eventData.bgData.BGName} (ID: {eventData.bgData.BG_ID})");
+                if (lastSubEventBgmId != eventData.bgData.BG_ID)
+                {
+                    AudioManager.Instance.PlayBGMByID(eventData.bgData.BG_ID);
+                    lastSubEventBgmId = eventData.bgData.BG_ID;
+                    Debug.Log($"[EventManager] 서브이벤트 BGM 재생: {eventData.bgData.BGName} (ID: {eventData.bgData.BG_ID})");
+                }
             }
         }
 
@@ -562,7 +582,12 @@ public class EventManager : MonoBehaviour
 
     private IEnumerator TransitionFromSubEventToParameter()
     {
-        // 서브이벤트 종료 시 UI에 페이드 아웃 요청 후 동일 시간만큼 대기
+        // 서브이벤트 종료: 서브이벤트 BGM 즉시 정지
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.StopBGM();
+        }
+        // 서브이벤트 종료 시 UI에 페이드 아웃 요청 (기존 연출 유지: 0.5s)
         float fadeDuration = 0.5f;
         OnSubEventExitFadeRequested?.Invoke(fadeDuration);
         yield return new WaitForSeconds(fadeDuration);

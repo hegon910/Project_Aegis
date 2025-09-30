@@ -82,6 +82,10 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
             {
                 Debug.Log($"[MainScenarioManager] {currentChapter}챕터 {currentPlaythrough}회차 스토리를 시작합니다. (시작 StoryNum: {startStoryNum}, 시작 ID: {firstNode.id}, 찾은 LoopNum: {firstNode.LoopNum}, 요청한 LoopNum: {loopNum})");
                 uiAnimator.ShowMainStoryView();
+                
+                // 메인 스토리 시작 시 BGM을 강제로 재생하기 위해 currentBGMId를 리셋
+                currentBGMId = 0;
+                
                 IsScenarioRunning = true;
                 mainStoryUI.panelRoot.SetActive(true);
 
@@ -203,6 +207,8 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
         }
 
         // 음향 재생 (BGM과 SFX)
+        // [보정] 메인화면 -> 새로하기로 메인 스토리에 진입한 '첫 표시'에서만 강제 재생
+        // 첫 노드에서만 currentBGMId를 0으로 만들어 동일 BGM이라도 재생되도록 함. 이후 노드 전환에서는 원래 로직 유지
         PlayEventAudio(currentNode);
 
         if (typingCoroutine != null) StopCoroutine(typingCoroutine);

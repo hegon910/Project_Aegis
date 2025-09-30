@@ -189,8 +189,8 @@ public class AccountLinkingTestScript : MonoBehaviour
         if (FirebaseManager.Auth != null)
         {
             FirebaseManager.Auth.SignOut();
-            FirebaseManager.CurrentLoginType = LoginType.None;
-            FirebaseManager.User = null;
+            //FirebaseManager.CurrentLoginType = LoginType.None;
+            //FirebaseManager.User = null;
             
             // PlayerPrefs에서 로그인 타입 제거
             PlayerPrefs.DeleteKey("LoginType");
@@ -239,8 +239,8 @@ public class AccountLinkingTestScript : MonoBehaviour
         PlayerPrefs.Save();
         
         // 상태 초기화
-        FirebaseManager.CurrentLoginType = LoginType.None;
-        FirebaseManager.User = null;
+        //FirebaseManager.CurrentLoginType = LoginType.None;
+        //FirebaseManager.User = null;
         
         UpdateUI();
         AddLog("테스트 데이터 리셋 완료");
