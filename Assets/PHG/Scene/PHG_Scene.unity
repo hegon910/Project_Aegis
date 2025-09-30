@@ -12716,6 +12716,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1701130080290473493, guid: e5c93491389b33e4a85e426b73b7a123, type: 3}
+      propertyPath: enableDevelopmentMode
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1701130080290473493, guid: e5c93491389b33e4a85e426b73b7a123, type: 3}
+      propertyPath: showLoginChoiceInDevelopment
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3262471727479077487, guid: e5c93491389b33e4a85e426b73b7a123, type: 3}
       propertyPath: m_Name
       value: BackendManager
