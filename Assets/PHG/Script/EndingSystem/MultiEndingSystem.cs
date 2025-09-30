@@ -115,7 +115,10 @@ public class MultiEndingSystem : MonoBehaviour
         {
             return EndingType.True;
         }
-        else if (playthroughCount == 3 && totalScore >= trueEndingMinScore3rd && currentKarma >= trueEndingMinKarma3rd)
+        else if (playthroughCount == 3 && 
+            totalScore >= trueEndingMinScore3rd && 
+            currentKarma >= trueEndingMinKarma3rd && 
+            DataManager.Instance.PlayerData.realEnding3ChoiceCount == 3)
         {
             return EndingType.True;
         }
