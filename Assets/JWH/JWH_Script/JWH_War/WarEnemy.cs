@@ -14,7 +14,7 @@ public class WarEnemy : MonoBehaviour
 
     [Header("Hint System")] 
     [Tooltip("적의 행동 힌트를 표시할 UI")]
-    [SerializeField] private TMP_Text enemyInfoText;
+    public TMP_Text enemyInfoText;
 
     [Tooltip("공격 표시할 무작위 힌트 목록")]
     [SerializeField] private List<string> attackHints;

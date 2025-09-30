@@ -30,6 +30,13 @@ public class CustomEnemy : WarEnemy
     [Tooltip("플레이어: 방어 / 적: 공격")]
     [SerializeField] private CollisionOutcome playerDefendVsEnemyAttack;
 
+    [Header("이 적과의 전투 설정")]
+    [Tooltip("이 적과 싸울 때의 전장 칸 수")]
+    public int battleLaneLength = 16;
+
+    [Tooltip("플레이어의 시작 위치 인덱스")]
+    public int playerStartPos = 6;
+
     public override WarAction ChooseAction()
     {
         // 현재 위치(인덱스)가 14이면 무조건 공격을 선택합니다.

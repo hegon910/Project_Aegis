@@ -9,7 +9,7 @@ public class WarHUD : MonoBehaviour
     [Header("Core References")]
     [SerializeField] WarTurnManager warturnMgr;
     [SerializeField] WarPlayer warplayer;
-    [SerializeField] WarEnemy warenemy;
+    //[SerializeField] WarEnemy warenemy;
     [SerializeField] private ChoiceCardSwipe choiceCard;
 
     [Header("Texts")]
@@ -18,6 +18,7 @@ public class WarHUD : MonoBehaviour
     [SerializeField] TMP_Text playerShieldNum;
     [SerializeField] TMP_Text enemyNameText;
     [SerializeField] TMP_Text enemyHpNum;
+    [SerializeField] TMP_Text enemyInfoText;
     [SerializeField] TMP_Text skillNameText;
     [SerializeField] TMP_Text skillCooldownText;
 
@@ -33,6 +34,8 @@ public class WarHUD : MonoBehaviour
 
     [Header("Feedback UI")]
     [SerializeField] private TMP_Text actionFeedbackText;
+    public TMP_Text EnemyInfoTextField => enemyInfoText;
+
 
     private CancellationTokenSource feedbackCts;
 
@@ -107,13 +110,18 @@ public class WarHUD : MonoBehaviour
 
     private void UpdateEnemyUI()
     {
-        if (warenemy)
+        WarEnemy currentEnemy = warturnMgr.CurrentEnemy;
+
+        if (currentEnemy != null)
         {
             if (enemyNameText != null)
             {
-                enemyNameText.text = warenemy.name;
+                enemyNameText.text = currentEnemy.name.Replace("(Clone)", "");
             }
-            enemyHpNum.text = $"{warenemy.Ctrl.CurrentHP}";
+            if (enemyHpNum != null)
+            {
+                enemyHpNum.text = $"{currentEnemy.Ctrl.CurrentHP}";
+            }
         }
     }
 

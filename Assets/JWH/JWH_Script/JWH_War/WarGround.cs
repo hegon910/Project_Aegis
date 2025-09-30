@@ -23,6 +23,13 @@ public class WarGround : MonoBehaviour
 
     public event Action OnGridUpdated;
 
+    public void InitializeGrid(int newLaneLength)
+    {
+        // 새로운 값으로 laneLength를 업데이트
+        this.laneLength = newLaneLength;
+        CalculateAndNotify();
+    }
+
     void Awake()
     {
         rectTransform = GetComponent<RectTransform>();
