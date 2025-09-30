@@ -73,6 +73,7 @@ public class WarTurnManager : MonoBehaviour
             ground.InitializeGrid(desiredLaneLength);
         }
         enemy = Instantiate(selectedEnemyPrefab);
+        this.maxTurns = selectedEnemyPrefab.maxTurns;
         Debug.Log($"챕터 {chapterIndex + 1} 전투 시작! 등장한 적: {enemy.name.Replace("(Clone)", "")}, 전장 크기: {desiredLaneLength}칸");
 
         if (warHUD != null)
