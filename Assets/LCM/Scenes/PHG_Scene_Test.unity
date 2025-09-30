@@ -5843,6 +5843,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9205374c44584934a9574fc2b2dbea1b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1508640614
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1157612207}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4225caa0d01a8864b8d985eda202abcb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  generalEndings: []
+  trueEndings: []
+  hiddenEndings: []
+  victoryPoint: 1
+  defeatPoint: -1
+  drawPoint: 0
+  trueEndingMinScore2nd: 4
+  trueEndingMinScore3rd: 5
+  trueEndingMinKarma3rd: 80
 --- !u!1 &1518822371
 GameObject:
   m_ObjectHideFlags: 0
@@ -6660,6 +6681,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1890490081217877769, guid: 4711122b314e6aa4c9c9b7acbd59b74c, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1508640612}
+    - targetCorrespondingSourceObject: {fileID: 1890490081217877769, guid: 4711122b314e6aa4c9c9b7acbd59b74c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1508640614}
   m_SourcePrefab: {fileID: 100100000, guid: 4711122b314e6aa4c9c9b7acbd59b74c, type: 3}
 --- !u!1 &1687853081
 GameObject:
