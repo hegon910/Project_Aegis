@@ -1,12 +1,18 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class WarTurnManager : MonoBehaviour
 {
     [SerializeField] WarGround ground;
     [SerializeField] WarPlayer player;
-    [SerializeField] WarEnemy enemy;
+    [Header("챕터별 적 설정")]
+    [SerializeField] private List<ChapterEnemyPool> chapterEnemies;
+    //[SerializeField] WarEnemy enemy;
+    private WarEnemy enemy;
+    public WarEnemy CurrentEnemy => enemy;
+
 
     [Header("UI References")]
     [SerializeField] private ChoiceCardSwipe choiceCard;
@@ -38,31 +44,41 @@ public class WarTurnManager : MonoBehaviour
         {
             choiceCard.SetInteractable(true);
         }
-        // 컨트롤러 초기화
-        if (ground != null && player != null && enemy != null)
-        {
-            player.Ctrl.Init(ground, playerStartIndex);
-            enemy.Ctrl.Init(ground, enemyStartIndex);
-        }
-        else
-        {
-            Debug.LogError("WarTurnManager에 Ground, Player, 또는 Enemy가 할당되지 않아 초기화할 수 없습니다!");
-        }
-        if (player != null && player.currentSkill != null)
-        {
-            skillCooldownTimer = player.currentSkill.cooltime;
-            Debug.Log($"전투 시작! '{player.currentSkill.skillName}' 스킬의 초기 쿨타임({skillCooldownTimer}턴)이 적용");
-        }
-        if (!battleEnded && enemy != null)
-        {
-            enemy.PrepareAndShowHint();
-        }
     }
 
 
     public void ResetForNewBattle(int newMaxTurns = 30)
     {
-        // 전투 상태 초기화
+        if (GameManager.instance != null && GameManager.instance.CurrentChapter == 1)
+        {
+            WarHistory.ResetHistory();
+        }
+
+        if (enemy != null)
+        {
+            Destroy(enemy.gameObject);
+        }
+
+        int chapterIndex = GameManager.instance.CurrentChapter - 1;
+        if (chapterIndex < 0 || chapterIndex >= chapterEnemies.Count || chapterEnemies[chapterIndex].enemyPrefabs.Count == 0)
+        {
+            Debug.LogError($"챕터 {chapterIndex + 1}에 설정된 적이 없습니다!");
+            return;
+        }
+        List<CustomEnemy> enemyPool = chapterEnemies[chapterIndex].enemyPrefabs;
+        CustomEnemy selectedEnemyPrefab = enemyPool[Random.Range(0, enemyPool.Count)];
+        int desiredLaneLength = selectedEnemyPrefab.battleLaneLength;
+        if (ground != null)
+        {
+            ground.InitializeGrid(desiredLaneLength);
+        }
+        enemy = Instantiate(selectedEnemyPrefab);
+        Debug.Log($"챕터 {chapterIndex + 1} 전투 시작! 등장한 적: {enemy.name.Replace("(Clone)", "")}, 전장 크기: {desiredLaneLength}칸");
+
+        if (warHUD != null)
+        {
+            enemy.enemyInfoText = warHUD.EnemyInfoTextField;
+        }
         maxTurns = newMaxTurns;
         currentTurn = 0;
         battleEnded = false;
@@ -75,21 +91,28 @@ public class WarTurnManager : MonoBehaviour
         }
         if (enemy != null)
         {
-            enemy.Ctrl.ResetState(ground, enemyStartIndex); // WarEnemy는 별도 버프가 없으므로 컨트롤러만 초기화
+            enemy.Ctrl.ResetState(ground, enemyStartIndex);
         }
 
         if (player != null && player.currentSkill != null)
         {
             skillCooldownTimer = player.currentSkill.cooltime;
-            Debug.Log($"전투 리셋! '{player.currentSkill.skillName}' 스킬의 초기 쿨타임({skillCooldownTimer}턴)이 적용됩니다.");
         }
         else
         {
-            skillCooldownTimer = 0; // 스킬이 없는 경우 0으로 초기화
+            skillCooldownTimer = 0;
         }
-
+        if (!battleEnded && enemy != null)
+        {
+            enemy.PrepareAndShowHint();
+        }
+        if (warHUD != null)
+        {
+            warHUD.UpdateAllUI();
+        }
         Debug.Log("전투 및 캐릭터 상태 초기화 완료");
     }
+
     void GoStartTurn(WarAction playerAction)
     {
         if (choiceCard != null)
@@ -123,7 +146,7 @@ public class WarTurnManager : MonoBehaviour
 
         currentTurn++;
         Debug.Log($"Turn {currentTurn}/{maxTurns} 시작 - Player Action: {playerAction}");
-        StartCoroutine(Co_Turn(playerAction));
+        TurnFlowAsync(playerAction).Forget();
         if (battleEnded) return;
     }
 
@@ -136,8 +159,8 @@ public class WarTurnManager : MonoBehaviour
         PlayerPrefs.Save();
 
         bool isWin = resultLog.Contains("승리");
-        WarHistory.RecordWarResult(isWin); // ���� ����� ��� �ý��ۿ� ����
-        var changes = new List<ParameterChange>//�Ķ���� ���� �߰��κ�
+        WarHistory.RecordWarResult(isWin); 
+        var changes = new List<ParameterChange>
 
         {
             new ParameterChange
@@ -195,121 +218,84 @@ public class WarTurnManager : MonoBehaviour
         }
     }
 
-    IEnumerator Co_Turn(WarAction playerAction)
+    async UniTask TurnFlowAsync(WarAction playerAction)
     {
         turnRunning = true;
-        if (enemy != null)
-        {
-            enemy.HideHint();
-        }
+        enemy?.HideHint();
         var enemyAction = enemy.GetPreparedAction();
 
         bool playerActsFirst;
         switch ((playerAction, enemyAction))
         {
-            case (WarAction.Attack, WarAction.Defend):
-                playerActsFirst = false;
-                Debug.Log("행동 순서: 적 선공 (방어)");
-                break;
-
-            default:
-                playerActsFirst = true;
-                Debug.Log("행동 순서: 플레이어 선공");
-                break;
+            case (WarAction.Attack, WarAction.Defend): playerActsFirst = false; break;
+            default: playerActsFirst = true; break;
         }
 
         if (playerActsFirst)
         {
-            // 플레이어 이동 시작
-            player.Act(playerAction);
-            while (player.IsBusy)
-            {
-                if (player.Ctrl.CurrentIndex >= enemy.Ctrl.CurrentIndex)
-                {
-                    player.Ctrl.StopMovement(); // 충돌 시 즉시 멈춤
-                    enemy.Ctrl.StopMovement();  // 상대도 멈춤
-                    Debug.Log("이동 중 충돌! 플레이어 이동을 중단합니다.");
-                    break;
-                }
-                yield return null; 
-            }
-
+            await ProcessMoveWithCollisionCheck(player.ActAsync(playerAction));
             if (player.Ctrl.CurrentIndex < enemy.Ctrl.CurrentIndex)
             {
-                enemy.Act(enemyAction);
-                while (enemy.IsBusy)
-                {
-                    if (player.Ctrl.CurrentIndex >= enemy.Ctrl.CurrentIndex)
-                    {
-                        player.Ctrl.StopMovement();
-                        enemy.Ctrl.StopMovement();
-                        Debug.Log("이동 중 충돌! 적 이동을 중단합니다.");
-                        break;
-                    }
-                    yield return null;
-                }
+                await ProcessMoveWithCollisionCheck(enemy.ActAsync(enemyAction));
             }
         }
-        else // 적이 먼저 행동하는 경우
+        else
         {
-            enemy.Act(enemyAction);
-            while (enemy.IsBusy)
-            {
-                if (player.Ctrl.CurrentIndex >= enemy.Ctrl.CurrentIndex)
-                {
-                    player.Ctrl.StopMovement();
-                    enemy.Ctrl.StopMovement();
-                    Debug.Log("이동 중 충돌! 적 이동을 중단합니다.");
-                    break;
-                }
-                yield return null;
-            }
-
+            await ProcessMoveWithCollisionCheck(enemy.ActAsync(enemyAction));
             if (player.Ctrl.CurrentIndex < enemy.Ctrl.CurrentIndex)
             {
-                player.Act(playerAction);
-                while (player.IsBusy)
-                {
-                    if (player.Ctrl.CurrentIndex >= enemy.Ctrl.CurrentIndex)
-                    {
-                        player.Ctrl.StopMovement();
-                        enemy.Ctrl.StopMovement();
-                        Debug.Log("이동 중 충돌! 플레이어 이동을 중단합니다.");
-                        break;
-                    }
-                    yield return null;
-                }
+                await ProcessMoveWithCollisionCheck(player.ActAsync(playerAction));
             }
         }
+
         int pIdx = player.Ctrl.CurrentIndex;
         int eIdx = enemy.Ctrl.CurrentIndex;
 
         if (pIdx >= eIdx)
         {
             int meet = Mathf.Clamp(Mathf.RoundToInt((pIdx + eIdx) * 0.5f), 0, ground.LaneLength - 1);
-            player.Ctrl.CrushResult(meet);
-            enemy.Ctrl.CrushResult(meet);
 
-            yield return new WaitWhile(() => player.IsBusy || enemy.IsBusy);
-
+            await UniTask.WhenAll(
+                player.Ctrl.CrushResultAsync(meet),
+                enemy.Ctrl.CrushResultAsync(meet)
+            );
             enemy.HandleCollision(player, playerAction, enemyAction);
         }
 
+        // 턴 종료
         Debug.Log($"Turn {currentTurn} End / Player Index: {player.Ctrl.CurrentIndex}, Enemy Index: {enemy.Ctrl.CurrentIndex}");
         CheckRingOutStatus();
         CheckWinLoseDrawAfterTurn();
         if (!battleEnded && currentTurn >= maxTurns) EndBattle("무승부 - 턴 제한 소진");
+
         if (!battleEnded && enemy != null)
         {
             enemy.PrepareAndShowHint();
         }
-
+        if (warHUD != null)
+        {
+            warHUD.UpdateAllUI();
+        }
         if (choiceCard != null)
         {
             choiceCard.SetInteractable(true);
         }
-
         turnRunning = false;
+    }
+
+    async UniTask ProcessMoveWithCollisionCheck(UniTask moveTask)
+    {
+        while (!moveTask.Status.IsCompleted())
+        {
+            if (player.Ctrl.CurrentIndex >= enemy.Ctrl.CurrentIndex)
+            {
+                player.Ctrl.StopMovement();
+                enemy.Ctrl.StopMovement();
+                Debug.Log("이동 중 충돌! 모든 이동을 중단합니다.");
+                break;
+            }
+            await UniTask.Yield(); // 다음 프레임
+        }
     }
 
     public void OnClick_PlayerSkill()
@@ -355,7 +341,13 @@ public class WarTurnManager : MonoBehaviour
         return null;
     }
 
-    //외부로 턴 정보 넘길예정 아마 승패쪽에서
+    [System.Serializable]
+    public class ChapterEnemyPool
+    {
+        public string chapterName;
+        public List<CustomEnemy> enemyPrefabs;
+    }
+
     public int CurrentTurn => currentTurn;
     public int MaxTurns => maxTurns;
     public bool IsBattleEnded => battleEnded || currentTurn >= maxTurns;

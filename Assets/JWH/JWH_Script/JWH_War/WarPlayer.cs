@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class WarPlayer : MonoBehaviour
@@ -47,20 +48,17 @@ public class WarPlayer : MonoBehaviour
         }
         Debug.Log("플레이어의 모든 버프와 실드가 초기화되었습니다.");
     }
-    public virtual void Act(WarAction action)
+    public async UniTask ActAsync(WarAction action)
     {
         int extraForward = 0;
-        // 행동이 공격이고 돌진 버프가 있다면
         if (action == WarAction.Attack && GoGoBuff)
         {
             Debug.Log("돌진 버프 효과 발동! 4칸 더 전진합니다.");
-            extraForward = 4; // 추가 전진 거리 설정
-            GoGoBuff = false; // 버프는 1회용이므로 사용 후 제거
+            extraForward = 4;
+            GoGoBuff = false;
         }
-        // controller.DoAction 호출 시 추가 거리를 전달
-        controller.DoAction(action, extraForward);
+        await controller.DoActionAsync(action, extraForward);
     }
-    public bool IsBusy => controller != null && controller.IsBusy;
 
     public void TakeDamage(int amount)
     {
@@ -82,25 +80,12 @@ public class WarPlayer : MonoBehaviour
         Debug.Log($"Player Shield +{amount} => {currentShield}");
     }
 
-
-    // 현재 체력 변경해야 함
-    //public void Heal(int amount)
-    //{
-    //    hp = Mathf.Clamp(hp + amount, 0, hp);
-    //    Debug.Log($"Player HP +{amount} => {hp}");
-    //}
-
     public void KillByRingOut()
     {
         if (Ctrl.CurrentHP <= 0) return;
         Ctrl.CurrentHP = 0;
         Debug.Log("플레이어 링아웃");
     }
-    //public void ResetStatus(int hpInit = 5, int shieldInit = 0)//포기화용
-    //{
-    //    hp = Mathf.Max(0, hpInit);
-    //    shield = Mathf.Clamp(shieldInit, 0, 3);
-    //}
 
     public void EquipSkill(SkillData newSkill)
     {

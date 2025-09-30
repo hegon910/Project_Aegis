@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 2133970515076568027}
   - component: {fileID: -3519295816317485448}
   m_Layer: 5
-  m_Name: SpeedEnemy
+  m_Name: Enemy06Kinglord
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -60,7 +60,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.06575376, b: 0, a: 1}
+  m_Color: {r: 0.39596844, g: 0, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -90,12 +90,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 100
-  forwardDist: 4
+  forwardDist: 6
   backwardDist: 1
   direction: -1
   maxHp: 5
   currentHp: 5
-  attackPower: 1
+  attackPower: 2
 --- !u!114 &-3519295816317485448
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -109,20 +109,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   controller: {fileID: 0}
-  attackChance: 0.5
-  rank: 1
+  attackChance: 0.82
+  rank: 3
+  enemyInfoText: {fileID: 0}
+  attackHints:
+  - "\uC801\uB4E4\uC774 \uBD84\uC8FC\uD558\uB2E4"
+  defendHints:
+  - "\uC801\uB4E4\uC774 \uC7A0\uC7A0\uD558\uB2E4"
   attackVsAttack:
-    playerDamage: 1
-    playerKnockback: 1
-    enemyDamage: 1
-    enemyKnockback: 1
+    playerDamage: 2
+    playerKnockback: 2
+    enemyBaseDamage: 0
+    enemyKnockback: 2
   playerAttackVsEnemyDefend:
-    playerDamage: 0
-    playerKnockback: 1
-    enemyDamage: 0
-    enemyKnockback: 0
+    playerDamage: 2
+    playerKnockback: 2
+    enemyBaseDamage: 0
+    enemyKnockback: 1
   playerDefendVsEnemyAttack:
     playerDamage: 0
-    playerKnockback: 0
-    enemyDamage: 0
+    playerKnockback: 1
+    enemyBaseDamage: 0
     enemyKnockback: 1
+  battleLaneLength: 14
+  playerStartPos: 6

@@ -408,6 +408,14 @@ PrefabInstance:
       propertyPath: enemyInfoText
       value: 
       objectReference: {fileID: 1725107436}
+    - target: {fileID: 1998703644467061465, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: attackHints.Array.data[1]
+      value: "\uD638\uB8E8\uD558\uAE30 \uC18C\uB9AC\uAC00 \uB4E4\uB9B0\uB2E4"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1998703644467061465, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: defendHints.Array.data[1]
+      value: "\uCD1D\uC131\uC774 \uBA48\uCD98\uB2E4"
+      objectReference: {fileID: 0}
     - target: {fileID: 2387749592704131571, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -488,6 +496,94 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6540825586812264945, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: chapterEnemies.Array.size
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 6540825586812264945, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: chapterEnemies.Array.data[0].chapterName
+      value: Ch01
+      objectReference: {fileID: 0}
+    - target: {fileID: 6540825586812264945, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: chapterEnemies.Array.data[1].chapterName
+      value: Ch02
+      objectReference: {fileID: 0}
+    - target: {fileID: 6540825586812264945, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: chapterEnemies.Array.data[2].chapterName
+      value: Ch03
+      objectReference: {fileID: 0}
+    - target: {fileID: 6540825586812264945, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: chapterEnemies.Array.data[3].chapterName
+      value: Ch04
+      objectReference: {fileID: 0}
+    - target: {fileID: 6540825586812264945, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: chapterEnemies.Array.data[4].chapterName
+      value: Ch05
+      objectReference: {fileID: 0}
+    - target: {fileID: 6540825586812264945, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: chapterEnemies.Array.data[5].chapterName
+      value: Ch06
+      objectReference: {fileID: 0}
+    - target: {fileID: 6540825586812264945, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: chapterEnemies.Array.data[0].enemyPrefabs.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6540825586812264945, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: chapterEnemies.Array.data[1].enemyPrefabs.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6540825586812264945, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: chapterEnemies.Array.data[2].enemyPrefabs.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6540825586812264945, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: chapterEnemies.Array.data[3].enemyPrefabs.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6540825586812264945, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: chapterEnemies.Array.data[4].enemyPrefabs.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6540825586812264945, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: chapterEnemies.Array.data[5].enemyPrefabs.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6540825586812264945, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: chapterEnemies.Array.data[0].enemyPrefabs.Array.data[0]
+      value: 
+      objectReference: {fileID: -3519295816317485448, guid: f89202f7e6c8c1b4c8cfbecdc0aede10, type: 3}
+    - target: {fileID: 6540825586812264945, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: chapterEnemies.Array.data[1].enemyPrefabs.Array.data[0]
+      value: 
+      objectReference: {fileID: -3519295816317485448, guid: 84c238bb07b5c2242bb86604935f2327, type: 3}
+    - target: {fileID: 6540825586812264945, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: chapterEnemies.Array.data[1].enemyPrefabs.Array.data[1]
+      value: 
+      objectReference: {fileID: -3519295816317485448, guid: 6909b594fe8988a48aa6cfaac056d9b1, type: 3}
+    - target: {fileID: 6540825586812264945, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: chapterEnemies.Array.data[2].enemyPrefabs.Array.data[0]
+      value: 
+      objectReference: {fileID: -3519295816317485448, guid: b5c8e6dfaa652e84fb87a69b8b038160, type: 3}
+    - target: {fileID: 6540825586812264945, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: chapterEnemies.Array.data[2].enemyPrefabs.Array.data[1]
+      value: 
+      objectReference: {fileID: -3519295816317485448, guid: b124f4b73bbb9b84fa204e1167f4a6a5, type: 3}
+    - target: {fileID: 6540825586812264945, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: chapterEnemies.Array.data[3].enemyPrefabs.Array.data[0]
+      value: 
+      objectReference: {fileID: -3519295816317485448, guid: e23490688c4ab73438afdf5142304b54, type: 3}
+    - target: {fileID: 6540825586812264945, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: chapterEnemies.Array.data[3].enemyPrefabs.Array.data[1]
+      value: 
+      objectReference: {fileID: -3519295816317485448, guid: 9fd07136392e0cf4f942281877dfad2e, type: 3}
+    - target: {fileID: 6540825586812264945, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: chapterEnemies.Array.data[4].enemyPrefabs.Array.data[0]
+      value: 
+      objectReference: {fileID: -3519295816317485448, guid: edb206b81fabb35479e54db656ec0a04, type: 3}
+    - target: {fileID: 6540825586812264945, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: chapterEnemies.Array.data[5].enemyPrefabs.Array.data[0]
+      value: 
+      objectReference: {fileID: -3519295816317485448, guid: 9afdcbdaaa4fcf5438cdbaa8afea4c3d, type: 3}
     - target: {fileID: 6633850379817137101, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -504,6 +600,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -194
       objectReference: {fileID: 0}
+    - target: {fileID: 7831991435369316234, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: maxShield
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7831991435369316234, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: equippedSkillID
+      value: MoraleBoost
+      objectReference: {fileID: 0}
     - target: {fileID: 7966315032008839688, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: m_Name
       value: WarPanel
@@ -513,7 +617,8 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 4722907744010525362, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Cysharp.Threading.Tasks;
 
 [System.Serializable]
 public class CollisionOutcome
@@ -28,6 +29,13 @@ public class CustomEnemy : WarEnemy
 
     [Tooltip("플레이어: 방어 / 적: 공격")]
     [SerializeField] private CollisionOutcome playerDefendVsEnemyAttack;
+
+    [Header("이 적과의 전투 설정")]
+    [Tooltip("이 적과 싸울 때의 전장 칸 수")]
+    public int battleLaneLength = 16;
+
+    [Tooltip("플레이어의 시작 위치 인덱스")]
+    public int playerStartPos = 6;
 
     public override WarAction ChooseAction()
     {
@@ -91,7 +99,7 @@ public class CustomEnemy : WarEnemy
             finalDamage = Mathf.Max(0, finalDamage);
             if (player.enhancedAttackStacks > 0)
             {
-                finalDamage += 2;
+                finalDamage += 1;
                 player.enhancedAttackStacks--;
             }
             if (finalDamage > 0)
@@ -107,7 +115,7 @@ public class CustomEnemy : WarEnemy
         // 밀림 적용
         if (outcome.playerKnockback > 0)
         {
-            player.Ctrl.CrushResult(player.Ctrl.CurrentIndex - outcome.playerKnockback);
+            player.Ctrl.CrushResultAsync(player.Ctrl.CurrentIndex - outcome.playerKnockback).Forget();
         }
         int finalEnemyKnockback = outcome.enemyKnockback;
         if (playerAction == WarAction.Attack && player.KnockbackBuff)
@@ -119,7 +127,7 @@ public class CustomEnemy : WarEnemy
 
         if (finalEnemyKnockback > 0)
         {
-            this.Ctrl.CrushResult(this.Ctrl.CurrentIndex + finalEnemyKnockback);
+            this.Ctrl.CrushResultAsync(this.Ctrl.CurrentIndex + finalEnemyKnockback).Forget();
         }
     }
 }

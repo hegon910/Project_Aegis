@@ -24,12 +24,12 @@ public class WarGroundUI : MonoBehaviour
 
     void OnEnable()
     {
-        warGround.onGridUpdated += GenerateMarkers;
+        warGround.OnGridUpdated += GenerateMarkers;
     }
 
     void OnDisable()
     {
-        warGround.onGridUpdated -= GenerateMarkers;
+        warGround.OnGridUpdated -= GenerateMarkers;
     }
 
     void ClearMarkers()
