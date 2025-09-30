@@ -26,8 +26,8 @@ public class GameSessionManager : MonoBehaviour
         // 경과 시간을 시/분/초 형식으로 변환
         TimeSpan playDuration = TimeSpan.FromSeconds(elapsedTime);
 
-        string playDate = sessionStartTime.ToString("yyyy-MM-dd HH:mm");
-        string playDurationString = string.Format("{0:D2}시간 {1:D2}분 {2:D2}초", playDuration.Hours, playDuration.Minutes, playDuration.Seconds);
+        string playDate = sessionStartTime.ToString("yyyy-MM-dd");
+        string playDurationString = string.Format("{0:D2}시간 {1:D2}분", playDuration.Hours, playDuration.Minutes, playDuration.Seconds);
 
         Debug.Log($"[GameSessionManager] 세션 종료. 총 플레이 시간: {playDurationString}");
 

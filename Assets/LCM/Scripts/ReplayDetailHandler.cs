@@ -27,7 +27,19 @@ public class ReplayDetailHandler : MonoBehaviour
     {
         detailPanel.SetActive(true);
 
-        playDateText.text = $"플레이 날짜: {record.playDate}";
+        string formattedDate = record.playDate;
+        if (System.DateTime.TryParse(record.playDate, out System.DateTime dateValue))
+        {
+            // 날짜 부분만 포맷
+            formattedDate = dateValue.ToString("yyyy-MM-dd");
+        }
+        else
+        {
+            // 파싱 실패 시, 문자열을 공백 기준으로 나누어 날짜만 사용 시도
+            formattedDate = record.playDate.Split(' ')[0];
+        }
+
+        playDateText.text = $"플레이 날짜: {formattedDate}";
         playDurationText.text = $"플레이 시간: {record.playDuration}";
         playthroughInfoText.text = $"회차 정보: {record.playthroughCount}회차 {record.outcome}";
 

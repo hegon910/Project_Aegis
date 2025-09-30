@@ -658,6 +658,18 @@ public class GameManager : MonoBehaviour
         string outcome = ParseOutcome(resultLog);
         int currentChapter = DataManager.Instance.PlayerData.currentChapter;
 
+        GameOutcome battleOutcome = ConvertOutcomeToEnum(outcome);
+
+        if (MultiEndingSystem.Instance != null)
+        {
+            MultiEndingSystem.Instance.RecordChapterResult(
+                currentChapter,
+                battleOutcome
+            );
+            Debug.Log($"[GameManager] 챕터 {currentChapter} 결과와 점수를 MultiEndingSystem에 기록했습니다.");
+        }
+
+
         if (SimpleEventHistoryManager.Instance != null)
         {
             SimpleEventHistoryManager.Instance.RecordChapterOutcome(currentChapter, outcome);
@@ -680,6 +692,16 @@ public class GameManager : MonoBehaviour
             return "무승부";
         }
         return "알 수 없음"; // 예외 처리
+    }
+    private GameOutcome ConvertOutcomeToEnum(string outcome)
+    {
+        return outcome switch
+        {
+            "승리" => GameOutcome.Victory,
+            "패배" => GameOutcome.Defeat,
+            "무승부" => GameOutcome.Draw,
+            _ => GameOutcome.Draw // 안전장치
+        };
     }
     // BattleResultPanel의 버튼이 호출할 공개 함수
     public void OnBattleResultConfirmed()
