@@ -49,15 +49,11 @@ public class SimpleEventHistoryManager : MonoBehaviour
 
     // 이벤트 발생 시점에서는 기록하지 않고, 선택지 선택 시점에서만 기록
     // (OnParameterEvent와 OnSubEvent 메서드는 제거됨)
-
-    /// <summary>
-    /// 메인이벤트 기록 (Ending_Memoriar 기준)
-    /// </summary>
+    // 이벤트 기록
     public void RecordMainEvent(int eventId, string dialogue, string selectedChoice, bool isEndingMemoriar)
     {
         if (!enableRecording) return;
 
-        // SimpleEventRecord는 dialogue, choice, isEndingMemoriar 등의 핵심 정보만 저장합니다.
         var record = new SimpleEventRecord(
             eventId,
             DataManager.Instance.PlayerData.currentChapter,
@@ -68,14 +64,13 @@ public class SimpleEventHistoryManager : MonoBehaviour
         eventHistory.Add(record);
         Debug.Log($"[SimpleEventHistoryManager] 메인이벤트 기록: {dialogue} (Ending_Memoriar: {isEndingMemoriar})");
 
-        // 이벤트가 기록될 때마다 저장하는 것은 파일 I/O 측면에서 비효율적일 수 있습니다.
-        // 하지만 현재 로직을 유지한다면:
         if (enableLocalSave)
         {
             SaveHistory();
         }
     }
 
+    //게임 전체 흐름 저장
     public void RecordPlaythrough(string date, string duration, int chapter, string outcome, List<SimpleEventRecord> events)
     {
         if (!enableRecording) return;
@@ -111,11 +106,7 @@ public class SimpleEventHistoryManager : MonoBehaviour
         return new List<GamePlaythroughRecord>(playthroughHistory);
     }
 
-    // 파라미터 이벤트와 서브 이벤트는 Ending_Memoriar 같은 플래그가 없으므로 별도 기록하지 않음
-
-    /// <summary>
     /// 이벤트 기록 가져오기
-    /// </summary>
     public List<SimpleEventRecord> GetEventHistory()
     {
         return new List<SimpleEventRecord>(eventHistory);
@@ -161,9 +152,7 @@ public class SimpleEventHistoryManager : MonoBehaviour
         Debug.Log("[SimpleEventHistoryManager] 모든 기록이 초기화되었습니다.");
     }
 
-    /// <summary>
     /// 이벤트 기록을 로컬 파일에 저장
-    /// </summary>
     private void SaveHistory()
     {
         if (!enableLocalSave || string.IsNullOrEmpty(savePath)) return;

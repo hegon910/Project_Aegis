@@ -9,15 +9,15 @@ public class GamePlaythroughRecord
 {
     public string playDate;
     public string playDuration;
-    public int finalChapter;
-    public string outcome; // "Victory", "Defeat", "Draw", "Quit"
+    public int playthroughCount;
+    public string outcome; // 게임 승무패
     public List<SimpleEventRecord> eventHistory; // 해당 회차의 모든 이벤트 기록
 
-    public GamePlaythroughRecord(string date, string duration, int chapter, string gameOutcome, List<SimpleEventRecord> events)
+    public GamePlaythroughRecord(string date, string duration, int playCount, string gameOutcome, List<SimpleEventRecord> events)
     {
         playDate = date;
         playDuration = duration;
-        finalChapter = chapter;
+        playthroughCount = playCount;
         outcome = gameOutcome;
         eventHistory = events;
     }
