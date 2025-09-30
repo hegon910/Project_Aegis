@@ -11,6 +11,7 @@ public class WarTurnManager : MonoBehaviour
     [SerializeField] private List<ChapterEnemyPool> chapterEnemies;
     //[SerializeField] WarEnemy enemy;
     private WarEnemy enemy;
+    public WarEnemy CurrentEnemy => enemy;
 
 
     [Header("UI References")]
@@ -29,10 +30,6 @@ public class WarTurnManager : MonoBehaviour
     [SerializeField] int playerStartIndex = 6;
     [SerializeField] int enemyStartIndex = 9;
 
-    
-
-    
-
     public void OnClick_PlayerAttack() { if (!turnRunning && !IsBattleEnded) GoStartTurn(WarAction.Attack); }
     public void OnClick_PlayerDefend() { if (!turnRunning && !IsBattleEnded) GoStartTurn(WarAction.Defend); }
 
@@ -47,56 +44,41 @@ public class WarTurnManager : MonoBehaviour
         {
             choiceCard.SetInteractable(true);
         }
-        // 컨트롤러 초기화
-        if (ground != null && player != null && enemy != null)
-        {
-            player.Ctrl.Init(ground, playerStartIndex);
-            enemy.Ctrl.Init(ground, enemyStartIndex);
-        }
-        else
-        {
-            Debug.LogError("WarTurnManager에 Ground, Player, 또는 Enemy가 할당되지 않아 초기화할 수 없습니다!");
-        }
-        if (player != null && player.currentSkill != null)
-        {
-            skillCooldownTimer = player.currentSkill.cooltime;
-            Debug.Log($"전투 시작! '{player.currentSkill.skillName}' 스킬의 초기 쿨타임({skillCooldownTimer}턴)이 적용");
-        }
-        if (!battleEnded && enemy != null)
-        {
-            enemy.PrepareAndShowHint();
-        }
-        if (warHUD != null)
-        {
-            warHUD.UpdateAllUI();
-        }
     }
 
 
     public void ResetForNewBattle(int newMaxTurns = 30)
     {
-
         if (GameManager.instance != null && GameManager.instance.CurrentChapter == 1)
         {
             WarHistory.ResetHistory();
         }
+
         if (enemy != null)
         {
             Destroy(enemy.gameObject);
         }
+
         int chapterIndex = GameManager.instance.CurrentChapter - 1;
         if (chapterIndex < 0 || chapterIndex >= chapterEnemies.Count || chapterEnemies[chapterIndex].enemyPrefabs.Count == 0)
         {
-            Debug.LogError($"챕터 {chapterIndex + 1}에 설정된 적이 없음");
+            Debug.LogError($"챕터 {chapterIndex + 1}에 설정된 적이 없습니다!");
             return;
         }
         List<CustomEnemy> enemyPool = chapterEnemies[chapterIndex].enemyPrefabs;
         CustomEnemy selectedEnemyPrefab = enemyPool[Random.Range(0, enemyPool.Count)];
+        int desiredLaneLength = selectedEnemyPrefab.battleLaneLength;
+        if (ground != null)
+        {
+            ground.InitializeGrid(desiredLaneLength);
+        }
         enemy = Instantiate(selectedEnemyPrefab);
-        Debug.Log($"챕터 {chapterIndex + 1} 전투 시작! 등장한 적: {enemy.name}");
+        Debug.Log($"챕터 {chapterIndex + 1} 전투 시작! 등장한 적: {enemy.name.Replace("(Clone)", "")}, 전장 크기: {desiredLaneLength}칸");
 
-
-        // 전투 상태 초기화
+        if (warHUD != null)
+        {
+            enemy.enemyInfoText = warHUD.EnemyInfoTextField;
+        }
         maxTurns = newMaxTurns;
         currentTurn = 0;
         battleEnded = false;
@@ -109,21 +91,28 @@ public class WarTurnManager : MonoBehaviour
         }
         if (enemy != null)
         {
-            enemy.Ctrl.ResetState(ground, enemyStartIndex); // WarEnemy는 별도 버프가 없으므로 컨트롤러만 초기화
+            enemy.Ctrl.ResetState(ground, enemyStartIndex);
         }
 
         if (player != null && player.currentSkill != null)
         {
             skillCooldownTimer = player.currentSkill.cooltime;
-            Debug.Log($"전투 리셋! '{player.currentSkill.skillName}' 스킬의 초기 쿨타임({skillCooldownTimer}턴)이 적용됩니다.");
         }
         else
         {
-            skillCooldownTimer = 0; // 스킬이 없는 경우 0으로 초기화
+            skillCooldownTimer = 0;
         }
-
+        if (!battleEnded && enemy != null)
+        {
+            enemy.PrepareAndShowHint();
+        }
+        if (warHUD != null)
+        {
+            warHUD.UpdateAllUI();
+        }
         Debug.Log("전투 및 캐릭터 상태 초기화 완료");
     }
+
     void GoStartTurn(WarAction playerAction)
     {
         if (choiceCard != null)
@@ -170,8 +159,8 @@ public class WarTurnManager : MonoBehaviour
         PlayerPrefs.Save();
 
         bool isWin = resultLog.Contains("승리");
-        WarHistory.RecordWarResult(isWin); // ���� ����� ��� �ý��ۿ� ����
-        var changes = new List<ParameterChange>//�Ķ���� ���� �߰��κ�
+        WarHistory.RecordWarResult(isWin); 
+        var changes = new List<ParameterChange>
 
         {
             new ParameterChange
@@ -242,7 +231,6 @@ public class WarTurnManager : MonoBehaviour
             default: playerActsFirst = true; break;
         }
 
-        // 이동과 충돌 감시를 병렬로 실행
         if (playerActsFirst)
         {
             await ProcessMoveWithCollisionCheck(player.ActAsync(playerAction));
@@ -260,7 +248,6 @@ public class WarTurnManager : MonoBehaviour
             }
         }
 
-        // 최종 충돌 처리
         int pIdx = player.Ctrl.CurrentIndex;
         int eIdx = enemy.Ctrl.CurrentIndex;
 
@@ -268,7 +255,6 @@ public class WarTurnManager : MonoBehaviour
         {
             int meet = Mathf.Clamp(Mathf.RoundToInt((pIdx + eIdx) * 0.5f), 0, ground.LaneLength - 1);
 
-            // 두 캐릭터의 충돌 애니메이션을 동시에 실행 모두 끝날 때까지 대기
             await UniTask.WhenAll(
                 player.Ctrl.CrushResultAsync(meet),
                 enemy.Ctrl.CrushResultAsync(meet)
@@ -362,7 +348,6 @@ public class WarTurnManager : MonoBehaviour
         public List<CustomEnemy> enemyPrefabs;
     }
 
-    //외부로 턴 정보 넘길예정 아마 승패쪽에서
     public int CurrentTurn => currentTurn;
     public int MaxTurns => maxTurns;
     public bool IsBattleEnded => battleEnded || currentTurn >= maxTurns;

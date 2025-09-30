@@ -112,8 +112,10 @@ MonoBehaviour:
   attackChance: 0.83
   rank: 2
   enemyInfoText: {fileID: 0}
-  attackHints: []
-  defendHints: []
+  attackHints:
+  - "\uC801\uB4E4\uC774 \uBD84\uC8FC\uD558\uB2E4"
+  defendHints:
+  - "\uC801\uB4E4\uC774 \uC7A0\uC7A0\uD558\uB2E4"
   attackVsAttack:
     playerDamage: 1
     playerKnockback: 2
@@ -129,3 +131,5 @@ MonoBehaviour:
     playerKnockback: 1
     enemyBaseDamage: 0
     enemyKnockback: 0
+  battleLaneLength: 14
+  playerStartPos: 6
