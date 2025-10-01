@@ -72,7 +72,7 @@ public class WarTurnManager : MonoBehaviour
         {
             ground.InitializeGrid(desiredLaneLength);
         }
-        enemy = Instantiate(selectedEnemyPrefab);
+        enemy = Instantiate(selectedEnemyPrefab, ground.transform);
         this.maxTurns = selectedEnemyPrefab.maxTurns;
         Debug.Log($"챕터 {chapterIndex + 1} 전투 시작! 등장한 적: {enemy.name.Replace("(Clone)", "")}, 전장 크기: {desiredLaneLength}칸");
 
@@ -90,7 +90,7 @@ public class WarTurnManager : MonoBehaviour
         {
             player.ResetState(ground, playerStartIndex);
         }
-        if (enemy != null)
+        if (enemy != null && enemy.Ctrl != null)
         {
             enemy.Ctrl.ResetState(ground, enemyStartIndex);
         }
@@ -103,7 +103,7 @@ public class WarTurnManager : MonoBehaviour
         {
             skillCooldownTimer = 0;
         }
-        if (!battleEnded && enemy != null)
+        if (!battleEnded && enemy != null && enemy.Ctrl != null)
         {
             enemy.PrepareAndShowHint();
         }
@@ -283,7 +283,7 @@ public class WarTurnManager : MonoBehaviour
         CheckWinLoseDrawAfterTurn();
         if (!battleEnded && currentTurn >= maxTurns) EndBattle("무승부 - 턴 제한 소진");
 
-        if (!battleEnded && enemy != null)
+        if (!battleEnded && enemy != null && enemy.Ctrl != null)
         {
             enemy.PrepareAndShowHint();
         }

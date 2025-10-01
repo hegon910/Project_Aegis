@@ -82,6 +82,7 @@ public class AchievementManager : MonoBehaviour
 
     /// <summary>
     /// 모든 업적 상태를 초기 상태로 리셋하고 저장합니다.
+    /// 디버깅용 OnclickResetData에서만 호출되어야 합니다.
     /// </summary>
     public void ResetAllAchievements()
     {
@@ -99,15 +100,16 @@ public class AchievementManager : MonoBehaviour
         completedAchievementIds.Clear();
         claimedRewardIds.Clear();
 
-        // 플레이어 데이터도 초기화
-        if (DataManager.Instance?.PlayerData != null)
+        // 플레이어 설정 데이터도 초기화 (SettingsData 사용)
+        if (DataManager.Instance?.PlayerSettings != null)
         {
-            DataManager.Instance.PlayerData.unlockedAchievements = new List<string>();
+            DataManager.Instance.PlayerSettings.unlockedAchievements = new List<string>();
+            DataManager.Instance.PlayerSettings.claimedAchievementIds = new List<string>();
         }
 
         if (enableDebugLogs)
         {
-            Debug.Log("[AchievementManager] 모든 업적이 초기화되었습니다.");
+            Debug.Log("[AchievementManager] 모든 업적이 초기화되었습니다. (디버깅용 전체 리셋)");
         }
 
         // 저장
@@ -158,19 +160,22 @@ public class AchievementManager : MonoBehaviour
     }
     
     /// <summary>
-    /// 업적 진행도 로드
+    /// 업적 진행도 로드 (SettingsData에서 로드하도록 변경)
     /// </summary>
     private void LoadAchievementProgress()
     {
-        if (DataManager.Instance?.PlayerData == null) return;
+        if (DataManager.Instance?.PlayerSettings == null) return;
         
-        var playerData = DataManager.Instance.PlayerData;
+        var playerSettings = DataManager.Instance.PlayerSettings;
         
-        // 완료된 업적 로드
+        // [마이그레이션] 기존 GameData에 있던 업적 데이터를 SettingsData로 이동
+        MigrateAchievementsFromGameData();
+        
+        // 완료된 업적 로드 (SettingsData에서)
         completedAchievementIds.Clear();
-        if (playerData.unlockedAchievements != null)
+        if (playerSettings.unlockedAchievements != null)
         {
-            completedAchievementIds.AddRange(playerData.unlockedAchievements);
+            completedAchievementIds.AddRange(playerSettings.unlockedAchievements);
         }
         
         // 업적 상태 업데이트
@@ -186,15 +191,15 @@ public class AchievementManager : MonoBehaviour
             }
         }
 
-        // [보강] 수령 상태 로드: GameData.claimedAchievementIds를 기준으로 반영
-        if (playerData.claimedAchievementIds == null)
+        // [보강] 수령 상태 로드: SettingsData.claimedAchievementIds를 기준으로 반영
+        if (playerSettings.claimedAchievementIds == null)
         {
-            playerData.claimedAchievementIds = new List<string>();
+            playerSettings.claimedAchievementIds = new List<string>();
         }
         foreach (var kvp in achievementDict)
         {
             var ach = kvp.Value;
-            ach.isRewardClaimed = playerData.claimedAchievementIds.Contains(ach.achievementId);
+            ach.isRewardClaimed = playerSettings.claimedAchievementIds.Contains(ach.achievementId);
         }
         
         if (enableDebugLogs)
@@ -204,28 +209,74 @@ public class AchievementManager : MonoBehaviour
     }
     
     /// <summary>
-    /// 업적 진행도 저장
+    /// 기존 GameData에 있던 업적 데이터를 SettingsData로 마이그레이션 (호환성 유지)
+    /// </summary>
+    private void MigrateAchievementsFromGameData()
+    {
+        if (DataManager.Instance?.PlayerData == null || DataManager.Instance?.PlayerSettings == null)
+            return;
+        
+        var playerData = DataManager.Instance.PlayerData;
+        var playerSettings = DataManager.Instance.PlayerSettings;
+        
+        // GameData에 업적 데이터가 있고, SettingsData에는 없는 경우 마이그레이션
+        bool needsMigration = false;
+        
+        if (playerData.unlockedAchievements != null && playerData.unlockedAchievements.Count > 0)
+        {
+            if (playerSettings.unlockedAchievements == null || playerSettings.unlockedAchievements.Count == 0)
+            {
+                playerSettings.unlockedAchievements = new List<string>(playerData.unlockedAchievements);
+                needsMigration = true;
+                if (enableDebugLogs)
+                {
+                    Debug.Log($"[AchievementManager] GameData에서 {playerData.unlockedAchievements.Count}개의 업적을 SettingsData로 마이그레이션했습니다.");
+                }
+            }
+        }
+        
+        if (playerData.claimedAchievementIds != null && playerData.claimedAchievementIds.Count > 0)
+        {
+            if (playerSettings.claimedAchievementIds == null || playerSettings.claimedAchievementIds.Count == 0)
+            {
+                playerSettings.claimedAchievementIds = new List<string>(playerData.claimedAchievementIds);
+                needsMigration = true;
+                if (enableDebugLogs)
+                {
+                    Debug.Log($"[AchievementManager] GameData에서 {playerData.claimedAchievementIds.Count}개의 수령 정보를 SettingsData로 마이그레이션했습니다.");
+                }
+            }
+        }
+        
+        // 마이그레이션이 일어났다면 SettingsData 저장
+        if (needsMigration)
+        {
+            DataManager.Instance.SaveSettings();
+        }
+    }
+    
+    /// <summary>
+    /// 업적 진행도 저장 (SettingsData에 저장하도록 변경)
     /// </summary>
     private void SaveAchievementProgress()
     {
-        if (DataManager.Instance?.PlayerData == null) return;
+        if (DataManager.Instance?.PlayerSettings == null) return;
         
-        var playerData = DataManager.Instance.PlayerData;
-        playerData.unlockedAchievements = new List<string>(completedAchievementIds);
+        var playerSettings = DataManager.Instance.PlayerSettings;
+        playerSettings.unlockedAchievements = new List<string>(completedAchievementIds);
 
-        // [보강] 수령 상태 저장: GameData.claimedAchievementIds에 동기화
-        playerData.claimedAchievementIds = achievementDict.Values
+        // [보강] 수령 상태 저장: SettingsData.claimedAchievementIds에 동기화
+        playerSettings.claimedAchievementIds = achievementDict.Values
             .Where(a => a.isRewardClaimed)
             .Select(a => a.achievementId)
             .ToList();
         
         if (autoSaveOnUpdate)
         {
-            // 업적 저장 시점엔 저장 억제 플래그를 해제하여 디스크 반영이 누락되지 않도록 보장
+            // 업적은 SettingsData에 저장되므로 SaveSettings 호출
             if (DataManager.Instance != null)
             {
-                DataManager.Instance.AllowSavesFromNow();
-                DataManager.Instance.SaveData();
+                DataManager.Instance.SaveSettings();
             }
         }
     }

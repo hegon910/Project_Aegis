@@ -130,6 +130,19 @@ public class CheatManager : MonoBehaviour
             GamePlayerStats.Instance.SetStat(ParameterType.전황, 90);
         }
 
+        // '+' 키를 누르면 재화 2000개 추가
+        if (Input.GetKeyDown(KeyCode.Plus) || Input.GetKeyDown(KeyCode.KeypadPlus))
+        {
+            if (CurrencyManager.AddCurrency(2000))
+            {
+                Debug.Log("[CHEAT] 재화 2000개 추가 완료!");
+            }
+            else
+            {
+                Debug.LogError("[CHEAT] 재화 추가 실패!");
+            }
+        }
+
         // ']' 키를 누르면 다음 이벤트로 넘어갑니다.
         if (Input.GetKeyDown(KeyCode.RightBracket))
         {

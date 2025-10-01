@@ -25,6 +25,10 @@ public class SettingsData
     public List<string> purchasedShopItemIds;
     // 재화 데이터 (새 게임으로 초기화되지 않음)
     public int currencyAmount; // 업적 보상으로 획득한 재화
+    
+    // === 업적 데이터 (새 게임으로 초기화되지 않음) ===
+    public List<string> unlockedAchievements;  // 달성한 도전과제 ID 목록
+    public List<string> claimedAchievementIds; // 수령 완료한 업적 ID 목록
 
     /// <summary>
     /// 새 설정 파일 생성 시 기본값
@@ -41,6 +45,9 @@ public class SettingsData
         purchasedShopItemIds = new List<string>();
         // 기본 재화 초기화
         currencyAmount = 0;
+        // 업적 데이터 초기화
+        unlockedAchievements = new List<string>();
+        claimedAchievementIds = new List<string>();
       // Debug.Log($"[SettingsData] 새 설정 데이터 생성 - 기본 서브이벤트팩: {string.Join(", ", selectedSubEventPackIDs)}");
     }
 }

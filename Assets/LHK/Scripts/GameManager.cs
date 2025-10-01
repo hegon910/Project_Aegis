@@ -174,7 +174,7 @@ public class GameManager : MonoBehaviour
 
         ChangeState(GameState.Title);
         
-        // FirebaseManager 초기화 완료를 기다린 후 로그인 처리
+        // 로딩 완료 후 로그인 처리 시작
         if (FirebaseManager.Instance != null)
         {
             // FirebaseManager가 이미 초기화되어 있으면 바로 로그인 처리
@@ -462,7 +462,8 @@ public class GameManager : MonoBehaviour
         {
             if (tutorialPanel != null) tutorialPanel.SetActive(false);
             if (tutorialText != null) tutorialText.SetActive(false);
-            if (parameterTutorialPanel != null) parameterTutorialPanel.SetActive(false);
+            // 파라미터 이벤트는 함부로 비활성화하지 않도록 보호
+            // if (parameterTutorialPanel != null) parameterTutorialPanel.SetActive(false);
         }
 
         // 한 프레임 동안만 억제하도록 플래그 해제
@@ -581,6 +582,12 @@ public class GameManager : MonoBehaviour
                 mainScenarioManager.BeginScenarioFromStart();
                 break;
             case GameState.PlayingChapterEndCutscene:
+                // 배틀 컷신 시작 전 메인 스토리 BGM 정지
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.StopBGM();
+                    Debug.Log("[GameManager] 배틀 컷신 시작: 메인 스토리 BGM 정지");
+                }
                 CutsceneManager.OnCutsceneFinished += OnStateFinished;
                 int chapterIndex = CurrentChapter - 1;
                 if (chapterMidCutscenes != null && chapterIndex < chapterMidCutscenes.Count && chapterMidCutscenes[chapterIndex] != null)
@@ -589,6 +596,13 @@ public class GameManager : MonoBehaviour
                     OnStateFinished();
                 break;
             case GameState.InBattle:
+                // 배틀 BGM 재생 (배틀 전용 음악 재생)
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.StopBGM();
+                    AudioManager.Instance.PlayBGMByName("BattleMusic");
+                    Debug.Log("[GameManager] 배틀 시작: 배틀 음악 재생");
+                }
                 if (DataManager.Instance?.PlayerData != null &&
                     DataManager.Instance.PlayerData.playthroughCount == 1 &&
                     CurrentChapter == 1 &&
@@ -606,6 +620,12 @@ public class GameManager : MonoBehaviour
                 break;
             // InBattleResult 상태에 대한 로직 추가 (현재는 UI 표시 외에 특별한 동작 없음)
             case GameState.InBattleResult:
+                // 배틀 종료 후 배틀 음악 정지
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.StopBGM();
+                    Debug.Log("[GameManager] 배틀 결과 화면: 배틀 음악 정지");
+                }
                 // 이 상태는 UI 버튼 클릭을 통해 다음 상태로 진행되므로, 여기서는 대기합니다.
                 break;
             case GameState.InChapterResult:
@@ -850,7 +870,39 @@ public class GameManager : MonoBehaviour
                 break;
         }
     }
-    public void HideTutorial() { if (tutorialPanel != null && tutorialPanel.activeSelf) { tutorialPanel.SetActive(false); parameterTutorialPanel.SetActive(false); } }
+    public void HideTutorial() { 
+        if (tutorialPanel != null && tutorialPanel.activeSelf) { 
+            tutorialPanel.SetActive(false); 
+            // 파라미터 이벤트는 함부로 비활성화하지 않도록 보호
+            // parameterTutorialPanel.SetActive(false); 
+        } 
+    }
+    
+    /// <summary>
+    /// 파라미터 이벤트 패널을 안전하게 비활성화하는 메서드
+    /// 특별한 상황에서만 호출되어야 함
+    /// </summary>
+    public void SafeHideParameterEventPanel()
+    {
+        if (parameterTutorialPanel != null && parameterTutorialPanel.activeSelf)
+        {
+            Debug.Log("[GameManager] 파라미터 이벤트 패널을 안전하게 비활성화합니다.");
+            parameterTutorialPanel.SetActive(false);
+        }
+    }
+    
+    /// <summary>
+    /// 파라미터 이벤트 패널을 활성화하는 메서드
+    /// 파라미터 이벤트가 필요할 때 사용
+    /// </summary>
+    public void ShowParameterEventPanel()
+    {
+        if (parameterTutorialPanel != null && !parameterTutorialPanel.activeSelf)
+        {
+            Debug.Log("[GameManager] 파라미터 이벤트 패널을 활성화합니다.");
+            parameterTutorialPanel.SetActive(true);
+        }
+    }
     public void HideWarTutorial()
     {
         hasShownWarTutorialThisPlaythrough = true;
@@ -886,12 +938,13 @@ public class GameManager : MonoBehaviour
 					preservedUnlockedTraits.Add(trait);
 				}
 			}
-            // 진행도만 삭제하여 Settings(서브이벤트 팩 선택)는 보존
+            // 진행도만 삭제하여 Settings(서브이벤트 팩 선택, 업적 데이터 등)는 보존
             DataManager.Instance.DeleteLocalSaveData();
 
             // 데이터를 모두 지운 후, 새 데이터 객체를 생성하고 게임을 시작합니다.
+            // 주의: 업적 데이터는 SettingsData에 저장되므로 StartNewGame()으로 초기화되지 않습니다.
             DataManager.Instance.StartNewGame();
-            DataManager.Instance.LoadSettings(); // 삭제 후 새로 로드
+            DataManager.Instance.LoadSettings(); // 삭제 후 새로 로드 (업적 포함)
             ResetAllGameData();
 			// 보존된 해금 상태 재적용 (혹시 초기화된 경우 대비)
 			foreach (var trait in preservedUnlockedTraits)
@@ -927,7 +980,8 @@ public class GameManager : MonoBehaviour
 
 			// 3. EventManager 등 다른 게임 시스템들의 상태 초기화
             ResetAllGameData();
-			// 전체 초기화에서는 업적/해금 모두 초기화
+			// [디버깅 전용] 전체 초기화에서는 업적/해금 모두 초기화
+			// 주의: 일반 "새 게임"에서는 업적이 보존됩니다!
 			if (AchievementManager.Instance != null)
 			{
 				AchievementManager.Instance.ResetAllAchievements();
@@ -1082,7 +1136,7 @@ public class GameManager : MonoBehaviour
         if (!hasCompletedLogin)
         {
             Debug.Log("[GameManager] 로그인이 완료되지 않았습니다. 먼저 로그인을 완료하세요.");
-            //return;
+            return;
         }
         
         if (continueButton != null)
@@ -1096,7 +1150,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void HandleLoginFlow()
     {
-        Debug.Log("[GameManager] 로그인 플로우 시작");
+        Debug.Log("[GameManager] 로그인 플로우 시작 (로딩 완료 후)");
         
         // FirebaseManager의 로그인 상태 변경 이벤트 구독
         FirebaseManager.OnLoginStateChanged += OnLoginStateChanged;
@@ -1108,8 +1162,17 @@ public class GameManager : MonoBehaviour
             hasCompletedLogin = true;
             ChangeState(GameState.Title);
         }
-        // FirebaseManager가 개발 모드에서 로그인 선택 UI를 표시하도록 함
-        // (FirebaseManager에서 자동으로 처리됨)
+        else
+        {
+#if UNITY_EDITOR
+            // 에디터 환경에서는 로딩 완료 후 GPGS 로그인 시도 (팝업 표시)
+            Debug.Log("[GameManager] 에디터 환경: GPGS 로그인 시도 -> 실패 -> 팝업 표시");
+            if (FirebaseManager.Instance != null)
+            {
+                FirebaseManager.Instance.GPGSLogin();
+            }
+#endif
+        }
     }
     
     /// <summary>
@@ -1319,7 +1382,12 @@ public class GameManager : MonoBehaviour
             GameOver("리더십이 0이 되어 병사들이 따르지 않습니다.");
         }
     }
-    public void ResetAllGameData() { EventManager.Instance.ResetEventManagerState(); battleTurnManager.ResetForNewBattle(); mainScenarioManager.ResetScenarioState();
+    public void ResetAllGameData() { EventManager.Instance.ResetEventManagerState(); 
+        if (battleTurnManager != null && battleTurnManager.gameObject.activeInHierarchy) 
+        { 
+            battleTurnManager.ResetForNewBattle(); 
+        }
+        mainScenarioManager.ResetScenarioState();
         // 파라미터 UI 잔상(토글/하이라이트) 제거
         var paramUI = FindObjectOfType<ParameterUIController>();
         if (paramUI != null) { paramUI.ClearAllToggles(); }
@@ -1350,7 +1418,8 @@ public class GameManager : MonoBehaviour
         // 패널 안전하게 닫기
         if (tutorialPanel != null) tutorialPanel.SetActive(false);
         if (tutorialText != null) tutorialText.SetActive(false);
-        if (parameterTutorialPanel != null) parameterTutorialPanel.SetActive(false);
+        // 파라미터 이벤트는 함부로 비활성화하지 않도록 보호
+        // if (parameterTutorialPanel != null) parameterTutorialPanel.SetActive(false);
         if (warTutorialPanel != null) warTutorialPanel.SetActive(false);
     }
     private IEnumerator RefreshUINextFrame()
