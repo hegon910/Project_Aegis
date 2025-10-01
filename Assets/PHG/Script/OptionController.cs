@@ -99,6 +99,9 @@ public class OptionController : MonoBehaviour
             UpdateButtonStates();
         }
         
+        // 옵션 창이 열릴 때마다 저장된 설정으로 UI 초기화
+        RefreshUIFromSavedSettings();
+        
         // 팁 표시 시작 (OnEnable에서도 시작하여 GameObject가 다시 활성화될 때도 작동)
         StartTipDisplay();
     }
@@ -299,26 +302,49 @@ public class OptionController : MonoBehaviour
     }
     
     /// <summary>
-    /// 옵션 창이 닫힐 때 호출 - 원래 값으로 되돌리기
+    /// 저장된 설정으로 UI를 새로고침하는 메서드
     /// </summary>
-    public void OnOptionsClosed()
+    private void RefreshUIFromSavedSettings()
     {
-        // 원래 저장된 값으로 되돌리기
+        // 원래 저장된 값으로 UI 업데이트
         if (DataManager.Instance?.PlayerData?.settings != null)
         {
             var settings = DataManager.Instance.PlayerData.settings;
+            
+            // 슬라이더 이벤트를 일시적으로 제거하여 불필요한 호출 방지
+            bgmVolumeSlider.onValueChanged.RemoveListener(OnBGMVolumeChanged);
+            sfxVolumeSlider.onValueChanged.RemoveListener(OnSFXVolumeChanged);
+            
             bgmVolumeSlider.value = settings.bgmVolume;
             sfxVolumeSlider.value = settings.sfxVolume;
             tempBGMVolume = settings.bgmVolume;
             tempSFXVolume = settings.sfxVolume;
             
-            // 오디오 볼륨도 원래 값으로 되돌리기
+            // 슬라이더 이벤트 다시 연결
+            bgmVolumeSlider.onValueChanged.AddListener(OnBGMVolumeChanged);
+            sfxVolumeSlider.onValueChanged.AddListener(OnSFXVolumeChanged);
+            
+            // 오디오 볼륨도 저장된 값으로 설정
             AudioManager.Instance?.SetBGMVolume(settings.bgmVolume);
             AudioManager.Instance?.SetSFXVolume(settings.sfxVolume);
             
             UpdateVolumeTexts();
-            Debug.Log("[OptionController] 옵션 창 닫힘 - 원래 값으로 되돌림");
+            Debug.Log($"[OptionController] UI를 저장된 설정으로 새로고침 - BGM: {settings.bgmVolume:F2}, SFX: {settings.sfxVolume:F2}");
         }
+        else
+        {
+            Debug.LogWarning("[OptionController] DataManager 또는 PlayerData.settings가 null입니다.");
+        }
+    }
+    
+    /// <summary>
+    /// 옵션 창이 닫힐 때 호출 - 원래 값으로 되돌리기
+    /// </summary>
+    public void OnOptionsClosed()
+    {
+        // 저장된 설정으로 되돌리기
+        RefreshUIFromSavedSettings();
+        Debug.Log("[OptionController] 옵션 창 닫힘 - 원래 값으로 되돌림");
     }
     
     // 외부에서 호출할 수 있는 메서드들
