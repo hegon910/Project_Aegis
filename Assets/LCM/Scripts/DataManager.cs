@@ -49,6 +49,7 @@ public class DataManager : MonoBehaviour
     public Dictionary<int, EndingEventData> endingEventDataDict;
     public Dictionary<int, EndingEventData> TrueEndingeventDataDict;
     public Dictionary<int, EndingCutScene> endingCutSceneDict;
+    public Dictionary<int, EndingNameList> endingNameDict;
     public Dictionary<int, FullEndingData> FullendingDataDict;
     public Dictionary<int, FullEndingData> TrueEndingDataDict;
     //회상 이벤트
@@ -752,12 +753,13 @@ public class DataManager : MonoBehaviour
             //엔딩 데이터 
             var endingEventDataTask = Csvparser.ParseAsync<EndingEventData>("EndingEventData");
             var endingCutSceneTask = Csvparser.ParseAsync<EndingCutScene>("EndingEventCutScene");
+            var endingNameDataTask = Csvparser.ParseAsync<EndingNameList>("EndingDataNameList");
             var trueEndingDataTask = Csvparser.ParseAsync<EndingEventData>("TrueEndingData");
             //회상 이벤트 데이터
             var endingMemoriarTask = Csvparser.ParseAsync<EndingMemoriarData>("EndingMemoriar");
 
-            var (mainEventList, answerList, characterList, bgList, sfxList, characterImgList, endingEventList, endingCutSceneList,trueEndingList, battleResultList, backDataList, subEventList, subAnswerList, endingMemoriarList) =
-                await UniTask.WhenAll(mainEventTask, answerTask, characterDataTask, bgDataTask, sfxDataTask, characterImgDataTask, endingEventDataTask, endingCutSceneTask, trueEndingDataTask, battleResultTask, backDataTask, subEventTask, subAnswerTask, endingMemoriarTask);
+            var (mainEventList, answerList, characterList, bgList, sfxList, characterImgList, endingEventList, endingCutSceneList,endingNameList,trueEndingList, battleResultList, backDataList, subEventList, subAnswerList, endingMemoriarList) =
+                await UniTask.WhenAll(mainEventTask, answerTask, characterDataTask, bgDataTask, sfxDataTask, characterImgDataTask, endingEventDataTask, endingCutSceneTask,endingNameDataTask, trueEndingDataTask, battleResultTask, backDataTask, subEventTask, subAnswerTask, endingMemoriarTask);
 
             Debug.Log("모든 파일 로딩 완료");
 
@@ -774,6 +776,7 @@ public class DataManager : MonoBehaviour
             endingEventDataDict = endingEventList.ToDictionary(e => e.ID, e => e);
             TrueEndingeventDataDict = trueEndingList.ToDictionary(e => e.ID, e => e);
             endingCutSceneDict = endingCutSceneList.ToDictionary(c => c.EndingCutScene_ID, c => c);
+            endingNameDict = endingNameList.ToDictionary(c => c.EndingName_ID, c => c);
             backDataDict = backDataList.ToDictionary(d => d.Back_ID, d => d);
             subEventDataDict = subEventList.ToDictionary(e => e.ID, e => e);
             subEventAnswerDataDict = subAnswerList.ToDictionary(a => a.AnswerID, a => a);
@@ -795,11 +798,6 @@ public class DataManager : MonoBehaviour
                     if (!mainEventData.ContainsKey(processedData.id))
                     {
                         mainEventData.Add(processedData.id, processedData);
-                        // 어떤 데이터가 성공적으로 추가되었는지 로그로 확인
-                        if (rawData.ID > 10010 && rawData.ID < 10020) // Chapter 2 시작 부근 로그 확인
-                        {
-                            Debug.Log($"[성공] ID: {rawData.ID}, StoryNum: {rawData.StoryNum} -> 가공 완료 및 추가 성공.");
-                        }
                     }
                 }
                 else
@@ -808,9 +806,8 @@ public class DataManager : MonoBehaviour
                     Debug.LogError($"[실패] ID: {rawData.ID}, StoryNum: {rawData.StoryNum} -> 가공 중 Null 반환됨. 이 데이터나 관련 데이터(BG, 캐릭터 등)에 문제가 있을 수 있습니다.");
                 }
             }
-            Debug.Log($"[DataManager] {mainEventData.Count}개의 메인 스토리 데이터를 가공하여 최종 준비했습니다.");
 
-            //-------------------------------서브 이벤트 데이터 가공단 ---------------------------------------------------------
+            //-------------------------------서브 이벤트 데이터 가공단 ---------------------------------------------------------//
             FullSubEvents.Clear();
             if (subEventList != null && subAnswerList != null)
             {
@@ -979,7 +976,7 @@ public class DataManager : MonoBehaviour
                                        .ToDictionary(g => g.Key, g => g.First().Parameter_type);
 
             _isReady.TrySetResult(true);
-            Debug.Log("모든 이벤트 데이터가 성공적으로 로드되었습니다.");
+            Debug.Log("모든 파라미터 데이터가 성공적으로 로드되었습니다.");
         }
         catch (System.Exception ex)
         {
@@ -1113,7 +1110,6 @@ public class DataManager : MonoBehaviour
         {
             parameterChanges = new List<ParameterChange>()
         };
-        Debug.Log($"[DataManager] 선택지를 생성합니다. AnswerID: {answerID}를 찾습니다...");
 
         if (answerDataDict.TryGetValue(answerID, out var answerData))
         {
@@ -1215,6 +1211,10 @@ public class DataManager : MonoBehaviour
             Direction = rawData.Direction,
             Fade_Out_Color = rawData.Fade_Out_Color
         };
+        if(endingNameDict.TryGetValue(rawData.EndingTitle, out var endingTitle))
+        {
+            fullEndingData.EndingTitle = endingTitle;
+        }
         if (bgDataDict.TryGetValue(rawData.BG_ID, out var bgData))
         {
             fullEndingData.bgData = bgData;
