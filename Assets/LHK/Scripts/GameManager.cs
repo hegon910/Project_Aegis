@@ -281,61 +281,46 @@ public class GameManager : MonoBehaviour
                 }
                 break;
             case GameState.PlayingEndingCutscene:
-                // 엔딩 분기 규칙
-                const int NORMAL_ENDING_ID = 1; // 일반 엔딩 ID
-                const int TRUE_ENDING_ID_2ND = 2; // 2회차 진엔딩 ID
-                const int TRUE_ENDING_ID_3RD = 3; // 3회차 진엔딩 ID
-                const int HIDDEN_ENDING_ID_3RD = 4; // 3회차 히든엔딩 ID (임시, 확인 필요)
-
                 var playerData = DataManager.Instance.PlayerData;
-                int determinedEndingId = NORMAL_ENDING_ID; // 기본은 일반 엔딩
 
-                if (playerData.playthroughCount == 2)
-                {
-                    // 2회차에서는 2회차 진엔딩 조건만 확인
-                    if (playerData.realEnding2ChoiceCount > 0)
-                    {
-                        determinedEndingId = TRUE_ENDING_ID_2ND;
-                    }
-                }
-                else if (playerData.playthroughCount >= 3) // 3회차 이상
-                {
-                    // 3회차 이상에서는 히든 엔딩 조건 먼저 확인 (우선순위 높음)
-                    // TODO: 히든 엔딩 조건 추가 (예: playerData.hiddenEndingChoiceCount > 0)
-                    // if (playerData.hiddenEndingChoiceCount > 0)
-                    // {
-                    //     determinedEndingId = HIDDEN_ENDING_ID_3RD;
-                    // }
-                    // else if (playerData.realEnding3ChoiceCount > 0) // 히든 엔딩 조건 미충족 시 3회차 진엔딩 조건 확인
-                    // { 
-                    //     determinedEndingId = TRUE_ENDING_ID_3RD;
-                    // }
-                    // For now, without hidden ending condition, just check 3rd playthrough true ending
-                    if (playerData.realEnding3ChoiceCount > 0)
-                    {
-                        determinedEndingId = TRUE_ENDING_ID_3RD;
-                    }
-                }
-                // else (playthroughCount == 1 or other cases not explicitly handled)
-                // determinedEndingId remains NORMAL_ENDING_ID
+                // 1. MultiEndingSystem을 통해 최종 엔딩 데이터를 가져옵니다.
+                EndingData determinedEnding = MultiEndingSystem.Instance.GetFinalEndingData();
+                FullEndingData determinedFullData = MultiEndingSystem.Instance.GetFullEndingData(determinedEnding);
 
-                // 결정된 엔딩 ID 기록
+                int determinedEndingId = -1;
+                if (determinedFullData != null)
+                {
+                    // 2. 해당 엔딩의 '고유 ID'를 가져옵니다.
+                    determinedEndingId = (int)determinedFullData.ID;
+                }
+                else
+                {
+                    // MultiEndingSystem이 엔딩을 결정하지 못했을 경우의 안전장치
+                    Debug.LogError("[GameManager] MultiEndingSystem에서 엔딩 데이터를 가져오지 못했습니다. 기본 엔딩 ID(1)를 사용합니다.");
+                    determinedEndingId = 1; // 예: 일반 엔딩 ID
+                }
+
+                // 3. 결정된 '고유 ID'를 기록합니다.
                 DataManager.Instance.RecordEnding(determinedEndingId);
+                PlaythroughHistory.Instance.RecordEndingCompletion(determinedEndingId);
 
-                // 이제 기록된 lastEndingId를 기반으로 분기 로직 실행
+
+                // 4. 이제 기록된 lastEndingId와 엔딩의 '타입'을 기반으로 분기 로직을 실행합니다.
+                EndingType finalEndingType = determinedEnding?.endingType ?? EndingType.General;
+
                 // 2회차에서 진엔딩을 못 봤다면 2회차를 다시 시작
-                if (playerData.playthroughCount == 2 && playerData.lastEndingId != TRUE_ENDING_ID_2ND)
+                if (playerData.playthroughCount == 2 && finalEndingType != EndingType.True)
                 {
-                    Debug.Log($"[분기] 2회차, 진엔딩({TRUE_ENDING_ID_2ND})이 아니므로 2회차를 다시 시작합니다. lastEndingId: {playerData.lastEndingId}");
+                    Debug.Log($"[분기] 2회차, 진엔딩이 아니므로 2회차를 다시 시작합니다. 달성한 엔딩: {finalEndingType}");
                     // 회차를 증가시키지 않고 현재 챕터만 1로 리셋
                     playerData.currentChapter = 1;
                 }
                 // 3회차 이상에서 히든엔딩을 봤다면 게임 완전 초기화
-                else if (playerData.playthroughCount >= 3 && playerData.lastEndingId == HIDDEN_ENDING_ID_3RD)
+                else if (playerData.playthroughCount >= 3 && finalEndingType == EndingType.Hidden)
                 {
-                    Debug.Log($"[분기] 3회차 이상, 히든엔딩({HIDDEN_ENDING_ID_3RD})을 봤으므로 게임을 초기화합니다.");
+                    Debug.Log($"[분기] 3회차 이상, 히든엔딩을 봤으므로 게임을 초기화합니다.");
                     // 새 게임 데이터로 덮어쓰고, 지휘관 선택 화면으로 이동
-                    DataManager.Instance.StartNewGame(); 
+                    DataManager.Instance.StartNewGame();
                     ResetAllGameData();
                     nextState = GameState.CommanderSelection;
                     break; // 아래의 공통 로직을 건너뛰고 바로 상태 변경
@@ -349,7 +334,7 @@ public class GameManager : MonoBehaviour
 
                 hasShownWarTutorialThisPlaythrough = false;
                 EventManager.Instance.ResetEventManagerState();
-                nextState = GameState.CommanderSelection; // Changed from MainMenu to CommanderSelection
+                nextState = GameState.CommanderSelection;
                 break;
         }
 

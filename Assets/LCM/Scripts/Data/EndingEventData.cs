@@ -6,6 +6,8 @@ using UnityEngine;
 public class EndingEventData
 {
     public int ID { get; set; }
+    public int EndingName { get; set; }
+    public string EndingTitle { get; set; } // Human-readable title
     public string EndingString { get; set; }
     public int Karma_Rate { get; set; }
     public int EndingCutScene_ID { get; set; }
@@ -28,6 +30,8 @@ public class EndingCutScene
 public class FullEndingData
 {
     public int ID { get; set; }
+    public int EndingName { get; set; }
+    public string EndingTitle { get; set; } // Human-readable title
     public string EndingString { get; set; }
     public int Karma_Rate { get; set; }
 
