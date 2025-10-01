@@ -86,8 +86,24 @@ public class SimpleReplayPanel : MonoBehaviour
 
     private void CreatePlaythroughItem(GamePlaythroughRecord record, int index)
     {
+        
+        string formattedDate = record.playDate;
+
+        //시분 문자 편집
+        if (System.DateTime.TryParse(record.playDate, out System.DateTime dateValue))
+        {
+            // 날짜 부분만 포맷 (예: "2025-09-30")
+            formattedDate = dateValue.ToString("yyyy-MM-dd");
+        }
+        else
+        {
+            // 파싱 실패 시, 문자열을 공백 기준으로 나누어 날짜만 사용 시도
+            // 예: "2025-09-30 10:45:00" -> "2025-09-30"
+            formattedDate = record.playDate.Split(' ')[0];
+        }
         GameObject recordItem = Instantiate(recordButtonPrefab, eventListParent);
         recordItem.name = $"RecordItem_{record.playDate}";
+
 
         var rectTransform = recordItem.GetComponent<RectTransform>();
         if (rectTransform != null)
@@ -102,7 +118,7 @@ public class SimpleReplayPanel : MonoBehaviour
 
         if (recordText != null)
         {
-            recordText.text = $"{record.playDate} | {record.playDuration} | {record.outcome}";
+            recordText.text = $"{formattedDate} | {record.playDuration} | {record.playthroughCount}회차 {record.outcome}";
         }
         else
         {

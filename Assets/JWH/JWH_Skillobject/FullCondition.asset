@@ -17,6 +17,6 @@ MonoBehaviour:
   skillRank: 5
   description: "\uCCB4\uB825\uC744 \uC804\uBD80 \uD68C\uBCF5\uD569\uB2C8\uB2E4. \uCD94\uAC00\uB85C
     \uC2E4\uB4DC 3\uAC1C\uB97C \uD68D\uB4DD\uD569\uB2C8\uB2E4."
-  cooltime: 0
-  isSingleUsePerCombat: 1
+  cooltime: 5
+  isSingleUsePerCombat: 0
   shieldToGain: 3

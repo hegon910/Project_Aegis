@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   skillID: Stimpack
   skillName: "\uC790\uADF9\uC81C\uD22C\uC5EC"
-  skillRank: 3
+  skillRank: 4
   description: "\uB2E4\uC74C \uACF5\uACA9 \uD589\uB3D9\uC744 \uD558\uBA74 \uC989\uC2DC
-    \uC2E4\uB4DC 4\uAC1C\uB97C \uD68D\uB4DD\uD569\uB2C8\uB2E4."
+    \uC2E4\uB4DC 2\uAC1C\uB97C \uD68D\uB4DD\uD569\uB2C8\uB2E4."
   cooltime: 3
   isSingleUsePerCombat: 0
-  shieldToGain: 4
+  shieldToGain: 2
