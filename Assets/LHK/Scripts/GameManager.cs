@@ -28,6 +28,8 @@ public enum GameState
 }
 public class GameManager : MonoBehaviour
 {
+    // 로그인 완료 후에만 타이틀 터치로 메인 메뉴로 진입하도록 제어
+    private bool hasCompletedLogin = false;
     // 게임오버 중복 호출 방지 플래그
     private bool _isGameOverActive = false;
     public static GameManager instance { get; private set; }
@@ -737,6 +739,18 @@ public class GameManager : MonoBehaviour
         string outcome = ParseOutcome(resultLog);
         int currentChapter = DataManager.Instance.PlayerData.currentChapter;
 
+        GameOutcome battleOutcome = ConvertOutcomeToEnum(outcome);
+
+        if (MultiEndingSystem.Instance != null)
+        {
+            MultiEndingSystem.Instance.RecordChapterResult(
+                currentChapter,
+                battleOutcome
+            );
+            Debug.Log($"[GameManager] 챕터 {currentChapter} 결과와 점수를 MultiEndingSystem에 기록했습니다.");
+        }
+
+
         if (SimpleEventHistoryManager.Instance != null)
         {
             SimpleEventHistoryManager.Instance.RecordChapterOutcome(currentChapter, outcome);
@@ -759,6 +773,16 @@ public class GameManager : MonoBehaviour
             return "무승부";
         }
         return "알 수 없음"; // 예외 처리
+    }
+    private GameOutcome ConvertOutcomeToEnum(string outcome)
+    {
+        return outcome switch
+        {
+            "승리" => GameOutcome.Victory,
+            "패배" => GameOutcome.Defeat,
+            "무승부" => GameOutcome.Draw,
+            _ => GameOutcome.Draw // 안전장치
+        };
     }
     // BattleResultPanel의 버튼이 호출할 공개 함수
     public void OnBattleResultConfirmed()
@@ -1044,7 +1068,21 @@ public class GameManager : MonoBehaviour
     }
     public void TutorialPanelTouched() { tutorialPanel.SetActive(true); tutorialText.SetActive(true); parameterTutorialPanel.SetActive(true); } 
     public void ParameterTutorialPanelTouched() { parameterTutorialPanel.SetActive(true); } 
-    public void OnTitlePanelTouched() { continueButton.gameObject.SetActive(DataManager.Instance.CheckIfSaveDataExists()); ChangeState(GameState.MainMenu); }
+    public void OnTitlePanelTouched()
+    {
+        // 로그인 완료 전에는 메인 메뉴로 넘어가지 않음
+        if (!hasCompletedLogin)
+        {
+            Debug.Log("[GameManager] 로그인이 완료되지 않았습니다. 먼저 로그인을 완료하세요.");
+            return;
+        }
+        
+        if (continueButton != null)
+        {
+            continueButton.gameObject.SetActive(DataManager.Instance.CheckIfSaveDataExists());
+        }
+        ChangeState(GameState.MainMenu);
+    }
     /// <summary>
     /// FirebaseManager 초기화 완료 후 로그인 플로우 처리
     /// </summary>
@@ -1055,11 +1093,12 @@ public class GameManager : MonoBehaviour
         // FirebaseManager의 로그인 상태 변경 이벤트 구독
         FirebaseManager.OnLoginStateChanged += OnLoginStateChanged;
         
-        // 이미 로그인되어 있으면 바로 메인 메뉴로
+        // 이미 로그인되어 있으면 타이틀 대기 상태로 유지
         if (FirebaseManager.IsLoggedIn)
         {
-            Debug.Log("[GameManager] 이미 로그인되어 있음. 메인 메뉴로 이동");
-            ChangeState(GameState.MainMenu);
+            Debug.Log("[GameManager] 이미 로그인되어 있음. 타이틀에서 대기");
+            hasCompletedLogin = true;
+            ChangeState(GameState.Title);
         }
         // FirebaseManager가 개발 모드에서 로그인 선택 UI를 표시하도록 함
         // (FirebaseManager에서 자동으로 처리됨)
@@ -1074,10 +1113,12 @@ public class GameManager : MonoBehaviour
         
         if (loginType != LoginType.None)
         {
-            // 로그인 완료 시 메인 메뉴로 이동
-            ChangeState(GameState.MainMenu);
+            // 로그인 완료: 타이틀 화면에서 대기, 터치 시 메인메뉴로 이동
+            hasCompletedLogin = true;
+            ChangeState(GameState.Title);
         }
     }
+    
     
     /// <summary>
     /// 기존 OnAuthenticated 메서드 (호환성을 위해 유지하되 사용하지 않음)
@@ -1133,7 +1174,20 @@ public class GameManager : MonoBehaviour
 		}
         OnStateFinished();
     }
-    private void StartDetailedResultSequence() { int warSituation = GamePlayerStats.Instance.GetStat(ParameterType.전황); GameOutcome outcome = (warSituation <= 19) ? GameOutcome.Defeat : (warSituation >= 81) ? GameOutcome.Victory : GameOutcome.Draw; int chapterIndex = CurrentChapter - 1; if (chapterIndex < chapterEndDataList.Count && chapterEndDataList[chapterIndex] != null) { chapterEndController.StartChapterEndSequence(chapterEndDataList[chapterIndex], outcome); } else { OnStateFinished(); } }
+    private void StartDetailedResultSequence() 
+    { 
+        int warSituation = GamePlayerStats.Instance.GetStat(ParameterType.전황); 
+        GameOutcome outcome = (warSituation <= 19) ? GameOutcome.Defeat : (warSituation >= 81) ?  GameOutcome.Victory : GameOutcome.Draw; 
+        int chapterIndex = CurrentChapter - 1; 
+        if (chapterIndex < chapterEndDataList.Count && chapterEndDataList[chapterIndex] != null) 
+        { 
+            chapterEndController.StartChapterEndSequence(chapterEndDataList[chapterIndex], outcome); 
+        } 
+        else 
+        { 
+            OnStateFinished(); 
+        } 
+    }
     public void GameOver(string reason)
     {
         if (_isGameOverActive) return; // 재진입 방지

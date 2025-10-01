@@ -262,6 +262,11 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
 
         Debug.Log($"[MainScenarioManager] 선택지 처리 시작. 선택된 다음 노드 ID: {selectedChoice.nextEventID}");
 
+        if (selectedChoice.isCountingforRealEnding3)
+        {
+            DataManager.Instance.PlayerData.realEnding3ChoiceCount++;
+        }
+
         if (selectedChoice.isEndingMemoriar)
         {
             if (SimpleEventHistoryManager.Instance != null)

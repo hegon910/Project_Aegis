@@ -47,8 +47,10 @@ public class DataManager : MonoBehaviour
     public Dictionary<int, BattleResultData> battleResultDataDict;
     //엔딩 이벤트
     public Dictionary<int, EndingEventData> endingEventDataDict;
+    public Dictionary<int, EndingEventData> TrueEndingeventDataDict;
     public Dictionary<int, EndingCutScene> endingCutSceneDict;
     public Dictionary<int, FullEndingData> FullendingDataDict;
+    public Dictionary<int, FullEndingData> TrueEndingDataDict;
     //회상 이벤트
     public Dictionary<int, EndingMemoriarData> endingMemoriarDataDict;
     //파라미터 이벤트 
@@ -792,18 +794,17 @@ public class DataManager : MonoBehaviour
             var sfxDataTask = Csvparser.ParseAsync<SFXData>("MainSFXData");
             var characterDataTask = Csvparser.ParseAsync<MainCharacterData>("MainCharacterData");
             var characterImgDataTask = Csvparser.ParseAsync<MainCharacterImgData>("MainCharacterImgData");
-            
-            
             var battleResultTask = Csvparser.ParseAsync<BattleResultData>("BattleResultTextData");
             var backDataTask = Csvparser.ParseAsync<BackData>("BackData");
             //엔딩 데이터 
             var endingEventDataTask = Csvparser.ParseAsync<EndingEventData>("EndingEventData");
             var endingCutSceneTask = Csvparser.ParseAsync<EndingCutScene>("EndingEventCutScene");
+            var trueEndingDataTask = Csvparser.ParseAsync<EndingEventData>("TrueEndingData");
             //회상 이벤트 데이터
             var endingMemoriarTask = Csvparser.ParseAsync<EndingMemoriarData>("EndingMemoriar");
 
-            var (mainEventList, answerList, characterList, bgList, sfxList, characterImgList, endingEventList, endingCutSceneList, battleResultList, backDataList, subEventList, subAnswerList, endingMemoriarList) =
-                await UniTask.WhenAll(mainEventTask, answerTask, characterDataTask, bgDataTask, sfxDataTask, characterImgDataTask, endingEventDataTask, endingCutSceneTask, battleResultTask, backDataTask, subEventTask, subAnswerTask, endingMemoriarTask);
+            var (mainEventList, answerList, characterList, bgList, sfxList, characterImgList, endingEventList, endingCutSceneList,trueEndingList, battleResultList, backDataList, subEventList, subAnswerList, endingMemoriarList) =
+                await UniTask.WhenAll(mainEventTask, answerTask, characterDataTask, bgDataTask, sfxDataTask, characterImgDataTask, endingEventDataTask, endingCutSceneTask, trueEndingDataTask, battleResultTask, backDataTask, subEventTask, subAnswerTask, endingMemoriarTask);
 
             Debug.Log("모든 파일 로딩 완료");
 
@@ -818,6 +819,7 @@ public class DataManager : MonoBehaviour
             sfxDataDict = sfxList.ToDictionary(sfx => sfx.SFX_ID, sfx => sfx);
             characterImgDataDict = characterImgList.ToDictionary(c => c.CharacterImg_ID, c => c);
             endingEventDataDict = endingEventList.ToDictionary(e => e.ID, e => e);
+            TrueEndingeventDataDict = trueEndingList.ToDictionary(e => e.ID, e => e);
             endingCutSceneDict = endingCutSceneList.ToDictionary(c => c.EndingCutScene_ID, c => c);
             backDataDict = backDataList.ToDictionary(d => d.Back_ID, d => d);
             subEventDataDict = subEventList.ToDictionary(e => e.ID, e => e);
@@ -932,9 +934,49 @@ public class DataManager : MonoBehaviour
                 if (fullEndingData != null)
                 {
                     FullendingDataDict.Add(fullEndingData.ID, fullEndingData);
+
                 }
             }
-            Debug.Log($"[DataManager] {FullendingDataDict.Count}개의 최종 엔딩 데이터를 가공하여 준비했습니다.");
+
+            TrueEndingDataDict = new Dictionary<int, FullEndingData>();
+
+            foreach (var rawData in trueEndingList)
+            {
+                var trueEndingData = GetEndingData(rawData.ID);
+                if (trueEndingData != null)
+                {
+                    TrueEndingDataDict.Add(trueEndingData.ID, trueEndingData);
+
+                    if (!FullendingDataDict.ContainsKey(trueEndingData.ID))
+                    {
+                        FullendingDataDict.Add(trueEndingData.ID, trueEndingData);
+                    }
+                }
+            }
+
+            if (TrueEndingDataDict != null && TrueEndingeventDataDict != null)
+            {
+                foreach (var pair in TrueEndingDataDict.OrderBy(e => e.Key)) // ID 순서대로 정렬하여 확인
+                {
+                    int endingID = pair.Key;
+                    FullEndingData fullData = pair.Value;
+                }
+                Debug.Log($"[DataManager] 총 {TrueEndingDataDict.Count}개의 진 엔딩 데이터 로딩 완료.");
+            }
+            else
+            {
+                Debug.LogWarning("[DataManager] 진 엔딩 딕셔너리가 초기화되지 않았습니다. 로딩 로직을 확인하세요.");
+            }
+
+            if (MultiEndingSystem.Instance != null)
+            {
+                MultiEndingSystem.Instance.InitializeEndings(FullendingDataDict);
+            }
+            else
+            {
+                // 만약 MultiEndingSystem이 꼭 필요하다면 여기서 에러를 띄워야 합니다.
+                Debug.LogError("[DataManager] MultiEndingSystem 인스턴스를 찾을 수 없습니다. 인스턴스가 생성되는 시점을 확인하세요.");
+            }
 
             Debug.Log("모든 이벤트 데이터가 성공적으로 로드되었습니다.");
         }
@@ -1224,15 +1266,29 @@ public class DataManager : MonoBehaviour
 
     public FullEndingData GetEndingData(int endingID)
     {
-        if (!endingEventDataDict.TryGetValue(endingID, out var rawData))
+        EndingEventData rawData = null;
+
+        if (endingEventDataDict != null && endingEventDataDict.TryGetValue(endingID, out rawData))
+        {
+
+        }
+
+        else if (TrueEndingeventDataDict != null && TrueEndingeventDataDict.TryGetValue(endingID, out rawData))
+        {
+            
+        }
+
+        else
         {
             Debug.LogError($"[DataManager] ID {endingID}에 해당하는 엔딩 데이터를 찾을 수 없습니다.");
             return null;
         }
 
+
         var fullEndingData = new FullEndingData
         {
             ID = rawData.ID,
+            PlayThrough = rawData.PlayThrough,
             EndingString = rawData.EndingString,
             Karma_Rate = rawData.Karma_Rate,
             Text_Kr = rawData.Text_Kr,

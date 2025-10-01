@@ -23,7 +23,7 @@ public class MultiEndingSystem : MonoBehaviour
     [Header("엔딩 조건")]
     [SerializeField] private int trueEndingMinScore2nd = 4;  // 2회차 진엔딩 최소 점수
     [SerializeField] private int trueEndingMinScore3rd = 5;  // 3회차 진엔딩 최소 점수
-    [SerializeField] private int trueEndingMinKarma3rd = 80; // 3회차 진엔딩 최소 카르마
+    [SerializeField] private int trueEndingMinKarma3rd = 81; // 3회차 진엔딩 최소 카르마
 
     [Header("히든 엔딩 조건")]
     [SerializeField] private int hiddenEndingMinScore = 6; // 히든 엔딩 최소 점수
@@ -37,6 +37,11 @@ public class MultiEndingSystem : MonoBehaviour
 
     // 챕터별 전투 결과 저장 (루프별로 관리)
     private Dictionary<int, List<ChapterBattleResult>> playthroughResults = new Dictionary<int, List<ChapterBattleResult>>();
+    
+    // 엔딩 데이터 저장소 (Develop_new0912에서 추가)
+    private List<EndingData> generalEndings = new List<EndingData>();
+    private List<EndingData> trueEndings = new List<EndingData>();
+    private List<EndingData> hiddenEndings = new List<EndingData>();
     
     // 현재 루프 상태 추적
     private int currentPlaythrough = 1;
@@ -82,13 +87,90 @@ public class MultiEndingSystem : MonoBehaviour
         Debug.Log($"[MultiEndingSystem] 루프 시스템 초기화 - 회차: {currentPlaythrough}, 챕터: {currentChapter}");
     }
 
+    /********************* Develop_new0912에서 추가: 데이터 초기화 및 변환 ******************************/
+    
+    /// <summary>
+    /// 데이터 테이블에서 엔딩 데이터를 초기화합니다
+    /// </summary>
+    public void InitializeEndings(Dictionary<int, FullEndingData> allEndingData)
+    {
+        generalEndings.Clear();
+        trueEndings.Clear();
+        hiddenEndings.Clear();
+
+        foreach (var fullData in allEndingData.Values)
+        {
+            EndingRoute route = ConvertCodeToRoute(fullData.EndingString);
+            int branch = ConvertCodeToBranch(fullData.Karma_Rate);
+            EndingType type = DetermineEndingTypeFromData(fullData.ID);
+
+            var newEndingData = new EndingData
+            {
+                endingType = type,
+                route = route,
+                branch = branch,
+                requiredPlaythrough = fullData.PlayThrough,
+                fullEndingData = fullData,
+                title = fullData.Text_Kr, 
+                description = fullData.Text_Kr
+            };
+
+            switch (type)
+            {
+                case EndingType.General:
+                    generalEndings.Add(newEndingData);
+                    break;
+                case EndingType.True:
+                    trueEndings.Add(newEndingData);
+                    break;
+                case EndingType.Hidden:
+                    hiddenEndings.Add(newEndingData);
+                    break;
+            }
+        }
+        
+        Debug.Log($"[MultiEndingSystem] 엔딩 데이터 초기화 완료 - 일반: {generalEndings.Count}, 진엔딩: {trueEndings.Count}, 히든: {hiddenEndings.Count}");
+    }
+
+    /// <summary>
+    /// ID로부터 엔딩 타입을 결정합니다
+    /// </summary>
+    private EndingType DetermineEndingTypeFromData(int ID)
+    {
+        if (ID/10000 == 5) return EndingType.General;
+        return EndingType.True;
+    }
+
+    /// <summary>
+    /// 엔딩 문자열 코드를 EndingRoute로 변환합니다
+    /// </summary>
+    private EndingRoute ConvertCodeToRoute(string code)
+    {
+        return code switch
+        {
+            "1001" => EndingRoute.Victory,
+            "1003" => EndingRoute.Defeat,
+            "1002" => EndingRoute.Truce,
+            _ => EndingRoute.Truce
+        };
+    }
+
+    /// <summary>
+    /// 카르마 비율 코드에서 분기 번호를 추출합니다
+    /// </summary>
+    private int ConvertCodeToBranch(int code)
+    {
+        return code % 10;
+    }
+
+    /*********************************************************************************************************/
+
     /// <summary>
     /// 챕터 전투 결과를 기록합니다 (루프 시스템 통합)
     /// </summary>
     /// <param name="chapter">챕터 번호 (1-6)</param>
     /// <param name="battleResult">전투 결과 (승리/무승부/패배)</param>
     /// <param name="warSituation">전세 수치</param>
-
     public void RecordChapterResult(int chapter, GameOutcome battleResult, int warSituation)
     {
         // 챕터 범위 검증
@@ -225,19 +307,14 @@ public class MultiEndingSystem : MonoBehaviour
         {
             return GamePlayerStats.Instance.GetStat(ParameterType.카르마);
         }
-        return 50; // GamePlayerStats가 없을 경우 기본값
-    }
-
-    //전투 결과에 따른 카르마 포인트 계산
-    public int GetBattlePoints(GameOutcome outcome)
-    {
-        return outcome switch
+        
+        // 폴백: DataManager 사용
+        if (DataManager.Instance?.PlayerData != null)
         {
-            GameOutcome.Victory => victoryPoint,
-            GameOutcome.Defeat => defeatPoint,
-            GameOutcome.Draw => drawPoint,
-            _ => 0
-        };
+            return DataManager.Instance.PlayerData.karma;
+        }
+        
+        return 50; // 기본값
     }
 
     /// <summary>
@@ -252,6 +329,14 @@ public class MultiEndingSystem : MonoBehaviour
             GameOutcome.Draw => drawPoint,
             _ => 0
         };
+    }
+
+    /// <summary>
+    /// 전투 결과에 따른 전투 포인트 계산 (호환성)
+    /// </summary>
+    public int GetBattlePoints(GameOutcome outcome)
+    {
+        return GetKarmaPoints(outcome);
     }
 
     /// <summary>
@@ -331,8 +416,13 @@ public class MultiEndingSystem : MonoBehaviour
     /// </summary>
     private bool CheckSpecialHiddenEndingConditions()
     {
-        // 예: 특정 이벤트에서 올바른 선택을 3회 이상 했는지 확인
-        // PlaythroughHistory를 통해 확인 가능
+        // DataManager의 realEnding3ChoiceCount 확인
+        if (DataManager.Instance?.PlayerData != null)
+        {
+            return DataManager.Instance.PlayerData.realEnding3ChoiceCount >= 3;
+        }
+
+        // 예: PlaythroughHistory를 통한 확인
         if (PlaythroughHistory.Instance != null)
         {
             // 예시: 특정 이벤트 ID들에서 성공한 횟수 확인
@@ -341,7 +431,6 @@ public class MultiEndingSystem : MonoBehaviour
 
             foreach (var eventId in specialEventIds)
             {
-                // HCW의 PlaythroughHistory는 성공/실패 구분이 없으므로 단순히 완료 여부만 확인
                 if (PlaythroughHistory.Instance.HasCompletedEvent(eventId))
                 {
                     successCount++;
@@ -351,7 +440,7 @@ public class MultiEndingSystem : MonoBehaviour
             return successCount >= 3; // 3회 이상 성공해야 함
         }
 
-        return true; // PlaythroughHistory가 없으면 기본적으로 true
+        return true; // 확인할 수 없으면 기본적으로 true
     }
 
     /// <summary>
@@ -408,6 +497,17 @@ public class MultiEndingSystem : MonoBehaviour
         // 무승부 루트 분기: 2001(50이상), 2002(0-49)
         if (karma >= 50) return 2001;
         return 2002;
+    }
+
+    /// <summary>
+    /// 카르마 수치에 따른 통합 분기 결정 (Develop_new0912 버전)
+    /// </summary>
+    private int GetKarmaBranch(int karma)
+    {
+        if (karma >= 81) return 1;
+        if (karma >= 20 && karma <= 80) return 2;
+        if (karma >= 0 && karma <= 19) return 3;
+        return 2; 
     }
 
     /// <summary>
@@ -599,8 +699,8 @@ public class MultiEndingSystem : MonoBehaviour
         return route switch
         {
             EndingRoute.Victory => "1001",
-            EndingRoute.Truce => "1002", // CSV의 실제 값 확인 필요
-            EndingRoute.Defeat => "1003", // CSV의 실제 값 확인 필요
+            EndingRoute.Truce => "1002",
+            EndingRoute.Defeat => "1003",
             _ => "1002" // 기본값
         };
     }
@@ -686,8 +786,6 @@ public class MultiEndingSystem : MonoBehaviour
         };
     }
 
-    // ===== 호환성을 위한 메서드들 =====
-    
     /// <summary>
     /// 호환성을 위한 GetFinalEndingData 메서드 (기존 코드와의 호환성 유지)
     /// </summary>
@@ -706,6 +804,27 @@ public class MultiEndingSystem : MonoBehaviour
             fullEndingData = fullEndingData,
             title = $"엔딩 - {endingType}",
             description = $"회차 {currentPlaythrough}의 {endingRoute} 루트 {branch}분기 엔딩"
+        };
+    }
+
+    /// <summary>
+    /// 기본 엔딩 생성 (안전장치) - Develop_new0912에서 추가
+    /// </summary>
+    private EndingData CreateDefaultEnding()
+    {
+        var endingType = DetermineEndingType();
+        var endingRoute = DetermineEndingRoute();
+        var branch = DetermineEndingBranch(endingRoute);
+        var fullEndingData = GetFullEndingData();
+
+        return new EndingData
+        {
+            endingType = endingType,
+            route = endingRoute,
+            branch = branch,
+            fullEndingData = fullEndingData,
+            title = $"기본 엔딩 - {endingType}",
+            description = $"회차 {currentPlaythrough}의 기본 엔딩"
         };
     }
 
@@ -891,35 +1010,35 @@ public class MultiEndingSystem : MonoBehaviour
     /// 현재 루프 상태 정보 반환
     /// </summary>
     public LoopStatus GetCurrentLoopStatus()
-{
-    int completedChapters = 0;
-    if (playthroughResults.ContainsKey(currentPlaythrough))
     {
-        var results = playthroughResults[currentPlaythrough];
-        // 연속된 챕터의 완료 수 계산
-        for (int i = 1; i <= maxChapters; i++)
+        int completedChapters = 0;
+        if (playthroughResults.ContainsKey(currentPlaythrough))
         {
-            if (results.Any(r => r.chapter == i))
+            var results = playthroughResults[currentPlaythrough];
+            // 연속된 챕터의 완료 수 계산
+            for (int i = 1; i <= maxChapters; i++)
             {
-                completedChapters = i;
-            }
-            else
-            {
-                break;
+                if (results.Any(r => r.chapter == i))
+                {
+                    completedChapters = i;
+                }
+                else
+                {
+                    break;
+                }
             }
         }
-    }
 
-    return new LoopStatus
-    {
-        currentPlaythrough = currentPlaythrough,
-        currentChapter = currentChapter,
-        isLoopCompleted = isLoopCompleted,
-        totalKarma = CalculateCurrentPlaythroughKarma(),
-        currentKarma = CalculateCurrentKarma(),
-        completedChapters = completedChapters
-    };
-}
+        return new LoopStatus
+        {
+            currentPlaythrough = currentPlaythrough,
+            currentChapter = currentChapter,
+            isLoopCompleted = isLoopCompleted,
+            totalKarma = CalculateCurrentPlaythroughKarma(),
+            currentKarma = CalculateCurrentKarma(),
+            completedChapters = completedChapters
+        };
+    }
 
     /// <summary>
     /// 특정 회차의 상세 정보 반환
@@ -942,9 +1061,7 @@ public class MultiEndingSystem : MonoBehaviour
         };
     }
 
-    /// <summary>
     /// 디버그 정보 출력
-    /// </summary>
     [ContextMenu("Print Debug Info")]
     public void PrintDebugInfo()
     {
@@ -992,29 +1109,29 @@ public class MultiEndingSystem : MonoBehaviour
     }
 
     public void SetCurrentPlaythrough(int playthrough)
-{
-    if (playthrough < 1)
     {
-        Debug.LogError($"[MultiEndingSystem] 잘못된 회차 번호: {playthrough}. 1 이상이어야 합니다.");
-        return;
-    }
+        if (playthrough < 1)
+        {
+            Debug.LogError($"[MultiEndingSystem] 잘못된 회차 번호: {playthrough}. 1 이상이어야 합니다.");
+            return;
+        }
 
-    currentPlaythrough = playthrough;
-    
-    // DataManager와 동기화
-    if (DataManager.Instance?.PlayerData != null)
-    {
-        DataManager.Instance.PlayerData.playthroughCount = playthrough;
-    }
+        currentPlaythrough = playthrough;
+        
+        // DataManager와 동기화
+        if (DataManager.Instance?.PlayerData != null)
+        {
+            DataManager.Instance.PlayerData.playthroughCount = playthrough;
+        }
 
-    // 현재 회차의 결과 리스트 초기화 (없으면)
-    if (!playthroughResults.ContainsKey(currentPlaythrough))
-    {
-        playthroughResults[currentPlaythrough] = new List<ChapterBattleResult>();
-    }
+        // 현재 회차의 결과 리스트 초기화 (없으면)
+        if (!playthroughResults.ContainsKey(currentPlaythrough))
+        {
+            playthroughResults[currentPlaythrough] = new List<ChapterBattleResult>();
+        }
 
-    Debug.Log($"[MultiEndingSystem] 현재 회차를 {playthrough}로 설정했습니다.");
-}
+        Debug.Log($"[MultiEndingSystem] 현재 회차를 {playthrough}로 설정했습니다.");
+    }
 
     // 테스트용 메서드들
     [ContextMenu("Test Chapter 1 Victory")]
@@ -1067,6 +1184,9 @@ public class ChapterBattleResult
     public int warSituation;
     public int karmaPoints;
     public int playthrough; // 회차 정보 추가
+    
+    // 호환성을 위한 속성 (Develop_new0912 호환)
+    public int BattlePoints => karmaPoints;
 }
 
 /// <summary>

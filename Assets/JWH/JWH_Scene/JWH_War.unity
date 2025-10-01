@@ -344,6 +344,10 @@ PrefabInstance:
       propertyPath: cellSize
       value: 60
       objectReference: {fileID: 0}
+    - target: {fileID: 962085439363309823, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1086907459790336601, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: m_SizeDelta.x
       value: 30
@@ -484,6 +488,10 @@ PrefabInstance:
       propertyPath: rightcardImage
       value: 
       objectReference: {fileID: 805756639}
+    - target: {fileID: 5865671948916239473, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6322502340110978306, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0.5
@@ -601,8 +609,12 @@ PrefabInstance:
       value: -194
       objectReference: {fileID: 0}
     - target: {fileID: 7831991435369316234, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: maxShield
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7831991435369316234, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: equippedSkillID
-      value: AmmoReinforce
+      value: MoraleBoost
       objectReference: {fileID: 0}
     - target: {fileID: 7966315032008839688, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: m_Name
