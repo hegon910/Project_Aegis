@@ -743,11 +743,19 @@ public class GameManager : MonoBehaviour
 
         if (MultiEndingSystem.Instance != null)
         {
+            // 현재 전세 수치 가져오기
+            int warSituation = 50; // 기본값
+            if (GamePlayerStats.Instance != null)
+            {
+                warSituation = GamePlayerStats.Instance.GetStat(ParameterType.전황);
+            }
+            
             MultiEndingSystem.Instance.RecordChapterResult(
                 currentChapter,
-                battleOutcome
+                battleOutcome,
+                warSituation
             );
-            Debug.Log($"[GameManager] 챕터 {currentChapter} 결과와 점수를 MultiEndingSystem에 기록했습니다.");
+            Debug.Log($"[GameManager] 챕터 {currentChapter} 결과와 점수를 MultiEndingSystem에 기록했습니다. (전세: {warSituation})");
         }
 
 
@@ -1074,7 +1082,7 @@ public class GameManager : MonoBehaviour
         if (!hasCompletedLogin)
         {
             Debug.Log("[GameManager] 로그인이 완료되지 않았습니다. 먼저 로그인을 완료하세요.");
-            return;
+            //return;
         }
         
         if (continueButton != null)
