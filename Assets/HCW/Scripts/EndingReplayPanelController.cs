@@ -75,13 +75,13 @@ public class EndingReplayPanelController : MonoBehaviour
         var groupedEndings = completedEndings
             .Select(id => DataManager.Instance.GetEndingData(id))
             .Where(data => data != null)
-            .GroupBy(data => data.EndingName);
+            .GroupBy(data => data.EndingTitle?.EndingName_ID ?? 0);
 
         foreach (var endingGroup in groupedEndings)
         {
             int endingNameKey = endingGroup.Key;
             var firstEndingOfGroup = endingGroup.FirstOrDefault();
-            string endingTitle = firstEndingOfGroup?.EndingTitle ?? $"엔딩 그룹 {endingNameKey}";
+            string endingTitle = firstEndingOfGroup?.EndingTitle?.EndingName ?? $"엔딩 그룹 {endingNameKey}";
 
             GameObject itemGO = Instantiate(endingItemPrefab, endingListContainer.transform);
             TextMeshProUGUI buttonText = itemGO.GetComponentInChildren<TextMeshProUGUI>();
@@ -111,7 +111,7 @@ public class EndingReplayPanelController : MonoBehaviour
 
         var endingSequenceData = completedEndings
             .Select(id => DataManager.Instance.GetEndingData(id))
-            .Where(data => data != null && data.EndingName == endingNameKey)
+            .Where(data => data != null && data.EndingTitle?.EndingName_ID == endingNameKey)
             .OrderBy(data => data.ID)
             .ToList();
 

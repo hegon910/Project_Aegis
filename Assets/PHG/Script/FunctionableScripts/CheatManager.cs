@@ -140,6 +140,8 @@ public class CheatManager : MonoBehaviour
             else
             {
                 Debug.LogError("[CHEAT] 재화 추가 실패!");
+            }
+        }
         // --- 엔딩 클리어 치트 (F12) ---
         if (Input.GetKeyDown(KeyCode.F12))
         {

@@ -150,13 +150,15 @@ public class AchievementManager : MonoBehaviour
         var endingCount = allAchievements.Count(a => a.type == AchievementType.Ending);
         var playthroughCount = allAchievements.Count(a => a.type == AchievementType.Playthrough);
         var battleCount = allAchievements.Count(a => a.type == AchievementType.Battle);
-        var eventCount = allAchievements.Count(a => a.type == AchievementType.Event);
+        var mainStoryCount = allAchievements.Count(a => a.type == AchievementType.MainStory);
+        var subStoryCount = allAchievements.Count(a => a.type == AchievementType.SubStory);
         
         Debug.Log($"[AchievementManager] 업적 요약:");
         Debug.Log($"  - 엔딩 업적: {endingCount}개 (일반 9개, 진 2개, 히든 1개)");
         Debug.Log($"  - 회차 업적: {playthroughCount}개 (1-3회차 각각 4개씩)");
         Debug.Log($"  - 전투 업적: {battleCount}개 (첫 전투 3가지 결과)");
-        Debug.Log($"  - 이벤트 업적: {eventCount}개 (특정 이벤트 완료)");
+        Debug.Log($"  - 메인 스토리 업적: {mainStoryCount}개 (특정 이벤트 완료)");
+        Debug.Log($"  - 서브 스토리 업적: {subStoryCount}개 (특정 이벤트 완료)");
     }
     
     /// <summary>
@@ -405,7 +407,7 @@ public class AchievementManager : MonoBehaviour
     }
     
     /// <summary>
-    /// 이벤트 완료 업적 체크
+    /// 이벤트 완료 업적 체크 (메인 스토리, 서브 스토리 포함)
     /// </summary>
     public void CheckEventAchievements(int eventId, bool wasSuccess)
     {
@@ -435,6 +437,22 @@ public class AchievementManager : MonoBehaviour
                 }
             }
         }
+    }
+    
+    /// <summary>
+    /// 메인 스토리 업적 체크
+    /// </summary>
+    public void CheckMainStoryAchievements(int eventId, bool wasSuccess)
+    {
+        CheckEventAchievements(eventId, wasSuccess);
+    }
+    
+    /// <summary>
+    /// 서브 스토리 업적 체크
+    /// </summary>
+    public void CheckSubStoryAchievements(int eventId, bool wasSuccess)
+    {
+        CheckEventAchievements(eventId, wasSuccess);
     }
     
     /// <summary>

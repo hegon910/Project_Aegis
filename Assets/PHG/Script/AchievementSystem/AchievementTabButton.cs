@@ -78,10 +78,10 @@ public class AchievementTabButton : MonoBehaviour
                 return "회차";
             case AchievementType.Battle:
                 return "전투";
-            case AchievementType.Event:
-                return "이벤트";
-            case AchievementType.Story:
-                return "스토리";
+            case AchievementType.MainStory:
+                return "메인 스토리";
+            case AchievementType.SubStory:
+                return "서브 스토리";
             case AchievementType.Collection:
                 return "수집";
             default:
