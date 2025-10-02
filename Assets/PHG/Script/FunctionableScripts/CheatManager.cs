@@ -1,4 +1,4 @@
-﻿// CheatManager.cs (새 스크립트)
+// CheatManager.cs (새 스크립트)
 using UnityEngine;
 
 public class CheatManager : MonoBehaviour
@@ -140,6 +140,23 @@ public class CheatManager : MonoBehaviour
             else
             {
                 Debug.LogError("[CHEAT] 재화 추가 실패!");
+        // --- 엔딩 클리어 치트 (F12) ---
+        if (Input.GetKeyDown(KeyCode.F12))
+        {
+            if (DataManager.Instance != null && DataManager.Instance.PlayerData != null)
+            {
+                int testEndingId = 50001; // 실제 존재하는 테스트용 엔딩 ID
+                if (!DataManager.Instance.PlayerData.completedEndingIds.Contains(testEndingId))
+                {
+                    DataManager.Instance.PlayerData.completedEndingIds.Add(testEndingId);
+                    Debug.Log($"[CHEAT] 테스트용 엔딩 ID {testEndingId}를 완료 목록에 추가했습니다.");
+                }
+                else
+                {
+                    Debug.Log($"[CHEAT] 엔딩 ID {testEndingId}는 이미 완료 목록에 있습니다.");
+                }
+                // 변경사항을 즉시 저장
+                DataManager.Instance.SaveData();
             }
         }
 

@@ -328,48 +328,66 @@ public class GameManager : MonoBehaviour
                 const int TRUE_ENDING_ID_3RD = 1003; // 3회차 진엔딩 (EndingString 1003)
 
                 var playerData = DataManager.Instance.PlayerData;
-                int determinedEndingId = NORMAL_ENDING_ID; // 기본은 일반 엔딩
 
-                // MultiEndingSystem의 점수/루트 기반 판단을 신뢰
-                var endingType = MultiEndingSystem.Instance?.DetermineEndingType() ?? EndingType.General;
-                var endingRoute = MultiEndingSystem.Instance?.DetermineEndingRoute() ?? EndingRoute.Truce;
+                // MultiEndingSystem을 통해 최종 엔딩 데이터를 가져옵니다.
+                EndingData determinedEnding = MultiEndingSystem.Instance.GetFinalEndingData();
+                FullEndingData determinedFullData = MultiEndingSystem.Instance.GetFullEndingData(determinedEnding);
 
-                if (playerData.playthroughCount == 1)
+                int determinedEndingId = -1;
+                if (determinedFullData != null)
                 {
-                    determinedEndingId = NORMAL_ENDING_ID;
+                    // 해당 엔딩의 '고유 ID'를 가져옵니다.
+                    determinedEndingId = (int)determinedFullData.ID;
                 }
-                else if (playerData.playthroughCount == 2)
+                else
                 {
-                    // 기획: 2회차 +4점 이상 AND 승리 루트일 때 진엔딩
-                    // DetermineEndingType이 True이고, DetermineEndingRoute가 Victory일 때 2회차 진엔딩으로 간주
-                    if (endingType == EndingType.True && endingRoute == EndingRoute.Victory)
-                    {
-                        determinedEndingId = TRUE_ENDING_ID_2ND;
-                    }
-                    else
+                    // MultiEndingSystem이 엔딩을 결정하지 못했을 경우의 안전장치
+                    // 기존 상수 기반 ID 사용으로 폴백
+                    Debug.LogWarning("[GameManager] MultiEndingSystem에서 엔딩 데이터를 가져오지 못했습니다. 기존 상수 기반 시스템으로 폴백합니다.");
+                    var endingType = MultiEndingSystem.Instance?.DetermineEndingType() ?? EndingType.General;
+                    var endingRoute = MultiEndingSystem.Instance?.DetermineEndingRoute() ?? EndingRoute.Truce;
+
+                    if (playerData.playthroughCount == 1)
                     {
                         determinedEndingId = NORMAL_ENDING_ID;
                     }
-                }
-                else // 3회차 이상: MultiEndingSystem의 True/Hidden 기준 사용
-                {
-                    if (endingType == EndingType.True || endingType == EndingType.Hidden)
+                    else if (playerData.playthroughCount == 2)
                     {
-                        determinedEndingId = TRUE_ENDING_ID_3RD;
+                        // 기획: 2회차 +4점 이상 AND 승리 루트일 때 진엔딩
+                        if (endingType == EndingType.True && endingRoute == EndingRoute.Victory)
+                        {
+                            determinedEndingId = TRUE_ENDING_ID_2ND;
+                        }
+                        else
+                        {
+                            determinedEndingId = NORMAL_ENDING_ID;
+                        }
                     }
-                    else
+                    else // 3회차 이상: MultiEndingSystem의 True/Hidden 기준 사용
                     {
-                        determinedEndingId = NORMAL_ENDING_ID;
+                        if (endingType == EndingType.True || endingType == EndingType.Hidden)
+                        {
+                            determinedEndingId = TRUE_ENDING_ID_3RD;
+                        }
+                        else
+                        {
+                            determinedEndingId = NORMAL_ENDING_ID;
+                        }
                     }
                 }
 
-                // 결정된 엔딩 ID 기록
+                // 결정된 '고유 ID'를 기록합니다.
                 DataManager.Instance.RecordEnding(determinedEndingId);
+                PlaythroughHistory.Instance.RecordEndingCompletion(determinedEndingId);
 
-                // 회차 진행/리셋 처리 로직은 기존 흐름 유지하되, 결정된 ID에 맞춰 동작
-                if (playerData.playthroughCount == 2 && playerData.lastEndingId != TRUE_ENDING_ID_2ND)
+                // 이제 기록된 lastEndingId와 엔딩의 '타입'을 기반으로 분기 로직을 실행합니다.
+                EndingType finalEndingType = determinedEnding?.endingType ?? EndingType.General;
+
+                // 회차 진행/리셋 처리 로직 - 두 시스템의 장점을 결합
+                if (playerData.playthroughCount == 2 && finalEndingType != EndingType.True)
                 {
-                    Debug.Log($"[분기] 2회차, 진엔딩({TRUE_ENDING_ID_2ND})이 아니므로 2회차를 다시 시작합니다. lastEndingId: {playerData.lastEndingId}");
+                    Debug.Log($"[분기] 2회차, 진엔딩이 아니므로 2회차를 다시 시작합니다. 달성한 엔딩: {finalEndingType}");
+                    // 회차를 증가시키지 않고 현재 챕터만 1로 리셋
                     playerData.currentChapter = 1;
                     playerData.currentGameState = GameState.MainMenu;
                     playerData.completedEventIds.Clear();
@@ -379,9 +397,11 @@ public class GameManager : MonoBehaviour
                     playerData.realEnding2ChoiceCount = 0;
                     Debug.Log("[분기] 2회차 재시작을 위한 상태 초기화 완료");
                 }
-                else if (playerData.playthroughCount >= 3 && playerData.lastEndingId == TRUE_ENDING_ID_3RD)
+                // 3회차 이상에서 히든엔딩을 봤다면 게임 완전 초기화
+                else if (playerData.playthroughCount >= 3 && finalEndingType == EndingType.Hidden)
                 {
-                    Debug.Log($"[분기] 3회차 이상, 진엔딩({TRUE_ENDING_ID_3RD})을 봤으므로 게임을 초기화합니다.");
+                    Debug.Log($"[분기] 3회차 이상, 히든엔딩을 봤으므로 게임을 초기화합니다.");
+                    // 새 게임 데이터로 덮어쓰고, 지휘관 선택 화면으로 이동
                     DataManager.Instance.StartNewGame();
                     ResetAllGameData();
                     nextState = GameState.CommanderSelection;
