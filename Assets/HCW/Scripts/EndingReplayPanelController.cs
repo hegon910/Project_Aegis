@@ -81,7 +81,7 @@ public class EndingReplayPanelController : MonoBehaviour
         {
             int endingTitleId = endingGroup.Key;
             var firstEndingOfGroup = endingGroup.FirstOrDefault();
-            string endingName = firstEndingOfGroup?.EndingTitle?.EndingName_Kr ?? $"엔딩 그룹 {endingTitleId}";
+            string endingName = firstEndingOfGroup?.EndingTitle?.EndingName ?? $"엔딩 그룹 {endingTitleId}";
 
             GameObject itemGO = Instantiate(endingItemPrefab, endingListContainer.transform);
             TextMeshProUGUI buttonText = itemGO.GetComponentInChildren<TextMeshProUGUI>();
