@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq;
@@ -74,14 +74,14 @@ public class EndingReplayPanelController : MonoBehaviour
 
         var groupedEndings = completedEndings
             .Select(id => DataManager.Instance.GetEndingData(id))
-            .Where(data => data != null)
-            .GroupBy(data => data.EndingName);
+            .Where(data => data != null && data.EndingTitle != null)
+            .GroupBy(data => data.EndingTitle.EndingName_ID);
 
         foreach (var endingGroup in groupedEndings)
         {
-            int endingNameKey = endingGroup.Key;
+            int endingTitleId = endingGroup.Key;
             var firstEndingOfGroup = endingGroup.FirstOrDefault();
-            string endingTitle = firstEndingOfGroup?.EndingTitle ?? $"엔딩 그룹 {endingNameKey}";
+            string endingName = firstEndingOfGroup?.EndingTitle?.EndingName_Kr ?? $"엔딩 그룹 {endingTitleId}";
 
             GameObject itemGO = Instantiate(endingItemPrefab, endingListContainer.transform);
             TextMeshProUGUI buttonText = itemGO.GetComponentInChildren<TextMeshProUGUI>();
@@ -89,17 +89,17 @@ public class EndingReplayPanelController : MonoBehaviour
 
             if (buttonText != null)
             {
-                buttonText.text = endingTitle;
+                buttonText.text = endingName;
             }
 
             if (endingButton != null)
             {
-                endingButton.onClick.AddListener(() => StartEndingSequence(endingNameKey));
+                endingButton.onClick.AddListener(() => StartEndingSequence(endingTitleId));
             }
         }
     }
 
-    private void StartEndingSequence(int endingNameKey)
+    private void StartEndingSequence(int endingTitleId)
     {
         if (MultiEndingSystem.Instance == null)
         {
@@ -111,13 +111,13 @@ public class EndingReplayPanelController : MonoBehaviour
 
         var endingSequenceData = completedEndings
             .Select(id => DataManager.Instance.GetEndingData(id))
-            .Where(data => data != null && data.EndingName == endingNameKey)
+            .Where(data => data != null && data.EndingTitle != null && data.EndingTitle.EndingName_ID == endingTitleId)
             .OrderBy(data => data.ID)
             .ToList();
 
         if (endingSequenceData.Count == 0)
         {
-            Debug.LogError($"[EndingReplayPanel] EndingNameKey {endingNameKey}에 해당하는 엔딩 시퀀스를 찾을 수 없습니다.");
+            Debug.LogError($"[EndingReplayPanel] EndingTitleId {endingTitleId}에 해당하는 엔딩 시퀀스를 찾을 수 없습니다.");
             return;
         }
 
@@ -137,7 +137,7 @@ public class EndingReplayPanelController : MonoBehaviour
 
         if (cutsceneSequenceQueue.Count > 0)
         {
-            Debug.Log($"[EndingReplayPanel] {endingNameKey} 그룹의 순차 재생을 시작합니다. (총 {cutsceneSequenceQueue.Count}개의 스텝)");
+            Debug.Log($"[EndingReplayPanel] {endingTitleId} 그룹의 순차 재생을 시작합니다. (총 {cutsceneSequenceQueue.Count}개의 스텝)");
             HidePanel();
             CutsceneManager.OnCutsceneFinished += PlayNextInSequence;
             PlayNextInSequence();
