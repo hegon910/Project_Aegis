@@ -14,6 +14,10 @@ public abstract class SkillData : ScriptableObject
     [Header("전투 당 1회용 스킬 여부")]
     public bool isSingleUsePerCombat;
 
+    [Header("Visuals & Audio")]
+    public GameObject skillEffectPrefab;
+    public AudioClip skillSound;
+
     public virtual bool CanUse(WarPlayer player, WarEnemy enemy)
     {
         return true;

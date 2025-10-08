@@ -5,7 +5,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "새로운 회복 스킬", menuName = "Skills/회복/풀회복")]
 public class FullHealSkill : SkillData
 {
-
+    [Header("스킬효과")]
     [Tooltip("획득할 보호막의 양")]
     public int shieldToGain = 3;
     public override void Activate(WarPlayer player, WarEnemy enemy, WarTurnManager turnManager)

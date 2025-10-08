@@ -22,9 +22,12 @@ public class WarPlayer : MonoBehaviour
     [System.NonSerialized] public bool KnockbackBuff = false;
     [System.NonSerialized] public bool GoGoBuff = false;
 
-    //vfx 사용하는 부분
+    [Header("VFX")]
     public GameObject shieldOnEffectPrefab;
     public GameObject shieldOffEffectPrefab;
+    //public AudioClip shieldOn;
+    //public AudioClip shieldOff;
+
 
     public int Shield => currentShield; 
     public WarController Ctrl => controller;
