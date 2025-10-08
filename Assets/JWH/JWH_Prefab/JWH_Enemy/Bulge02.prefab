@@ -113,9 +113,11 @@ MonoBehaviour:
   rank: 4
   enemyInfoText: {fileID: 0}
   attackHints:
-  - "\uC801\uB4E4\uC774 \uBD84\uC8FC\uD558\uB2E4"
+  - "\uACF5\uACA9\uD560\uAC83\uAC19\uB2E4"
+  - "\uC7A0\uC2DC \uD478\uB978 \uBE5B\uC774 \uB09C \uAC83 \uAC19\uB2E4"
   defendHints:
-  - "\uC801\uB4E4\uC774 \uC7A0\uC7A0\uD558\uB2E4"
+  - "\uC218\uBE44\uD560\uAC83\uAC19\uB2E4"
+  - "\uC7A0\uC2DC \uBD89\uC740 \uBE5B\uC774 \uB09C \uAC83 \uAC19\uB2E4"
   attackVsAttack:
     playerDamage: 2
     playerKnockback: 1
