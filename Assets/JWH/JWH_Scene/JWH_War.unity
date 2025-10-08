@@ -378,7 +378,7 @@ PrefabInstance:
     - target: {fileID: 1329003215274039568, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 578917885e88fd646b34b860de98da97, type: 3}
+      objectReference: {fileID: 21300000, guid: 1b3e46a83a6e2554c93c258ffd4d3acf, type: 3}
     - target: {fileID: 1339541212528671808, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: m_SizeDelta.x
       value: 50
@@ -522,7 +522,11 @@ PrefabInstance:
     - target: {fileID: 2978308366919833166, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 1221fdffc92907e4298e01b66430efe3, type: 3}
+      objectReference: {fileID: 21300000, guid: 1fb339a00d1a08e4b964003ec86e3729, type: 3}
+    - target: {fileID: 3607427417005825841, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -0.00018310547
+      objectReference: {fileID: 0}
     - target: {fileID: 4852539890086447662, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: numberYOffset
       value: 180
@@ -702,6 +706,14 @@ PrefabInstance:
     - target: {fileID: 7831991435369316234, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: equippedSkillID
       value: MoraleBoost
+      objectReference: {fileID: 0}
+    - target: {fileID: 7831991435369316234, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: shieldOnEffectPrefab
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 7831991435369316234, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: shieldOffEffectPrefab
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 7966315032008839688, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: m_Name
