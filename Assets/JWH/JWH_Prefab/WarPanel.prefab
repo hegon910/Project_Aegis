@@ -3898,6 +3898,8 @@ MonoBehaviour:
   - chapterName: ch06
     enemyPrefabs:
     - {fileID: -3519295816317485448, guid: 9afdcbdaaa4fcf5438cdbaa8afea4c3d, type: 3}
+  attackVsAttackPrefab: {fileID: 0}
+  attackVsDefendPrefab: {fileID: 0}
   choiceCard: {fileID: 1958663304189081122}
   warHUD: {fileID: 7182068766325194693}
   maxTurns: 30
@@ -4972,8 +4974,8 @@ MonoBehaviour:
   currentShield: 0
   equippedSkillID: CounterAttack
   skillDatabase: {fileID: 11400000, guid: 1bf50a35dc2094643aeeb527a7aef982, type: 2}
-  shieldOnEffectPrefab: {fileID: 598804161898402219, guid: 217e470a24a59a942a4cb4050355fdb5, type: 3}
-  shieldOffEffectPrefab: {fileID: 78893887757108202, guid: f0a06848241726e4684a85ddb25cab25, type: 3}
+  shieldOnEffectPrefab: {fileID: 0}
+  shieldOffEffectPrefab: {fileID: 0}
 --- !u!1 &7705710673180044186
 GameObject:
   m_ObjectHideFlags: 0
