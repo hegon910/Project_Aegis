@@ -23,17 +23,17 @@ public class CustomEnemy : WarEnemy
     [Header("충돌 결과 설정 가능")]
     [Tooltip("플레이어: 공격 / 적: 공격")]
     [SerializeField] private CollisionOutcome attackVsAttack;
-        public GameObject ImpactCutV3;
-        //public AudioClip Sound01; 이펙트에 사운드 나오나?
+    //public GameObject attackVsAttackPrefab;//다른데 넣는게 좋아보이기도 하고
+    //public AudioClip Sound01; 이펙트에 사운드 나오나?
 
     [Tooltip("플레이어: 공격 / 적: 방어")]
     [SerializeField] private CollisionOutcome playerAttackVsEnemyDefend;
-        public GameObject BlueSlashV23;
-        //public AudioClip Sound02;
+    //public GameObject attackVsDefendPrefab;
+    //public AudioClip Sound02;
 
     [Tooltip("플레이어: 방어 / 적: 공격")]
     [SerializeField] private CollisionOutcome playerDefendVsEnemyAttack;
-        //public GameObject BlueSlashV23; 플레이어 takedamage로 위치변경
+        //public GameObject BlueSlashV23; 플레이어 takedamage로 위치변경?
 
     [Header("이 적과의 전투 설정")]
     [Tooltip("이 적과 싸울 때의 전장 칸 수")]

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using static TMPro.Examples.ObjectSpin;
 
 public class WarTurnManager : MonoBehaviour
 {
@@ -17,6 +18,9 @@ public class WarTurnManager : MonoBehaviour
     //[SerializeField] WarEnemy enemy;
     private WarEnemy enemy;
     public WarEnemy CurrentEnemy => enemy;
+
+    public GameObject attackVsAttackPrefab; // 임팩트컷
+    public GameObject attackVsDefendPrefab; // 블루슬래쉬
 
 
     [Header("UI References")]
@@ -375,7 +379,26 @@ public class WarTurnManager : MonoBehaviour
         return null;
     }
 
-    [System.Serializable]
+    //스킬사용 vfx
+    //public void ExecuteSkill(WarPlayer player, WarEnemy enemy, SkillData skill)
+    //{
+    //    if (skill.casterEffectPrefab != null)
+    //    {
+    //        Instantiate(skill.casterEffectPrefab, player.transform.position, Quaternion.identity);
+    //    }
+
+    //    if (skill.targetEffectPrefab != null && enemy != null)
+    //    {
+    //        // 폭격스킬 위치 지정 별도
+    //        Vector3 targetPosition = enemy.transform.position;
+    //        Instantiate(skill.targetEffectPrefab, targetPosition, Quaternion.identity);
+    //    }
+    //}
+
+    
+
+
+[System.Serializable]
     public class ChapterEnemyPool
     {
         public string chapterName;

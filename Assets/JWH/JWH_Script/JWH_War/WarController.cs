@@ -22,6 +22,8 @@ public class WarController : MonoBehaviour
     WarGround ground;
     int currentIndex;
 
+    
+
     // 이동 취소를 위한 CancellationTokenSource
     private CancellationTokenSource moveCts;
 
@@ -125,4 +127,6 @@ public class WarController : MonoBehaviour
             moveCts = null;
         }
     }
+
+
 }
