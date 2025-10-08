@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 2133970515076568027}
   - component: {fileID: -3519295816317485448}
   m_Layer: 5
-  m_Name: "\uC774\uD130 \uC131 \uC804\uD22C"
+  m_Name: Dodecanese
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -93,8 +93,8 @@ MonoBehaviour:
   forwardDist: 6
   backwardDist: 1
   direction: -1
-  maxHp: 9
-  currentHp: 9
+  maxHp: 5
+  currentHp: 5
   attackPower: 1
 --- !u!114 &-3519295816317485448
 MonoBehaviour:
@@ -109,15 +109,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   controller: {fileID: 0}
-  attackChance: 0.95
-  rank: 6
+  attackChance: 0.8
+  rank: 1
   enemyInfoText: {fileID: 0}
   attackHints:
   - "\uC801\uB4E4\uC774 \uBD84\uC8FC\uD558\uB2E4"
   defendHints:
   - "\uC801\uB4E4\uC774 \uC7A0\uC7A0\uD558\uB2E4"
   attackVsAttack:
-    playerDamage: 2
+    playerDamage: 1
     playerKnockback: 2
     enemyBaseDamage: 0
     enemyKnockback: 1
@@ -125,12 +125,12 @@ MonoBehaviour:
     playerDamage: 0
     playerKnockback: 1
     enemyBaseDamage: 0
-    enemyKnockback: 2
+    enemyKnockback: 0
   playerDefendVsEnemyAttack:
     playerDamage: 0
-    playerKnockback: 1
+    playerKnockback: 2
     enemyBaseDamage: 0
-    enemyKnockback: 2
-  battleLaneLength: 18
+    enemyKnockback: 1
+  battleLaneLength: 14
   playerStartPos: 6
   maxTurns: 30

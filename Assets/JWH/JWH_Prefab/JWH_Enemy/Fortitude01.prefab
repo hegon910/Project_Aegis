@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 2133970515076568027}
   - component: {fileID: -3519295816317485448}
   m_Layer: 5
-  m_Name: "\uBE44\uC2A4\uC544 \uC624\uB808\uB974"
+  m_Name: Fortitude01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -93,8 +93,8 @@ MonoBehaviour:
   forwardDist: 6
   backwardDist: 1
   direction: -1
-  maxHp: 8
-  currentHp: 8
+  maxHp: 4
+  currentHp: 4
   attackPower: 1
 --- !u!114 &-3519295816317485448
 MonoBehaviour:
@@ -109,8 +109,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   controller: {fileID: 0}
-  attackChance: 0.9
-  rank: 5
+  attackChance: 0.8
+  rank: 2
   enemyInfoText: {fileID: 0}
   attackHints:
   - "\uC801\uB4E4\uC774 \uBD84\uC8FC\uD558\uB2E4"
@@ -118,19 +118,19 @@ MonoBehaviour:
   - "\uC801\uB4E4\uC774 \uC7A0\uC7A0\uD558\uB2E4"
   attackVsAttack:
     playerDamage: 2
-    playerKnockback: 1
+    playerKnockback: 2
     enemyBaseDamage: 0
     enemyKnockback: 1
   playerAttackVsEnemyDefend:
     playerDamage: 0
     playerKnockback: 1
     enemyBaseDamage: 0
-    enemyKnockback: 2
+    enemyKnockback: 1
   playerDefendVsEnemyAttack:
     playerDamage: 0
     playerKnockback: 1
     enemyBaseDamage: 0
     enemyKnockback: 1
-  battleLaneLength: 16
+  battleLaneLength: 14
   playerStartPos: 6
   maxTurns: 30

@@ -22,6 +22,10 @@ public class WarPlayer : MonoBehaviour
     [System.NonSerialized] public bool KnockbackBuff = false;
     [System.NonSerialized] public bool GoGoBuff = false;
 
+    //vfx 사용하는 부분
+    public GameObject shieldOnEffectPrefab;
+    public GameObject shieldOffEffectPrefab;
+
     public int Shield => currentShield; 
     public WarController Ctrl => controller;
     public bool IsDead => controller != null && controller.CurrentHP <= 0;
@@ -72,12 +76,25 @@ public class WarPlayer : MonoBehaviour
         }
 
         Debug.Log($"Player HP -> {controller.CurrentHP}, Shield -> {currentShield}");
+
+        if (fromShield > 0 && currentShield <= 0)
+        {
+            if (shieldOffEffectPrefab != null)//쉴드vfx
+            {
+                Instantiate(shieldOffEffectPrefab, transform.position, Quaternion.identity);
+            }
+        }
     }
 
     public void GainShield(int amount)
     {
         currentShield = Mathf.Clamp(currentShield + amount, 0, maxShield);
         Debug.Log($"Player Shield +{amount} => {currentShield}");
+        if (shieldOnEffectPrefab != null)
+        {
+            // 플레이어의 위치에 프리팹 생성
+            Instantiate(shieldOnEffectPrefab, transform.position, Quaternion.identity);
+        }
     }
 
     public void KillByRingOut()
