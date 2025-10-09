@@ -308,6 +308,24 @@ public class EventManager : MonoBehaviour
         Debug.Log($"[PlayNextTurn] 호출됨. 현재 상태: {currentState}, 진행도: {DataManager.Instance.PlayerData.eventPlaylistIndex}/{DataManager.Instance.PlayerData.currentPlaylist.Count} (totalEventsPerCycle: {totalEventsPerCycle})");
         if (currentState == EventManagerState.Idle) return;
 
+        // 특수 이벤트 체인이 진행 중이면 간섭하지 않음
+        if (SpecialEventManager.Instance != null && SpecialEventManager.Instance.IsInSpecialChain)
+        {
+            Debug.Log("[EventManager] 특수 이벤트 체인 진행 중. PlayNextTurn을 보류합니다.");
+            return;
+        }
+
+        // 파라미터 이벤트를 보여주기 직전에 특수 이벤트 트리거 (파라미터 변화 윈도우가 열렸을 때만)
+        if (SpecialEventManager.Instance != null && currentState == EventManagerState.InCycle)
+        {
+            bool intercepted = SpecialEventManager.Instance.TryTriggerIfReady();
+            if (intercepted)
+            {
+                // 특수 이벤트 체인이 시작되면 일반 진행을 잠시 중단 (플레이리스트 인덱스는 증가하지 않음)
+                return;
+            }
+        }
+
         // InSubEvent 상태일 때는 서브이벤트 체인이 끝나기를 기다려야 함
         if (currentState == EventManagerState.InSubEvent)
         {

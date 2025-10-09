@@ -8,6 +8,7 @@ public abstract class SkillData : ScriptableObject
     public string skillID; // 저장에 사용할 ID
     public string skillName;
     public int skillRank;
+    public Sprite icon; // 특수 이벤트 스킬 획득/교체 UI 시각화 아이콘
     [TextArea(3, 5)]
     public string description;
     public int cooltime; // 스킬 쿨타임 턴 수

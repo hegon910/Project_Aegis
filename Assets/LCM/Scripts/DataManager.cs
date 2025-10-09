@@ -29,6 +29,8 @@ public class DataManager : MonoBehaviour
 
     //서브이벤트 전체 목록
     public List<FullSubEventData> FullSubEvents { get; private set; } = new List<FullSubEventData>();
+    //특수 이벤트 전체 목록 (서브와 분리)
+    public List<FullSubEventData> FullSpecialEvents { get; private set; } = new List<FullSubEventData>();
     //엔딩 텍스트 누적 리스트
     private List<string> acquiredEndingMemoriars = new List<string>();
 
@@ -791,6 +793,9 @@ public class DataManager : MonoBehaviour
             //서브 이벤트 데이터 로딩
             var subEventTask = Csvparser.ParseAsync<SubEventData>("SubEventData1");
             var subAnswerTask = Csvparser.ParseAsync<SubEventAnswerData>("SubEventAnswerID");
+            // [추가] 특수 이벤트 데이터 로딩 (스키마 차이를 내부 변환으로 해소)
+            var specialSubEventTask = Csvparser.ParseAsync<SpecialSubEventRow>("SpecialEventData");
+            var specialSubAnswerTask = Csvparser.ParseAsync<SubEventAnswerData>("SpecialEventAnswerID");
             //룩업 테이블 로딩
             var bgDataTask = Csvparser.ParseAsync<BGData>("MainBGData");
             var sfxDataTask = Csvparser.ParseAsync<SFXData>("MainSFXData");
@@ -806,10 +811,29 @@ public class DataManager : MonoBehaviour
             //회상 이벤트 데이터
             var endingMemoriarTask = Csvparser.ParseAsync<EndingMemoriarData>("EndingMemoriar");
 
-            var (mainEventList, answerList, characterList, bgList, sfxList, characterImgList, endingEventList, endingCutSceneList,endingNameList,trueEndingList, battleResultList, backDataList, subEventList, subAnswerList, endingMemoriarList) =
-                await UniTask.WhenAll(mainEventTask, answerTask, characterDataTask, bgDataTask, sfxDataTask, characterImgDataTask, endingEventDataTask, endingCutSceneTask,endingNameDataTask, trueEndingDataTask, battleResultTask, backDataTask, subEventTask, subAnswerTask, endingMemoriarTask);
+            var mainEventList = await mainEventTask;
+            var answerList = await answerTask;
+            var characterList = await characterDataTask;
+            var bgList = await bgDataTask;
+            var sfxList = await sfxDataTask;
+            var characterImgList = await characterImgDataTask;
+            var endingEventList = await endingEventDataTask;
+            var endingCutSceneList = await endingCutSceneTask;
+            var endingNameList = await endingNameDataTask;
+            var trueEndingList = await trueEndingDataTask;
+            var battleResultList = await battleResultTask;
+            var backDataList = await backDataTask;
+            var subEventList = await subEventTask;
+            var subAnswerList = await subAnswerTask;
+            var specialSubEventRows = await specialSubEventTask;
+            var specialSubAnswerList = await specialSubAnswerTask;
+            var endingMemoriarList = await endingMemoriarTask;
 
             Debug.Log("모든 파일 로딩 완료");
+
+            // [추가] 특수 이벤트를 SubEvent 스키마로 변환 후 병합합니다.
+            var combinedSubEventList = new List<SubEventData>(subEventList ?? new List<SubEventData>());
+            var combinedSubAnswerList = new List<SubEventAnswerData>(subAnswerList ?? new List<SubEventAnswerData>());
 
             // 새로운 딕셔너리로 데이터를 구성합니다.
             mainEventDataDict = mainEventList.ToDictionary(e => e.ID, e => e);
@@ -826,8 +850,21 @@ public class DataManager : MonoBehaviour
             endingCutSceneDict = endingCutSceneList.ToDictionary(c => c.EndingCutScene_ID, c => c);
             endingNameDict = endingNameList.ToDictionary(c => c.EndingName_ID, c => c);
             backDataDict = backDataList.ToDictionary(d => d.Back_ID, d => d);
-            subEventDataDict = subEventList.ToDictionary(e => e.ID, e => e);
-            subEventAnswerDataDict = subAnswerList.ToDictionary(a => a.AnswerID, a => a);
+            // ID/AnswerID가 0이거나 중복인 항목을 제거하고 딕셔너리 구성 (CSV 구분줄 등 방지)
+            var filteredSubEvents = combinedSubEventList
+                .Where(e => e != null && e.ID > 0)
+                .GroupBy(e => e.ID)
+                .Select(g => g.First())
+                .ToList();
+
+            var filteredSubAnswers = combinedSubAnswerList
+                .Where(a => a != null && a.AnswerID > 0)
+                .GroupBy(a => a.AnswerID)
+                .Select(g => g.First())
+                .ToList();
+
+            subEventDataDict = filteredSubEvents.ToDictionary(e => e.ID, e => e);
+            subEventAnswerDataDict = filteredSubAnswers.ToDictionary(a => a.AnswerID, a => a);
             //회상 이벤트 데이터
             endingMemoriarDataDict = endingMemoriarList.ToDictionary(m => m.AnswerID, m => m);
 
@@ -857,9 +894,9 @@ public class DataManager : MonoBehaviour
 
             //-------------------------------서브 이벤트 데이터 가공단 ---------------------------------------------------------//
             FullSubEvents.Clear();
-            if (subEventList != null && subAnswerList != null)
+            if (combinedSubEventList != null && combinedSubAnswerList != null)
             {
-                foreach (var rawData in subEventList)
+                foreach (var rawData in combinedSubEventList)
                 {
                     SubChoice leftChoice = null;
                     if (subEventAnswerDataDict.TryGetValue(rawData.AnswerLeftID, out var leftAnswerData))
@@ -922,6 +959,78 @@ public class DataManager : MonoBehaviour
             else
             {
                 Debug.LogError("[DataManager] 서브 이벤트 데이터 로딩 실패!");
+            }
+            // 특수 이벤트는 별도 목록으로 구성 (서브와 분리)
+            FullSpecialEvents.Clear();
+            if (specialSubEventRows != null && specialSubAnswerList != null)
+            {
+                var specialEvents = new List<SubEventData>();
+                foreach (var row in specialSubEventRows)
+                {
+                    var conv = ConvertSpecialRowToSubEvent(row);
+                    if (conv != null && conv.ID > 0) specialEvents.Add(conv);
+                }
+                var specialAnswers = specialSubAnswerList
+                    .Where(a => a != null && a.AnswerID > 0)
+                    .GroupBy(a => a.AnswerID)
+                    .Select(g => g.First())
+                    .ToDictionary(a => a.AnswerID, a => a);
+
+                foreach (var rawData in specialEvents)
+                {
+                    SubChoice leftChoice = null;
+                    if (specialAnswers.TryGetValue(rawData.AnswerLeftID, out var leftAnswerData))
+                    {
+                        leftChoice = new SubChoice
+                        {
+                            answerID = leftAnswerData.AnswerID,
+                            choiceText = leftAnswerData.Text_KR,
+                            nextEventID = leftAnswerData.NextTextID,
+                            outcome = new ChoiceOutcome
+                            {
+                                parameterChanges = ParseRewardString(leftAnswerData.AnswerReward)
+                            }
+                        };
+                    }
+
+                    SubChoice rightChoice = null;
+                    if (specialAnswers.TryGetValue(rawData.AnswerRightID, out var rightAnswerData))
+                    {
+                        rightChoice = new SubChoice
+                        {
+                            answerID = rightAnswerData.AnswerID,
+                            choiceText = rightAnswerData.Text_KR,
+                            nextEventID = rightAnswerData.NextTextID,
+                            outcome = new ChoiceOutcome
+                            {
+                                parameterChanges = ParseRewardString(rightAnswerData.AnswerReward)
+                            }
+                        };
+                    }
+
+                    BGData bgData = bgDataDict.TryGetValue(rawData.BG_ID, out var bg) ? bg : null;
+                    SFXData sfxData = sfxDataDict.TryGetValue(rawData.SFX_ID, out var sfx) ? sfx : null;
+                    MainCharacterData characterData = CharacterDataDict.TryGetValue(rawData.CharacterName, out var character) ? character : null;
+                    MainCharacterImgData characterImgData = characterImgDataDict.TryGetValue(rawData.CharacterImg_ID, out var img) ? img : null;
+                    BackData backData = backDataDict.TryGetValue(rawData.Back_ID, out var back) ? back : null;
+
+                    var fullEventData = new FullSubEventData
+                    {
+                        ID = rawData.ID,
+                        SubStoryPac = rawData.SubStoryPac,
+                        StoryNum = rawData.StoryNum,
+                        Text_kr = rawData.Text_kr,
+                        bgData = bgData,
+                        sfxData = sfxData,
+                        characterData = characterData,
+                        characterImgData = characterImgData,
+                        backData = backData,
+                        leftChoice = leftChoice,
+                        rightChoice = rightChoice
+                    };
+                    FullSpecialEvents.Add(fullEventData);
+                }
+                Debug.Log($"[DataManager] 특수 이벤트 데이터 분리 완료! 총 {FullSpecialEvents.Count}개");
             }
             Debug.Log("---------- [DataManager] 엔딩 데이터 가공 시작 ----------");
             FullendingDataDict = new Dictionary<int, FullEndingData>();
@@ -1729,5 +1838,54 @@ public class DataManager : MonoBehaviour
     {
         public string Chr_name { get; set; }
         public int Chr_index { get; set; }
+    }
+
+    // [추가] 특수 이벤트 CSV 행 정의 (모든 컬럼 문자열로 받아서 안전 파싱)
+    [System.Serializable]
+    public class SpecialSubEventRow
+    {
+        public string ID { get; set; }
+        public string StoryPac { get; set; }
+        public string StoryNum { get; set; }
+        public string AnswerLeftID { get; set; }
+        public string AnswerRightID { get; set; }
+        public string BG_ID { get; set; }
+        public string SFX_ID { get; set; }
+        public string CharacterName { get; set; }
+        public string Text_kr { get; set; }
+        public string Text_en { get; set; }
+        public string Back_ID { get; set; }
+        public string CharacterImg_ID { get; set; }
+        public string Font_Direction { get; set; }
+    }
+
+    // [추가] 특수 이벤트 스키마 → 기존 SubEventData 스키마로 변환
+    private SubEventData ConvertSpecialRowToSubEvent(SpecialSubEventRow row)
+    {
+        if (row == null) return null;
+        int ParseIntSafe(string s)
+        {
+            if (string.IsNullOrWhiteSpace(s)) return 0;
+            s = s.Trim();
+            if (s.Equals("Null", System.StringComparison.OrdinalIgnoreCase) || s.Equals("NULL")) return 0;
+            return int.TryParse(s, out var v) ? v : 0;
+        }
+
+        return new SubEventData
+        {
+            ID = ParseIntSafe(row.ID),
+            SubStoryPac = ParseIntSafe(row.StoryPac),
+            StoryNum = ParseIntSafe(row.StoryNum),
+            AnswerLeftID = ParseIntSafe(row.AnswerLeftID),
+            AnswerRightID = ParseIntSafe(row.AnswerRightID),
+            BG_ID = ParseIntSafe(row.BG_ID),
+            SFX_ID = ParseIntSafe(row.SFX_ID),
+            CharacterName = ParseIntSafe(row.CharacterName),
+            Text_kr = row.Text_kr ?? string.Empty,
+            Text_en = row.Text_en ?? string.Empty,
+            Back_ID = ParseIntSafe(row.Back_ID),
+            CharacterImg_ID = ParseIntSafe(row.CharacterImg_ID),
+            Font_Direction = ParseIntSafe(row.Font_Direction)
+        };
     }
 }

@@ -22,6 +22,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 
     [Header("배경")]
     [SerializeField] private Image backgroundImage; // BG_ID/Back_ID 기반 배경 스프라이트 적용 대상
+    [SerializeField] private SkillPromptOverlay skillPromptOverlay; // 특수 이벤트 스킬 교체 시각화
 
     private EventData currentParameterEventData;
     private FullSubEventData currentSubEventData;
@@ -45,6 +46,9 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         EventManager.OnParameterEventReady += HandleParameterEvent;
         EventManager.OnSubEventReady += HandleSubEvent;
         EventManager.OnSubEventExitFadeRequested += OnSubEventExitFadeRequested;
+        SpecialEventManager.OnSpecialEventReady += HandleSpecialEvent;
+        SpecialEventManager.OnSpecialEventExitFadeRequested += OnSubEventExitFadeRequested;
+        SpecialEventManager.OnSpecialEventChainEnded += OnSpecialEventChainEnded;
     }
 
     private void OnDisable()
@@ -52,6 +56,9 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         EventManager.OnParameterEventReady -= HandleParameterEvent;
         EventManager.OnSubEventReady -= HandleSubEvent;
         EventManager.OnSubEventExitFadeRequested -= OnSubEventExitFadeRequested;
+        SpecialEventManager.OnSpecialEventReady -= HandleSpecialEvent;
+        SpecialEventManager.OnSpecialEventExitFadeRequested -= OnSubEventExitFadeRequested;
+        SpecialEventManager.OnSpecialEventChainEnded -= OnSpecialEventChainEnded;
     }
 
     // <<<<<<< [삭제] 불필요해진 함수들을 삭제합니다.
@@ -241,6 +248,61 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         );
     }
 
+    // 특수 이벤트 표시 (서브이벤트와 동일 흐름, 단 배경/사운드도 동일 규칙 사용)
+    private void HandleSpecialEvent(FullSubEventData data)
+    {
+        if (data == null)
+        {
+            Debug.LogError("[UIFlowSimulator] HandleSpecialEvent: data가 null입니다.");
+            return;
+        }
+
+        if (tutorialPanel != null && tutorialPanel.activeSelf)
+        {
+            tutorialPanel.SetActive(false);
+        }
+
+        StopAllCoroutines();
+        currentParameterEventData = null;
+        currentSubEventData = data;
+
+        string characterName = data.characterData != null ? (data.characterData.Chr_Name ?? "") : "";
+        string dialogue = data.Text_kr ?? "대화 내용이 없습니다.";
+        string leftChoiceText = data.leftChoice?.choiceText ?? "선택지 1";
+        string rightChoiceText = data.rightChoice?.choiceText ?? "선택지 2";
+
+        TryApplyBackgroundFromSubEvent(data);
+
+        DisplayEventUI(
+            characterSprite: ResolvePortraitSprite(data),
+            characterName: characterName,
+            dialogue: dialogue,
+            leftChoice: leftChoiceText,
+            rightChoice: rightChoiceText
+        );
+
+        // 특수 이벤트가 스킬 교체 프롬프트일 경우, 기존/신규 스킬 아이콘을 시각화
+        if (SpecialEventManager.Instance != null && data.ID == -999999 && skillPromptOverlay != null)
+        {
+            var player = GameManager.instance != null ? FindObjectOfType<WarPlayer>() : null;
+            Sprite currentIcon = player?.currentSkill?.icon;
+            string currentName = player?.currentSkill?.skillName ?? "";
+
+            string newSkillId = SpecialEventManager.Instance.GetPendingSkillId();
+            Sprite newIcon = null; string newName = "";
+            if (player != null && player.skillDatabase != null && !string.IsNullOrEmpty(newSkillId))
+            {
+                var newSkill = player.skillDatabase.GetSkillByID(newSkillId);
+                newIcon = newSkill?.icon;
+                newName = newSkill?.skillName ?? newSkillId;
+            }
+
+            bool hasCurrent = player != null && player.currentSkill != null;
+            string title = hasCurrent ? "스킬을 교체한다." : "스킬을 획득한다.";
+            skillPromptOverlay.Show(currentIcon, currentName, newIcon, newName, title);
+        }
+    }
+
     private IEnumerator FadeToBlackThenDisplaySubEvent(string characterName, string dialogue, string leftChoiceText, string rightChoiceText)
     {
         // 시작 상태 초기화 및 입력 차단 (서브이벤트 전용 디머 사용)
@@ -309,6 +371,23 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         subEventDimmerPanel.color = new Color(0f, 0f, 0f, 0f);
         subEventDimmerPanel.raycastTarget = false;
         subEventExitFaded = false;
+    }
+
+    private void OnSpecialEventChainEnded()
+    {
+        // 특수 이벤트 종료 후 다음 일반 이벤트로 복귀
+        StartCoroutine(Co_ResumeAfterSpecialEvent());
+    }
+
+    private IEnumerator Co_ResumeAfterSpecialEvent()
+    {
+        if (skillPromptOverlay != null) skillPromptOverlay.Hide();
+        // 페이드 인 완료 대기 (SubEventExit 페이드가 0.5s로 설계되어 있음)
+        yield return new WaitForSeconds(0.1f);
+        if (EventManager.Instance != null)
+        {
+            EventManager.Instance.PlayNextTurn();
+        }
     }
 
     // 파라미터 이벤트 초상 스프라이트 결정: 기본은 Resources/Portraits/<IMGName> 우선, 호환 경로 및 정규화 처리
@@ -511,6 +590,11 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             // '리사드'가 아니거나 '확정 성공' 이벤트인 경우, 위 if문을 건너뛰고 원래 결과만 사용하게 됩니다.
 
             GamePlayerStats.Instance.ApplyChanges(finalChanges);
+            // 파라미터 변화 발생: 특수 이벤트 트리거 윈도우를 엽니다.
+            if (SpecialEventManager.Instance != null)
+            {
+                SpecialEventManager.Instance.OpenTriggerWindow();
+            }
 
             // [신규] 파라미터 이벤트 완료 기록 (HCW의 PlaythroughHistory는 성공/실패 구분 없음)
             if (PlaythroughHistory.Instance != null)
@@ -542,7 +626,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             var choice = isRightChoice ? currentSubEventData.rightChoice : currentSubEventData.leftChoice;
             string resultText = choice?.outcome?.outcomeText ?? "";
             
-            // 서브이벤트 체인 진행 중에는 BGM을 유지하고 즉시 전환
+            // 서브/특수 이벤트 모두 동일한 즉시 전환 코루틴을 사용
             StartCoroutine(TransitionToNextSubEvent(resultText, isRightChoice));
         }
         else
@@ -686,7 +770,17 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             yield break;
         }
 
-        EventManager.Instance.OnSubEventChoiceSelected(!isRightChoice);
+        // 특수 이벤트 체인 진행 중이면 특수 매니저로 라우팅, 아니면 일반 서브이벤트로 라우팅
+        if (SpecialEventManager.Instance != null && SpecialEventManager.Instance.IsInSpecialChain)
+        {
+            if (skillPromptOverlay != null) skillPromptOverlay.Hide();
+            // SpecialEventManager는 isLeftChoice 시그니처를 사용하므로 반전 전달
+            SpecialEventManager.Instance.OnSubEventChoiceSelected(!isRightChoice);
+        }
+        else
+        {
+            EventManager.Instance.OnSubEventChoiceSelected(isRightChoice);
+        }
         yield break;
     }
 

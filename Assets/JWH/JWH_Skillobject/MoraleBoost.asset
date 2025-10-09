@@ -15,6 +15,7 @@ MonoBehaviour:
   skillID: MoraleBoost
   skillName: "\uC0AC\uAE30\uC99D\uC9C4"
   skillRank: 1
+  icon: {fileID: 21300000, guid: 0bdb86c736332904d93e82e428889325, type: 3}
   description: "\uB2E4\uC74C \uACF5\uACA9 \uD589\uB3D9\uC73C\uB85C \uC544\uAD70\uC774
     4\uCE78 \uB354 \uC804\uC9C4\uD569\uB2C8\uB2E4."
   cooltime: 1

@@ -164,6 +164,9 @@ public class GameManager : MonoBehaviour
         {
             Debug.LogError("[GameManager] EventManager.Instance가 여전히 null입니다. EventManager가 씬에 존재하는지 확인하세요.");
         }
+
+        // [변경] 특수 이벤트 매니저는 씬/프리팹에 미리 배치하여 인스펙터에서 트리거를 설정합니다.
+        // (자동 생성 로직 제거)
         
         if (loadingPanel != null)
         {

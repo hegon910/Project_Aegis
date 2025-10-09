@@ -100,7 +100,15 @@ public static class Csvparser
                             }
                             else
                             {
-                                convertedValue = int.Parse(trimmedValue);
+                                // 'Null' 문자열은 0으로 조용히 처리 (로그 노이즈 방지)
+                                if (string.Equals(trimmedValue, "null", System.StringComparison.OrdinalIgnoreCase))
+                                {
+                                    convertedValue = 0;
+                                }
+                                else
+                                {
+                                    convertedValue = int.Parse(trimmedValue);
+                                }
                             }
                         }
                         else if (property.PropertyType == typeof(bool))
@@ -130,7 +138,7 @@ public static class Csvparser
                         {
                             property.SetValue(data, false);
                         }
-                        Debug.LogError($"'{property.Name}' 변환 오류. 값: '{rawValue}', 타입: '{property.PropertyType}' - 기본값으로 설정합니다.");
+                        // int/bool에 대해서만 기본값 설정. 불필요한 에러 로그는 억제합니다.
                     }
                     catch (System.Exception ex)
                     {
