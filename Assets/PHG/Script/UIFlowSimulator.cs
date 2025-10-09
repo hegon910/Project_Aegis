@@ -20,6 +20,9 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     [SerializeField] private Image dimmerPanel;
     [SerializeField] private Image subEventDimmerPanel;
 
+    [Header("배경")]
+    [SerializeField] private Image backgroundImage; // BG_ID/Back_ID 기반 배경 스프라이트 적용 대상
+
     private EventData currentParameterEventData;
     private FullSubEventData currentSubEventData;
 
@@ -151,6 +154,9 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
                 {
                     characterName = name;
                 }
+
+                // 파라미터 이벤트 배경 적용 (stringData.BG 사용)
+                TryApplyBackgroundFromString(stringData.BG);
             }
         }
 
@@ -217,6 +223,9 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         string rightChoiceText = data.rightChoice?.choiceText ?? "선택지 2";
 
         // 파라미터 이벤트 도중 서브이벤트로 진입할 때는 페이드 아웃/인 연출 적용
+        // 서브이벤트 배경 적용 (BackData 우선, 없으면 BGName 폴백)
+        TryApplyBackgroundFromSubEvent(data);
+
         if (cameFromParameterEvent && subEventDimmerPanel != null)
         {
             StartCoroutine(FadeToBlackThenDisplaySubEvent(characterName, dialogue, leftChoiceText, rightChoiceText));
@@ -368,6 +377,101 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         cardController.gameObject.SetActive(true);
     }
 
+    // 배경 스프라이트 적용 유틸리티들
+    private void TryApplyBackgroundFromString(string bgString)
+    {
+        if (backgroundImage == null) return;
+        if (string.IsNullOrWhiteSpace(bgString)) return;
+
+        var sprite = ResolveBackgroundSpriteByName(bgString);
+        if (sprite != null)
+        {
+            SetBackgroundSprite(sprite);
+        }
+        else
+        {
+            // 파라미터 이벤트 전용 폴백: Base
+            var baseSprite = ResolveBackgroundSpriteByName("Base");
+            if (baseSprite != null)
+            {
+                SetBackgroundSprite(baseSprite);
+            }
+            else
+            {
+                Debug.LogWarning($"[UIFlowSimulator] 배경 스프라이트 로드 실패: '{bgString}', 폴백(Base)도 없음");
+            }
+        }
+    }
+
+    private void TryApplyBackgroundFromSubEvent(FullSubEventData data)
+    {
+        if (backgroundImage == null || data == null) return;
+
+        // BackData 우선
+        string backName = data.backData?.IMGName;
+        if (!string.IsNullOrEmpty(backName))
+        {
+            var s = ResolveBackgroundSpriteByName(backName);
+            if (s != null)
+            {
+                SetBackgroundSprite(s);
+                return;
+            }
+        }
+
+        // 폴백: BGName 사용
+        string bgName = data.bgData?.BGName;
+        if (!string.IsNullOrEmpty(bgName))
+        {
+            var s = ResolveBackgroundSpriteByName(bgName);
+            if (s != null)
+            {
+                SetBackgroundSprite(s);
+                return;
+            }
+        }
+
+        // 서브이벤트 전용 최종 폴백: Base
+        var baseSprite = ResolveBackgroundSpriteByName("Base");
+        if (baseSprite != null)
+        {
+            SetBackgroundSprite(baseSprite);
+        }
+    }
+
+    private void SetBackgroundSprite(Sprite sprite)
+    {
+        backgroundImage.sprite = sprite;
+    }
+
+    private Sprite ResolveBackgroundSpriteByName(string nameOrPath)
+    {
+        if (string.IsNullOrWhiteSpace(nameOrPath)) return null;
+
+        string cleaned = nameOrPath.Trim();
+        string normalized = cleaned.Replace('\\', '/');
+        int lastSlash = normalized.LastIndexOf('/');
+        string lastSegment = lastSlash >= 0 ? normalized.Substring(lastSlash + 1) : normalized;
+        string baseName = Path.GetFileNameWithoutExtension(lastSegment);
+
+        // 시도 1) Backgrounds/
+        var s = Resources.Load<Sprite>("Backgrounds/" + baseName);
+        if (s != null) return s;
+
+        // 시도 2) Back/
+        s = Resources.Load<Sprite>("Back/" + baseName);
+        if (s != null) return s;
+
+        // 시도 3) 원문 경로
+        string rawNoExt = normalized;
+        int dot = rawNoExt.LastIndexOf('.');
+        if (dot > 0) rawNoExt = rawNoExt.Substring(0, dot);
+        s = Resources.Load<Sprite>(rawNoExt);
+        if (s != null) return s;
+
+        return null;
+    }
+
     public void HandleChoice(bool isRightChoice)
     {
         if (tutorialPanel != null && tutorialPanel.activeSelf)
@@ -438,8 +542,8 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             var choice = isRightChoice ? currentSubEventData.rightChoice : currentSubEventData.leftChoice;
             string resultText = choice?.outcome?.outcomeText ?? "";
             
-            // 서브이벤트 완료 시 BGM 페이드 아웃 후 전환 (시각적 페이드 유지)
-            StartCoroutine(FadeOutBGMAndTransitionToSubEvent(resultText, isRightChoice));
+            // 서브이벤트 체인 진행 중에는 BGM을 유지하고 즉시 전환
+            StartCoroutine(TransitionToNextSubEvent(resultText, isRightChoice));
         }
         else
         {

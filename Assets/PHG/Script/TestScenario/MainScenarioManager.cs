@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections;
 using System.Linq;
 using TMPro;
@@ -20,9 +21,11 @@ public class MainStoryUI
     public TextMeshProUGUI choicePreviewText;
     [Header("메인 스토리 전용 Dimmer")]
     public Image mainStoryDimmerPanel;
+    [Header("배경")]
+    public Image backgroundImage; // BG/Back 기반 배경 스프라이트 적용 대상
 }
 
-public class MainScenarioManager : MonoBehaviour, IChoiceHandler
+public partial class MainScenarioManager : MonoBehaviour, IChoiceHandler
 {
     public static event Action OnScenarioFinished;
     public bool IsScenarioRunning { get; private set; }
@@ -205,6 +208,9 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
             mainStoryUI.characterImage.sprite = null;
             mainStoryUI.characterImage.color = Color.clear;
         }
+
+        // 배경 적용: BackData 우선, 없으면 BGName 폴백
+        TryApplyBackgroundFromMainEvent(currentNode);
 
         // 음향 재생 (BGM과 SFX)
         // [보정] 메인화면 -> 새로하기로 메인 스토리에 진입한 '첫 표시'에서만 강제 재생
@@ -441,5 +447,65 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
 
         // 다음 노드를 표시 (nextNodeID가 0이면 시나리오 종료)
         DisplayNode(nextNodeID);
+    }
+}
+
+// 배경 스프라이트 적용 유틸리티
+partial class MainScenarioManager
+{
+    private void TryApplyBackgroundFromMainEvent(NewMainEventData node)
+    {
+        if (mainStoryUI == null || mainStoryUI.backgroundImage == null || node == null) return;
+
+        string backName = node.backData?.IMGName;
+        if (!string.IsNullOrEmpty(backName))
+        {
+            var s = ResolveBackgroundSpriteByName(backName);
+            if (s != null)
+            {
+                SetBackgroundSprite(s);
+                return;
+            }
+        }
+
+        string bgName = node.bgData?.BGName;
+        if (!string.IsNullOrEmpty(bgName))
+        {
+            var s = ResolveBackgroundSpriteByName(bgName);
+            if (s != null)
+            {
+                SetBackgroundSprite(s);
+            }
+        }
+    }
+
+    private void SetBackgroundSprite(Sprite sprite)
+    {
+        mainStoryUI.backgroundImage.sprite = sprite;
+    }
+
+    private Sprite ResolveBackgroundSpriteByName(string nameOrPath)
+    {
+        if (string.IsNullOrWhiteSpace(nameOrPath)) return null;
+
+        string cleaned = nameOrPath.Trim();
+        string normalized = cleaned.Replace('\\', '/');
+        int lastSlash = normalized.LastIndexOf('/');
+        string lastSegment = lastSlash >= 0 ? normalized.Substring(lastSlash + 1) : normalized;
+        string baseName = Path.GetFileNameWithoutExtension(lastSegment);
+
+        var s = Resources.Load<Sprite>("Backgrounds/" + baseName);
+        if (s != null) return s;
+
+        s = Resources.Load<Sprite>("Back/" + baseName);
+        if (s != null) return s;
+
+        string rawNoExt = normalized;
+        int dot = rawNoExt.LastIndexOf('.');
+        if (dot > 0) rawNoExt = rawNoExt.Substring(0, dot);
+        s = Resources.Load<Sprite>(rawNoExt);
+        if (s != null) return s;
+
+        return null;
     }
 }
