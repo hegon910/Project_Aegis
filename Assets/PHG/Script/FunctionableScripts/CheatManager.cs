@@ -1,5 +1,6 @@
 // CheatManager.cs (새 스크립트)
 using UnityEngine;
+using System.Linq;
 
 public class CheatManager : MonoBehaviour
 {
@@ -82,18 +83,32 @@ public class CheatManager : MonoBehaviour
         // --- 엔딩 클리어 치트 (F12) ---
         if (Input.GetKeyDown(KeyCode.F12))
         {
-            if (DataManager.Instance != null && DataManager.Instance.PlayerData != null)
+            if (DataManager.Instance != null && DataManager.Instance.PlayerData != null && DataManager.Instance.IsDataReady)
             {
-                int testEndingId = 50001; // 실제 존재하는 테스트용 엔딩 ID
-                if (!DataManager.Instance.PlayerData.completedEndingIds.Contains(testEndingId))
+                int targetEndingTitleId = 3001; // 테스트할 엔딩 그룹 ID
+
+                var endingsInGroup = DataManager.Instance.FullendingDataDict.Values
+                    .Where(data => data.EndingTitle != null && data.EndingTitle.EndingName_ID == targetEndingTitleId)
+                    .ToList();
+
+                if (endingsInGroup.Count == 0)
                 {
-                    DataManager.Instance.PlayerData.completedEndingIds.Add(testEndingId);
-                    Debug.Log($"[CHEAT] 테스트용 엔딩 ID {testEndingId}를 완료 목록에 추가했습니다.");
+                    Debug.LogWarning($"[CHEAT] 엔딩 그룹 ID {targetEndingTitleId}에 해당하는 엔딩을 찾을 수 없습니다.");
+                    return;
                 }
-                else
+
+                int addedCount = 0;
+                foreach (var endingData in endingsInGroup)
                 {
-                    Debug.Log($"[CHEAT] 엔딩 ID {testEndingId}는 이미 완료 목록에 있습니다.");
+                    if (!DataManager.Instance.PlayerData.completedEndingIds.Contains(endingData.ID))
+                    {
+                        DataManager.Instance.PlayerData.completedEndingIds.Add(endingData.ID);
+                        addedCount++;
+                    }
                 }
+
+                Debug.Log($"[CHEAT] 엔딩 그룹 {targetEndingTitleId}에 속한 {addedCount}개의 새로운 엔딩을 완료 목록에 추가했습니다.");
+
                 // 변경사항을 즉시 저장
                 DataManager.Instance.SaveData();
             }

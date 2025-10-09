@@ -25,6 +25,7 @@ public class DataManager : MonoBehaviour
 
     private UniTaskCompletionSource<bool> _isReady = new UniTaskCompletionSource<bool>();
     public UniTask IsReady => _isReady.Task;
+    public bool IsDataReady => _isReady.Task.Status == UniTaskStatus.Succeeded;
 
     //서브이벤트 전체 목록
     public List<FullSubEventData> FullSubEvents { get; private set; } = new List<FullSubEventData>();

@@ -17,4 +17,18 @@ public class WarTutorial : MonoBehaviour
             gameObject.SetActive(false);
         }
     }
+
+    public void OnOpenButtonClicked()
+    {
+        if (GameManager.instance != null)
+        {
+            //GameManager.instance.OpenWarTutorial();
+        }
+        else
+        {
+            Debug.LogWarning("GameManager 인스턴스를 찾을 수 없어");
+            gameObject.SetActive(false);
+        }
+
+    }
 }

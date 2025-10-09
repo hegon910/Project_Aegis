@@ -1,9 +1,9 @@
-using UnityEngine;
-using UnityEngine.UI;
+ï»¿using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
-using System;
+using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.Video;
 
 public class CutsceneManager : MonoBehaviour
@@ -34,7 +34,7 @@ public class CutsceneManager : MonoBehaviour
 
     private void Awake()
     {
-        Debug.Log("CutsceneManager°¡ ¿©±â¼­ ±ú¾î³µ½À´Ï´Ù!", this.gameObject);
+        Debug.Log("CutsceneManagerê°€ ì—¬ê¸°ì„œ ê¹¨ì–´ë‚¬ìŠµë‹ˆë‹¤!", this.gameObject);
     }
     private void Start()
     {
@@ -47,19 +47,19 @@ public class CutsceneManager : MonoBehaviour
 
     public void StartCutscene(CutsceneData cutsceneData)
     {
+        Debug.Log($"[CutsceneManager] StartCutscene í˜¸ì¶œ. CutsceneData ìŠ¤í… ìˆ˜: {cutsceneData?.steps.Count ?? 0}");
         if (isCutsceneActive) return;
         if (cutsceneData == null || cutsceneData.steps.Count == 0)
         {
+            Debug.LogWarning("[CutsceneManager] ìœ íš¨í•œ CutsceneDataê°€ ì—†ì–´ ì»·ì‹ ì„ ì‹œì‘í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
             OnCutsceneFinished?.Invoke();
             return;
         }
         isCutsceneActive = true;
-
         currentCutscene = cutsceneData;
         currentStepIndex = -1;
         isStepActive = false;
         isSkippable = false;
-
         cutsceneCanvas.SetActive(true);
         PlayNextStep();
     }
@@ -71,17 +71,17 @@ public class CutsceneManager : MonoBehaviour
             clickIndicator.SetActive(isStepActive && !isVideoPlaying);
         }
 
-        // <<<<<<< [º¹¿ø] '½ºÅµ'°ú '´ÙÀ½'À» ±¸ºĞÇÏ´Â ·ÎÁ÷
+        // <<<<<<< [ë³µì›] 'ìŠ¤í‚µ'ê³¼ 'ë‹¤ìŒ'ì„ êµ¬ë¶„í•˜ëŠ” ë¡œì§
         if (isStepActive && !isVideoPlaying && Input.GetMouseButtonDown(0))
         {
             if (isSkippable)
             {
-                // ¿¬Ãâ ÁøÇà ÁßÀÏ ¶§ Å¬¸¯ -> ¿¬Ãâ ½ºÅµ
+                // ì—°ì¶œ ì§„í–‰ ì¤‘ì¼ ë•Œ í´ë¦­ -> ì—°ì¶œ ìŠ¤í‚µ
                 SkipCurrentStepEffects();
             }
             else
             {
-                // ¿¬Ãâ Á¾·á ÈÄ ´ë±â »óÅÂÀÏ ¶§ Å¬¸¯ -> ´ÙÀ½ ½ºÅÜÀ¸·Î
+                // ì—°ì¶œ ì¢…ë£Œ í›„ ëŒ€ê¸° ìƒíƒœì¼ ë•Œ í´ë¦­ -> ë‹¤ìŒ ìŠ¤í…ìœ¼ë¡œ
                 PlayNextStep();
             }
         }
@@ -120,15 +120,15 @@ public class CutsceneManager : MonoBehaviour
         stepProcessCoroutine = StartCoroutine(ProcessStep(currentCutscene.steps[currentStepIndex]));
     }
 
-    // <<<<<<< [º¹¿ø] ¿¬Ãâ ½ºÅµÀ» À§ÇÑ ¸Ş¼­µå
+    // <<<<<<< [ë³µì›] ì—°ì¶œ ìŠ¤í‚µì„ ìœ„í•œ ë©”ì„œë“œ
     private void SkipCurrentStepEffects()
     {
         StopAllRunningCoroutines();
         ApplyFinalState(currentCutscene.steps[currentStepIndex]);
-        isSkippable = false; // ½ºÅµ ÈÄ¿¡´Â '´ÙÀ½' »óÅÂ°¡ µÇ¾î¾ß ÇÏ¹Ç·Î false·Î º¯°æ
+        isSkippable = false; // ìŠ¤í‚µ í›„ì—ëŠ” 'ë‹¤ìŒ' ìƒíƒœê°€ ë˜ì–´ì•¼ í•˜ë¯€ë¡œ falseë¡œ ë³€ê²½
     }
 
-    // <<<<<<< [º¹¿ø] ½ºÅµ ½Ã ÃÖÁ¾ »óÅÂ¸¦ Áï½Ã Àû¿ëÇÏ´Â ¸Ş¼­µå
+    // <<<<<<< [ë³µì›] ìŠ¤í‚µ ì‹œ ìµœì¢… ìƒíƒœë¥¼ ì¦‰ì‹œ ì ìš©í•˜ëŠ” ë©”ì„œë“œ
     private void ApplyFinalState(CutsceneStep step)
     {
         if (step.enableImageEffect)
@@ -161,8 +161,16 @@ public class CutsceneManager : MonoBehaviour
 
     private IEnumerator ProcessStep(CutsceneStep step)
     {
+        Debug.Log($"[CutsceneManager] ProcessStep í˜¸ì¶œ. í˜„ì¬ ìŠ¤í… ì¸ë±ìŠ¤: {currentStepIndex}");
+        Debug.Log($"[CutsceneManager] ImageEffect: {step.enableImageEffect}, DialogueEffect: {step.enableDialogueEffect}, VideoEffect: {step.enableVideoEffect}, DayTextEffect: {step.enableDayTextEffect}");
+
+        if (step.enableImageEffect) Debug.Log($"[CutsceneManager] Image: {step.imageData.image?.name}, FadeDuration: {step.imageData.fadeDuration}");
+        if (step.enableDialogueEffect) Debug.Log($"[CutsceneManager] Dialogue: {step.dialogueData.dialogue}");
+        if (step.enableVideoEffect) Debug.Log($"[CutsceneManager] Video: {step.videoData.videoClip?.name}");
+        if (step.enableDayTextEffect) Debug.Log($"[CutsceneManager] DayText: {step.dayTextData.text}");
+
         isStepActive = true;
-        isSkippable = true; // ¿¬Ãâ ½ÃÀÛ, '½ºÅµ'ÀÌ °¡´ÉÇÑ »óÅÂ
+        isSkippable = true; // ì—°ì¶œ ì‹œì‘, 'ìŠ¤í‚µ'ì´ ê°€ëŠ¥í•œ ìƒíƒœ
 
         runningEffectCoroutines.Clear();
 
@@ -184,20 +192,20 @@ public class CutsceneManager : MonoBehaviour
             runningEffectCoroutines.Add(StartCoroutine(DayTextEffectCoroutine(step.dayTextData)));
         }
 
-        // ¸ğµç '¿¬Ãâ' ÄÚ·çÆ¾ÀÌ ³¡³¯ ¶§±îÁö ±â´Ù¸²
+        // ëª¨ë“  'ì—°ì¶œ' ì½”ë£¨í‹´ì´ ëë‚  ë•Œê¹Œì§€ ê¸°ë‹¤ë¦¼
         foreach (var coroutine in runningEffectCoroutines)
         {
             yield return coroutine;
         }
 
-        // <<<<<<< [ÇÙ½É ¼öÁ¤]
-        // ¸ğµç ¿¬ÃâÀÌ ³¡³µÀ¸¹Ç·Î, ÀÌÁ¦ºÎÅÍÀÇ Å¬¸¯Àº '´ÙÀ½'À¸·Î ³Ñ±â´Â ¿ªÇÒÀ» ÇØ¾ß ÇÔ.
-        // µû¶ó¼­ waitTime ÀÌÀü¿¡ isSkippable »óÅÂ¸¦ false·Î º¯°æ.
+        // <<<<<<< [í•µì‹¬ ìˆ˜ì •]
+        // ëª¨ë“  ì—°ì¶œì´ ëë‚¬ìœ¼ë¯€ë¡œ, ì´ì œë¶€í„°ì˜ í´ë¦­ì€ 'ë‹¤ìŒ'ìœ¼ë¡œ ë„˜ê¸°ëŠ” ì—­í• ì„ í•´ì•¼ í•¨.
+        // ë”°ë¼ì„œ waitTime ì´ì „ì— isSkippable ìƒíƒœë¥¼ falseë¡œ ë³€ê²½.
         isSkippable = false;
 
         if (step.waitTime > 0)
         {
-            // ÀÌ waitTime µ¿¾È Å¬¸¯ÇÏ¸é isSkippable°¡ falseÀÌ¹Ç·Î PlayNextStep()ÀÌ È£ÃâµÊ
+            // ì´ waitTime ë™ì•ˆ í´ë¦­í•˜ë©´ isSkippableê°€ falseì´ë¯€ë¡œ PlayNextStep()ì´ í˜¸ì¶œë¨
             yield return new WaitForSeconds(step.waitTime);
         }
 
@@ -212,7 +220,7 @@ public class CutsceneManager : MonoBehaviour
         isStepActive = false;
         isSkippable = false;
 
-        Debug.Log("ÄÆ½Å Á¾·á.");
+        Debug.Log("ì»·ì‹  ì¢…ë£Œ.");
         if (clickIndicator != null) clickIndicator.SetActive(false);
         backgroundImage.gameObject.SetActive(false);
         dialoguePanel.SetActive(false);
@@ -231,7 +239,7 @@ public class CutsceneManager : MonoBehaviour
         isVideoPlaying = false;
     }
 
-    // --- °¢ È¿°ú¸¦ Ã³¸®ÇÏ´Â ÄÚ·çÆ¾µé (ÀÌÇÏ º¯°æ ¾øÀ½) ---
+    // --- ê° íš¨ê³¼ë¥¼ ì²˜ë¦¬í•˜ëŠ” ì½”ë£¨í‹´ë“¤ (ì´í•˜ ë³€ê²½ ì—†ìŒ) ---
     private IEnumerator ImageEffectCoroutine(ImageEffectData data)
     {
         backgroundImage.sprite = data.image;
@@ -288,7 +296,7 @@ public class CutsceneManager : MonoBehaviour
     {
         if (videoPlayer == null || data.videoClip == null)
         {
-            Debug.LogError("ºñµğ¿À ÇÃ·¹ÀÌ¾î³ª ºñµğ¿À Å¬¸³ÀÌ ÇÒ´çµÇÁö ¾Ê¾Ò½À´Ï´Ù!");
+            Debug.LogError("ë¹„ë””ì˜¤ í”Œë ˆì´ì–´ë‚˜ ë¹„ë””ì˜¤ í´ë¦½ì´ í• ë‹¹ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤!");
             yield break;
         }
 
@@ -322,29 +330,29 @@ public class CutsceneManager : MonoBehaviour
     {
         if (dayText == null)
         {
-            Debug.LogError("DayText UI°¡ ÇÒ´çµÇÁö ¾Ê¾Ò½À´Ï´Ù!");
+            Debug.LogError("DayText UIê°€ í• ë‹¹ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤!");
             yield break;
         }
 
         dayText.text = data.text;
         dayText.gameObject.SetActive(true);
 
-        // --- ÆäÀÌµåÀÎ ·ÎÁ÷ ---
-        // animationDuration ÀüÃ¼¸¦ ÆäÀÌµåÀÎ ½Ã°£À¸·Î »ç¿ëÇÕ´Ï´Ù.
+        // --- í˜ì´ë“œì¸ ë¡œì§ ---
+        // animationDuration ì „ì²´ë¥¼ í˜ì´ë“œì¸ ì‹œê°„ìœ¼ë¡œ ì‚¬ìš©í•©ë‹ˆë‹¤.
         float fadeInDuration = data.animationDuration;
         float timer = 0f;
         Color startColor = new Color(dayText.color.r, dayText.color.g, dayText.color.b, 0);
         Color endColor = new Color(dayText.color.r, dayText.color.g, dayText.color.b, 1);
 
-        // ÆäÀÌµåÀÎ ·çÇÁ
+        // í˜ì´ë“œì¸ ë£¨í”„
         while (timer < fadeInDuration)
         {
             timer += Time.deltaTime;
             dayText.color = Color.Lerp(startColor, endColor, timer / fadeInDuration);
             yield return null;
         }
-        dayText.color = endColor; // ÆäÀÌµåÀÎ ¿Ï·á
+        dayText.color = endColor; // í˜ì´ë“œì¸ ì™„ë£Œ
 
-        // Hold ¹× ÆäÀÌµå¾Æ¿ô ·ÎÁ÷À» ¸ğµÎ Á¦°ÅÇÏ¿© ÅØ½ºÆ®°¡ »ç¶óÁöÁö ¾Êµµ·Ï ÇÕ´Ï´Ù.
+        // Hold ë° í˜ì´ë“œì•„ì›ƒ ë¡œì§ì„ ëª¨ë‘ ì œê±°í•˜ì—¬ í…ìŠ¤íŠ¸ê°€ ì‚¬ë¼ì§€ì§€ ì•Šë„ë¡ í•©ë‹ˆë‹¤.
     }
 }

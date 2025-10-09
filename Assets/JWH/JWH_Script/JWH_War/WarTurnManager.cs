@@ -2,9 +2,15 @@
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using static TMPro.Examples.ObjectSpin;
 
 public class WarTurnManager : MonoBehaviour
 {
+    [Header("Test Mode")]
+    [SerializeField] private bool isTestMode = false;
+    [Tooltip("테스트 모드에서 사용할 챕터 번호 (1~6)")]
+    [SerializeField] private int testChapter = 1;
+
     [SerializeField] WarGround ground;
     [SerializeField] WarPlayer player;
     [Header("챕터별 적 설정")]
@@ -12,6 +18,9 @@ public class WarTurnManager : MonoBehaviour
     //[SerializeField] WarEnemy enemy;
     private WarEnemy enemy;
     public WarEnemy CurrentEnemy => enemy;
+
+    public GameObject attackVsAttackPrefab; // 임팩트컷
+    public GameObject attackVsDefendPrefab; // 블루슬래쉬
 
 
     [Header("UI References")]
@@ -44,12 +53,34 @@ public class WarTurnManager : MonoBehaviour
         {
             choiceCard.SetInteractable(true);
         }
+        if (isTestMode && GameManager.instance == null)
+        {
+            Debug.LogWarning("--- TEST MODE ---");
+            ResetForNewBattle();
+        }
     }
 
 
-    public void ResetForNewBattle(int newMaxTurns = 30)
+    public void ResetForNewBattle()
     {
-        if (GameManager.instance != null && GameManager.instance.CurrentChapter == 1)
+        int chapterToLoad;
+        bool isRealGameMode = !isTestMode && GameManager.instance != null;
+
+        if (isTestMode)
+        {
+            chapterToLoad = testChapter;
+        }
+        else if (isRealGameMode)
+        {
+            chapterToLoad = GameManager.instance.CurrentChapter;
+        }
+        else
+        {
+            Debug.LogError("GameManager를 찾을 수 없습니다! 정상 모드로 실행할 수 없습니다. WarTurnManager에서 테스트 모드를 활성화하세요.");
+            return;
+        }
+
+        if (chapterToLoad == 1)
         {
             WarHistory.ResetHistory();
         }
@@ -59,28 +90,33 @@ public class WarTurnManager : MonoBehaviour
             Destroy(enemy.gameObject);
         }
 
-        int chapterIndex = GameManager.instance.CurrentChapter - 1;
+        int chapterIndex = chapterToLoad - 1;
         if (chapterIndex < 0 || chapterIndex >= chapterEnemies.Count || chapterEnemies[chapterIndex].enemyPrefabs.Count == 0)
         {
-            Debug.LogError($"챕터 {chapterIndex + 1}에 설정된 적이 없습니다!");
+            Debug.LogError($"챕터 {chapterToLoad}에 설정된 적이 없습니다! 인스펙터를 확인하세요.");
             return;
         }
+
         List<CustomEnemy> enemyPool = chapterEnemies[chapterIndex].enemyPrefabs;
         CustomEnemy selectedEnemyPrefab = enemyPool[Random.Range(0, enemyPool.Count)];
+
         int desiredLaneLength = selectedEnemyPrefab.battleLaneLength;
         if (ground != null)
         {
             ground.InitializeGrid(desiredLaneLength);
         }
-        enemy = Instantiate(selectedEnemyPrefab);
+
+        enemy = Instantiate(selectedEnemyPrefab, ground.transform);
+
         this.maxTurns = selectedEnemyPrefab.maxTurns;
-        Debug.Log($"챕터 {chapterIndex + 1} 전투 시작! 등장한 적: {enemy.name.Replace("(Clone)", "")}, 전장 크기: {desiredLaneLength}칸");
+
+        Debug.Log($"챕터 {chapterToLoad} 전투 시작! 등장한 적: {enemy.name.Replace("(Clone)", "")}, 전장 크기: {desiredLaneLength}칸, 최대 턴: {this.maxTurns}턴");
 
         if (warHUD != null)
         {
             enemy.enemyInfoText = warHUD.EnemyInfoTextField;
         }
-        maxTurns = newMaxTurns;
+
         currentTurn = 0;
         battleEnded = false;
         turnRunning = false;
@@ -103,6 +139,7 @@ public class WarTurnManager : MonoBehaviour
         {
             skillCooldownTimer = 0;
         }
+
         if (!battleEnded && enemy != null)
         {
             enemy.PrepareAndShowHint();
@@ -342,7 +379,26 @@ public class WarTurnManager : MonoBehaviour
         return null;
     }
 
-    [System.Serializable]
+    //스킬사용 vfx
+    //public void ExecuteSkill(WarPlayer player, WarEnemy enemy, SkillData skill)
+    //{
+    //    if (skill.casterEffectPrefab != null)
+    //    {
+    //        Instantiate(skill.casterEffectPrefab, player.transform.position, Quaternion.identity);
+    //    }
+
+    //    if (skill.targetEffectPrefab != null && enemy != null)
+    //    {
+    //        // 폭격스킬 위치 지정 별도
+    //        Vector3 targetPosition = enemy.transform.position;
+    //        Instantiate(skill.targetEffectPrefab, targetPosition, Quaternion.identity);
+    //    }
+    //}
+
+    
+
+
+[System.Serializable]
     public class ChapterEnemyPool
     {
         public string chapterName;

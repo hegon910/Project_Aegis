@@ -122,6 +122,17 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!114 &187292571 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7551591192565391023, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+  m_PrefabInstance: {fileID: 518341345}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f16a4aa944d458a4a90b2279c7b5c86e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &287608924
 GameObject:
   m_ObjectHideFlags: 0
@@ -346,7 +357,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 962085439363309823, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1086907459790336601, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: m_SizeDelta.x
@@ -356,13 +367,21 @@ PrefabInstance:
       propertyPath: m_SizeDelta.y
       value: 70
       objectReference: {fileID: 0}
+    - target: {fileID: 1219853864107398122, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: m_Layer
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1219853864107398122, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
+      objectReference: {fileID: 0}
     - target: {fileID: 1329003215274039568, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 53f166bb39d94c248b252be57b0ef2f6, type: 3}
+      objectReference: {fileID: 21300000, guid: 1b3e46a83a6e2554c93c258ffd4d3acf, type: 3}
     - target: {fileID: 1339541212528671808, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 30
+      value: 50
       objectReference: {fileID: 0}
     - target: {fileID: 1339541212528671808, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: m_SizeDelta.y
@@ -420,6 +439,42 @@ PrefabInstance:
       propertyPath: defendHints.Array.data[1]
       value: "\uCD1D\uC131\uC774 \uBA48\uCD98\uB2E4"
       objectReference: {fileID: 0}
+    - target: {fileID: 2140113757831439833, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: lengthInSec
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 2140113757831439833, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: startDelay.scalar
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2140113757831439833, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: VelocityModule.enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2140113757831439833, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: InitialModule.gravitySource
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2140113757831439833, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: InitialModule.startSpeed.scalar
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2140113757831439833, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: InitialModule.startLifetime.scalar
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2140113757831439833, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2140113757831439833, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2140113757831439833, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.r
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2387749592704131571, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -468,6 +523,10 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300000, guid: 1fb339a00d1a08e4b964003ec86e3729, type: 3}
+    - target: {fileID: 3607427417005825841, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -0.00018310547
+      objectReference: {fileID: 0}
     - target: {fileID: 4852539890086447662, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: numberYOffset
       value: 180
@@ -488,6 +547,34 @@ PrefabInstance:
       propertyPath: rightcardImage
       value: 
       objectReference: {fileID: 805756639}
+    - target: {fileID: 5482744408992755361, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5482744408992755361, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5482744408992755361, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 187292571}
+    - target: {fileID: 5482744408992755361, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5482744408992755361, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: OnCloseButtonClicked
+      objectReference: {fileID: 0}
+    - target: {fileID: 5482744408992755361, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: WarTutorial, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 5482744408992755361, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
     - target: {fileID: 5865671948916239473, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -503,6 +590,10 @@ PrefabInstance:
     - target: {fileID: 6322502340110978306, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6540825586812264945, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: isTestMode
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6540825586812264945, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: chapterEnemies.Array.size
@@ -616,6 +707,14 @@ PrefabInstance:
       propertyPath: equippedSkillID
       value: MoraleBoost
       objectReference: {fileID: 0}
+    - target: {fileID: 7831991435369316234, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: shieldOnEffectPrefab
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 7831991435369316234, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: shieldOffEffectPrefab
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 7966315032008839688, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: m_Name
       value: WarPanel
@@ -627,6 +726,8 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 4722907744010525362, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+    - {fileID: -1828226008220321737, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+    - {fileID: 1219853864107398122, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
