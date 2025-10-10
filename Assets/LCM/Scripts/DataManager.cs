@@ -40,6 +40,8 @@ public class DataManager : MonoBehaviour
     //서브 이벤트
     public Dictionary<int, SubEventData> subEventDataDict;
     public Dictionary<int, SubEventAnswerData> subEventAnswerDataDict;
+    //특수 이벤트 답변 데이터
+    public Dictionary<int, SubEventAnswerData> specialEventAnswerDataDict;
     //메인 룩업 테이블
     private Dictionary<int, MainCharacterData> CharacterDataDict;
     private Dictionary<int, BGData> bgDataDict;
@@ -970,7 +972,7 @@ public class DataManager : MonoBehaviour
                     var conv = ConvertSpecialRowToSubEvent(row);
                     if (conv != null && conv.ID > 0) specialEvents.Add(conv);
                 }
-                var specialAnswers = specialSubAnswerList
+                specialEventAnswerDataDict = specialSubAnswerList
                     .Where(a => a != null && a.AnswerID > 0)
                     .GroupBy(a => a.AnswerID)
                     .Select(g => g.First())
@@ -979,7 +981,7 @@ public class DataManager : MonoBehaviour
                 foreach (var rawData in specialEvents)
                 {
                     SubChoice leftChoice = null;
-                    if (specialAnswers.TryGetValue(rawData.AnswerLeftID, out var leftAnswerData))
+                    if (specialEventAnswerDataDict.TryGetValue(rawData.AnswerLeftID, out var leftAnswerData))
                     {
                         leftChoice = new SubChoice
                         {
@@ -994,7 +996,7 @@ public class DataManager : MonoBehaviour
                     }
 
                     SubChoice rightChoice = null;
-                    if (specialAnswers.TryGetValue(rawData.AnswerRightID, out var rightAnswerData))
+                    if (specialEventAnswerDataDict.TryGetValue(rawData.AnswerRightID, out var rightAnswerData))
                     {
                         rightChoice = new SubChoice
                         {

@@ -49,6 +49,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         SpecialEventManager.OnSpecialEventReady += HandleSpecialEvent;
         SpecialEventManager.OnSpecialEventExitFadeRequested += OnSubEventExitFadeRequested;
         SpecialEventManager.OnSpecialEventChainEnded += OnSpecialEventChainEnded;
+        EventManager.OnEventCycleCompleted += OnEventCycleCompleted;
     }
 
     private void OnDisable()
@@ -59,6 +60,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         SpecialEventManager.OnSpecialEventReady -= HandleSpecialEvent;
         SpecialEventManager.OnSpecialEventExitFadeRequested -= OnSubEventExitFadeRequested;
         SpecialEventManager.OnSpecialEventChainEnded -= OnSpecialEventChainEnded;
+        EventManager.OnEventCycleCompleted -= OnEventCycleCompleted;
     }
 
     // <<<<<<< [삭제] 불필요해진 함수들을 삭제합니다.
@@ -248,7 +250,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         );
     }
 
-    // 특수 이벤트 표시 (서브이벤트와 동일 흐름, 단 배경/사운드도 동일 규칙 사용)
+    // 특수 이벤트 표시 (서브이벤트와 동일 흐름, 배경/사운드/입력 차단 타이밍 완전 동일화)
     private void HandleSpecialEvent(FullSubEventData data)
     {
         if (data == null)
@@ -262,6 +264,10 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             tutorialPanel.SetActive(false);
         }
 
+        // 파라미터 이벤트에서 특수 이벤트로 전환되는지 판별 (서브이벤트와 동일)
+        bool cameFromParameterEvent = currentParameterEventData != null;
+
+        // 진행 중 전환 코루틴 정지 및 상태 세팅
         StopAllCoroutines();
         currentParameterEventData = null;
         currentSubEventData = data;
@@ -271,8 +277,24 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         string leftChoiceText = data.leftChoice?.choiceText ?? "선택지 1";
         string rightChoiceText = data.rightChoice?.choiceText ?? "선택지 2";
 
+        // 배경 적용 (서브이벤트와 동일 규칙)
         TryApplyBackgroundFromSubEvent(data);
 
+        // 사운드 처리: 파라미터 → 특수 전환 시 기존 BGM 즉시 정지 후, 특수 이벤트 BGM/SFX 재생
+        if (cameFromParameterEvent && AudioManager.Instance != null)
+        {
+            AudioManager.Instance.StopBGM();
+        }
+        PlaySpecialEventAudio(data);
+
+        if (cameFromParameterEvent && subEventDimmerPanel != null)
+        {
+            // 서브이벤트와 동일한 페이드-투-블랙 후 표시, 이 동안 입력 차단
+            StartCoroutine(FadeToBlackThenDisplaySubEvent(characterName, dialogue, leftChoiceText, rightChoiceText));
+            return;
+        }
+
+        // 바로 표시 (서브에서 특수로 이어질 경우 등)
         DisplayEventUI(
             characterSprite: ResolvePortraitSprite(data),
             characterName: characterName,
@@ -285,12 +307,24 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         if (SpecialEventManager.Instance != null && data.ID == -999999 && skillPromptOverlay != null)
         {
             var player = GameManager.instance != null ? FindObjectOfType<WarPlayer>() : null;
+            // 오버레이 진입 직전에 현재 스킬 캐시가 비어 있으면 로드 보정
+            if (player != null && player.currentSkill == null && !string.IsNullOrEmpty(player.equippedSkillID))
+            {
+                player.LoadSkillFromID();
+            }
             Sprite currentIcon = player?.currentSkill?.icon;
             string currentName = player?.currentSkill?.skillName ?? "";
 
             string newSkillId = SpecialEventManager.Instance.GetPendingSkillId();
             Sprite newIcon = null; string newName = "";
-            if (player != null && player.skillDatabase != null && !string.IsNullOrEmpty(newSkillId))
+            // 매니저에 대기 중 에셋이 있으면 우선 사용
+            var pendingAsset = SpecialEventManager.Instance.GetPendingSkillData();
+            if (pendingAsset != null)
+            {
+                newIcon = pendingAsset.icon;
+                newName = !string.IsNullOrEmpty(pendingAsset.skillName) ? pendingAsset.skillName : newSkillId;
+            }
+            else if (player != null && player.skillDatabase != null && !string.IsNullOrEmpty(newSkillId))
             {
                 var newSkill = player.skillDatabase.GetSkillByID(newSkillId);
                 newIcon = newSkill?.icon;
@@ -300,6 +334,24 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             bool hasCurrent = player != null && player.currentSkill != null;
             string title = hasCurrent ? "스킬을 교체한다." : "스킬을 획득한다.";
             skillPromptOverlay.Show(currentIcon, currentName, newIcon, newName, title);
+        }
+    }
+
+    // 특수 이벤트용 BGM/SFX 재생 (EventManager의 서브이벤트 로직과 동등한 규칙 적용)
+    private void PlaySpecialEventAudio(FullSubEventData eventData)
+    {
+        if (eventData == null || AudioManager.Instance == null) return;
+
+        // BGM
+        if (eventData.bgData != null && eventData.bgData.BG_ID != 0)
+        {
+            AudioManager.Instance.PlayBGMByID(eventData.bgData.BG_ID);
+        }
+
+        // SFX
+        if (eventData.sfxData != null && eventData.sfxData.SFX_ID != 0)
+        {
+            AudioManager.Instance.PlaySFXByID(eventData.sfxData.SFX_ID);
         }
     }
 
@@ -377,6 +429,11 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     {
         // 특수 이벤트 종료 후 다음 일반 이벤트로 복귀
         StartCoroutine(Co_ResumeAfterSpecialEvent());
+    }
+
+    private void OnEventCycleCompleted()
+    {
+        // 특수 이벤트 우선 처리 로직은 GameManager에서 수행. 여기서는 개입하지 않음.
     }
 
     private IEnumerator Co_ResumeAfterSpecialEvent()
@@ -770,7 +827,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             yield break;
         }
 
-        // 특수 이벤트 체인 진행 중이면 특수 매니저로 라우팅, 아니면 일반 서브이벤트로 라우팅
+        // 특수 이벤트 체인 진행 중이면 카드가 사라지는 연출을 기다리지 않고 바로 다음 이벤트로 라우팅
         if (SpecialEventManager.Instance != null && SpecialEventManager.Instance.IsInSpecialChain)
         {
             if (skillPromptOverlay != null) skillPromptOverlay.Hide();
@@ -779,7 +836,8 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         }
         else
         {
-            EventManager.Instance.OnSubEventChoiceSelected(isRightChoice);
+            // EventManager는 isLeftChoice 시그니처를 사용하므로 반전 전달
+            EventManager.Instance.OnSubEventChoiceSelected(!isRightChoice);
         }
         yield break;
     }

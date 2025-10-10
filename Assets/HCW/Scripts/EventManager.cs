@@ -315,16 +315,7 @@ public class EventManager : MonoBehaviour
             return;
         }
 
-        // 파라미터 이벤트를 보여주기 직전에 특수 이벤트 트리거 (파라미터 변화 윈도우가 열렸을 때만)
-        if (SpecialEventManager.Instance != null && currentState == EventManagerState.InCycle)
-        {
-            bool intercepted = SpecialEventManager.Instance.TryTriggerIfReady();
-            if (intercepted)
-            {
-                // 특수 이벤트 체인이 시작되면 일반 진행을 잠시 중단 (플레이리스트 인덱스는 증가하지 않음)
-                return;
-            }
-        }
+        // [변경] 특수 이벤트는 사이클 종료 후에만 등장하도록 인터셉트 로직 제거
 
         // InSubEvent 상태일 때는 서브이벤트 체인이 끝나기를 기다려야 함
         if (currentState == EventManagerState.InSubEvent)

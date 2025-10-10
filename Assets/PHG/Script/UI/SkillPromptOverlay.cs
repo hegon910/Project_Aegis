@@ -17,14 +17,46 @@ public class SkillPromptOverlay : MonoBehaviour
 
     public void Show(Sprite currentIcon, string currentName, Sprite newIcon, string newName, string title)
     {
+        // SpecialEventManager에서 대기 중인 스킬 에셋이 있으면 우선 사용하여 UI에 즉시 반영
+        var pendingSkill = SpecialEventManager.Instance != null ? SpecialEventManager.Instance.GetPendingSkillData() : null;
+        if (pendingSkill != null)
+        {
+            if (pendingSkill.icon != null) newIcon = pendingSkill.icon;
+            if (!string.IsNullOrEmpty(pendingSkill.skillName)) newName = pendingSkill.skillName;
+        }
+
         if (panel != null) panel.SetActive(true);
         if (titleText != null) titleText.text = title ?? string.Empty;
 
-        if (currentSkillImage != null) currentSkillImage.sprite = currentIcon;
-        if (currentSkillNameText != null) currentSkillNameText.text = currentName ?? string.Empty;
+        if (currentSkillImage != null)
+        {
+            currentSkillImage.sprite = currentIcon;
+            // 스프라이트가 있으면 보이도록, 없으면 투명 처리
+            var c = currentSkillImage.color; c.a = currentIcon != null ? 1f : 0f; currentSkillImage.color = c;
+        }
+        if (currentSkillNameText != null)
+        {
+            currentSkillNameText.text = currentName ?? string.Empty;
+            // 잘못된 바인딩(예: SituationText)에 대한 가드 경고
+            if (currentSkillNameText.name == "SituationText")
+            {
+                Debug.LogWarning("[SkillPromptOverlay] currentSkillNameText가 SituationText에 바인딩되어 있습니다. 프리팹/씬에서 올바른 텍스트로 재바인딩하세요.");
+            }
+        }
 
-        if (newSkillImage != null) newSkillImage.sprite = newIcon;
-        if (newSkillNameText != null) newSkillNameText.text = newName ?? string.Empty;
+        if (newSkillImage != null)
+        {
+            newSkillImage.sprite = newIcon;
+            var c2 = newSkillImage.color; c2.a = newIcon != null ? 1f : 0f; newSkillImage.color = c2;
+        }
+        if (newSkillNameText != null)
+        {
+            newSkillNameText.text = newName ?? string.Empty;
+            if (newSkillNameText.name == "SituationText")
+            {
+                Debug.LogWarning("[SkillPromptOverlay] newSkillNameText가 SituationText에 바인딩되어 있습니다. 프리팹/씬에서 올바른 텍스트로 재바인딩하세요.");
+            }
+        }
     }
 
     public void Hide()

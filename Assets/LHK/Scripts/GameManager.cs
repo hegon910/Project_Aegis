@@ -591,7 +591,8 @@ public class GameManager : MonoBehaviour
                 break;
             case GameState.InEventCycle:
                 if (cardController != null) cardController.choiceHandler = uiFlowSimulator;
-                EventManager.OnEventCycleCompleted += OnStateFinished;
+                // 사이클 완료 시 특수 이벤트를 우선 실행한 뒤 컷신으로 진행
+                EventManager.OnEventCycleCompleted += OnEventCycleCompleted_Handle;
 
                 if (uiFlowSimulator != null)
                 {
@@ -756,7 +757,7 @@ public class GameManager : MonoBehaviour
                 CutsceneManager.OnCutsceneFinished -= OnStateFinished;
                 break;
             case GameState.InEventCycle:
-                EventManager.OnEventCycleCompleted -= OnStateFinished;
+                EventManager.OnEventCycleCompleted -= OnEventCycleCompleted_Handle;
                 break;
             case GameState.InStory:
                 if (uiPanelAnimator != null) uiPanelAnimator.ShowDefaultView();
@@ -769,6 +770,27 @@ public class GameManager : MonoBehaviour
                 //  ChapterResultController.OnSequenceComplete -= OnStateFinished;
                 break;
         }
+    }
+
+    // 사이클 완료 시 특수 이벤트(있으면) 우선 실행, 종료 후 컷신으로 진행
+    private void OnEventCycleCompleted_Handle()
+    {
+        if (SpecialEventManager.Instance != null)
+        {
+            bool started = SpecialEventManager.Instance.TryTriggerAfterCycle();
+            if (started)
+            {
+                SpecialEventManager.OnSpecialEventChainEnded += ProceedToChapterCutscene;
+                return;
+            }
+        }
+        ProceedToChapterCutscene();
+    }
+
+    private void ProceedToChapterCutscene()
+    {
+        SpecialEventManager.OnSpecialEventChainEnded -= ProceedToChapterCutscene;
+        OnStateFinished();
     }
 
     //  전투 종료 시 호출되는 함수 변경

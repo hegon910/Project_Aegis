@@ -26,6 +26,8 @@ public class SpecialEventManager : MonoBehaviour
     private bool inSpecialChain = false;
     private int currentEventId = 0;
     private Dictionary<int, FullSubEventData> idToEvent = new Dictionary<int, FullSubEventData>();
+        // 현재 진행 중인 특수 체인을 유발한 트리거 (UI 표출을 위한 보상 스킬 참조용)
+        private SpecialTrigger activeTrigger = null;
 
     // 스킬 보상 매핑 (AnswerID -> SkillID 문자열)
     private Dictionary<int, string> answerToSkillId = new Dictionary<int, string>();
@@ -33,7 +35,13 @@ public class SpecialEventManager : MonoBehaviour
     // 스킬 획득 프롬프트 상태
     private bool inSkillPrompt = false;
     private string pendingSkillId;
-    private int pendingNextEventIdAfterSkillPrompt;
+        private int pendingNextEventIdAfterSkillPrompt;
+        // 오버레이 선택 결과에 따라 분기 제어
+        private int pendingNextEventIdIfAccept;
+        private int pendingNextEventIdIfReject;
+        private List<ParameterChange> pendingAcceptParamChanges;
+        private List<ParameterChange> pendingRejectParamChanges;
+        private SkillData pendingSkillData; // UI에서 바로 표시할 스킬 에셋 (트리거에서 지정)
     // 파라미터 변화가 발생한 직후에만 특수 이벤트를 시도하기 위한 트리거 윈도우 플래그
     private bool triggerWindowOpen = false;
     // 같은 프레임/같은 변화에서 중복 트리거 방지
@@ -41,6 +49,7 @@ public class SpecialEventManager : MonoBehaviour
 
     public bool IsInSpecialChain => inSpecialChain;
     public string GetPendingSkillId() => pendingSkillId;
+        public SkillData GetPendingSkillData() => pendingSkillData;
     public void OpenTriggerWindow()
     {
         triggerWindowOpen = true;
@@ -79,26 +88,15 @@ public class SpecialEventManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 현재 파라미터 이벤트가 화면에 표시되기 직전 호출해 조건을 평가하고,
-    /// 트리거가 만족되면 특수 이벤트 체인을 시작합니다.
+    /// [변경] 특수 이벤트는 사이클 종료 후(24개 소진) 등장. 즉시 체인을 시작할지를 평가합니다.
     /// </summary>
-    /// <returns>특수 이벤트가 시작되었으면 true</returns>
-    public bool TryTriggerIfReady()
+    public bool TryTriggerAfterCycle()
     {
         if (inSpecialChain || triggers == null || triggers.Count == 0) return false;
-        // 파라미터 변화 트리거 윈도우가 아닐 때는 시도하지 않음 (시작부터 강제 발생 방지)
-        if (!triggerWindowOpen) return false;
-        // 한 프레임에 여러 번 호출될 수 있으므로, 같은 프레임에서 한 번만 허용
-        if (triggerWindowOpenFrame == Time.frameCount)
-        {
-            // 계속 진행 허용 (동일 프레임 1회)
-        }
         if (DataManager.Instance == null || DataManager.Instance.PlayerData == null) return false;
-        // --- 흐름 게이팅: 서브이벤트와 유사한 윈도우/사이클 제약, 챕터 제한 ---
-        ResetFlowGatingIfCycleChanged();
-        if (!IsFlowWindowOpenForCurrentTurn()) return false; // 위치 윈도우 제약
-        if (!IsChapterAllowed()) return false;                // 2챕터부터 허용
-        if (HasReachedMaxChainsThisCycle()) return false;     // 사이클 당 제한
+        // 1장부터 허용
+        if (!IsChapterAllowedForChapter1()) return false;
+
         // 등급 우선순위로 후보를 모으고, 최상위 등급끼리 랜덤 선택
         var satisfied = new List<SpecialTrigger>();
         foreach (var trig in triggers)
@@ -114,13 +112,13 @@ public class SpecialEventManager : MonoBehaviour
         var firstEvent = FindFirstEventOfGroup(chosen.storyPac, chosen.storyNum);
         if (firstEvent == null) return false;
 
-        // 윈도우는 1회 소진: 다음 파라미터 변화까지 대기
-        triggerWindowOpen = false;
+        // 트리거 고정 (보상 스킬 에셋 표출용)
+        activeTrigger = chosen;
         StartChain(firstEvent.ID);
         return true;
     }
 
-    public void OnSubEventChoiceSelected(bool isLeftChoice)
+    public async void OnSubEventChoiceSelected(bool isLeftChoice)
     {
         if (!inSpecialChain) return;
 
@@ -137,7 +135,34 @@ public class SpecialEventManager : MonoBehaviour
             return;
         }
 
-        // 파라미터 변화 적용
+        // 현재 이벤트가 스킬 수락/거부를 담은 이벤트인지 먼저 검사하여 프롬프트로 위임
+        // 두 선택지 중 하나라도 스킬 보상 매핑이 있으면 프롬프트로 전환
+        int leftAnswer = current.leftChoice != null ? current.leftChoice.answerID : 0;
+        int rightAnswer = current.rightChoice != null ? current.rightChoice.answerID : 0;
+        string skillIdFromLeft = (leftAnswer != 0 && answerToSkillId.TryGetValue(leftAnswer, out var s1) && !string.IsNullOrEmpty(s1) && !IsNullLiteral(s1)) ? s1 : null;
+        string skillIdFromRight = (rightAnswer != 0 && answerToSkillId.TryGetValue(rightAnswer, out var s2) && !string.IsNullOrEmpty(s2) && !IsNullLiteral(s2)) ? s2 : null;
+        bool isSkillDecisionEvent = !string.IsNullOrEmpty(skillIdFromLeft) || !string.IsNullOrEmpty(skillIdFromRight);
+
+        if (isSkillDecisionEvent && !inSkillPrompt)
+        {
+            // 수락 선택지는 스킬이 매핑된 쪽, 거부는 반대쪽으로 간주
+            bool leftIsAccept = !string.IsNullOrEmpty(skillIdFromLeft);
+            var acceptChoice = leftIsAccept ? current.leftChoice : current.rightChoice;
+            var rejectChoice = leftIsAccept ? current.rightChoice : current.leftChoice;
+
+            pendingSkillId = leftIsAccept ? skillIdFromLeft : skillIdFromRight;
+            pendingNextEventIdIfAccept = acceptChoice != null ? acceptChoice.nextEventID : 0;
+            pendingNextEventIdIfReject = rejectChoice != null ? rejectChoice.nextEventID : 0;
+            pendingAcceptParamChanges = acceptChoice != null && acceptChoice.outcome != null ? (acceptChoice.outcome.parameterChanges ?? new List<ParameterChange>()) : new List<ParameterChange>();
+            pendingRejectParamChanges = rejectChoice != null && rejectChoice.outcome != null ? (rejectChoice.outcome.parameterChanges ?? new List<ParameterChange>()) : new List<ParameterChange>();
+
+            // 카드 리셋 시간 대기 후 프롬프트 표시
+            await UniTask.Delay(System.TimeSpan.FromSeconds(0.5));
+            ShowSkillPrompt();
+            return;
+        }
+
+        // 스킬 결정 이벤트가 아니면 기존 파라미터 변화 적용
         if (selected.outcome != null && selected.outcome.parameterChanges != null)
         {
             GamePlayerStats.Instance.ApplyChanges(selected.outcome.parameterChanges);
@@ -151,6 +176,8 @@ public class SpecialEventManager : MonoBehaviour
                 // 스킬 프롬프트 표시 (선택으로 수락/거부)
                 pendingSkillId = skillId;
                 pendingNextEventIdAfterSkillPrompt = selected.nextEventID;
+                // 카드 오프스크린/리셋 연출 시간과 동일하게 대기 후 프롬프트를 띄움 (0.5s)
+                await UniTask.Delay(System.TimeSpan.FromSeconds(0.5));
                 ShowSkillPrompt();
                 return; // 프롬프트가 끝나면 다시 체인 진행
             }
@@ -161,18 +188,32 @@ public class SpecialEventManager : MonoBehaviour
             if (isLeftChoice)
             {
                 ApplySkill(pendingSkillId);
+                // 수락 시 파라미터 변화 적용 및 해당 분기로 이동
+                if (pendingAcceptParamChanges != null && pendingAcceptParamChanges.Count > 0)
+                {
+                    GamePlayerStats.Instance.ApplyChanges(pendingAcceptParamChanges);
+                }
+                inSkillPrompt = false;
+                await GoNextAsync(pendingNextEventIdIfAccept != 0 ? pendingNextEventIdIfAccept : pendingNextEventIdAfterSkillPrompt);
             }
-            // 프롬프트 종료 후 원래 체인으로 복귀
-            inSkillPrompt = false;
-            GoNext(pendingNextEventIdAfterSkillPrompt);
+            else
+            {
+                // 거부 시 파라미터 변화 적용 및 해당 분기로 이동
+                if (pendingRejectParamChanges != null && pendingRejectParamChanges.Count > 0)
+                {
+                    GamePlayerStats.Instance.ApplyChanges(pendingRejectParamChanges);
+                }
+                inSkillPrompt = false;
+                await GoNextAsync(pendingNextEventIdIfReject != 0 ? pendingNextEventIdIfReject : pendingNextEventIdAfterSkillPrompt);
+            }
             return;
         }
 
-        // 일반 체인 진행
-        GoNext(selected.nextEventID);
+        // 일반 체인 진행 (대기 없이 카드 리셋과 동시에 다음 텍스트 표시)
+        await GoNextAsync(selected.nextEventID);
     }
 
-    private void GoNext(int nextId)
+    private async UniTask GoNextAsync(int nextId)
     {
         if (nextId <= 0)
         {
@@ -181,6 +222,8 @@ public class SpecialEventManager : MonoBehaviour
             EndChain();
             return;
         }
+        // 서브이벤트와 동일하게 카드 오프스크린/리셋 연출 시간을 고려해 대기 후 시작 (0.5s)
+        await UniTask.Delay(System.TimeSpan.FromSeconds(0.5));
         StartChain(nextId);
     }
 
@@ -205,6 +248,8 @@ public class SpecialEventManager : MonoBehaviour
         inSkillPrompt = false;
         pendingSkillId = null;
         pendingNextEventIdAfterSkillPrompt = 0;
+        pendingSkillData = null;
+        activeTrigger = null;
         OnSpecialEventChainEnded?.Invoke();
     }
 
@@ -277,6 +322,9 @@ public class SpecialEventManager : MonoBehaviour
         var player = FindObjectOfType<WarPlayer>();
         bool hasCurrent = (player != null && player.currentSkill != null);
 
+        // 트리거에서 직접 할당된 스킬 에셋을 UI에 표출하도록 대기 상태에 저장
+        pendingSkillData = activeTrigger != null ? activeTrigger.rewardSkill : null;
+
         var prompt = new FullSubEventData
         {
             ID = -999999, // 임시 ID (데이터와 충돌 없음)
@@ -314,10 +362,28 @@ public class SpecialEventManager : MonoBehaviour
             return;
         }
 
+        // 트리거에서 지정한 스킬 에셋이 있으면 직접 장착(아이콘/이름 즉시 반영)
+        if (pendingSkillData != null)
+        {
+            player.EquipSkill(pendingSkillData);
+            PlayerPrefs.SetString("EquippedSkillID", pendingSkillData.skillID);
+            PlayerPrefs.Save();
+            // 전투 HUD가 존재하면 즉시 UI 반영
+            var hud = FindObjectOfType<WarHUD>();
+            if (hud != null) hud.UpdateAllUI();
+            return;
+        }
+
+        // 에셋이 없으면 ID 기준으로 데이터베이스에서 로드
         player.equippedSkillID = skillId;
         player.LoadSkillFromID();
         PlayerPrefs.SetString("EquippedSkillID", skillId);
         PlayerPrefs.Save();
+        // 전투 HUD가 존재하면 즉시 UI 반영
+        {
+            var hud = FindObjectOfType<WarHUD>();
+            if (hud != null) hud.UpdateAllUI();
+        }
     }
 
     private bool IsNullLiteral(string s)
@@ -335,6 +401,8 @@ public class SpecialEventManager : MonoBehaviour
         public int storyNum = 10000001; // 체인 그룹 번호(시작)
         [Range(1, 10)] public int priority = 1; // 등급/우선순위 (높을수록 먼저)
         public List<ParamRule> rules = new List<ParamRule>();
+        [Header("보상 스킬 (UI 표출용, 이벤트 플로우에는 영향 없음)")]
+        public SkillData rewardSkill; // 각 트리거별로 에셋을 인스펙터에서 직접 할당
 
         [Serializable]
         public class ParamRule
@@ -350,7 +418,7 @@ public class SpecialEventManager : MonoBehaviour
     // -------------------------- 흐름 게이팅: 서브이벤트와 유사한 규칙 --------------------------
     [Header("Flow Gating Settings (SubEvent-like, do NOT merge data)")]
     [Tooltip("특수 이벤트가 등장 가능한 최소 챕터 (포함)")]
-    [SerializeField] private int minChapterForSpecial = 2; // 2챕터부터 등장
+    [SerializeField] private int minChapterForSpecial = 1; // 1챕터부터 등장
     [Tooltip("플레이리스트 내에서 특수 이벤트를 끼워넣을 수 있는 시작 인덱스 (0-based)")]
     [SerializeField] private int flowWindowStartIndex = 7; // 8번째부터 (서브와 동일)
     [Tooltip("플레이리스트 내에서 특수 이벤트를 끼워넣을 수 있는 종료 인덱스 (0-based)")]
@@ -390,6 +458,13 @@ public class SpecialEventManager : MonoBehaviour
         var pd = DataManager.Instance?.PlayerData;
         if (pd == null) return false;
         return pd.currentChapter >= minChapterForSpecial;
+    }
+
+    private bool IsChapterAllowedForChapter1()
+    {
+        var pd = DataManager.Instance?.PlayerData;
+        if (pd == null) return false;
+        return pd.currentChapter >= 1;
     }
 
     private bool IsFlowWindowOpenForCurrentTurn()
