@@ -15,6 +15,22 @@ public abstract class SkillData : ScriptableObject
     [Header("전투 당 1회용 스킬 여부")]
     public bool isSingleUsePerCombat;
 
+    [Header("Visual Effects")]
+    // 스킬 시전 시 시전자에게 표시될 이펙트
+    public GameObject casterEffectPrefab;
+
+    // 타겟에게 표시될 이펙트
+    public GameObject targetEffectPrefab;
+
+    // 충돌 또는 특정 조건에서 표시될 이펙트
+    public GameObject impactEffectPrefab;
+
+    // 지속 효과 이펙트
+    public GameObject persistentEffectPrefab;
+
+    // 스킬 사운드
+    public AudioClip skillSound;
+
     public virtual bool CanUse(WarPlayer player, WarEnemy enemy)
     {
         return true;
