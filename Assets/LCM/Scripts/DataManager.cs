@@ -889,6 +889,8 @@ public class DataManager : MonoBehaviour
                 }
             }
 
+            
+
             TrueEndingDataDict = new Dictionary<int, FullEndingData>();
 
             foreach (var rawData in trueEndingList)
@@ -927,6 +929,23 @@ public class DataManager : MonoBehaviour
             {
                 // 만약 MultiEndingSystem이 꼭 필요하다면 여기서 에러를 띄워야 합니다.
                 Debug.LogError("[DataManager] MultiEndingSystem 인스턴스를 찾을 수 없습니다. 인스턴스가 생성되는 시점을 확인하세요.");
+            }
+
+            foreach (var kvp in FullendingDataDict)
+            {
+                var data = kvp.Value;
+
+                // 연결 데이터 확인을 위해 널 체크
+                string bgName = data.bgData != null ? data.bgData.BGName : "NULL";
+                string sfxName = data.sfxData != null ? data.sfxData.SFXName : "NULL";
+                string cutSceneImg = data.cutSceneData != null ? data.cutSceneData.IMGName : "NULL";
+
+                Debug.Log($"[Full Ending Data] ID: {data.ID}, Karma_Rate: {data.Karma_Rate}, EndingString: {data.EndingTitle.EndingName}");
+                Debug.Log($"   ㄴ Text_Kr: {data.Text_Kr.Substring(0, Mathf.Min(data.Text_Kr.Length, 30))}..."); // 텍스트 30자만 출력
+                Debug.Log($"   ㄴ BG/SFX/CutScene 연결 상태:");
+                Debug.Log($"      BG_ID ({data.bgData?.BG_ID ?? 0}) -> Name: {bgName}");
+                Debug.Log($"      SFX_ID ({data.sfxData?.SFX_ID ?? 0}) -> Name: {sfxName}");
+                Debug.Log($"      CutScene_ID ({data.cutSceneData?.EndingCutScene_ID ?? 0}) -> ImgName: {cutSceneImg}");
             }
 
             _isReady.TrySetResult(true);
