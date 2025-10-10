@@ -32,6 +32,11 @@ public class DataManager : MonoBehaviour
     //엔딩 텍스트 누적 리스트
     private List<string> acquiredEndingMemoriars = new List<string>();
 
+
+    //오프닝 이벤트
+    public Dictionary<int, OpeningEventData> openingEventDataDict;
+    public Dictionary<int, OpeningCutSceneData> openingCutSceneDict;
+    public Dictionary<int, FullOpeningEventData> FullOpeningDataDict;
     //메인 이벤트 
     public Dictionary<int, MainEventData> mainEventDataDict;
     public Dictionary<int, AnswerData> answerDataDict;
@@ -738,6 +743,10 @@ public class DataManager : MonoBehaviour
         {
             Debug.Log("이벤트 데이터 로딩 시작");
 
+
+            //오프닝 데이터 로딩
+            var openingEventTask = Csvparser.ParseAsync<OpeningEventData>("OpeningEventData");
+            var openingCutSceneTask = Csvparser.ParseAsync<OpeningCutSceneData>("OpeningCutScene");
             // MainEventData11.csv와 AnswerID.csv를 비동기로 로드합니다.
             var mainEventTask = Csvparser.ParseAsync<MainEventData>("MainEventData");
             var answerTask = Csvparser.ParseAsync<AnswerData>("MainAnswerID");
@@ -759,11 +768,38 @@ public class DataManager : MonoBehaviour
             //회상 이벤트 데이터
             var endingMemoriarTask = Csvparser.ParseAsync<EndingMemoriarData>("EndingMemoriar");
 
-            var (mainEventList, answerList, characterList, bgList, sfxList, characterImgList, endingEventList, endingCutSceneList,endingNameList,trueEndingList, battleResultList, backDataList, subEventList, subAnswerList, endingMemoriarList) =
-                await UniTask.WhenAll(mainEventTask, answerTask, characterDataTask, bgDataTask, sfxDataTask, characterImgDataTask, endingEventDataTask, endingCutSceneTask,endingNameDataTask, trueEndingDataTask, battleResultTask, backDataTask, subEventTask, subAnswerTask, endingMemoriarTask);
+            List<OpeningEventData> openingEventList = await openingEventTask;
+            List<OpeningCutSceneData> openingCutSceneList = await openingCutSceneTask;
 
-            Debug.Log("모든 파일 로딩 완료");
+            // 메인 이벤트
+            List<MainEventData> mainEventList = await mainEventTask;
+            List<AnswerData> answerList = await answerTask;
 
+            // 룩업 테이블
+            List<MainCharacterData> characterList = await characterDataTask;
+            List<BGData> bgList = await bgDataTask;
+            List<SFXData> sfxList = await sfxDataTask;
+            List<MainCharacterImgData> characterImgList = await characterImgDataTask;
+            List<BattleResultData> battleResultList = await battleResultTask;
+            List<BackData> backDataList = await backDataTask;
+
+            // 엔딩 데이터
+            List<EndingEventData> endingEventList = await endingEventDataTask;
+            List<EndingCutScene> endingCutSceneList = await endingCutSceneTask;
+            List<EndingNameList> endingNameList = await endingNameDataTask;
+            List<EndingEventData> trueEndingList = await trueEndingDataTask;
+
+            // 서브 이벤트
+            List<SubEventData> subEventList = await subEventTask;
+            List<SubEventAnswerData> subAnswerList = await subAnswerTask;
+
+            // 회상 이벤트
+            List<EndingMemoriarData> endingMemoriarList = await endingMemoriarTask;
+
+
+            //오프닝 딕셔너리 구성
+            openingEventDataDict = openingEventList.ToDictionary(e => e.ID, e => e);
+            openingCutSceneDict = openingCutSceneList.ToDictionary(c => c.OpeningCutScene_ID, c => c);
             // 새로운 딕셔너리로 데이터를 구성합니다.
             mainEventDataDict = mainEventList.ToDictionary(e => e.ID, e => e);
             answerDataDict = answerList.ToDictionary(a => a.AnswerID, a => a);
@@ -810,72 +846,29 @@ public class DataManager : MonoBehaviour
 
             //-------------------------------서브 이벤트 데이터 가공단 ---------------------------------------------------------//
             FullSubEvents.Clear();
-            if (subEventList != null && subAnswerList != null)
-            {
-                foreach (var rawData in subEventList)
-                {
-                    SubChoice leftChoice = null;
-                    if (subEventAnswerDataDict.TryGetValue(rawData.AnswerLeftID, out var leftAnswerData))
-                    {
-                        leftChoice = new SubChoice
-                        {
-                            answerID = leftAnswerData.AnswerID,
-                            choiceText = leftAnswerData.Text_KR,
-                            nextEventID = leftAnswerData.NextTextID,
-                            outcome = new ChoiceOutcome
-                            {
-                                parameterChanges = ParseRewardString(leftAnswerData.AnswerReward)
-                            }
-                        };
-                    }
-
-                    SubChoice rightChoice = null;
-                    if (subEventAnswerDataDict.TryGetValue(rawData.AnswerRightID, out var rightAnswerData))
-                    {
-                        rightChoice = new SubChoice
-                        {
-                            answerID = rightAnswerData.AnswerID,
-                            choiceText = rightAnswerData.Text_KR,
-                            nextEventID = rightAnswerData.NextTextID,
-                            outcome = new ChoiceOutcome
-                            {
-                                parameterChanges = ParseRewardString(rightAnswerData.AnswerReward)
-                            }
-                        };
-                    }
-
-                    BGData bgData = bgDataDict.TryGetValue(rawData.BG_ID, out var bg) ? bg : null;
-                    SFXData sfxData = sfxDataDict.TryGetValue(rawData.SFX_ID, out var sfx) ? sfx : null;
-                    MainCharacterData characterData = CharacterDataDict.TryGetValue(rawData.CharacterName, out var character) ? character : null;
-                    MainCharacterImgData characterImgData = characterImgDataDict.TryGetValue(rawData.CharacterImg_ID, out var img) ? img : null;
-                    BackData backData = backDataDict.TryGetValue(rawData.Back_ID, out var back) ? back : null;
-
-
-                    var fullEventData = new FullSubEventData
-                    {
-                        ID = rawData.ID,
-                        SubStoryPac = rawData.SubStoryPac,
-                        StoryNum = rawData.StoryNum,
-                        Text_kr = rawData.Text_kr, // 텍스트 필드 추가
-
-                        bgData = bgData,
-                        sfxData = sfxData,
-                        characterData = characterData,
-                        characterImgData = characterImgData,
-                        backData = backData,
-
-                        leftChoice = leftChoice,
-                        rightChoice = rightChoice
-                    };
-
-                    FullSubEvents.Add(fullEventData);
-                }
-                Debug.Log($"[DataManager] 서브 이벤트 데이터 통합 완료! 총 {FullSubEvents.Count}개의 이벤트가 준비되었습니다.");
-            }
-            else
+            if (subEventList == null || subEventAnswerDataDict == null)
             {
                 Debug.LogError("[DataManager] 서브 이벤트 데이터 로딩 실패!");
+                return;
             }
+
+            // subEventList의 원본 데이터(rawData)를 순회합니다.
+            foreach (var rawData in subEventList)
+            {
+                FullSubEventData fullEventData = GetSubEventDataById(rawData.ID);
+
+                if (fullEventData != null)
+                {
+                    FullSubEvents.Add(fullEventData);
+                }
+            }
+
+            Debug.Log($"[DataManager] 서브 이벤트 데이터 통합 완료! 총 {FullSubEvents.Count}개의 이벤트가 준비되었습니다.");
+            //------------------------------- 오프닝 이벤트 데이터 가공단 ---------------------------------------------------------//
+            ProcessOpeningEventData(openingEventList);
+
+            Debug.Log("오브닝 이벤트 로딩 완료");
+
             Debug.Log("---------- [DataManager] 엔딩 데이터 가공 시작 ----------");
             FullendingDataDict = new Dictionary<int, FullEndingData>();
 
@@ -888,8 +881,6 @@ public class DataManager : MonoBehaviour
 
                 }
             }
-
-            
 
             TrueEndingDataDict = new Dictionary<int, FullEndingData>();
 
@@ -929,23 +920,6 @@ public class DataManager : MonoBehaviour
             {
                 // 만약 MultiEndingSystem이 꼭 필요하다면 여기서 에러를 띄워야 합니다.
                 Debug.LogError("[DataManager] MultiEndingSystem 인스턴스를 찾을 수 없습니다. 인스턴스가 생성되는 시점을 확인하세요.");
-            }
-
-            foreach (var kvp in FullendingDataDict)
-            {
-                var data = kvp.Value;
-
-                // 연결 데이터 확인을 위해 널 체크
-                string bgName = data.bgData != null ? data.bgData.BGName : "NULL";
-                string sfxName = data.sfxData != null ? data.sfxData.SFXName : "NULL";
-                string cutSceneImg = data.cutSceneData != null ? data.cutSceneData.IMGName : "NULL";
-
-                Debug.Log($"[Full Ending Data] ID: {data.ID}, Karma_Rate: {data.Karma_Rate}, EndingString: {data.EndingTitle.EndingName}");
-                Debug.Log($"   ㄴ Text_Kr: {data.Text_Kr.Substring(0, Mathf.Min(data.Text_Kr.Length, 30))}..."); // 텍스트 30자만 출력
-                Debug.Log($"   ㄴ BG/SFX/CutScene 연결 상태:");
-                Debug.Log($"      BG_ID ({data.bgData?.BG_ID ?? 0}) -> Name: {bgName}");
-                Debug.Log($"      SFX_ID ({data.sfxData?.SFX_ID ?? 0}) -> Name: {sfxName}");
-                Debug.Log($"      CutScene_ID ({data.cutSceneData?.EndingCutScene_ID ?? 0}) -> ImgName: {cutSceneImg}");
             }
 
             _isReady.TrySetResult(true);
@@ -1003,6 +977,42 @@ public class DataManager : MonoBehaviour
             Debug.LogError($"데이터 로드 실패: {ex.Message}");
             _isReady.TrySetException(ex);
         }
+    }
+
+    private void ProcessOpeningEventData(List<OpeningEventData> rawOpeningEventList)
+    {
+        FullOpeningDataDict = new Dictionary<int, FullOpeningEventData>();
+
+        if (rawOpeningEventList == null || openingCutSceneDict == null)
+        {
+            Debug.LogError("[DataManager] 오프닝 이벤트 데이터 가공 실패: 필수 리스트 또는 딕셔너리가 null입니다.");
+            return;
+        }
+        foreach (var rawData in rawOpeningEventList.OrderBy(d => d.ID))
+        {
+
+            BGData bgData = bgDataDict.TryGetValue(rawData.BG_ID, out var bg) ? bg : null;
+            SFXData sfxData = sfxDataDict.TryGetValue(rawData.SFX_ID, out var sfx) ? sfx : null;
+
+            OpeningCutSceneData cutSceneData = openingCutSceneDict.TryGetValue(rawData.OpeningCutScene, out var cs) ? cs : null;
+
+            var fullEventData = new FullOpeningEventData
+            {
+                ID = rawData.ID,
+                StoryNum = rawData.StoryNum,
+                Text_kr = rawData.Text_kr,
+
+                bgData = bgData,
+                sfxData = sfxData,
+                cutSceneData = cutSceneData
+            };
+
+            if (!FullOpeningDataDict.ContainsKey(fullEventData.ID))
+            {
+                FullOpeningDataDict.Add(fullEventData.ID, fullEventData);
+            }
+        }
+        Debug.Log($"[DataManager] 오프닝 이벤트 데이터 통합 완료! 총 {FullOpeningDataDict.Count}개의 이벤트가 준비되었습니다.");
     }
 
 
