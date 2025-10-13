@@ -46,6 +46,8 @@ public class SpecialEventManager : MonoBehaviour
     private bool triggerWindowOpen = false;
     // 같은 프레임/같은 변화에서 중복 트리거 방지
     private int triggerWindowOpenFrame = -1;
+    // 회차(한 사이클) 동안 이미 본 특수이벤트 그룹(SubStoryPac+StoryNum) 기록
+    private HashSet<(int pac, int num)> seenGroupsThisPlaythrough = new HashSet<(int pac, int num)>();
 
     public bool IsInSpecialChain => inSpecialChain;
     public string GetPendingSkillId() => pendingSkillId;
@@ -84,6 +86,8 @@ public class SpecialEventManager : MonoBehaviour
             await LoadAnswerSkillMapAsync();
             // 사이클 게이팅 초기화
             InitializeFlowGatingState();
+            // 회차 시작 시 중복 방지 상태 초기화
+            seenGroupsThisPlaythrough.Clear();
         }
     }
 
@@ -105,6 +109,12 @@ public class SpecialEventManager : MonoBehaviour
         }
         if (satisfied.Count == 0) return false;
 
+        // 이번 회차에서 이미 본 그룹은 제외
+        satisfied = satisfied
+            .Where(t => !seenGroupsThisPlaythrough.Contains((t.storyPac, t.storyNum)))
+            .ToList();
+        if (satisfied.Count == 0) return false;
+
         int maxPriority = satisfied.Max(t => t.priority);
         var top = satisfied.Where(t => t.priority == maxPriority).ToList();
         var chosen = top.OrderBy(_ => System.Guid.NewGuid()).First();
@@ -114,6 +124,8 @@ public class SpecialEventManager : MonoBehaviour
 
         // 트리거 고정 (보상 스킬 에셋 표출용)
         activeTrigger = chosen;
+        // 선택된 그룹을 회차 기록에 추가
+        seenGroupsThisPlaythrough.Add((chosen.storyPac, chosen.storyNum));
         StartChain(firstEvent.ID);
         return true;
     }
@@ -436,6 +448,8 @@ public class SpecialEventManager : MonoBehaviour
         cachedChapterForCycle = pd != null ? pd.currentChapter : 0;
         cachedPlaylistStartIndex = pd != null ? pd.eventPlaylistIndex : -1;
         specialChainsTriggeredThisCycle = 0;
+        // 챕터/사이클 시작 시 특수이벤트 중복 기록도 초기화
+        seenGroupsThisPlaythrough.Clear();
     }
 
     private void ResetFlowGatingIfCycleChanged()
@@ -450,6 +464,8 @@ public class SpecialEventManager : MonoBehaviour
             cachedChapterForCycle = pd.currentChapter;
             cachedPlaylistStartIndex = pd.eventPlaylistIndex;
             specialChainsTriggeredThisCycle = 0;
+            // 새 사이클 시작: 이번 회차 중복 기록 초기화
+            seenGroupsThisPlaythrough.Clear();
         }
     }
 

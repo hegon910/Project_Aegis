@@ -570,6 +570,12 @@ public class GameManager : MonoBehaviour
         }
 
         Debug.Log($"[GameManager] 가 바라보는 WarTurnManager ID: {battleTurnManager.GetInstanceID()}");
+        
+        // 안전 가드: battleTurnManager가 null일 수 있으므로 NRE 방지
+        if (battleTurnManager != null)
+        {
+            Debug.Log($"[GameManager] 가 바라보는 WarTurnManager ID: {battleTurnManager.GetInstanceID()}");
+        }
         switch (newState)
         {
             case GameState.Login:

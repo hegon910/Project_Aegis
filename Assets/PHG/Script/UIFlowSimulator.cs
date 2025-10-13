@@ -90,6 +90,14 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         if (uiPanelController != null) uiPanelController.gameObject.SetActive(false);
         if (situationCardController != null) situationCardController.gameObject.SetActive(false);
         if (dimmerPanel != null) dimmerPanel.color = Color.clear;
+        // 서브 디머는 기본적으로 비활성화하고 알파/레이캐스트 리셋
+        if (subEventDimmerPanel != null)
+        {
+            subEventDimmerPanel.DOKill();
+            subEventDimmerPanel.color = new Color(0f, 0f, 0f, 0f);
+            subEventDimmerPanel.raycastTarget = false;
+            subEventDimmerPanel.gameObject.SetActive(false);
+        }
 
         // startFirstTurn이 true일 때만 다음 턴을 시작하도록 수정
         if (startFirstTurn)
@@ -334,6 +342,11 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             bool hasCurrent = player != null && player.currentSkill != null;
             string title = hasCurrent ? "스킬을 교체한다." : "스킬을 획득한다.";
             skillPromptOverlay.Show(currentIcon, currentName, newIcon, newName, title);
+			// 특수 이벤트 스킬 패널이 떴을 때 상황 텍스트는 공란 처리하여 중복 노출 방지
+			if (situationCardController != null)
+			{
+				situationCardController.UpdateText("");
+			}
         }
     }
 
@@ -380,6 +393,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         yield return subEventDimmerPanel.DOFade(0f, 0.5f).SetUpdate(false).WaitForCompletion();
         subEventDimmerPanel.color = new Color(0f, 0f, 0f, 0f);
         subEventDimmerPanel.raycastTarget = false;
+        subEventDimmerPanel.gameObject.SetActive(false);
     }
 
     private void OnSubEventExitFadeRequested(float duration)
@@ -422,6 +436,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         yield return subEventDimmerPanel.DOFade(0f, 0.5f).SetUpdate(false).WaitForCompletion();
         subEventDimmerPanel.color = new Color(0f, 0f, 0f, 0f);
         subEventDimmerPanel.raycastTarget = false;
+        subEventDimmerPanel.gameObject.SetActive(false);
         subEventExitFaded = false;
     }
 
@@ -439,6 +454,15 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     private IEnumerator Co_ResumeAfterSpecialEvent()
     {
         if (skillPromptOverlay != null) skillPromptOverlay.Hide();
+        // 안전: 특수 이벤트 체인 종료 시 서브 디머가 남아 있으면 즉시 해제
+        if (subEventDimmerPanel != null)
+        {
+            subEventDimmerPanel.DOKill();
+            subEventDimmerPanel.color = new Color(0f, 0f, 0f, 0f);
+            subEventDimmerPanel.raycastTarget = false;
+            subEventDimmerPanel.gameObject.SetActive(false);
+        }
+        subEventExitFaded = false;
         // 페이드 인 완료 대기 (SubEventExit 페이드가 0.5s로 설계되어 있음)
         yield return new WaitForSeconds(0.1f);
         if (EventManager.Instance != null)
