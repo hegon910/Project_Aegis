@@ -30,13 +30,22 @@ public class SkillPromptOverlay : MonoBehaviour
 
         if (currentSkillImage != null)
         {
-            currentSkillImage.sprite = currentIcon;
-            // 스프라이트가 있으면 보이도록, 없으면 투명 처리
-            var c = currentSkillImage.color; c.a = currentIcon != null ? 1f : 0f; currentSkillImage.color = c;
+            if (currentIcon != null)
+            {
+                currentSkillImage.sprite = currentIcon;
+                var c = currentSkillImage.color; c.a = 1f; currentSkillImage.color = c;
+            }
+            else
+            {
+                // 현재 스킬이 없을 때는 프리팹/씬에 기본 할당된 스프라이트를 유지하고 보이도록 처리
+                var c = currentSkillImage.color; c.a = 1f; currentSkillImage.color = c;
+            }
         }
         if (currentSkillNameText != null)
         {
-            currentSkillNameText.text = currentName ?? string.Empty;
+			// 현재 스킬이 없으면 텍스트를 "스킬 없음"으로 표기
+			string displayName = string.IsNullOrEmpty(currentName) ? "스킬 없음" : currentName;
+			currentSkillNameText.text = displayName;
             // 잘못된 바인딩(예: SituationText)에 대한 가드 경고
             if (currentSkillNameText.name == "SituationText")
             {

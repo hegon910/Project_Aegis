@@ -18,6 +18,8 @@ public class SpecialEventManager : MonoBehaviour
     public static event Action<FullSubEventData> OnSpecialEventReady;
     public static event Action<float> OnSpecialEventExitFadeRequested;
     public static event Action OnSpecialEventChainEnded;
+    // 스킬 장착/교체가 확정될 때 즉시 통지 (ID, 에셋)
+    public static event Action<string, SkillData> OnEquippedSkillChanged;
 
     [Header("트리거 설정 (인스펙터에서 정의)")]
     public List<SpecialTrigger> triggers = new List<SpecialTrigger>();
@@ -50,7 +52,7 @@ public class SpecialEventManager : MonoBehaviour
     private HashSet<(int pac, int num)> seenGroupsThisPlaythrough = new HashSet<(int pac, int num)>();
 
     public bool IsInSpecialChain => inSpecialChain;
-    public string GetPendingSkillId() => pendingSkillId;
+	public string GetPendingSkillId() => NormalizeSkillId(pendingSkillId);
         public SkillData GetPendingSkillData() => pendingSkillData;
     public void OpenTriggerWindow()
     {
@@ -196,9 +198,10 @@ public class SpecialEventManager : MonoBehaviour
         }
         else
         {
-            // 스킬 프롬프트 처리
-            if (isLeftChoice)
+			// 스킬 프롬프트 처리
+			if (isLeftChoice)
             {
+				Debug.Log("[스킬 디버그] 선택: 수락");
                 ApplySkill(pendingSkillId);
                 // 수락 시 파라미터 변화 적용 및 해당 분기로 이동
                 if (pendingAcceptParamChanges != null && pendingAcceptParamChanges.Count > 0)
@@ -210,6 +213,7 @@ public class SpecialEventManager : MonoBehaviour
             }
             else
             {
+				Debug.Log("[스킬 디버그] 선택: 거부");
                 // 거부 시 파라미터 변화 적용 및 해당 분기로 이동
                 if (pendingRejectParamChanges != null && pendingRejectParamChanges.Count > 0)
                 {
@@ -327,15 +331,43 @@ public class SpecialEventManager : MonoBehaviour
 
     private void ShowSkillPrompt()
     {
-        // 프롬프트용 가짜 이벤트 구성 (텍스트/선택지만 사용)
+		// 프롬프트용 가짜 이벤트 구성 (텍스트/선택지만 사용)
         inSkillPrompt = true;
 
         string newSkillName = pendingSkillId;
         var player = FindObjectOfType<WarPlayer>();
         bool hasCurrent = (player != null && player.currentSkill != null);
 
-        // 트리거에서 직접 할당된 스킬 에셋을 UI에 표출하도록 대기 상태에 저장
-        pendingSkillData = activeTrigger != null ? activeTrigger.rewardSkill : null;
+		// 트리거에서 직접 할당된 스킬 에셋을 UI에 표출하도록 대기 상태에 저장
+		// [가드] 이벤트에서 결정된 스킬ID와 트리거 보상 스킬의 ID가 일치할 때만 사용
+		if (activeTrigger != null && activeTrigger.rewardSkill != null && !string.IsNullOrEmpty(pendingSkillId))
+		{
+			string normalized = NormalizeSkillId(pendingSkillId);
+			pendingSkillData = string.Equals(activeTrigger.rewardSkill.skillID, normalized, StringComparison.Ordinal)
+				? activeTrigger.rewardSkill
+				: null;
+		}
+		else
+		{
+			pendingSkillData = null;
+		}
+
+		// [스킬 디버그] 획득 기대 스킬 로그 (StoryPac/StoryNum 포함)
+		{
+			string normalized = NormalizeSkillId(pendingSkillId);
+			string expectedSkillName = normalized;
+			if (pendingSkillData != null && string.Equals(pendingSkillData.skillID, normalized, StringComparison.Ordinal))
+			{
+				expectedSkillName = !string.IsNullOrEmpty(pendingSkillData.skillName) ? pendingSkillData.skillName : pendingSkillData.skillID;
+			}
+			else if (player != null && player.skillDatabase != null && !string.IsNullOrEmpty(normalized))
+			{
+				var newSkill = player.skillDatabase.GetSkillByID(normalized);
+				expectedSkillName = newSkill != null && !string.IsNullOrEmpty(newSkill.skillName) ? newSkill.skillName : expectedSkillName;
+			}
+			var cur = Resolve(currentEventId);
+			Debug.Log($"[스킬 디버그] 획득 기대 스킬 : {expectedSkillName} (StoryPac={cur?.SubStoryPac}, StoryNum={cur?.StoryNum}, EventID={currentEventId})");
+		}
 
         var prompt = new FullSubEventData
         {
@@ -364,38 +396,102 @@ public class SpecialEventManager : MonoBehaviour
 
     private void ApplySkill(string skillId)
     {
-        if (string.IsNullOrEmpty(skillId)) return;
-        var player = FindObjectOfType<WarPlayer>();
-        if (player == null)
-        {
-            // 전투 장면이 아니라면 PlayerPrefs에 저장하여 다음 전투에서 로드
-            PlayerPrefs.SetString("EquippedSkillID", skillId);
-            PlayerPrefs.Save();
-            return;
-        }
+		if (string.IsNullOrEmpty(skillId)) return;
+		// CSV에서 오는 숫자형 코드를 에셋 ID로 정규화
+		skillId = NormalizeSkillId(skillId);
+		var player = FindObjectOfType<WarPlayer>();
+		if (player == null)
+		{
+			// 전투 장면이 아니라면 PlayerPrefs에 저장하여 다음 전투에서 로드
+			PlayerPrefs.SetString("EquippedSkillID", skillId);
+			PlayerPrefs.Save();
+				// [스킬 디버그] 실제 획득 스킬 (전투 외, ID 기준)
+				Debug.Log($"[스킬 디버그] 실제 획득 스킬 : {skillId}");
+			// 즉시 반영: HUD가 있다면 갱신 시도, 변경 이벤트 브로드캐스트
+			var hudOut = FindObjectOfType<WarHUD>();
+			if (hudOut != null) hudOut.UpdateAllUI();
+			OnEquippedSkillChanged?.Invoke(skillId, null);
+			return;
+		}
 
-        // 트리거에서 지정한 스킬 에셋이 있으면 직접 장착(아이콘/이름 즉시 반영)
-        if (pendingSkillData != null)
-        {
-            player.EquipSkill(pendingSkillData);
-            PlayerPrefs.SetString("EquippedSkillID", pendingSkillData.skillID);
-            PlayerPrefs.Save();
-            // 전투 HUD가 존재하면 즉시 UI 반영
-            var hud = FindObjectOfType<WarHUD>();
-            if (hud != null) hud.UpdateAllUI();
-            return;
-        }
+			// 트리거에서 지정한 스킬 에셋이 있으면, 이벤트에서 결정된 ID와 일치할 때에만 직접 장착
+			if (pendingSkillData != null && string.Equals(pendingSkillData.skillID, skillId, StringComparison.Ordinal))
+			{
+				var before = PlayerPrefs.HasKey("EquippedSkillID") ? PlayerPrefs.GetString("EquippedSkillID") : "<none>";
+				PlayerPrefs.SetString("EquippedSkillID", pendingSkillData.skillID);
+				PlayerPrefs.Save();
+				var after = PlayerPrefs.GetString("EquippedSkillID");
+				Debug.Log($"[스킬 디버그] PlayerPrefs EquippedSkillID: {before} -> {after}");
+				var actualName = !string.IsNullOrEmpty(pendingSkillData.skillName) ? pendingSkillData.skillName : pendingSkillData.skillID;
+				Debug.Log($"[스킬 디버그] 실제 획득 스킬 : {actualName}");
+				// 씬 내 모든 WarPlayer에 즉시 반영
+				var playersA = UnityEngine.Object.FindObjectsOfType<WarPlayer>();
+				foreach (var p in playersA)
+				{
+					p.EquipSkill(pendingSkillData);
+					p.equippedSkillID = pendingSkillData.skillID; // 인스펙터 반영 강제
+					p.currentSkill = pendingSkillData;
+					Debug.Log($"[스킬 디버그] 적용 대상 WarPlayer='{p.name}', equippedSkillID='{p.equippedSkillID}', currentSkill='{p.currentSkill?.skillName}'");
+				}
+				var hudImmed = FindObjectOfType<WarHUD>();
+				if (hudImmed != null) hudImmed.UpdateAllUI();
+				OnEquippedSkillChanged?.Invoke(pendingSkillData.skillID, pendingSkillData);
+				return;
+			}
 
-        // 에셋이 없으면 ID 기준으로 데이터베이스에서 로드
-        player.equippedSkillID = skillId;
-        player.LoadSkillFromID();
-        PlayerPrefs.SetString("EquippedSkillID", skillId);
-        PlayerPrefs.Save();
-        // 전투 HUD가 존재하면 즉시 UI 반영
-        {
-            var hud = FindObjectOfType<WarHUD>();
-            if (hud != null) hud.UpdateAllUI();
-        }
+			// 에셋이 없으면 ID 기준으로 데이터베이스에서 로드 후 즉시 반영
+			var before2 = PlayerPrefs.HasKey("EquippedSkillID") ? PlayerPrefs.GetString("EquippedSkillID") : "<none>";
+			PlayerPrefs.SetString("EquippedSkillID", skillId);
+			PlayerPrefs.Save();
+			var after2 = PlayerPrefs.GetString("EquippedSkillID");
+			Debug.Log($"[스킬 디버그] PlayerPrefs EquippedSkillID: {before2} -> {after2}");
+			string actualNameDb = skillId;
+			var playersB = UnityEngine.Object.FindObjectsOfType<WarPlayer>();
+			foreach (var p in playersB)
+			{
+				SkillData dbSkill = p.skillDatabase != null ? p.skillDatabase.GetSkillByID(skillId) : null;
+				if (dbSkill != null)
+				{
+					p.EquipSkill(dbSkill);
+					p.equippedSkillID = dbSkill.skillID; // 인스펙터 반영 강제
+					p.currentSkill = dbSkill;
+					if (!string.IsNullOrEmpty(dbSkill.skillName)) actualNameDb = dbSkill.skillName;
+				}
+				else
+				{
+					// DB 미존재 시 기존 방식으로 로드 시도
+					p.equippedSkillID = skillId;
+					p.LoadSkillFromID();
+				}
+				Debug.Log($"[스킬 디버그] 적용 대상 WarPlayer='{p.name}', equippedSkillID='{p.equippedSkillID}', currentSkill='{p.currentSkill?.skillName}'");
+			}
+			Debug.Log($"[스킬 디버그] 실제 획득 스킬 : {actualNameDb}");
+			var hud = FindObjectOfType<WarHUD>();
+			if (hud != null) hud.UpdateAllUI();
+			OnEquippedSkillChanged?.Invoke(skillId, playersB.Length > 0 ? playersB[0].currentSkill : null);
+	}
+
+    // -------------------------- 숫자형 스킬 코드 → 에셋 ID 매핑 --------------------------
+    private static readonly System.Collections.Generic.Dictionary<string, string> SkillCodeMap = new System.Collections.Generic.Dictionary<string, string>
+    {
+        {"2000001", "FullCondition"},
+        {"2000002", "ForwardStrike"},
+        {"2000003", "Stimpack"},
+        {"2000004", "AmmoReinforce"},
+        {"2000005", "CounterAttack"},
+        {"2000006", "SupFormation"},
+        {"2000007", "Overdrive"},
+        {"2000008", "NightAttack"},
+        {"2000009", "Sacrifice"},
+        {"2000010", "MoraleBoost"},
+    };
+
+    private string NormalizeSkillId(string id)
+    {
+        if (string.IsNullOrEmpty(id)) return id;
+        // 숫자형 코드면 매핑; 아니면 그대로 사용
+        if (SkillCodeMap.TryGetValue(id, out var mapped)) return mapped;
+        return id;
     }
 
     private bool IsNullLiteral(string s)

@@ -40,6 +40,16 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     private static bool hasShownChapter1ParameterTutorial = false;
     private bool subEventExitFaded = false;
 
+	// 서브/특수 이벤트 전환 중 페이드가 진행 중인지 추적하여 메인 딤머 업데이트를 가드
+	private bool isSubEventFading = false;
+
+	// 외부(예: CheatManager)에서 전환 중 여부를 확인하기 위한 읽기 전용 플래그
+	public bool IsDuringTransition => isSubEventFading || subEventExitFaded;
+
+	// 특수 이벤트 BGM 상태 추적
+	private bool isSpecialEventBGMPlaying = false;
+	private int lastSpecialEventBgmId = -1;
+
     // <<<<<<< [핵심 복원 1] 원본과 같이 OnEnable/OnDisable을 사용한 이벤트 구독으로 되돌립니다.
     private void OnEnable()
     {
@@ -89,7 +99,12 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         // UI 초기화
         if (uiPanelController != null) uiPanelController.gameObject.SetActive(false);
         if (situationCardController != null) situationCardController.gameObject.SetActive(false);
-        if (dimmerPanel != null) dimmerPanel.color = Color.clear;
+        if (dimmerPanel != null)
+        {
+            dimmerPanel.color = Color.clear;
+            // 메인 딤머는 입력 차단 목적이 아니므로 항상 레이캐스트 비활성
+            dimmerPanel.raycastTarget = false;
+        }
         // 서브 디머는 기본적으로 비활성화하고 알파/레이캐스트 리셋
         if (subEventDimmerPanel != null)
         {
@@ -288,6 +303,13 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         // 배경 적용 (서브이벤트와 동일 규칙)
         TryApplyBackgroundFromSubEvent(data);
 
+		// 특수 이벤트 체인 시작 시 BGM 추적 상태 초기화
+		if (cameFromParameterEvent)
+		{
+			isSpecialEventBGMPlaying = false;
+			lastSpecialEventBgmId = -1;
+		}
+
         // 사운드 처리: 파라미터 → 특수 전환 시 기존 BGM 즉시 정지 후, 특수 이벤트 BGM/SFX 재생
         if (cameFromParameterEvent && AudioManager.Instance != null)
         {
@@ -314,14 +336,45 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         // 특수 이벤트가 스킬 교체 프롬프트일 경우, 기존/신규 스킬 아이콘을 시각화
         if (SpecialEventManager.Instance != null && data.ID == -999999 && skillPromptOverlay != null)
         {
-            var player = GameManager.instance != null ? FindObjectOfType<WarPlayer>() : null;
-            // 오버레이 진입 직전에 현재 스킬 캐시가 비어 있으면 로드 보정
-            if (player != null && player.currentSkill == null && !string.IsNullOrEmpty(player.equippedSkillID))
-            {
-                player.LoadSkillFromID();
-            }
-            Sprite currentIcon = player?.currentSkill?.icon;
-            string currentName = player?.currentSkill?.skillName ?? "";
+			var player = GameManager.instance != null ? FindObjectOfType<WarPlayer>() : null;
+			// 오버레이 진입 직전에 항상 최신 PlayerPrefs 값을 반영하여 현재 스킬 동기화
+			if (player != null)
+			{
+				player.LoadSkillFromID();
+			}
+			Sprite currentIcon = player?.currentSkill?.icon;
+			string currentName = player?.currentSkill?.skillName ?? "";
+			// [보강] 전투 씬이 아니거나 player.currentSkill이 비어 있을 때 PlayerPrefs 기반으로 현재 스킬 표시
+			if ((player == null || player.currentSkill == null))
+			{
+				string prefId = PlayerPrefs.HasKey("EquippedSkillID") ? PlayerPrefs.GetString("EquippedSkillID") : null;
+				if (!string.IsNullOrEmpty(prefId))
+				{
+					SkillDatabase db = player != null ? player.skillDatabase : null;
+					if (db == null)
+					{
+						var allDbs = Resources.FindObjectsOfTypeAll<SkillDatabase>();
+						if (allDbs != null && allDbs.Length > 0) db = allDbs[0];
+					}
+					if (db != null)
+					{
+						var curSkill = db.GetSkillByID(prefId);
+						if (curSkill != null)
+						{
+							currentIcon = curSkill.icon;
+							currentName = !string.IsNullOrEmpty(curSkill.skillName) ? curSkill.skillName : prefId;
+						}
+						else
+						{
+							currentName = prefId;
+						}
+					}
+					else
+					{
+						currentName = prefId;
+					}
+				}
+			}
 
             string newSkillId = SpecialEventManager.Instance.GetPendingSkillId();
             Sprite newIcon = null; string newName = "";
@@ -350,16 +403,22 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         }
     }
 
-    // 특수 이벤트용 BGM/SFX 재생 (EventManager의 서브이벤트 로직과 동등한 규칙 적용)
+	// 특수 이벤트용 BGM/SFX 재생 (EventManager의 서브이벤트 로직과 동등한 규칙 적용)
     private void PlaySpecialEventAudio(FullSubEventData eventData)
     {
         if (eventData == null || AudioManager.Instance == null) return;
 
-        // BGM
-        if (eventData.bgData != null && eventData.bgData.BG_ID != 0)
-        {
-            AudioManager.Instance.PlayBGMByID(eventData.bgData.BG_ID);
-        }
+		// BGM: 체인 동안 동일한 트랙이면 재시작하지 않음
+		int bgId = (eventData.bgData != null) ? eventData.bgData.BG_ID : 0;
+		if (bgId != 0)
+		{
+			if (!isSpecialEventBGMPlaying || lastSpecialEventBgmId != bgId)
+			{
+				AudioManager.Instance.PlayBGMByID(bgId);
+				isSpecialEventBGMPlaying = true;
+				lastSpecialEventBgmId = bgId;
+			}
+		}
 
         // SFX
         if (eventData.sfxData != null && eventData.sfxData.SFX_ID != 0)
@@ -371,6 +430,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     private IEnumerator FadeToBlackThenDisplaySubEvent(string characterName, string dialogue, string leftChoiceText, string rightChoiceText)
     {
         // 시작 상태 초기화 및 입력 차단 (서브이벤트 전용 디머 사용)
+        isSubEventFading = true;
         subEventDimmerPanel.gameObject.SetActive(true);
         subEventDimmerPanel.raycastTarget = true;
         subEventDimmerPanel.DOKill();
@@ -394,6 +454,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         subEventDimmerPanel.color = new Color(0f, 0f, 0f, 0f);
         subEventDimmerPanel.raycastTarget = false;
         subEventDimmerPanel.gameObject.SetActive(false);
+        isSubEventFading = false;
     }
 
     private void OnSubEventExitFadeRequested(float duration)
@@ -409,6 +470,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             yield break;
         }
 
+        isSubEventFading = true;
         subEventDimmerPanel.gameObject.SetActive(true);
         subEventDimmerPanel.raycastTarget = true;
         subEventDimmerPanel.DOKill();
@@ -430,6 +492,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         if (subEventDimmerPanel == null)
         {
             subEventExitFaded = false;
+            isSubEventFading = false;
             yield break;
         }
         // 페이드 인
@@ -438,13 +501,22 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         subEventDimmerPanel.raycastTarget = false;
         subEventDimmerPanel.gameObject.SetActive(false);
         subEventExitFaded = false;
+        isSubEventFading = false;
     }
 
-    private void OnSpecialEventChainEnded()
-    {
-        // 특수 이벤트 종료 후 다음 일반 이벤트로 복귀
-        StartCoroutine(Co_ResumeAfterSpecialEvent());
-    }
+	private void OnSpecialEventChainEnded()
+	{
+		// 특수 이벤트 종료 시 BGM 정지 및 상태 리셋
+		if (AudioManager.Instance != null)
+		{
+			AudioManager.Instance.StopBGM();
+		}
+		isSpecialEventBGMPlaying = false;
+		lastSpecialEventBgmId = -1;
+
+		// 특수 이벤트 종료 후 다음 일반 이벤트로 복귀
+		StartCoroutine(Co_ResumeAfterSpecialEvent());
+	}
 
     private void OnEventCycleCompleted()
     {
@@ -889,7 +961,45 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     }
 
     public void ClearParameterPreview() { if (parameterUIController != null) { parameterUIController.ClearAllToggles(); } }
-    public void UpdateDimmer(float alpha) { if (dimmerPanel != null) { dimmerPanel.color = new Color(0, 0, 0, alpha); } }
+    public void UpdateDimmer(float alpha)
+    {
+        // 서브/특수 이벤트 전환 페이드 중에는 메인 딤머를 업데이트하지 않음
+        if (isSubEventFading) return;
+        if (dimmerPanel != null)
+        {
+            dimmerPanel.DOKill();
+            dimmerPanel.color = new Color(0, 0, 0, alpha);
+            // 메인 딤머는 항상 레이캐스트 비활성로 유지하여 입력 차단을 유발하지 않도록 함
+            if (dimmerPanel.raycastTarget)
+            {
+                dimmerPanel.raycastTarget = false;
+            }
+        }
+    }
+
+    // 어디서든 즉시 딤머 상태를 정상화하기 위한 강제 초기화 API (치트/강제 스킵 대비)
+    public void ForceClearAllDimmers()
+    {
+        // 메인 딤머 초기화
+        if (dimmerPanel != null)
+        {
+            dimmerPanel.DOKill();
+            dimmerPanel.color = Color.clear;
+            dimmerPanel.raycastTarget = false;
+            if (!dimmerPanel.gameObject.activeSelf) dimmerPanel.gameObject.SetActive(true);
+        }
+
+        // 서브/특수 전환용 딤머 초기화
+        if (subEventDimmerPanel != null)
+        {
+            subEventDimmerPanel.DOKill();
+            subEventDimmerPanel.color = new Color(0f, 0f, 0f, 0f);
+            subEventDimmerPanel.raycastTarget = false;
+            subEventDimmerPanel.gameObject.SetActive(false);
+        }
+        subEventExitFaded = false;
+        isSubEventFading = false;
+    }
     public void UpdateChoicePreview(string text, Color color) { }
 
     /// <summary>

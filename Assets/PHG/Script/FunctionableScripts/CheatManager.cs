@@ -177,10 +177,17 @@ public class CheatManager : MonoBehaviour
             }
         }
 
-        // ']' 키를 누르면 다음 이벤트로 넘어갑니다.
+        // ']' 키를 누르면 다음 이벤트로 넘어갑니다. (전환/페이드 중에는 입력 차단)
         if (Input.GetKeyDown(KeyCode.RightBracket))
         {
             Debug.Log("치트 키: 다음 이벤트로 스킵합니다.");
+            var uiFlow = FindObjectOfType<UIFlowSimulator>();
+            // 전환 중(서브/특수 페이드 또는 Exit 페이드)에는 스킵 입력을 무시하여 흐름을 보호
+            if (uiFlow != null && uiFlow.IsDuringTransition)
+            {
+                Debug.Log("[CHEAT] 전환 중이므로 스킵 입력을 무시합니다.");
+                return;
+            }
 
             // 메인 시나리오가 실행 중인지 먼저 확인
             var mainScenarioManager = FindObjectOfType<MainScenarioManager>();
@@ -197,7 +204,7 @@ public class CheatManager : MonoBehaviour
             // 그렇지 않으면 일반 이벤트(파라미터) 스킵 시도
             else if (EventManager.Instance != null)
             {
-                // 현재 UI 전환 효과 등을 무시하고 즉시 다음 턴을 호출합니다.
+                // 정상 흐름만 존중: 전환 중이 아니므로 다음 턴 호출 허용
                 EventManager.Instance.PlayNextTurn();
             }
         }

@@ -172,6 +172,13 @@ public class DataManager : MonoBehaviour
     public void StartNewGame()
     {
         PlayerData = new GameData();
+        // 새 게임에서는 장착 스킬을 초기화합니다.
+        if (PlayerPrefs.HasKey("EquippedSkillID"))
+        {
+            PlayerPrefs.DeleteKey("EquippedSkillID");
+            PlayerPrefs.Save();
+            Debug.Log("[스킬 디버그] 새 게임 - PlayerPrefs 'EquippedSkillID' 초기화 완료");
+        }
         // 메뉴 단계에서 자동 저장이 일어나지 않도록 저장 억제
         _suppressSavesUntilGameplay = true;
         //   SaveLocal();

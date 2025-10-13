@@ -179,14 +179,48 @@ public class EventManager : MonoBehaviour
 
                 Debug.Log($"[EventManager] 서브 그룹 후보: 전체 {allAvailableGroups.Count}개, 미플레이 {availableGroups.Count}개");
 
-                if (availableGroups.Count > 0)
+                // 가용 그룹이 없으면 전체 데이터에서 폴백 그룹을 구성하여 강제로라도 배치
+                if (availableGroups.Count == 0)
                 {
-                    // 8번째~14번째 사이에 서브이벤트를 배치
-                    int subEventStartIndex = 7; // 8번째 (0-based index)
-                    int subEventEndIndex = 13;  // 14번째 (0-based index)
-                    
-                    // 서브이벤트를 배치할 위치들을 결정 (8~14번째 중에서 랜덤하게 선택)
-                    var subEventPositions = new List<int>();
+                    var fallbackGroups = (DataManager.Instance.FullSubEvents ?? new List<FullSubEventData>())
+                        .GroupBy(e => new { e.SubStoryPac, e.StoryNum })
+                        .Select(g => (packId: g.Key.SubStoryPac, groupId: g.Key.StoryNum))
+                        .OrderBy(x => Guid.NewGuid())
+                        .ToList();
+                    if (fallbackGroups.Count > 0)
+                    {
+                        Debug.LogWarning($"[EventManager] 선택 팩에 유효 그룹이 없어 전체 데이터에서 폴백 그룹을 사용합니다. 총 {fallbackGroups.Count}개");
+                        availableGroups = fallbackGroups;
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[EventManager] 폴백용 서브이벤트 그룹도 없습니다. 데이터 로드를 확인하세요.");
+                    }
+                }
+
+                // 8번째~14번째 사이에 서브이벤트를 배치
+                int subEventStartIndex = 7; // 8번째 (0-based index)
+                int subEventEndIndex = 13;  // 14번째 (0-based index)
+                
+                // 서브이벤트를 배치할 위치들을 결정 (8~14번째 중에서 랜덤하게 선택)
+                var subEventPositions = new List<int>();
+                for (int i = subEventStartIndex; i <= subEventEndIndex; i++)
+                {
+                    if (i < DataManager.Instance.PlayerData.currentPlaylist.Count)
+                    {
+                        subEventPositions.Add(i);
+                    }
+                }
+
+                // 플레이리스트가 짧아 8~14 구간이 비면, 최소 14번째까지 길이 보정 (중복 허용)
+                if (subEventPositions.Count == 0 && DataManager.Instance.PlayerData.currentPlaylist.Count > 0)
+                {
+                    int targetMinCount = Math.Min(subEventEndIndex + 1, totalEventsPerCycle);
+                    while (DataManager.Instance.PlayerData.currentPlaylist.Count < targetMinCount)
+                    {
+                        int last = DataManager.Instance.PlayerData.currentPlaylist[DataManager.Instance.PlayerData.currentPlaylist.Count - 1];
+                        DataManager.Instance.PlayerData.currentPlaylist.Add(last);
+                    }
                     for (int i = subEventStartIndex; i <= subEventEndIndex; i++)
                     {
                         if (i < DataManager.Instance.PlayerData.currentPlaylist.Count)
@@ -194,59 +228,78 @@ public class EventManager : MonoBehaviour
                             subEventPositions.Add(i);
                         }
                     }
-                    
-                    // 서브이벤트 위치를 랜덤하게 섞기
-                    subEventPositions = subEventPositions.OrderBy(x => Guid.NewGuid()).ToList();
-                    
-                    Debug.Log($"[EventManager] 서브이벤트 배치 가능 위치: {string.Join(", ", subEventPositions)}");
+                }
+                
+                // 서브이벤트 위치를 랜덤하게 섞기
+                subEventPositions = subEventPositions.OrderBy(x => Guid.NewGuid()).ToList();
+                
+                Debug.Log($"[EventManager] 서브이벤트 배치 가능 위치: {string.Join(", ", subEventPositions)}");
 
-                    // 셔플된 그룹 목록을 순회하며 서브이벤트 체인을 배치
-                    int positionIndex = 0;
-                    int totalSubEventTurns = 0; // 서브이벤트가 소모할 총 턴 수
-                    
-                    foreach (var selectedPackAndGroup in availableGroups)
+                // 셔플된 그룹 목록을 순회하며 서브이벤트 체인을 배치
+                int positionIndex = 0;
+                int totalSubEventTurns = 0; // 서브이벤트가 소모할 총 턴 수
+                bool anyPlaced = false;
+                
+                foreach (var selectedPackAndGroup in availableGroups)
+                {
+                    if (positionIndex >= subEventPositions.Count)
                     {
-                        if (positionIndex >= subEventPositions.Count)
+                        Debug.Log($"[EventManager] 서브이벤트 배치 위치가 모두 사용됨. 남은 그룹은 건너뜀.");
+                        break;
+                    }
+                    
+                    var subEventChain = GetSubEventChain(selectedPackAndGroup.packId, selectedPackAndGroup.groupId);
+                    if (subEventChain.Count > 0)
+                    {
+                        int targetPosition = subEventPositions[positionIndex];
+                        
+                        // 표준 규칙: 24턴 초과 방지
+                        if (totalSubEventTurns + subEventChain.Count <= totalEventsPerCycle)
                         {
-                            Debug.Log($"[EventManager] 서브이벤트 배치 위치가 모두 사용됨. 남은 그룹은 건너뜀.");
-                            break;
-                        }
-
-                        var subEventChain = GetSubEventChain(selectedPackAndGroup.packId, selectedPackAndGroup.groupId);
-                        if (subEventChain.Count > 0)
-                        {
-                            int targetPosition = subEventPositions[positionIndex];
+                            DataManager.Instance.PlayerData.playedSubEventGroups.Add(selectedPackAndGroup.groupId);
                             
-                            // 서브이벤트 체인이 24개 제한을 초과하지 않는지 확인
-                            // 서브이벤트 체인은 첫 번째 이벤트만 플레이리스트에 배치되고, 나머지는 체인으로 처리됨
-                            // 따라서 체인 길이만큼 턴을 소모하지만 플레이리스트에는 1개만 추가됨
-                            if (totalSubEventTurns + subEventChain.Count <= totalEventsPerCycle)
-                            {
-                                DataManager.Instance.PlayerData.playedSubEventGroups.Add(selectedPackAndGroup.groupId);
-                                
-                                // 해당 위치의 파라미터 이벤트를 서브이벤트로 교체
-                                DataManager.Instance.PlayerData.currentPlaylist[targetPosition] = subEventChain.First().ID;
-                                
-                                totalSubEventTurns += subEventChain.Count;
-                                
-                                Debug.Log($"[EventManager] 서브 이벤트 체인 배치: 팩 {selectedPackAndGroup.packId}, 그룹 {selectedPackAndGroup.groupId} ({subEventChain.Count}턴 소모) - 위치: {targetPosition + 1}번째, 첫 이벤트 ID: {subEventChain.First().ID}, 누적 서브이벤트 턴: {totalSubEventTurns}");
-                                
-                                positionIndex++;
-                            }
-                            else
-                            {
-                                Debug.Log($"[EventManager] 서브 이벤트 체인 배치 건너뜀: 팩 {selectedPackAndGroup.packId}, 그룹 {selectedPackAndGroup.groupId} (추가 시 {totalSubEventTurns + subEventChain.Count}턴으로 {totalEventsPerCycle}턴 초과)");
-                            }
+                            // 해당 위치의 파라미터 이벤트를 서브이벤트로 교체
+                            DataManager.Instance.PlayerData.currentPlaylist[targetPosition] = subEventChain.First().ID;
+                            
+                            totalSubEventTurns += subEventChain.Count;
+                            anyPlaced = true;
+                            
+                            Debug.Log($"[EventManager] 서브 이벤트 체인 배치: 팩 {selectedPackAndGroup.packId}, 그룹 {selectedPackAndGroup.groupId} ({subEventChain.Count}턴 소모) - 위치: {targetPosition + 1}번째, 첫 이벤트 ID: {subEventChain.First().ID}, 누적 서브이벤트 턴: {totalSubEventTurns}");
+                            
+                            positionIndex++;
                         }
                         else
                         {
-                            Debug.LogWarning($"[EventManager] 그룹 {selectedPackAndGroup.groupId} 체인 데이터 없음");
+                            Debug.Log($"[EventManager] 서브 이벤트 체인 배치 건너뜀: 팩 {selectedPackAndGroup.packId}, 그룹 {selectedPackAndGroup.groupId} (추가 시 {totalSubEventTurns + subEventChain.Count}턴으로 {totalEventsPerCycle}턴 초과)");
                         }
                     }
+                    else
+                    {
+                        Debug.LogWarning($"[EventManager] 그룹 {selectedPackAndGroup.groupId} 체인 데이터 없음");
+                    }
                 }
-                else
+
+                // 최후 폴백: 하나도 배치되지 않았다면 강제로 8~14 중 첫 위치에 1개 배치
+                if (!anyPlaced)
                 {
-                    Debug.LogWarning($"[EventManager] 선택된 팩 [{string.Join(", ", selectedPackNumbers)}]에 더 이상 진행할 수 있는 새 서브 이벤트 그룹이 없습니다.");
+                    var forcedChain = (availableGroups.Count > 0)
+                        ? GetSubEventChain(availableGroups[0].packId, availableGroups[0].groupId)
+                        : (DataManager.Instance.FullSubEvents ?? new List<FullSubEventData>()).OrderBy(e => e.ID).ToList();
+
+                    if (forcedChain != null && forcedChain.Count > 0)
+                    {
+                        int fallbackPosition = subEventPositions.Count > 0
+                            ? subEventPositions[0]
+                            : Math.Min(Math.Max(subEventStartIndex, 0), DataManager.Instance.PlayerData.currentPlaylist.Count - 1);
+
+                        DataManager.Instance.PlayerData.currentPlaylist[fallbackPosition] = forcedChain.First().ID;
+                        DataManager.Instance.PlayerData.playedSubEventGroups.Add(forcedChain.First().StoryNum);
+                        Debug.LogWarning($"[EventManager] 강제 배치 수행: 위치 {fallbackPosition + 1}번째, 이벤트 ID {forcedChain.First().ID}");
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[EventManager] 강제 배치 실패: 사용 가능한 서브이벤트 체인을 찾을 수 없습니다.");
+                    }
                 }
             }
         }
