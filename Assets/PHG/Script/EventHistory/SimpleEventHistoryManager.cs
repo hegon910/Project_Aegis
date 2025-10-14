@@ -136,6 +136,18 @@ public class SimpleEventHistoryManager : MonoBehaviour
         return eventHistory.FindAll(e => e.chapter == chapter && e.isEndingMemoriar);
     }
 
+    public void ClearCurrentEventHistory()
+    {
+        eventHistory.Clear();
+
+        if (enableLocalSave)
+        {
+            SaveHistory();
+        }
+
+        Debug.Log("[SimpleEventHistoryManager] 현재 회차의 이벤트 기록(eventHistory)이 초기화되었습니다.");
+    }
+
     /// <summary>
     /// 이벤트 기록 초기화
     /// </summary>

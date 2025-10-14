@@ -39,6 +39,8 @@ public class GameSessionManager : MonoBehaviour
             List<SimpleEventRecord> eventList = SimpleEventHistoryManager.Instance.GetEventHistory();
 
             SimpleEventHistoryManager.Instance.RecordPlaythrough(playDate, playDurationString, playthroughCount, outcome, eventList);
+
+            SimpleEventHistoryManager.Instance.ClearCurrentEventHistory();
         }
 
     }
