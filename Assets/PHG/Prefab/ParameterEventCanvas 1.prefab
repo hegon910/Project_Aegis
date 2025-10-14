@@ -316,11 +316,11 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 8623274424159911619}
+  m_Father: {fileID: 5188088539734817211}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 350, y: 48}
+  m_AnchoredPosition: {x: 350, y: 0}
   m_SizeDelta: {x: 101.75, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6068361681510859590
@@ -1136,7 +1136,6 @@ RectTransform:
   - {fileID: 3197453189931074303}
   - {fileID: 2100063377290375346}
   - {fileID: 5019050093079324219}
-  - {fileID: 4024120497922043929}
   - {fileID: 717650701577902951}
   - {fileID: 2715221951802708321}
   - {fileID: 1566461371713476901}
@@ -2982,6 +2981,8 @@ MonoBehaviour:
   currentShield: 0
   equippedSkillID: BoobyTrap
   skillDatabase: {fileID: 11400000, guid: 1bf50a35dc2094643aeeb527a7aef982, type: 2}
+  shieldOnEffectPrefab: {fileID: 0}
+  shieldOffEffectPrefab: {fileID: 0}
 --- !u!1 &2363253244469069076
 GameObject:
   m_ObjectHideFlags: 0
@@ -8752,6 +8753,7 @@ MonoBehaviour:
   dimmerPanel: {fileID: 8791509328285450015}
   subEventDimmerPanel: {fileID: 8791509328285450015}
   backgroundImage: {fileID: 0}
+  skillPromptOverlay: {fileID: 0}
   tutorialPanel: {fileID: 5837603757455820365}
   parameterTutoText: {fileID: 0}
   swipeTutorialImage: {fileID: 0}
@@ -8910,6 +8912,7 @@ RectTransform:
   - {fileID: 2411792136116335542}
   - {fileID: 3847447744472205408}
   - {fileID: 7851357001841526999}
+  - {fileID: 4024120497922043929}
   - {fileID: 7304928484618461728}
   - {fileID: 7844530649275513356}
   m_Father: {fileID: 0}

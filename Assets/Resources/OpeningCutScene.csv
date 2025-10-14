@@ -1,0 +1,10 @@
+OpeningCutScene_ID,IMGName,Explanation
+400000001,Corridor.png,복도
+400000002,CorridorSoldier.png,"복도, 병사"
+400000003,ThroneRoom.png,알현실
+400000004,ThroneRoomKing.png,"알현실, 국왕"
+400000005,CorridorSchrodinger.png,"복도, 박사"
+400000006,Office.png,지휘관실
+400000007,OfficeAide.png,"지휘관실, 부관"
+400000008,MilitarySchool.png,군사학교
+400000009,CountryUnit.png,시골군대

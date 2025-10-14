@@ -75,6 +75,10 @@ public class GameManager : MonoBehaviour
     [Header("컷신 시스템")]
     [SerializeField] private CutsceneManager cutsceneManager;
     [SerializeField] private CutsceneData chapter1OpeningCutscene;
+    // 최소 변경: 지휘관별 오프닝 컷씬(SO) 선택 지원. 미지정 시 chapter1OpeningCutscene로 폴백
+    [SerializeField] private CutsceneData openingCutscene_Devost;
+    [SerializeField] private CutsceneData openingCutscene_Wille;
+    [SerializeField] private CutsceneData openingCutscene_Risard;
     [SerializeField] private List<CutsceneData> chapterMidCutscenes;
     [SerializeField] private List<CutsceneData> chapterEndingCutscenes;
     [SerializeField] private CutsceneData finalEndingCutscene;
@@ -593,7 +597,10 @@ public class GameManager : MonoBehaviour
                 break;
             case GameState.PlayingOpeningCutscene:
                 CutsceneManager.OnCutsceneFinished += OnStateFinished;
-                cutsceneManager.StartCutscene(chapter1OpeningCutscene);
+                {
+                    var opening = GetOpeningCutsceneForActiveCommander();
+                    cutsceneManager.StartCutscene(opening);
+                }
                 break;
             case GameState.InEventCycle:
                 if (cardController != null) cardController.choiceHandler = uiFlowSimulator;
@@ -1692,8 +1699,17 @@ public class GameManager : MonoBehaviour
             AchievementManager.Instance.CheckPlaythroughAchievements(playerData.playthroughCount);
         }
         
-        // 바로 게임 시작 상태로 이동
-        ChangeState(GameState.PlayingOpeningCutscene);
+        // 2회차 이상 이어하기의 경우 오프닝 컷씬을 건너뛰고 바로 메인 스토리로 진입
+        if (playerData.playthroughCount >= 2)
+        {
+            // 메인 스토리부터 시작
+            ChangeState(GameState.InStory);
+        }
+        else
+        {
+            // 1회차는 기존대로 오프닝 컷씬을 재생
+            ChangeState(GameState.PlayingOpeningCutscene);
+        }
     }
 
 
@@ -1715,6 +1731,22 @@ public class GameManager : MonoBehaviour
                 return Commander3Button?.GetComponent<CommanderInfo>();
             default:
                 return Commander1Button?.GetComponent<CommanderInfo>(); // 기본값
+        }
+    }
+    private CutsceneData GetOpeningCutsceneForActiveCommander()
+    {
+        // 활성 지휘관 특성에 따라 오프닝 컷씬 선택. 비어있으면 공통 SO로 폴백
+        var trait = DataManager.Instance?.PlayerData != null ? DataManager.Instance.PlayerData.activeTrait : CommanderTrait.Devost;
+        switch (trait)
+        {
+            case CommanderTrait.Devost:
+                return openingCutscene_Devost != null ? openingCutscene_Devost : chapter1OpeningCutscene;
+            case CommanderTrait.Wille:
+                return openingCutscene_Wille != null ? openingCutscene_Wille : chapter1OpeningCutscene;
+            case CommanderTrait.Risard:
+                return openingCutscene_Risard != null ? openingCutscene_Risard : chapter1OpeningCutscene;
+            default:
+                return chapter1OpeningCutscene;
         }
     }
 }

@@ -177,6 +177,32 @@ public class CheatManager : MonoBehaviour
             }
         }
 
+        // --- 플레이어 체력 30 설정 (9번 키) ---
+        if (Input.GetKeyDown(KeyCode.Alpha9))
+        {
+            var warPlayer = FindObjectOfType<WarPlayer>();
+            if (warPlayer != null && warPlayer.Ctrl != null)
+            {
+                // MaxHP가 30보다 작으면 30으로 상향하여 이후 리셋에도 유지되도록 함
+                if (warPlayer.Ctrl.MaxHP < 30)
+                {
+                    warPlayer.Ctrl.MaxHP = 30;
+                }
+                warPlayer.Ctrl.CurrentHP = 30;
+
+                var hud = FindObjectOfType<WarHUD>();
+                if (hud != null)
+                {
+                    hud.UpdateAllUI();
+                }
+                Debug.Log("[CHEAT] 플레이어 체력을 30으로 설정했습니다.");
+            }
+            else
+            {
+                Debug.LogWarning("[CHEAT] WarPlayer를 찾을 수 없어 체력을 설정하지 못했습니다.");
+            }
+        }
+
         // ']' 키를 누르면 다음 이벤트로 넘어갑니다. (전환/페이드 중에는 입력 차단)
         if (Input.GetKeyDown(KeyCode.RightBracket))
         {

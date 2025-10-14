@@ -35,4 +35,4 @@ MonoBehaviour:
       animationDuration: 1
       holdDuration: 0
     waitTime: 10
-    waitForClick: 1
+    waitForClick: 0

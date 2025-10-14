@@ -36,6 +36,15 @@ public class ChapterResultController : MonoBehaviour
     private void Start()
     {
         continueButton.onClick.AddListener(OnContinueButtonClicked);
+        // 버튼 라벨을 요청에 맞게 변경
+        if (continueButton != null)
+        {
+            var label = continueButton.GetComponentInChildren<TextMeshProUGUI>();
+            if (label != null)
+            {
+                label.text = "What's next?";
+            }
+        }
         endPanel.SetActive(false);
         
         // 현재 챕터 번호를 DataManager나 다른 매니저에서 가져오기

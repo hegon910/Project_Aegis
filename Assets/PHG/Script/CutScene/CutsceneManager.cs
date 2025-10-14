@@ -15,6 +15,7 @@ public class CutsceneManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI dialogueText;
     [SerializeField] private TextMeshProUGUI dayText;
     [SerializeField] private AudioSource sfxAudioSource;
+    [SerializeField] private AudioSource bgmAudioSource;
     [SerializeField] private VideoPlayer videoPlayer;
     [SerializeField] private RawImage videoPlayerScreen;
     [SerializeField] private GameObject clickIndicator;
@@ -76,12 +77,12 @@ public class CutsceneManager : MonoBehaviour
         {
             if (isSkippable)
             {
-                // 연출 진행 중일 때 클릭 -> 현재 페이지 연출 즉시 완료
+                // 첫 클릭: 현재 페이지 연출 즉시 완료 (텍스트/이미지/BGM/SFX 최종 상태 적용)
                 SkipCurrentStepEffects();
             }
             else
             {
-                // 연출 종료 후 대기 상태일 때 클릭 -> 다음 스텝으로
+                // 두 번째 클릭: 다음 스텝으로 진행
                 PlayNextStep();
             }
         }
@@ -125,18 +126,9 @@ public class CutsceneManager : MonoBehaviour
     {
         StopAllRunningCoroutines();
         ApplyFinalState(currentCutscene.steps[currentStepIndex]);
-        isSkippable = false; // 연출 완료 후 '다음' 상태로 변경
-        
-        // 연출 완료 후 자동으로 다음 스텝으로 진행
-        StartCoroutine(AutoAdvanceToNextStep());
+        isSkippable = false; // 연출 완료 후 '다음' 클릭 대기 상태로 변경
     }
     
-    // 연출 완료 후 자동으로 다음 스텝으로 진행
-    private IEnumerator AutoAdvanceToNextStep()
-    {
-        yield return new WaitForSeconds(0.1f); // 짧은 대기 후 자동 진행
-        PlayNextStep();
-    }
 
     // <<<<<<< [복원] 스킵 시 최종 상태를 즉시 적용하는 메서드
     private void ApplyFinalState(CutsceneStep step)
@@ -184,6 +176,7 @@ public class CutsceneManager : MonoBehaviour
         if (step.enableImageEffect) runningEffectCoroutines.Add(StartCoroutine(ImageEffectCoroutine(step.imageData)));
         if (step.enableDialogueEffect) runningEffectCoroutines.Add(StartCoroutine(DialogueEffectCoroutine(step.dialogueData)));
         if (step.enableSoundEffect) runningEffectCoroutines.Add(StartCoroutine(SoundEffectCoroutine(step.soundData)));
+        if (step.enableBgmEffect) runningEffectCoroutines.Add(StartCoroutine(BgmEffectCoroutine(step.bgmData)));
         if (step.enableVideoEffect)
         {
             var videoCoroutine = StartCoroutine(VideoEffectCoroutine(step.videoData));
@@ -221,6 +214,33 @@ public class CutsceneManager : MonoBehaviour
         {
             isCutsceneActive = false;
             OnCutsceneFinished?.Invoke();
+        }
+
+        // 컷신 종료 시 BGM 확실히 정지
+        if (bgmAudioSource != null)
+        {
+            bgmAudioSource.Stop();
+            bgmAudioSource.clip = null;
+        }
+    }
+
+    // --- 전체 스킵: 확인 후 즉시 종료 ---
+    public void OnClickFullSkipButton()
+    {
+        var gm = FindObjectOfType<GameManager>();
+        if (gm != null)
+        {
+            gm.ShowConfirmation("오프닝 스토리를 스킵합니다. 진행하시겠습니까?", () =>
+            {
+                StopAllRunningCoroutines();
+                FinishCutscene();
+            });
+        }
+        else
+        {
+            // GameManager가 없으면 바로 종료
+            StopAllRunningCoroutines();
+            FinishCutscene();
         }
     }
 
@@ -279,6 +299,30 @@ public class CutsceneManager : MonoBehaviour
         {
             sfxAudioSource.PlayOneShot(data.soundClip);
         }
+        yield break;
+    }
+
+    private IEnumerator BgmEffectCoroutine(BgmEffectData data)
+    {
+        if (bgmAudioSource == null || data.bgmClip == null)
+        {
+            yield break;
+        }
+        // 같은 클립이면 재시작/루프하지 않고 그대로 유지 (이미 재생 중이든, 끝났든 다시 건드리지 않음)
+        if (bgmAudioSource.clip == data.bgmClip)
+        {
+            // 볼륨만 반영 (재생 상태는 건드리지 않음)
+            bgmAudioSource.volume = Mathf.Clamp01(data.volume <= 0 ? 1f : data.volume);
+            bgmAudioSource.loop = false; // 요청: 반복 재생하지 않음
+            yield break;
+        }
+
+        // 다른 클립이 요청되면 교체하여 한 번만 재생 (루프 꺼짐)
+        bgmAudioSource.Stop();
+        bgmAudioSource.clip = data.bgmClip;
+        bgmAudioSource.loop = false; // 요청: 반복 재생하지 않음
+        bgmAudioSource.volume = Mathf.Clamp01(data.volume <= 0 ? 1f : data.volume);
+        bgmAudioSource.Play();
         yield break;
     }
 
