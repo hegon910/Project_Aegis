@@ -15,6 +15,8 @@ public abstract class SkillData : ScriptableObject
     public bool isSingleUsePerCombat;
 
     [Header("Visual Effects")]
+
+    public Sprite skillIcon;
     // 스킬 시전 시 시전자에게 표시될 이펙트
     public GameObject casterEffectPrefab;
 

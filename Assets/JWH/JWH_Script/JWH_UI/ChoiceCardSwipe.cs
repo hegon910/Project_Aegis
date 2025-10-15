@@ -31,6 +31,7 @@ public class SwipePreviewUI
 }
 
 [RequireComponent(typeof(CanvasGroup))]
+[RequireComponent(typeof(CanvasGroup), typeof(AudioSource))]
 public class ChoiceCardSwipe : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     private CanvasGroup canvasGroup;
@@ -38,6 +39,11 @@ public class ChoiceCardSwipe : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     [Header("Visual Effects")]
     [SerializeField] private GameObject glowcard;
+    [SerializeField] private GameObject glowcardskill;
+
+    [Header("Sound Effects")]
+    [SerializeField] private AudioClip notificationSound; // 알림음 오디오 클립
+    private AudioSource audioSource; // 오디오 소스 컴포넌트
 
     [Header("Refs")]
     [SerializeField] RectTransform card;
@@ -74,6 +80,7 @@ public class ChoiceCardSwipe : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     void Awake()
     {
         canvasGroup = GetComponent<CanvasGroup>();
+        audioSource = GetComponent<AudioSource>();
         if (!card) card = GetComponent<RectTransform>();
         if (!canvas) canvas = GetComponentInParent<Canvas>();
         initialPosition = card.anchoredPosition;
@@ -82,6 +89,7 @@ public class ChoiceCardSwipe : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         defendPreview?.SetAlpha(0);
         skillPreview?.SetAlpha(0);
         if (glowcard != null) glowcard.SetActive(false);
+        if (glowcard != null) glowcardskill.SetActive(false);
     }
     public void SetInteractable(bool state)
     {
@@ -238,6 +246,14 @@ public class ChoiceCardSwipe : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         if (glowcard != null)
         {
             glowcard.SetActive(isOn);
+        }
+        if (glowcardskill != null)
+        {
+            glowcardskill.SetActive(isOn);
+        }
+        if (isOn && notificationSound != null)
+        {
+            audioSource.PlayOneShot(notificationSound);
         }
     }
 }
