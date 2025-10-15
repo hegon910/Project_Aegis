@@ -298,6 +298,10 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300000, guid: 9690168f04b3ecf45b2f92610548977b, type: 3}
+    - target: {fileID: 2609374185607794937, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4335024622155884758, guid: ed9ad01d5ee82e046bbb1170137796b8, type: 3}
       propertyPath: m_Color.b
       value: 1
@@ -4198,7 +4202,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 072949a8ae6d0564392e912bf1b522f9, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 0bdf84264f71bd646a6ee4fe8896a6d8, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -9017,7 +9021,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 160c7577a28b6b140a5acb2378e77bfe, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 72e773d997baf1e42a4c3f549c201cb5, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -13890,7 +13894,7 @@ PrefabInstance:
     - target: {fileID: 358264137625817312, guid: 1d7ff69a83241b444a53691340a4377b, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: bb7c24be92e12f147bdbd2fe1aaf4ae5, type: 3}
+      objectReference: {fileID: 21300000, guid: b92734df127ce9b4cbcbf12492ccd36d, type: 3}
     - target: {fileID: 493487512187583642, guid: 1d7ff69a83241b444a53691340a4377b, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 275
@@ -16909,7 +16913,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1415005126812485775, guid: 02625e4e01c1b2a4185212f35a7aad0a, type: 3}
       propertyPath: m_text
-      value: Ver.0.95
+      value: Ver.1.0
       objectReference: {fileID: 0}
     - target: {fileID: 1653837443099668501, guid: 02625e4e01c1b2a4185212f35a7aad0a, type: 3}
       propertyPath: m_Color.a

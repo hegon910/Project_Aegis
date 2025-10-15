@@ -98,6 +98,16 @@ public class EventManager : MonoBehaviour
 
         Debug.Log($"[EventManager] 플레이리스트 초기화 완료: {DataManager.Instance.PlayerData.currentPlaylist.Count}개");
 
+        // [보강] ResetEventManagerState 이후 selectedPackNumbers가 비어 서브 편성이 스킵되는 문제 방지
+        // Settings에 저장된 선택 팩을 자동 재적용 (사용자 입력 없이도 2장 이후 서브스토리 유지)
+        if ((selectedPackNumbers == null || selectedPackNumbers.Count == 0) && DataManager.Instance?.PlayerSettings != null)
+        {
+            var ids = DataManager.Instance.PlayerSettings.selectedSubEventPackIDs ?? new List<int>();
+            // 사용자 ID(1,2 등)를 데이터 도메인(>=1000)이면 그대로, 아니면 +1000으로 정규화
+            selectedPackNumbers = ids.Select(id => id < 1000 ? id + 1000 : id).ToList();
+            Debug.Log($"[EventManager] StartNewCycle: Settings 기반으로 서브 팩 재적용 -> [{string.Join(", ", selectedPackNumbers)}]");
+        }
+
         // 먼저 파라미터 이벤트로 24개를 채웁니다
         Debug.Log($"[EventManager] 파라미터 이벤트 추가 시작 - 목표: {totalEventsPerCycle}개");
 

@@ -38,6 +38,7 @@ public class WarPlayer : MonoBehaviour
     void Awake()
     {
         if (!controller) controller = GetComponent<WarController>();
+        audioSource = GetComponent<AudioSource>();
 		// PlayerPrefs에 저장된 스킬이 없으면 초기 기본(인스펙터) 스킬을 무시하여 무스킬 상태로 시작
 		if (!PlayerPrefs.HasKey("EquippedSkillID"))
 		{
@@ -103,7 +104,7 @@ public class WarPlayer : MonoBehaviour
         int previousShield = currentShield;
         currentShield = Mathf.Clamp(currentShield + amount, 0, maxShield);
         Debug.Log($"Player Shield +{amount} => {currentShield}");
-        if (amount > 0 && shieldGainSound != null)
+        if (amount > 0 && shieldGainSound != null && audioSource != null)
         {
             audioSource.PlayOneShot(shieldGainSound);
         }
