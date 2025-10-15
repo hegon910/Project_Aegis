@@ -4,6 +4,8 @@ using Cysharp.Threading.Tasks;
 using Unity.VisualScripting;
 using UnityEngine;
 
+
+[RequireComponent(typeof(AudioSource))]
 public class WarPlayer : MonoBehaviour
 {
     [SerializeField] private WarController controller;
@@ -23,6 +25,9 @@ public class WarPlayer : MonoBehaviour
     [System.NonSerialized] public bool KnockbackBuff = false;
     [System.NonSerialized] public bool GoGoBuff = false;
 
+    [Header("Sound Effects")]
+    [SerializeField] private AudioClip shieldGainSound; 
+    private AudioSource audioSource; 
 
     public WarController Ctrl => controller;
     public bool IsDead => controller != null && controller.CurrentHP <= 0;
@@ -86,8 +91,11 @@ public class WarPlayer : MonoBehaviour
         int previousShield = currentShield;
         currentShield = Mathf.Clamp(currentShield + amount, 0, maxShield);
         Debug.Log($"Player Shield +{amount} => {currentShield}");
+        if (amount > 0 && shieldGainSound != null)
+        {
+            audioSource.PlayOneShot(shieldGainSound);
+        }
 
-        
     }
 
     public void KillByRingOut()
