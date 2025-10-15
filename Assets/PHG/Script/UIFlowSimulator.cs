@@ -587,11 +587,11 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     // 서브이벤트 초상 스프라이트 결정: CharacterImg_ID의 IMGName → Resources/Portraits/<IMGName>
     private Sprite ResolvePortraitSprite(FullSubEventData data)
     {
-        // 특수 이벤트 캐릭터 IMGName가 있으면 우선 사용
+        // 특수 이벤트에만 특수 IMGName 우선 적용
         string imgName = null;
         if (data != null && DataManager.Instance != null)
         {
-            if (TryGetSpecialImgName(data, out var specialImg))
+            if (IsSpecialEventData(data) && TryGetSpecialImgName(data, out var specialImg))
             {
                 imgName = specialImg;
             }
@@ -602,15 +602,25 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         }
         if (!string.IsNullOrEmpty(imgName))
         {
-            var s = Resources.Load<Sprite>($"Portraits/{imgName}");
+            string normalized = imgName.Trim();
+            string baseName = normalized;
+            int dot = baseName.LastIndexOf('.');
+            if (dot > 0) baseName = baseName.Substring(0, dot);
+
+            // 1) 신규 규칙: Portraits/
+            var s = Resources.Load<Sprite>($"Portraits/{baseName}");
             if (s != null) return s;
 
-            // 예전 규칙(단수 폴더) 호환
-            s = Resources.Load<Sprite>($"Portrait/{imgName}");
+            // 2) 구 규칙 호환: Portrait/
+            s = Resources.Load<Sprite>($"Portrait/{baseName}");
             if (s != null) return s;
 
-            // 원문 경로가 이미 포함된 경우 대비
-            s = Resources.Load<Sprite>(imgName);
+            // 3) 원문 경로 무확장 시도
+            s = Resources.Load<Sprite>(baseName);
+            if (s != null) return s;
+
+            // 4) 마지막 폴백: 원문 전체 (확장자 포함)
+            s = Resources.Load<Sprite>(normalized);
             if (s != null) return s;
         }
         return null;
@@ -620,7 +630,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     {
         imgName = null;
         if (DataManager.Instance == null || data == null) return false;
-        // CharacterImg_ID를 특수 캐릭터 사전에서 조회
+        // CharacterImg_ID를 특수 캐릭터 사전에서 조회 (특수 이벤트에 한정)
         var dictField = typeof(DataManager).GetField("specialEventCharacterDict", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         if (dictField == null) return false;
         var dict = dictField.GetValue(DataManager.Instance) as System.Collections.Generic.Dictionary<int, SpecialEventCharacterData>;
@@ -629,6 +639,19 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         {
             imgName = entry.IMGName;
             return !string.IsNullOrEmpty(imgName);
+        }
+        return false;
+    }
+
+    private bool IsSpecialEventData(FullSubEventData data)
+    {
+        if (DataManager.Instance == null || data == null) return false;
+        var specialList = DataManager.Instance.FullSpecialEvents;
+        if (specialList == null || specialList.Count == 0) return false;
+        // ID 기반으로만 확인 (데이터 가공 시 ID는 유니크)
+        for (int i = 0; i < specialList.Count; i++)
+        {
+            if (specialList[i] != null && specialList[i].ID == data.ID) return true;
         }
         return false;
     }
