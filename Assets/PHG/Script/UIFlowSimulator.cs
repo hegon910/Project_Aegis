@@ -295,7 +295,17 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         currentParameterEventData = null;
         currentSubEventData = data;
 
-        string characterName = data.characterData != null ? (data.characterData.Chr_Name ?? "") : "";
+        // 특수 이벤트의 경우 MainCharacter 대신 SpecialEventCharacterData의 설명(이름) 사용을 우선 시도
+        string characterName = "";
+        var specialName = TryResolveSpecialEventName(data);
+        if (!string.IsNullOrEmpty(specialName))
+        {
+            characterName = specialName;
+        }
+        else
+        {
+            characterName = data.characterData != null ? (data.characterData.Chr_Name ?? "") : "";
+        }
         string dialogue = data.Text_kr ?? "대화 내용이 없습니다.";
         string leftChoiceText = data.leftChoice?.choiceText ?? "선택지 1";
         string rightChoiceText = data.rightChoice?.choiceText ?? "선택지 2";
@@ -577,7 +587,19 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
     // 서브이벤트 초상 스프라이트 결정: CharacterImg_ID의 IMGName → Resources/Portraits/<IMGName>
     private Sprite ResolvePortraitSprite(FullSubEventData data)
     {
-        string imgName = data?.characterImgData?.IMGName;
+        // 특수 이벤트 캐릭터 IMGName가 있으면 우선 사용
+        string imgName = null;
+        if (data != null && DataManager.Instance != null)
+        {
+            if (TryGetSpecialImgName(data, out var specialImg))
+            {
+                imgName = specialImg;
+            }
+            else
+            {
+                imgName = data.characterImgData?.IMGName;
+            }
+        }
         if (!string.IsNullOrEmpty(imgName))
         {
             var s = Resources.Load<Sprite>($"Portraits/{imgName}");
@@ -590,6 +612,47 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             // 원문 경로가 이미 포함된 경우 대비
             s = Resources.Load<Sprite>(imgName);
             if (s != null) return s;
+        }
+        return null;
+    }
+
+    private bool TryGetSpecialImgName(FullSubEventData data, out string imgName)
+    {
+        imgName = null;
+        if (DataManager.Instance == null || data == null) return false;
+        // CharacterImg_ID를 특수 캐릭터 사전에서 조회
+        var dictField = typeof(DataManager).GetField("specialEventCharacterDict", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        if (dictField == null) return false;
+        var dict = dictField.GetValue(DataManager.Instance) as System.Collections.Generic.Dictionary<int, SpecialEventCharacterData>;
+        if (dict == null) return false;
+        if (dict.TryGetValue(data?.characterImgData?.CharacterImg_ID ?? 0, out var entry) && entry != null)
+        {
+            imgName = entry.IMGName;
+            return !string.IsNullOrEmpty(imgName);
+        }
+        return false;
+    }
+
+    private string TryResolveSpecialEventName(FullSubEventData data)
+    {
+        if (DataManager.Instance == null || data == null) return null;
+        var dictField = typeof(DataManager).GetField("specialEventCharacterDict", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        if (dictField == null) return null;
+        var dict = dictField.GetValue(DataManager.Instance) as System.Collections.Generic.Dictionary<int, SpecialEventCharacterData>;
+        if (dict == null) return null;
+        if (dict.TryGetValue(data?.characterImgData?.CharacterImg_ID ?? 0, out var entry) && entry != null)
+        {
+            // 설명 칼럼은 "크리스티안 노멀" 처럼 감정이 붙을 수 있으므로 이름만 추출
+            var exp = entry.Explanation ?? string.Empty;
+            var nameOnly = exp.Replace(" 노멀", string.Empty)
+                              .Replace(" 놀람", string.Empty)
+                              .Replace(" 분노", string.Empty)
+                              .Replace(" 고민", string.Empty)
+                              .Replace(" 웃음", string.Empty)
+                              .Replace(" 울상", string.Empty)
+                              .Replace(" 비열", string.Empty);
+            nameOnly = nameOnly.Trim();
+            return string.IsNullOrEmpty(nameOnly) ? null : nameOnly;
         }
         return null;
     }

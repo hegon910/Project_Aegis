@@ -47,6 +47,7 @@ public class DataManager : MonoBehaviour
     private Dictionary<int, BGData> bgDataDict;
     private Dictionary<int, SFXData> sfxDataDict;
     private Dictionary<int, MainCharacterImgData> characterImgDataDict;
+    private Dictionary<int, SpecialEventCharacterData> specialEventCharacterDict;
     private Dictionary<int, BackData> backDataDict;
     //전투 결과 이벤트
     public Dictionary<int, BattleResultData> battleResultDataDict;
@@ -810,6 +811,8 @@ public class DataManager : MonoBehaviour
             var sfxDataTask = Csvparser.ParseAsync<SFXData>("MainSFXData");
             var characterDataTask = Csvparser.ParseAsync<MainCharacterData>("MainCharacterData");
             var characterImgDataTask = Csvparser.ParseAsync<MainCharacterImgData>("MainCharacterImgData");
+            // 특수 이벤트 캐릭터 표시명/이미지(감정명 포함)를 위한 CSV
+            var specialEventCharacterTask = Csvparser.ParseAsync<SpecialEventCharacterData>("SpecialEventCharacterData");
             var battleResultTask = Csvparser.ParseAsync<BattleResultData>("BattleResultTextData");
             var backDataTask = Csvparser.ParseAsync<BackData>("BackData");
             //엔딩 데이터 
@@ -837,6 +840,7 @@ public class DataManager : MonoBehaviour
             var specialSubEventRows = await specialSubEventTask;
             var specialSubAnswerList = await specialSubAnswerTask;
             var endingMemoriarList = await endingMemoriarTask;
+            var specialEventCharacterList = await specialEventCharacterTask;
 
             Debug.Log("모든 파일 로딩 완료");
 
@@ -854,6 +858,8 @@ public class DataManager : MonoBehaviour
             bgDataDict = bgList.ToDictionary(bg => bg.BG_ID, bg => bg);
             sfxDataDict = sfxList.ToDictionary(sfx => sfx.SFX_ID, sfx => sfx);
             characterImgDataDict = characterImgList.ToDictionary(c => c.CharacterImg_ID, c => c);
+            specialEventCharacterDict = specialEventCharacterList?.ToDictionary(c => c.CharacterImg_ID, c => c) 
+                                        ?? new Dictionary<int, SpecialEventCharacterData>();
             endingEventDataDict = endingEventList.ToDictionary(e => e.ID, e => e);
             TrueEndingeventDataDict = trueEndingList.ToDictionary(e => e.ID, e => e);
             endingCutSceneDict = endingCutSceneList.ToDictionary(c => c.EndingCutScene_ID, c => c);
@@ -941,6 +947,14 @@ public class DataManager : MonoBehaviour
                     SFXData sfxData = sfxDataDict.TryGetValue(rawData.SFX_ID, out var sfx) ? sfx : null;
                     MainCharacterData characterData = CharacterDataDict.TryGetValue(rawData.CharacterName, out var character) ? character : null;
                     MainCharacterImgData characterImgData = characterImgDataDict.TryGetValue(rawData.CharacterImg_ID, out var img) ? img : null;
+                    if (characterImgData == null && specialEventCharacterDict != null && specialEventCharacterDict.TryGetValue(rawData.CharacterImg_ID, out var specialEntry) && specialEntry != null)
+                    {
+                        characterImgData = new MainCharacterImgData
+                        {
+                            CharacterImg_ID = specialEntry.CharacterImg_ID,
+                            IMGName = specialEntry.IMGName
+                        };
+                    }
                     BackData backData = backDataDict.TryGetValue(rawData.Back_ID, out var back) ? back : null;
 
 
@@ -1021,6 +1035,14 @@ public class DataManager : MonoBehaviour
                     SFXData sfxData = sfxDataDict.TryGetValue(rawData.SFX_ID, out var sfx) ? sfx : null;
                     MainCharacterData characterData = CharacterDataDict.TryGetValue(rawData.CharacterName, out var character) ? character : null;
                     MainCharacterImgData characterImgData = characterImgDataDict.TryGetValue(rawData.CharacterImg_ID, out var img) ? img : null;
+                    if (characterImgData == null && specialEventCharacterDict != null && specialEventCharacterDict.TryGetValue(rawData.CharacterImg_ID, out var specialEntry2) && specialEntry2 != null)
+                    {
+                        characterImgData = new MainCharacterImgData
+                        {
+                            CharacterImg_ID = specialEntry2.CharacterImg_ID,
+                            IMGName = specialEntry2.IMGName
+                        };
+                    }
                     BackData backData = backDataDict.TryGetValue(rawData.Back_ID, out var back) ? back : null;
 
                     var fullEventData = new FullSubEventData

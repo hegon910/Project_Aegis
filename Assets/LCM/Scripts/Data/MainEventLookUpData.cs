@@ -27,6 +27,13 @@ public class MainCharacterImgData
     public string IMGName { get; set; }
 }
 [System.Serializable]
+public class SpecialEventCharacterData
+{
+    public int CharacterImg_ID { get; set; }
+    public string IMGName { get; set; }
+    public string Explanation { get; set; }
+}
+[System.Serializable]
 public class BackData
 {
     public int Back_ID { get; set; }
