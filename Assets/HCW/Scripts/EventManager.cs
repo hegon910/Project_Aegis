@@ -392,6 +392,10 @@ public class EventManager : MonoBehaviour
             if (DataManager.Instance.PlayerData.eventPlaylistIndex >= DataManager.Instance.PlayerData.currentPlaylist.Count)
             {
                 Debug.Log("현재 사이클(챕터)의 모든 이벤트를 완료했습니다.");
+                
+                // Analytics: 장 클리어 로그
+                LogChapterComplete();
+                
                 currentState = EventManagerState.Idle;
                 OnEventCycleCompleted?.Invoke();
                 return;
@@ -434,8 +438,39 @@ public class EventManager : MonoBehaviour
                 OnParameterEventReady?.Invoke(eventId);
                 DataManager.Instance.PlayerData.completedEventIds.Add(eventId);
                 lastEventWasSubEvent = false;
+                
+                // Analytics: 파라미터 이벤트 종료 로그
+                LogParameterEventComplete();
             }
         }
+    }
+    
+    /// <summary>
+    /// 장 클리어 시 Analytics 로그 전송
+    /// </summary>
+    private void LogChapterComplete()
+    {
+        if (DataManager.Instance?.PlayerData == null) return;
+        
+        int playthrough = DataManager.Instance.PlayerData.playthroughCount;
+        int chapter = DataManager.Instance.PlayerData.currentChapter;
+        
+        GameEventLogger.LogFinishChapter(playthrough, chapter);
+        Debug.Log($"[EventManager] Analytics - 장 클리어: {playthrough}회차 {chapter}장");
+    }
+    
+    /// <summary>
+    /// 파라미터 이벤트 종료 시 Analytics 로그 전송
+    /// </summary>
+    private void LogParameterEventComplete()
+    {
+        if (DataManager.Instance?.PlayerData == null) return;
+        
+        int playthrough = DataManager.Instance.PlayerData.playthroughCount;
+        int chapter = DataManager.Instance.PlayerData.currentChapter;
+        
+        GameEventLogger.LogFinishParameter(playthrough, chapter);
+        Debug.Log($"[EventManager] Analytics - 파라미터 이벤트 종료: {playthrough}회차 {chapter}장");
     }
 
     // (표기용 보조 메서드 없음 - 원상복구)

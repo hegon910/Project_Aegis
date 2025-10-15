@@ -285,6 +285,15 @@ public class GameManager : MonoBehaviour
             case GameState.CommanderSelection: nextState = GameState.PlayingOpeningCutscene; break;
             case GameState.PlayingOpeningCutscene: nextState = GameState.InStory; break;
             case GameState.InStory:
+                // Analytics: 메인 스토리 이벤트 종료 로그
+                if (DataManager.Instance?.PlayerData != null)
+                {
+                    int playthrough = DataManager.Instance.PlayerData.playthroughCount;
+                    int chapter = CurrentChapter;
+                    GameEventLogger.LogFinishMainStory(playthrough, chapter);
+                    Debug.Log($"[GameManager] Analytics - 메인 스토리 종료: {playthrough}회차 {chapter}장");
+                }
+                
                 // 1장은 스토리가 먼저이므로, 다음은 이벤트 사이클입니다.
                 if (CurrentChapter == 1)
                 {
@@ -329,6 +338,14 @@ public class GameManager : MonoBehaviour
                 }
                 break;
             case GameState.PlayingEndingCutscene:
+                // Analytics: 회차 클리어 로그 (엔딩 직전)
+                if (DataManager.Instance?.PlayerData != null)
+                {
+                    int completedPlaythrough = DataManager.Instance.PlayerData.playthroughCount;
+                    GameEventLogger.LogFinishStory(completedPlaythrough);
+                    Debug.Log($"[GameManager] Analytics - 회차 클리어: {completedPlaythrough}회차");
+                }
+                
                 // 엔딩 분기 규칙 - 기획서 기준 일치화
                 const int NORMAL_ENDING_ID = 1001; // 1회차 일반 엔딩 (EndingString 1001)
                 const int TRUE_ENDING_ID_2ND = 1002; // 2회차 진엔딩 (EndingString 1002)
@@ -420,6 +437,10 @@ public class GameManager : MonoBehaviour
                     playerData.playthroughCount++;
                     playerData.currentChapter = 1;
                     playerData.currentGameState = GameState.MainMenu;
+                    
+                    // Analytics: 다음 회차 진입 로그
+                    GameEventLogger.LogEnterStory(playerData.playthroughCount);
+                    Debug.Log($"[GameManager] Analytics - 다음 회차 진입: {playerData.playthroughCount}회차");
                 }
 
                 hasShownWarTutorialThisPlaythrough = false;
@@ -842,6 +863,15 @@ public class GameManager : MonoBehaviour
             SimpleEventHistoryManager.Instance.RecordChapterOutcome(currentChapter, outcome);
             Debug.Log($"[GameManager] 챕터 {currentChapter}의 전투 결과({outcome})를 기록했습니다.");
         }
+        
+        // Analytics: 전투 이벤트 종료 로그
+        if (DataManager.Instance?.PlayerData != null)
+        {
+            int playthrough = DataManager.Instance.PlayerData.playthroughCount;
+            GameEventLogger.LogFinishBattle(playthrough, currentChapter);
+            Debug.Log($"[GameManager] Analytics - 전투 이벤트 종료: {playthrough}회차 {currentChapter}장");
+        }
+        
         ChangeState(GameState.InBattleResult);
     }
     private string ParseOutcome(string resultLog)
@@ -1301,6 +1331,15 @@ public class GameManager : MonoBehaviour
 			Debug.Log($"[GameManager] 새게임 시작 - 회차 업적 체크: {DataManager.Instance.PlayerData.playthroughCount}회차");
 			AchievementManager.Instance.CheckPlaythroughAchievements(DataManager.Instance.PlayerData.playthroughCount);
 		}
+		
+		// Analytics: 1회차 진입 로그
+		if (DataManager.Instance?.PlayerData != null)
+		{
+			int playthrough = DataManager.Instance.PlayerData.playthroughCount;
+			GameEventLogger.LogEnterStory(playthrough);
+			Debug.Log($"[GameManager] Analytics - 회차 진입: {playthrough}회차");
+		}
+		
         OnStateFinished();
     }
     private void StartDetailedResultSequence() 

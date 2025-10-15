@@ -301,6 +301,11 @@ public class ShopUI : MonoBehaviour
         if (success)
         {
             Debug.Log("구매 성공!");
+            
+            // Analytics: 유료 아이템 구매 로그
+            PurchaseEventLogger.LogPurchase(itemId);
+            Debug.Log($"[ShopUI] Analytics - 아이템 구매: {itemId}");
+            
             // UI 새로고침
             RefreshShopUI();
         }
