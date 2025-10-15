@@ -5,6 +5,12 @@ using UnityEngine;
 
 public class WarTurnManager : MonoBehaviour
 {
+    [Header("Test Mode")]
+    [SerializeField] private bool isTestMode = false;
+    [Tooltip("테스트 모드에서 사용할 챕터 번호 (1~6)")]
+    [SerializeField] private int testChapter = 1;
+    public int CurrentChapter { get; private set; }
+
     [SerializeField] WarGround ground;
     [SerializeField] WarPlayer player;
     [Header("챕터별 적 설정")]
@@ -15,6 +21,9 @@ public class WarTurnManager : MonoBehaviour
 
 
     [Header("UI References")]
+    //[SerializeField] private Canvas mainCanvas;// UI 들어가는 캔버스
+    public Camera particleCamera;
+    [SerializeField] private Canvas fxCanvas;// 특수효과 캔버스
     [SerializeField] private ChoiceCardSwipe choiceCard;
     [SerializeField] private WarHUD warHUD;
 
@@ -46,9 +55,44 @@ public class WarTurnManager : MonoBehaviour
         }
     }
 
+    public void SpawnVFXOnPlayer(GameObject vfxPrefab)
+    {
+        if (vfxPrefab == null || player == null || fxCanvas == null)
+        {
+            Debug.LogError("VFX 프리팹, 플레이어, 또는 FX Canvas가 설정되지 않았습니다!");
+            return;
+        }
+
+        GameObject vfxInstance = Instantiate(vfxPrefab, fxCanvas.transform);
+        vfxInstance.transform.position = player.transform.position;
+    }
+
 
     public void ResetForNewBattle(int newMaxTurns = 30)
     {
+        int chapterToLoad;
+        bool isRealGameMode = !isTestMode && GameManager.instance != null;
+
+        if (isTestMode)
+        {
+            chapterToLoad = testChapter;
+        }
+        else if (isRealGameMode)
+        {
+            chapterToLoad = GameManager.instance.CurrentChapter;
+        }
+        else
+        {
+            Debug.LogError("GameManager를 찾을 수 없습니다! 정상 모드로 실행할 수 없습니다. WarTurnManager에서 테스트 모드를 활성화하세요.");
+            return;
+        }
+
+        CurrentChapter = chapterToLoad;
+        if (ground != null)
+        {
+            ground.SetBackgroundForChapter(CurrentChapter);
+        }
+
         if (GameManager.instance != null && GameManager.instance.CurrentChapter == 1)
         {
             WarHistory.ResetHistory();
@@ -356,7 +400,11 @@ public class WarTurnManager : MonoBehaviour
         return null;
     }
 
-    [System.Serializable]
+
+    
+
+
+[System.Serializable]
     public class ChapterEnemyPool
     {
         public string chapterName;

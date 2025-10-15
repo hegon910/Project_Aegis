@@ -20,4 +20,10 @@ MonoBehaviour:
     \uC131\uACF5\uD558\uBA74 1\uC758 \uD53C\uD574\uB97C \uCD94\uAC00\uB85C \uC90D\uB2C8\uB2E4."
   cooltime: 3
   isSingleUsePerCombat: 0
+  skillIcon: {fileID: 21300000, guid: 86bbdb4398dc5c84a8e165419318d232, type: 3}
+  casterEffectPrefab: {fileID: 0}
+  targetEffectPrefab: {fileID: 0}
+  impactEffectPrefab: {fileID: 0}
+  persistentEffectPrefab: {fileID: 0}
+  skillSound: {fileID: 0}
   attackStacks: 2

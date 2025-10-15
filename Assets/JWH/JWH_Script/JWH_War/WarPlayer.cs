@@ -7,11 +7,11 @@ using UnityEngine;
 public class WarPlayer : MonoBehaviour
 {
     [SerializeField] private WarController controller;
+    private WarTurnManager turnManager;
 
     [Header("Shield System")]
-    [SerializeField] private int maxShield = 3;           
-    [SerializeField] private int currentShield = 0;       
-    
+    [SerializeField] public int maxShield = 3;
+    [SerializeField] public int currentShield = 0;
 
     [Header("Skill & Buffs")]
     public string equippedSkillID;//스킬변경 건드리는 부분
@@ -23,20 +23,13 @@ public class WarPlayer : MonoBehaviour
     [System.NonSerialized] public bool KnockbackBuff = false;
     [System.NonSerialized] public bool GoGoBuff = false;
 
-    [Header("VFX")]
-    public GameObject shieldOnEffectPrefab;
-    private GameObject activeShieldEffect;
-    public GameObject shieldOffEffectPrefab;
-    //public AudioClip shieldOn;
-    //public AudioClip shieldOff;
 
-
-    public int Shield => currentShield; 
     public WarController Ctrl => controller;
     public bool IsDead => controller != null && controller.CurrentHP <= 0;
 
     public int AttackPower => controller ? controller.AttackPower : 0;
 
+    
     void Awake()
     {
         if (!controller) controller = GetComponent<WarController>();
@@ -53,24 +46,9 @@ public class WarPlayer : MonoBehaviour
     {
         // 활성화 시마다 PlayerPrefs 기반으로 최신 스킬을 재적용
         LoadSkillFromID();
+        turnManager = FindObjectOfType<WarTurnManager>();
     }
 
-    // 스킬사용 vfx
-    //void Update()// 유니태스크로 처리 가능하지 않을까?
-    //{
-
-    //    if (currentShield > 0 && activeShieldEffect == null)
-    //    {
-    //        activeShieldEffect = Instantiate(shieldOnEffectPrefab, transform.position, Quaternion.identity);
-    //        activeShieldEffect.transform.SetParent(this.transform);
-    //    }
-
-    //    else if (currentShield <= 0 && activeShieldEffect != null)
-    //    {
-    //        Destroy(activeShieldEffect);
-    //        activeShieldEffect = null;
-    //    }
-    //}
 
     public void ResetState(WarGround ground, int startIndex)
     {
@@ -112,28 +90,16 @@ public class WarPlayer : MonoBehaviour
         }
 
         Debug.Log($"Player HP -> {controller.CurrentHP}, Shield -> {currentShield}");
-        //this.currentShield -= damage; //뭘로 바꾸지
-
-
-        //if (shieldBeforeDamage > 0 && this.currentShield <= 0)
-        //{
-        //    this.currentShield = 0; // 쉴드가 마이너스가 되지 않도록 보정
-        //    if (shieldOffEffectPrefab != null)
-        //    {
-        //        Instantiate(shieldOffEffectPrefab, transform.position, Quaternion.identity);
-        //    }
-        //}
+        
     }
 
     public void GainShield(int amount)
     {
+        int previousShield = currentShield;
         currentShield = Mathf.Clamp(currentShield + amount, 0, maxShield);
         Debug.Log($"Player Shield +{amount} => {currentShield}");
-        if (shieldOnEffectPrefab != null)
-        {
-            // 플레이어의 위치에 프리팹 생성
-            Instantiate(shieldOnEffectPrefab, transform.position, Quaternion.identity);
-        }
+
+        
     }
 
     public void KillByRingOut()

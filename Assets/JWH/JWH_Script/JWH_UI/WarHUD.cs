@@ -28,6 +28,7 @@ public class WarHUD : MonoBehaviour
     [SerializeField] Gradient warSliderGradient;
 
     [Header("Skill UI")]
+    [SerializeField] private Image skillButtonImage;
     [SerializeField] private Button skillInfoButton;
     [SerializeField] private GameObject skillInfoPanel;
     [SerializeField] private TMP_Text skillInfoText;
@@ -104,7 +105,7 @@ public class WarHUD : MonoBehaviour
         if (warplayer)
         {
             playerHpNum.text = $"{warplayer.Ctrl.CurrentHP}";
-            playerShieldNum.text = $"{warplayer.Shield}";
+            playerShieldNum.text = $"{warplayer.currentShield}";
         }
     }
 
@@ -140,23 +141,37 @@ public class WarHUD : MonoBehaviour
 
     private void UpdateSkillUI()
     {
-        if (warturnMgr == null) return;
-        string currentSkillName = warturnMgr.GetSkillName();
-        int cooldown = warturnMgr.GetSkillCooldown();
-        bool isSkillAvailable = !string.IsNullOrEmpty(currentSkillName) && cooldown <= 0;
-        if (choiceCard != null)
+        if (warplayer == null || skillInfoButton == null) return;
+
+        var currentSkill = warplayer.currentSkill;
+
+        if (currentSkill != null)
         {
-            choiceCard.SetGlow(isSkillAvailable);
-        }
-        if (!string.IsNullOrEmpty(currentSkillName))
-        {
-            skillNameText.text = currentSkillName;
-            skillCooldownText.text = (cooldown > 0) ? cooldown.ToString() : "사용 가능";
+            skillInfoButton.gameObject.SetActive(true);
+
+            if (skillButtonImage != null && currentSkill.skillIcon != null)
+            {
+                skillButtonImage.sprite = currentSkill.skillIcon;
+            }
+
+            skillNameText.text = currentSkill.skillName; // 직접 스킬 데이터에서 이름 가져오기
+            int cooldown = warturnMgr.GetSkillCooldown(); // 쿨다운은 TurnManager에서 가져옴
+            skillCooldownText.text = (cooldown > 0) ? $"스킬쿨 {cooldown} 턴" : "사용 가능";
+            if (choiceCard != null)
+            {
+                choiceCard.SetGlow(cooldown <= 0);
+            }
         }
         else
         {
+            skillInfoButton.gameObject.SetActive(false);
+
             skillNameText.text = "스킬 없음";
             skillCooldownText.text = "";
+            if (choiceCard != null)
+            {
+                choiceCard.SetGlow(false);
+            }
         }
     }
 
