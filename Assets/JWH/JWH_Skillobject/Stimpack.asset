@@ -24,5 +24,5 @@ MonoBehaviour:
   targetEffectPrefab: {fileID: 0}
   impactEffectPrefab: {fileID: 0}
   persistentEffectPrefab: {fileID: 0}
-  skillSound: {fileID: 0}
+  skillSound: {fileID: 8300000, guid: 983f92be12405064ea2b671dd01490a8, type: 3}
   shieldToGain: 2
