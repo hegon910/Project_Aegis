@@ -1574,6 +1574,63 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 119508807}
   m_CullTransparentMesh: 1
+--- !u!1001 &126702465
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4704464374114559554, guid: 9acf8ceb985ce744bbf5f5362f4c30a2, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 493.7598
+      objectReference: {fileID: 0}
+    - target: {fileID: 4704464374114559554, guid: 9acf8ceb985ce744bbf5f5362f4c30a2, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 932.2164
+      objectReference: {fileID: 0}
+    - target: {fileID: 4704464374114559554, guid: 9acf8ceb985ce744bbf5f5362f4c30a2, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -5.729226
+      objectReference: {fileID: 0}
+    - target: {fileID: 4704464374114559554, guid: 9acf8ceb985ce744bbf5f5362f4c30a2, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4704464374114559554, guid: 9acf8ceb985ce744bbf5f5362f4c30a2, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4704464374114559554, guid: 9acf8ceb985ce744bbf5f5362f4c30a2, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4704464374114559554, guid: 9acf8ceb985ce744bbf5f5362f4c30a2, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4704464374114559554, guid: 9acf8ceb985ce744bbf5f5362f4c30a2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4704464374114559554, guid: 9acf8ceb985ce744bbf5f5362f4c30a2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4704464374114559554, guid: 9acf8ceb985ce744bbf5f5362f4c30a2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5807371618014998707, guid: 9acf8ceb985ce744bbf5f5362f4c30a2, type: 3}
+      propertyPath: m_Name
+      value: AnalyticsEventManager
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 9acf8ceb985ce744bbf5f5362f4c30a2, type: 3}
 --- !u!1 &135607090
 GameObject:
   m_ObjectHideFlags: 0
@@ -3656,7 +3713,7 @@ MonoBehaviour:
     unlockTargetId: Wille
     isUnlocked: 0
     isPurchased: 0
-    icon: {fileID: 21300000, guid: 12ea2b66afd590a48a8de780026b9623, type: 3}
+    icon: {fileID: 21300000, guid: 72e773d997baf1e42a4c3f549c201cb5, type: 3}
     lockedIcon: {fileID: 21300000, guid: faa279d4b52994c469ada40751501df0, type: 3}
     nameColor: {r: 0, g: 0.16104364, b: 1, a: 0}
     descriptionColor: {r: 0, g: 0, b: 0, a: 0}
@@ -3673,7 +3730,7 @@ MonoBehaviour:
     unlockTargetId: ' Risard'
     isUnlocked: 0
     isPurchased: 0
-    icon: {fileID: 21300000, guid: 0dc755c6e661d744b98df20e1d9a283e, type: 3}
+    icon: {fileID: 21300000, guid: 0bdf84264f71bd646a6ee4fe8896a6d8, type: 3}
     lockedIcon: {fileID: 21300000, guid: faa279d4b52994c469ada40751501df0, type: 3}
     nameColor: {r: 0, g: 0.16104364, b: 1, a: 0}
     descriptionColor: {r: 0, g: 0, b: 0, a: 0}
@@ -3688,6 +3745,23 @@ MonoBehaviour:
     itemType: 1
     price: 200
     unlockTargetId: 1000002
+    isUnlocked: 0
+    isPurchased: 0
+    icon: {fileID: 21300000, guid: 20d722cde146d0b4aa39947022a0ff97, type: 3}
+    lockedIcon: {fileID: 21300000, guid: faa279d4b52994c469ada40751501df0, type: 3}
+    nameColor: {r: 0, g: 0.16104364, b: 1, a: 0}
+    descriptionColor: {r: 0, g: 0, b: 0, a: 0}
+    isLimited: 1
+    purchaseLimit: 1
+    purchasedCount: 0
+    requiredAchievements: []
+    requiredUnlocks: []
+  - itemId: SubStoryPack3
+    itemName: "\uC11C\uBE0C\uC2A4\uD1A0\uB9AC\uD3293"
+    description: "\uC11C\uBE0C\uC2A4\uD1A0\uB9AC\uD3292\uB97C \uD574\uAE08\uD569\uB2C8\uB2E4."
+    itemType: 1
+    price: 200
+    unlockTargetId: 1000003
     isUnlocked: 0
     isPurchased: 0
     icon: {fileID: 21300000, guid: 20d722cde146d0b4aa39947022a0ff97, type: 3}
@@ -18082,3 +18156,4 @@ SceneRoots:
   - {fileID: 905048537}
   - {fileID: 1241039405}
   - {fileID: 1692809553}
+  - {fileID: 126702465}
