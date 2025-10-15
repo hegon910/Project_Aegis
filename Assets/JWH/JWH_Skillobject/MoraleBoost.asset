@@ -19,4 +19,10 @@ MonoBehaviour:
     4\uCE78 \uB354 \uC804\uC9C4\uD569\uB2C8\uB2E4."
   cooltime: 1
   isSingleUsePerCombat: 0
+  skillIcon: {fileID: 21300000, guid: 1e7ee8487bf2a8049b8681d0d937b709, type: 3}
+  casterEffectPrefab: {fileID: 0}
+  targetEffectPrefab: {fileID: 0}
+  impactEffectPrefab: {fileID: 0}
+  persistentEffectPrefab: {fileID: 0}
+  skillSound: {fileID: 0}
   extraDistance: 4

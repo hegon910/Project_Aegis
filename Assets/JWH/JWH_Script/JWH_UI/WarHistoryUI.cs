@@ -9,16 +9,20 @@ public class WarHistoryUI : MonoBehaviour
     [SerializeField] private Image[] recordImages;
 
     [Tooltip("승리 색상")]
-    [SerializeField] private Color winColor = Color.cyan;
+    [SerializeField] private Sprite winSprite;
 
     [Tooltip("패배 색상")]
-    [SerializeField] private Color lossColor = Color.red;
+    [SerializeField] private Sprite lossSprite;
 
     [Tooltip("무승부 색상")]
-    [SerializeField] private Color drawColor = Color.white;
+    [SerializeField] private Sprite drawSprite;
 
     [Tooltip("기록이 없을 때의 기본 색상")]
-    [SerializeField] private Color defaultColor = Color.gray;
+    [SerializeField] private Sprite defaultSprite;
+
+    [Header("현재 챕터 표시")]
+    [Tooltip("현재 진행 중인 챕터 이미지")]
+    [SerializeField] private Sprite currentChapterSprite;
 
     void OnEnable()
     {
@@ -35,6 +39,8 @@ public class WarHistoryUI : MonoBehaviour
                 .ToList();
         }
 
+        int battlesFought = battleRecords.Count;
+
         for (int i = 0; i < recordImages.Length; i++)
         {
             if (recordImages[i] == null) continue;
@@ -45,22 +51,37 @@ public class WarHistoryUI : MonoBehaviour
                 switch (outcome)
                 {
                     case "승리":
-                        recordImages[i].color = winColor;
+                        recordImages[i].sprite = winSprite;
                         break;
                     case "패배":
-                        recordImages[i].color = lossColor;
+                        recordImages[i].sprite = lossSprite;
                         break;
                     case "무승부":
-                        recordImages[i].color = drawColor;
+                        recordImages[i].sprite = drawSprite;
                         break;
                     default:
-                        recordImages[i].color = defaultColor;
+                        recordImages[i].sprite = defaultSprite;
                         break;
                 }
+                recordImages[i].color = Color.white;
+            }
+            else if (i == battlesFought) // 현재 진행 중인 전투
+            {
+                recordImages[i].sprite = currentChapterSprite; // 현재 챕터 이미지
+                recordImages[i].color = Color.white;
             }
             else
             {
-                recordImages[i].color = defaultColor;
+                recordImages[i].sprite = defaultSprite;
+
+                if (defaultSprite == null)
+                {
+                    recordImages[i].color = Color.clear;
+                }
+                else
+                {
+                    recordImages[i].color = Color.white;
+                }
             }
         }
     }

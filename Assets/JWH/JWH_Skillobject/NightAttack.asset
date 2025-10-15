@@ -20,6 +20,12 @@ MonoBehaviour:
     \uC90D\uB2C8\uB2E4."
   cooltime: 3
   isSingleUsePerCombat: 0
+  skillIcon: {fileID: 21300000, guid: d9122c050d2c03e40aa8d62488410b5a, type: 3}
+  casterEffectPrefab: {fileID: 0}
+  targetEffectPrefab: {fileID: 0}
+  impactEffectPrefab: {fileID: 0}
+  persistentEffectPrefab: {fileID: 0}
+  skillSound: {fileID: 0}
   activationDistance: 3
   damage: 2
   selfDamage: 0
