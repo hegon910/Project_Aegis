@@ -26,5 +26,5 @@ MonoBehaviour:
   targetEffectPrefab: {fileID: 0}
   impactEffectPrefab: {fileID: 0}
   persistentEffectPrefab: {fileID: 0}
-  skillSound: {fileID: 0}
+  skillSound: {fileID: 8300000, guid: 21ce14122e91168479b2d39151cb7d22, type: 3}
   damageOnSuccess: 1
