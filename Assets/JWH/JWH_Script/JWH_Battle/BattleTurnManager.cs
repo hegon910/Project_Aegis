@@ -87,6 +87,19 @@ public class BattleTurnManager : MonoBehaviour
         //PlayerStats.Instance.ApplyChanges(changes); // 전황 파라미터 변경 적용
 
 
+        // 업적 체크 - AchievementIntegration 직접 호출
+        var achievementIntegration = FindObjectOfType<AchievementIntegration>();
+        if (achievementIntegration != null)
+        {
+            GameOutcome battleOutcome = isWin ? GameOutcome.Victory : (resultLog.Contains("무승부") ? GameOutcome.Draw : GameOutcome.Defeat);
+            // 첫 전투 판별: 1회차 1챕터에서 첫 번째 전투인지 확인
+            bool isFirstBattle = DataManager.Instance?.PlayerData?.playthroughCount == 1 && 
+                                DataManager.Instance?.PlayerData?.currentChapter == 1 &&
+                                (DataManager.Instance?.PlayerData?.completedBattleResultIds?.Count ?? 0) == 0;
+            achievementIntegration.OnBattleResult(battleOutcome, isFirstBattle);
+            Debug.Log($"[BattleTurnManager] 전투 결과 업적 체크: {battleOutcome}, 첫 전투: {isFirstBattle} (회차: {DataManager.Instance?.PlayerData?.playthroughCount}, 챕터: {DataManager.Instance?.PlayerData?.currentChapter}, 완료된 전투 수: {DataManager.Instance?.PlayerData?.completedBattleResultIds?.Count ?? 0})");
+        }
+        
         Debug.Log(resultLog);
         Debug.Log("전투 종료");
         OnBattleEnd?.Invoke(resultLog);

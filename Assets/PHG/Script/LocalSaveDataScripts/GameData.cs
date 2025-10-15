@@ -24,7 +24,13 @@ public class GameData
 
     // --- 플레이 기록 & 업적 ---
     public List<int> completedEventIds;        // 완료한 이벤트 ID 목록 (PlayerStats)
-    public List<string> unlockedAchievements;  // 달성한 도전과제 ID 목록
+    
+    // [Deprecated] 업적 데이터는 이제 SettingsData로 이동되었습니다.
+    // 호환성을 위해 필드는 남겨두지만, 새 게임 시작 시 초기화되지 않도록 
+    // AchievementManager는 SettingsData를 사용합니다.
+    public List<string> unlockedAchievements;  // 달성한 도전과제 ID 목록 (SettingsData로 이동됨)
+    public List<string> claimedAchievementIds; // 수령 완료한 업적 ID 목록 (SettingsData로 이동됨)
+    
     public List<string> completedEndings;      // 본 엔딩 ID 목록
     public List<int> playedSubEventGroups;     // 플레이한 서브 이벤트 그룹 (EventManager)
     public List<int> completedBattleResultIds; // 완료한 전투 결과 ID 목록
@@ -79,6 +85,7 @@ public class GameData
 
         completedEventIds = new List<int>();
         unlockedAchievements = new List<string>();
+        claimedAchievementIds = new List<string>();
         completedEndings = new List<string>();
         playedSubEventGroups = new List<int>();
         completedBattleResultIds = new List<int>();

@@ -20,6 +20,8 @@ public class EventManager : MonoBehaviour
     public static event Action<int> OnParameterEventReady;
     public static event Action<FullSubEventData> OnSubEventReady;
     public static event Action OnEventCycleCompleted;
+    // 서브이벤트 종료 시 UI 페이드 아웃을 요청하는 이벤트 (duration: 초)
+    public static event Action<float> OnSubEventExitFadeRequested;
 
     [Header("설정")]
     [SerializeField] private int totalEventsPerCycle = 24;
@@ -35,6 +37,8 @@ public class EventManager : MonoBehaviour
 
     private int currentSubEventIndex;
     private int subEventChainLength = 0; // 서브이벤트 체인 길이 추적
+    private bool lastEventWasSubEvent = false; // 직전 이벤트가 서브인지 추적
+    private int lastSubEventBgmId = -1; // 서브이벤트 BGM 중복 재생 방지
     // 서브이벤트 체인 길이 제한 제거 - 기획에서 24개 안 넘도록 조절
 
     // 이벤트 매니저 싱글톤
@@ -175,14 +179,48 @@ public class EventManager : MonoBehaviour
 
                 Debug.Log($"[EventManager] 서브 그룹 후보: 전체 {allAvailableGroups.Count}개, 미플레이 {availableGroups.Count}개");
 
-                if (availableGroups.Count > 0)
+                // 가용 그룹이 없으면 전체 데이터에서 폴백 그룹을 구성하여 강제로라도 배치
+                if (availableGroups.Count == 0)
                 {
-                    // 8번째~14번째 사이에 서브이벤트를 배치
-                    int subEventStartIndex = 7; // 8번째 (0-based index)
-                    int subEventEndIndex = 13;  // 14번째 (0-based index)
-                    
-                    // 서브이벤트를 배치할 위치들을 결정 (8~14번째 중에서 랜덤하게 선택)
-                    var subEventPositions = new List<int>();
+                    var fallbackGroups = (DataManager.Instance.FullSubEvents ?? new List<FullSubEventData>())
+                        .GroupBy(e => new { e.SubStoryPac, e.StoryNum })
+                        .Select(g => (packId: g.Key.SubStoryPac, groupId: g.Key.StoryNum))
+                        .OrderBy(x => Guid.NewGuid())
+                        .ToList();
+                    if (fallbackGroups.Count > 0)
+                    {
+                        Debug.LogWarning($"[EventManager] 선택 팩에 유효 그룹이 없어 전체 데이터에서 폴백 그룹을 사용합니다. 총 {fallbackGroups.Count}개");
+                        availableGroups = fallbackGroups;
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[EventManager] 폴백용 서브이벤트 그룹도 없습니다. 데이터 로드를 확인하세요.");
+                    }
+                }
+
+                // 8번째~14번째 사이에 서브이벤트를 배치
+                int subEventStartIndex = 7; // 8번째 (0-based index)
+                int subEventEndIndex = 13;  // 14번째 (0-based index)
+                
+                // 서브이벤트를 배치할 위치들을 결정 (8~14번째 중에서 랜덤하게 선택)
+                var subEventPositions = new List<int>();
+                for (int i = subEventStartIndex; i <= subEventEndIndex; i++)
+                {
+                    if (i < DataManager.Instance.PlayerData.currentPlaylist.Count)
+                    {
+                        subEventPositions.Add(i);
+                    }
+                }
+
+                // 플레이리스트가 짧아 8~14 구간이 비면, 최소 14번째까지 길이 보정 (중복 허용)
+                if (subEventPositions.Count == 0 && DataManager.Instance.PlayerData.currentPlaylist.Count > 0)
+                {
+                    int targetMinCount = Math.Min(subEventEndIndex + 1, totalEventsPerCycle);
+                    while (DataManager.Instance.PlayerData.currentPlaylist.Count < targetMinCount)
+                    {
+                        int last = DataManager.Instance.PlayerData.currentPlaylist[DataManager.Instance.PlayerData.currentPlaylist.Count - 1];
+                        DataManager.Instance.PlayerData.currentPlaylist.Add(last);
+                    }
                     for (int i = subEventStartIndex; i <= subEventEndIndex; i++)
                     {
                         if (i < DataManager.Instance.PlayerData.currentPlaylist.Count)
@@ -190,59 +228,78 @@ public class EventManager : MonoBehaviour
                             subEventPositions.Add(i);
                         }
                     }
-                    
-                    // 서브이벤트 위치를 랜덤하게 섞기
-                    subEventPositions = subEventPositions.OrderBy(x => Guid.NewGuid()).ToList();
-                    
-                    Debug.Log($"[EventManager] 서브이벤트 배치 가능 위치: {string.Join(", ", subEventPositions)}");
+                }
+                
+                // 서브이벤트 위치를 랜덤하게 섞기
+                subEventPositions = subEventPositions.OrderBy(x => Guid.NewGuid()).ToList();
+                
+                Debug.Log($"[EventManager] 서브이벤트 배치 가능 위치: {string.Join(", ", subEventPositions)}");
 
-                    // 셔플된 그룹 목록을 순회하며 서브이벤트 체인을 배치
-                    int positionIndex = 0;
-                    int totalSubEventTurns = 0; // 서브이벤트가 소모할 총 턴 수
-                    
-                    foreach (var selectedPackAndGroup in availableGroups)
+                // 셔플된 그룹 목록을 순회하며 서브이벤트 체인을 배치
+                int positionIndex = 0;
+                int totalSubEventTurns = 0; // 서브이벤트가 소모할 총 턴 수
+                bool anyPlaced = false;
+                
+                foreach (var selectedPackAndGroup in availableGroups)
+                {
+                    if (positionIndex >= subEventPositions.Count)
                     {
-                        if (positionIndex >= subEventPositions.Count)
+                        Debug.Log($"[EventManager] 서브이벤트 배치 위치가 모두 사용됨. 남은 그룹은 건너뜀.");
+                        break;
+                    }
+                    
+                    var subEventChain = GetSubEventChain(selectedPackAndGroup.packId, selectedPackAndGroup.groupId);
+                    if (subEventChain.Count > 0)
+                    {
+                        int targetPosition = subEventPositions[positionIndex];
+                        
+                        // 표준 규칙: 24턴 초과 방지
+                        if (totalSubEventTurns + subEventChain.Count <= totalEventsPerCycle)
                         {
-                            Debug.Log($"[EventManager] 서브이벤트 배치 위치가 모두 사용됨. 남은 그룹은 건너뜀.");
-                            break;
-                        }
-
-                        var subEventChain = GetSubEventChain(selectedPackAndGroup.packId, selectedPackAndGroup.groupId);
-                        if (subEventChain.Count > 0)
-                        {
-                            int targetPosition = subEventPositions[positionIndex];
+                            DataManager.Instance.PlayerData.playedSubEventGroups.Add(selectedPackAndGroup.groupId);
                             
-                            // 서브이벤트 체인이 24개 제한을 초과하지 않는지 확인
-                            // 서브이벤트 체인은 첫 번째 이벤트만 플레이리스트에 배치되고, 나머지는 체인으로 처리됨
-                            // 따라서 체인 길이만큼 턴을 소모하지만 플레이리스트에는 1개만 추가됨
-                            if (totalSubEventTurns + subEventChain.Count <= totalEventsPerCycle)
-                            {
-                                DataManager.Instance.PlayerData.playedSubEventGroups.Add(selectedPackAndGroup.groupId);
-                                
-                                // 해당 위치의 파라미터 이벤트를 서브이벤트로 교체
-                                DataManager.Instance.PlayerData.currentPlaylist[targetPosition] = subEventChain.First().ID;
-                                
-                                totalSubEventTurns += subEventChain.Count;
-                                
-                                Debug.Log($"[EventManager] 서브 이벤트 체인 배치: 팩 {selectedPackAndGroup.packId}, 그룹 {selectedPackAndGroup.groupId} ({subEventChain.Count}턴 소모) - 위치: {targetPosition + 1}번째, 첫 이벤트 ID: {subEventChain.First().ID}, 누적 서브이벤트 턴: {totalSubEventTurns}");
-                                
-                                positionIndex++;
-                            }
-                            else
-                            {
-                                Debug.Log($"[EventManager] 서브 이벤트 체인 배치 건너뜀: 팩 {selectedPackAndGroup.packId}, 그룹 {selectedPackAndGroup.groupId} (추가 시 {totalSubEventTurns + subEventChain.Count}턴으로 {totalEventsPerCycle}턴 초과)");
-                            }
+                            // 해당 위치의 파라미터 이벤트를 서브이벤트로 교체
+                            DataManager.Instance.PlayerData.currentPlaylist[targetPosition] = subEventChain.First().ID;
+                            
+                            totalSubEventTurns += subEventChain.Count;
+                            anyPlaced = true;
+                            
+                            Debug.Log($"[EventManager] 서브 이벤트 체인 배치: 팩 {selectedPackAndGroup.packId}, 그룹 {selectedPackAndGroup.groupId} ({subEventChain.Count}턴 소모) - 위치: {targetPosition + 1}번째, 첫 이벤트 ID: {subEventChain.First().ID}, 누적 서브이벤트 턴: {totalSubEventTurns}");
+                            
+                            positionIndex++;
                         }
                         else
                         {
-                            Debug.LogWarning($"[EventManager] 그룹 {selectedPackAndGroup.groupId} 체인 데이터 없음");
+                            Debug.Log($"[EventManager] 서브 이벤트 체인 배치 건너뜀: 팩 {selectedPackAndGroup.packId}, 그룹 {selectedPackAndGroup.groupId} (추가 시 {totalSubEventTurns + subEventChain.Count}턴으로 {totalEventsPerCycle}턴 초과)");
                         }
                     }
+                    else
+                    {
+                        Debug.LogWarning($"[EventManager] 그룹 {selectedPackAndGroup.groupId} 체인 데이터 없음");
+                    }
                 }
-                else
+
+                // 최후 폴백: 하나도 배치되지 않았다면 강제로 8~14 중 첫 위치에 1개 배치
+                if (!anyPlaced)
                 {
-                    Debug.LogWarning($"[EventManager] 선택된 팩 [{string.Join(", ", selectedPackNumbers)}]에 더 이상 진행할 수 있는 새 서브 이벤트 그룹이 없습니다.");
+                    var forcedChain = (availableGroups.Count > 0)
+                        ? GetSubEventChain(availableGroups[0].packId, availableGroups[0].groupId)
+                        : (DataManager.Instance.FullSubEvents ?? new List<FullSubEventData>()).OrderBy(e => e.ID).ToList();
+
+                    if (forcedChain != null && forcedChain.Count > 0)
+                    {
+                        int fallbackPosition = subEventPositions.Count > 0
+                            ? subEventPositions[0]
+                            : Math.Min(Math.Max(subEventStartIndex, 0), DataManager.Instance.PlayerData.currentPlaylist.Count - 1);
+
+                        DataManager.Instance.PlayerData.currentPlaylist[fallbackPosition] = forcedChain.First().ID;
+                        DataManager.Instance.PlayerData.playedSubEventGroups.Add(forcedChain.First().StoryNum);
+                        Debug.LogWarning($"[EventManager] 강제 배치 수행: 위치 {fallbackPosition + 1}번째, 이벤트 ID {forcedChain.First().ID}");
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[EventManager] 강제 배치 실패: 사용 가능한 서브이벤트 체인을 찾을 수 없습니다.");
+                    }
                 }
             }
         }
@@ -304,6 +361,15 @@ public class EventManager : MonoBehaviour
         Debug.Log($"[PlayNextTurn] 호출됨. 현재 상태: {currentState}, 진행도: {DataManager.Instance.PlayerData.eventPlaylistIndex}/{DataManager.Instance.PlayerData.currentPlaylist.Count} (totalEventsPerCycle: {totalEventsPerCycle})");
         if (currentState == EventManagerState.Idle) return;
 
+        // 특수 이벤트 체인이 진행 중이면 간섭하지 않음
+        if (SpecialEventManager.Instance != null && SpecialEventManager.Instance.IsInSpecialChain)
+        {
+            Debug.Log("[EventManager] 특수 이벤트 체인 진행 중. PlayNextTurn을 보류합니다.");
+            return;
+        }
+
+        // [변경] 특수 이벤트는 사이클 종료 후에만 등장하도록 인터셉트 로직 제거
+
         // InSubEvent 상태일 때는 서브이벤트 체인이 끝나기를 기다려야 함
         if (currentState == EventManagerState.InSubEvent)
         {
@@ -316,6 +382,10 @@ public class EventManager : MonoBehaviour
             if (DataManager.Instance.PlayerData.eventPlaylistIndex >= DataManager.Instance.PlayerData.currentPlaylist.Count)
             {
                 Debug.Log("현재 사이클(챕터)의 모든 이벤트를 완료했습니다.");
+                
+                // Analytics: 장 클리어 로그
+                LogChapterComplete();
+                
                 currentState = EventManagerState.Idle;
                 OnEventCycleCompleted?.Invoke();
                 return;
@@ -338,15 +408,59 @@ public class EventManager : MonoBehaviour
             if (isSubByData)
             {
                 Debug.Log($"서브이벤트(ID: {eventId}) 발생.");
+                // 파라미터에서 서브로 넘어갈 때만 즉시 정지
+                if (!lastEventWasSubEvent && AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.StopBGM();
+                }
                 DisplaySubEvent(eventId);
             }
             else
             {
                 Debug.Log($"파라미터 이벤트(ID: {eventId}) 발생.");
+                // 서브에서 파라미터로 전환될 때만 즉시 정지 후 CommandCenter 재생
+                if (lastEventWasSubEvent && AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.StopBGM();
+                    AudioManager.Instance.PlayBGMByName("CommandCenter");
+                    lastSubEventBgmId = -1;
+                }
                 OnParameterEventReady?.Invoke(eventId);
                 DataManager.Instance.PlayerData.completedEventIds.Add(eventId);
+                lastEventWasSubEvent = false;
+                
+                // Analytics: 파라미터 이벤트 종료 로그
+                LogParameterEventComplete();
             }
         }
+    }
+    
+    /// <summary>
+    /// 장 클리어 시 Analytics 로그 전송
+    /// </summary>
+    private void LogChapterComplete()
+    {
+        if (DataManager.Instance?.PlayerData == null) return;
+        
+        int playthrough = DataManager.Instance.PlayerData.playthroughCount;
+        int chapter = DataManager.Instance.PlayerData.currentChapter;
+        
+        GameEventLogger.LogFinishChapter(playthrough, chapter);
+        Debug.Log($"[EventManager] Analytics - 장 클리어: {playthrough}회차 {chapter}장");
+    }
+    
+    /// <summary>
+    /// 파라미터 이벤트 종료 시 Analytics 로그 전송
+    /// </summary>
+    private void LogParameterEventComplete()
+    {
+        if (DataManager.Instance?.PlayerData == null) return;
+        
+        int playthrough = DataManager.Instance.PlayerData.playthroughCount;
+        int chapter = DataManager.Instance.PlayerData.currentChapter;
+        
+        GameEventLogger.LogFinishParameter(playthrough, chapter);
+        Debug.Log($"[EventManager] Analytics - 파라미터 이벤트 종료: {playthrough}회차 {chapter}장");
     }
 
     // (표기용 보조 메서드 없음 - 원상복구)
@@ -373,9 +487,46 @@ public class EventManager : MonoBehaviour
         var data = DataManager.Instance.FullSubEvents.FirstOrDefault(e => e.ID == index);
         if (data != null)
         {
+            // 서브이벤트 음향 재생 (중복 방지)
+            PlaySubEventAudio(data);
+            
             OnSubEventReady?.Invoke(data);
             Debug.Log($"서브 이벤트 표시: (Index: {data.ID})");
             currentState = EventManagerState.InSubEvent;
+            lastEventWasSubEvent = true;
+        }
+    }
+
+    /// <summary>
+    /// 서브이벤트 데이터에서 음향을 재생합니다.
+    /// </summary>
+    /// <param name="eventData">서브이벤트 데이터</param>
+    private void PlaySubEventAudio(FullSubEventData eventData)
+    {
+        if (eventData == null) return;
+
+        // BGM 재생
+        if (eventData.bgData != null && eventData.bgData.BG_ID != 0)
+        {
+            if (AudioManager.Instance != null)
+            {
+                if (lastSubEventBgmId != eventData.bgData.BG_ID)
+                {
+                    AudioManager.Instance.PlayBGMByID(eventData.bgData.BG_ID);
+                    lastSubEventBgmId = eventData.bgData.BG_ID;
+                    Debug.Log($"[EventManager] 서브이벤트 BGM 재생: {eventData.bgData.BGName} (ID: {eventData.bgData.BG_ID})");
+                }
+            }
+        }
+
+        // SFX 재생
+        if (eventData.sfxData != null && eventData.sfxData.SFX_ID != 0)
+        {
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlaySFXByID(eventData.sfxData.SFX_ID);
+                Debug.Log($"[EventManager] 서브이벤트 SFX 재생: {eventData.sfxData.SFXName} (ID: {eventData.sfxData.SFX_ID})");
+            }
         }
     }
 
@@ -392,7 +543,7 @@ public class EventManager : MonoBehaviour
         {
             Debug.LogError($"[EventManager] OnSubEventChoiceSelected: ID {currentSubEventIndex}에 해당하는 서브이벤트 데이터를 찾을 수 없습니다.");
             currentState = EventManagerState.InCycle;
-            PlayNextTurn();
+            StartCoroutine(TransitionFromSubEventToParameter());
             return;
         }
 
@@ -401,7 +552,7 @@ public class EventManager : MonoBehaviour
         {
             Debug.LogError($"[EventManager] OnSubEventChoiceSelected: 선택된 선택지가 null입니다. (isLeftChoice: {isLeftChoice})");
             currentState = EventManagerState.InCycle;
-            PlayNextTurn();
+            StartCoroutine(TransitionFromSubEventToParameter());
             return;
         }
 
@@ -423,7 +574,7 @@ public class EventManager : MonoBehaviour
             Debug.Log("[EventManager] 플레이리스트 끝에 도달했습니다. 서브이벤트 체인을 종료합니다.");
             subEventChainLength = 0; // 체인 길이 리셋
             currentState = EventManagerState.InCycle;
-            PlayNextTurn();
+            StartCoroutine(TransitionFromSubEventToParameter());
             return;
         }
 
@@ -444,7 +595,7 @@ public class EventManager : MonoBehaviour
                 Debug.LogWarning($"[EventManager] 다음 이벤트 ID {nextEventID}에 해당하는 데이터를 찾을 수 없습니다. 체인을 종료합니다.");
                 subEventChainLength = 0; // 체인 길이 리셋
                 currentState = EventManagerState.InCycle;
-                PlayNextTurn();
+                StartCoroutine(TransitionFromSubEventToParameter());
             }
         }
         else
@@ -452,8 +603,8 @@ public class EventManager : MonoBehaviour
             Debug.Log("[EventManager] 서브 이벤트 체인의 마지막입니다. 일반 이벤트로 돌아갑니다.");
             subEventChainLength = 0; // 체인 길이 리셋
             currentState = EventManagerState.InCycle;
-            // 서브이벤트 체인이 끝났으므로 다음 일반 이벤트로 진행
-            PlayNextTurn();
+            // 서브이벤트 체인이 끝났으므로 잠시 대기 후 다음 일반 이벤트로 진행
+            StartCoroutine(TransitionFromSubEventToParameter());
         }
     }
 
@@ -524,6 +675,20 @@ public class EventManager : MonoBehaviour
 
         // 다음 서브이벤트 표시
         DisplaySubEvent(nextEventID);
+    }
+
+    private IEnumerator TransitionFromSubEventToParameter()
+    {
+        // 서브이벤트 종료: 서브이벤트 BGM 즉시 정지
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.StopBGM();
+        }
+        // 서브이벤트 종료 시 UI에 페이드 아웃 요청 (기존 연출 유지: 0.5s)
+        float fadeDuration = 0.5f;
+        OnSubEventExitFadeRequested?.Invoke(fadeDuration);
+        yield return new WaitForSeconds(fadeDuration);
+        PlayNextTurn();
     }
 
     /// <summary>

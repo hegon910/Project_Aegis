@@ -21,9 +21,9 @@ public class AchievementCard : MonoBehaviour
     [SerializeField] private TextMeshProUGUI rewardButtonText;
     
     [Header("색상 설정")]
-    [SerializeField] private Color completedCardColor = Color.yellow;
-    [SerializeField] private Color incompleteCardColor = Color.gray;
-    [SerializeField] private Color lockedCardColor = Color.black;
+    [SerializeField] private Color completedCardColor = new Color(1f, 0.8f, 0f, 1f); // 노란색
+    [SerializeField] private Color incompleteCardColor = new Color(0.5f, 0.5f, 0.5f, 1f); // 회색
+    [SerializeField] private Color lockedCardColor = new Color(0.2f, 0.2f, 0.2f, 1f); // 어두운 회색
     
     // 현재 표시 중인 업적 데이터
     public AchievementData Achievement { get; private set; }
@@ -33,6 +33,17 @@ public class AchievementCard : MonoBehaviour
     
     private void Awake()
     {
+        // cardBackground가 할당되지 않은 경우 자동으로 찾기
+        if (cardBackground == null)
+        {
+            cardBackground = GetComponent<Image>();
+            if (cardBackground == null)
+            {
+                // Image 컴포넌트가 없으면 첫 번째 자식의 Image를 찾기
+                cardBackground = GetComponentInChildren<Image>();
+            }
+        }
+        
         if (rewardButton != null)
         {
             rewardButton.onClick.AddListener(OnRewardButtonClicked);
@@ -159,42 +170,55 @@ public class AchievementCard : MonoBehaviour
         // 카드 배경색 설정
         if (cardBackground != null)
         {
+            Color targetColor;
+            Color textColor = Color.white; // 기본 텍스트 색상
+            
             if (!Achievement.isUnlocked)
             {
-                cardBackground.color = lockedCardColor;
+                targetColor = lockedCardColor;
+                textColor = Color.gray;
+                Debug.Log($"[AchievementCard] {Achievement.title} - 잠김 상태: {targetColor}");
             }
             else if (Achievement.isCompleted)
             {
-                cardBackground.color = completedCardColor;
+                targetColor = completedCardColor; // 노란색
+                textColor = Color.black; // 노란색 배경에는 검은색 글자
+                Debug.Log($"[AchievementCard] {Achievement.title} - 완료 상태 (노란색): {targetColor}");
             }
             else
             {
-                cardBackground.color = incompleteCardColor;
+                targetColor = incompleteCardColor; // 회색
+                textColor = Color.white; // 회색 배경에는 흰색 글자
+                Debug.Log($"[AchievementCard] {Achievement.title} - 미완료 상태 (회색): {targetColor}");
+            }
+            
+            cardBackground.color = targetColor;
+            
+            // 텍스트 색상 설정
+            if (achievementTitle != null)
+            {
+                var titleColor = textColor;
+                titleColor.a = Achievement.isUnlocked ? 1.0f : 0.5f;
+                achievementTitle.color = titleColor;
+            }
+            
+            if (achievementDescription != null)
+            {
+                var descColor = textColor;
+                descColor.a = Achievement.isUnlocked ? 1.0f : 0.5f;
+                achievementDescription.color = descColor;
             }
         }
-        
-        // 텍스트 알파값 조정 (잠긴 상태)
-        float textAlpha = Achievement.isUnlocked ? 1.0f : 0.5f;
-        
-        if (achievementTitle != null)
+        else
         {
-            var titleColor = achievementTitle.color;
-            titleColor.a = textAlpha;
-            achievementTitle.color = titleColor;
-        }
-        
-        if (achievementDescription != null)
-        {
-            var descColor = achievementDescription.color;
-            descColor.a = textAlpha;
-            achievementDescription.color = descColor;
+            Debug.LogError($"[AchievementCard] cardBackground가 null입니다! {Achievement?.title}");
         }
     }
     
     /// <summary>
     /// 보상 버튼 클릭 이벤트
     /// </summary>
-    private void OnRewardButtonClicked()
+    public void OnRewardButtonClicked()
     {
         if (Achievement.isCompleted && !Achievement.isRewardClaimed)
         {
@@ -217,4 +241,5 @@ public class AchievementCard : MonoBehaviour
     {
         UpdateCardDisplay();
     }
+    
 }

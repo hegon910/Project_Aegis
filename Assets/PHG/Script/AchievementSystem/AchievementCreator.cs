@@ -316,7 +316,7 @@ public class AchievementCreator : ScriptableObject
             achievementId = "event_christmas_truce_success",
             title = "평화의 사도",
             description = "크리스마스 휴전 이벤트를 성공적으로 완료했습니다.",
-            type = AchievementType.Event,
+            type = AchievementType.MainStory,
             category = AchievementCategory.Special,
             condition = new AchievementCondition
             {

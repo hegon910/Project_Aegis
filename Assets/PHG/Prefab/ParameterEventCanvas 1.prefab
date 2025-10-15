@@ -316,11 +316,11 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 8623274424159911619}
+  m_Father: {fileID: 5188088539734817211}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 350, y: 48}
+  m_AnchoredPosition: {x: 350, y: 0}
   m_SizeDelta: {x: 101.75, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6068361681510859590
@@ -701,6 +701,9 @@ MonoBehaviour:
   controller: {fileID: 616971157441215651}
   attackChance: 0.5
   rank: 1
+  enemyInfoText: {fileID: 0}
+  attackHints: []
+  defendHints: []
   attackVsAttack:
     playerDamage: 1
     playerKnockback: 1
@@ -716,6 +719,9 @@ MonoBehaviour:
     playerKnockback: 0
     enemyBaseDamage: 0
     enemyKnockback: 1
+  battleLaneLength: 16
+  playerStartPos: 6
+  maxTurns: 30
 --- !u!1 &859398253955207532
 GameObject:
   m_ObjectHideFlags: 0
@@ -1130,7 +1136,6 @@ RectTransform:
   - {fileID: 3197453189931074303}
   - {fileID: 2100063377290375346}
   - {fileID: 5019050093079324219}
-  - {fileID: 4024120497922043929}
   - {fileID: 717650701577902951}
   - {fileID: 2715221951802708321}
   - {fileID: 1566461371713476901}
@@ -1472,7 +1477,6 @@ GameObject:
   - component: {fileID: 3384887704020671628}
   - component: {fileID: 4068988854389273377}
   - component: {fileID: 2212717853916021068}
-  - component: {fileID: 2430316248673887405}
   m_Layer: 5
   m_Name: UpperPanelSafeArea
   m_TagString: Untagged
@@ -1543,18 +1547,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &2430316248673887405
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1030354009583470899}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6265ab5be247ee04fa0b0dc6590b9c5d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1137499147088897336
 GameObject:
   m_ObjectHideFlags: 0
@@ -1970,15 +1962,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b40f4862590fca4e8bc951ed892f5bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  turnMgr: {fileID: 6661931244282724803}
-  player: {fileID: 480180370959937788}
-  enemy: {fileID: 3002651465180752887}
+  warturnMgr: {fileID: 0}
+  warplayer: {fileID: 0}
   choiceCard: {fileID: 0}
-  turnTxt: {fileID: 7097742081640599512}
-  pHpTxt: {fileID: 107826815208416028}
-  pShieldTxt: {fileID: 6659644525071538459}
-  eNameTxt: {fileID: 4435924107876431734}
-  eHpTxt: {fileID: 7037602679941107613}
+  turnText: {fileID: 0}
+  playerHpNum: {fileID: 0}
+  playerShieldNum: {fileID: 0}
+  enemyNameText: {fileID: 0}
+  enemyHpNum: {fileID: 0}
+  enemyInfoText: {fileID: 0}
   skillNameText: {fileID: 8763320040676144014}
   skillCooldownText: {fileID: 5754046675029550143}
   warSlider: {fileID: 5305706290718550263}
@@ -2014,8 +2006,8 @@ MonoBehaviour:
     m_NumColorKeys: 2
     m_NumAlphaKeys: 2
   skillInfoButton: {fileID: 0}
-  skillDescriptionPanel: {fileID: 0}
-  skillDescriptionText: {fileID: 0}
+  skillInfoPanel: {fileID: 0}
+  skillInfoText: {fileID: 0}
   actionFeedbackText: {fileID: 0}
 --- !u!114 &7027850883725066764
 MonoBehaviour:
@@ -2030,8 +2022,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cardRect: {fileID: 9043630300150989689}
-  leftIndicatorImage: {fileID: 1974358134029418799}
-  rightIndicatorImage: {fileID: 8452800394962581030}
+  leftcardImage: {fileID: 0}
+  rightcardImage: {fileID: 0}
   activationDistance: 150
 --- !u!1 &1729254385405656043
 GameObject:
@@ -2740,7 +2732,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ground: {fileID: 4932246188284412859}
   player: {fileID: 480180370959937788}
-  enemy: {fileID: 3002651465180752887}
+  chapterEnemies: []
   choiceCard: {fileID: 0}
   warHUD: {fileID: 0}
   maxTurns: 30
@@ -2989,6 +2981,8 @@ MonoBehaviour:
   currentShield: 0
   equippedSkillID: BoobyTrap
   skillDatabase: {fileID: 11400000, guid: 1bf50a35dc2094643aeeb527a7aef982, type: 2}
+  shieldOnEffectPrefab: {fileID: 0}
+  shieldOffEffectPrefab: {fileID: 0}
 --- !u!1 &2363253244469069076
 GameObject:
   m_ObjectHideFlags: 0
@@ -6790,7 +6784,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &5019050093079324219
 RectTransform:
   m_ObjectHideFlags: 0
@@ -6803,6 +6797,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 622637877474599599}
   - {fileID: 3766911693546039182}
   - {fileID: 9030965341397496621}
   - {fileID: 127709568992784887}
@@ -6876,6 +6871,7 @@ MonoBehaviour:
     choicePreviewImage: {fileID: 1276753841405349895}
     choicePreviewText: {fileID: 1195359249503214492}
     mainStoryDimmerPanel: {fileID: 2956484690858964560}
+    backgroundImage: {fileID: 6187652138248938008}
   typingSpeed: 0.05
 --- !u!1 &5248878612286498699
 GameObject:
@@ -8756,6 +8752,8 @@ MonoBehaviour:
   parameterUIController: {fileID: 261896329515295652}
   dimmerPanel: {fileID: 8791509328285450015}
   subEventDimmerPanel: {fileID: 8791509328285450015}
+  backgroundImage: {fileID: 0}
+  skillPromptOverlay: {fileID: 0}
   tutorialPanel: {fileID: 5837603757455820365}
   parameterTutoText: {fileID: 0}
   swipeTutorialImage: {fileID: 0}
@@ -8914,6 +8912,7 @@ RectTransform:
   - {fileID: 2411792136116335542}
   - {fileID: 3847447744472205408}
   - {fileID: 7851357001841526999}
+  - {fileID: 4024120497922043929}
   - {fileID: 7304928484618461728}
   - {fileID: 7844530649275513356}
   m_Father: {fileID: 0}
@@ -10717,6 +10716,81 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!1 &7330926035203794170
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 622637877474599599}
+  - component: {fileID: 5106171208110236797}
+  - component: {fileID: 6187652138248938008}
+  m_Layer: 5
+  m_Name: Image
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &622637877474599599
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7330926035203794170}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5019050093079324219}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 1280, y: 7}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &5106171208110236797
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7330926035203794170}
+  m_CullTransparentMesh: 1
+--- !u!114 &6187652138248938008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7330926035203794170}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

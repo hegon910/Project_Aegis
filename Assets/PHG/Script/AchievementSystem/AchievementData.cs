@@ -43,8 +43,8 @@ public enum AchievementType
     Ending,         // 엔딩 달성
     Playthrough,    // 회차 시작
     Battle,         // 전투 관련
-    Event,          // 이벤트 관련
-    Story,          // 스토리 진행
+    MainStory,      // 메인 스토리
+    SubStory,       // 서브 스토리
     Collection      // 수집 관련
 }
 
@@ -55,6 +55,7 @@ public enum AchievementCategory
 {
     All,
     General,        // 일반 업적
+    True,           // 진 엔딩
     Hidden,         // 히든 업적
     Special         // 특별 업적
 }

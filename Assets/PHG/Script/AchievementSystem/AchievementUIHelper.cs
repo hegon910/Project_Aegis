@@ -114,19 +114,19 @@ public class AchievementUIHelper : MonoBehaviour
     }
     
     /// <summary>
-    /// 이벤트 업적 UI 열기
+    /// 메인 스토리 업적 UI 열기
     /// </summary>
-    public void OpenEventAchievements()
+    public void OpenMainStoryAchievements()
     {
-        OpenAchievementUI(AchievementType.Event);
+        OpenAchievementUI(AchievementType.MainStory);
     }
     
     /// <summary>
-    /// 스토리 업적 UI 열기
+    /// 서브 스토리 업적 UI 열기
     /// </summary>
-    public void OpenStoryAchievements()
+    public void OpenSubStoryAchievements()
     {
-        OpenAchievementUI(AchievementType.Story);
+        OpenAchievementUI(AchievementType.SubStory);
     }
     
     /// <summary>
@@ -137,3 +137,4 @@ public class AchievementUIHelper : MonoBehaviour
         OpenAchievementUI(AchievementType.Collection);
     }
 }
+

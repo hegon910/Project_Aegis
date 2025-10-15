@@ -70,10 +70,15 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TMPro.TextMeshProUGUI subEventSelectedText;
     [SerializeField] private GameObject warTutorialPanel;
     [SerializeField] private GameObject achievementPanel;
+        [SerializeField] private ShopUI shopUI;
 
     [Header("컷신 시스템")]
     [SerializeField] private CutsceneManager cutsceneManager;
     [SerializeField] private CutsceneData chapter1OpeningCutscene;
+    // 최소 변경: 지휘관별 오프닝 컷씬(SO) 선택 지원. 미지정 시 chapter1OpeningCutscene로 폴백
+    [SerializeField] private CutsceneData openingCutscene_Devost;
+    [SerializeField] private CutsceneData openingCutscene_Wille;
+    [SerializeField] private CutsceneData openingCutscene_Risard;
     [SerializeField] private List<CutsceneData> chapterMidCutscenes;
     [SerializeField] private List<CutsceneData> chapterEndingCutscenes;
     [SerializeField] private CutsceneData finalEndingCutscene;
@@ -111,6 +116,7 @@ public class GameManager : MonoBehaviour
     
     [Header("Guest Login Popup System")]
     [SerializeField] private PopupController popupController;
+
 
     private void Awake()
     {
@@ -162,6 +168,9 @@ public class GameManager : MonoBehaviour
         {
             Debug.LogError("[GameManager] EventManager.Instance가 여전히 null입니다. EventManager가 씬에 존재하는지 확인하세요.");
         }
+
+        // [변경] 특수 이벤트 매니저는 씬/프리팹에 미리 배치하여 인스펙터에서 트리거를 설정합니다.
+        // (자동 생성 로직 제거)
         
         if (loadingPanel != null)
         {
@@ -172,7 +181,7 @@ public class GameManager : MonoBehaviour
 
         ChangeState(GameState.Title);
         
-        // FirebaseManager 초기화 완료를 기다린 후 로그인 처리
+        // 로딩 완료 후 로그인 처리 시작
         if (FirebaseManager.Instance != null)
         {
             // FirebaseManager가 이미 초기화되어 있으면 바로 로그인 처리
@@ -229,10 +238,37 @@ public class GameManager : MonoBehaviour
     //서브이벤트 패널을 열고 닫을 함수
     public void ToggleSubEventPanel(bool isOpen)
     {
-        // [수정] 이 함수는 이제 단순히 패널을 켜고 끄는 역할만 합니다.
+        if (isOpen)
+        {
+            // 패널을 열 때는 검증 없이 바로 열기
+            if (subEventSelectPanel != null)
+            {
+                subEventSelectPanel.SetActive(true);
+            }
+        }
+        else
+        {
+            // 패널을 닫을 때는 서브이벤트팩 선택 검증
+            var storyPackManager = FindObjectOfType<StoryPackManager>();
+            if (storyPackManager != null && !storyPackManager.CanClosePanel())
+            {
+                // 검증 실패 시 패널을 닫지 않음
+                return;
+            }
+            
+            if (subEventSelectPanel != null)
+            {
+                subEventSelectPanel.SetActive(false);
+            }
+        }
+    }
+
+    // 서브이벤트 패널을 검증 없이 직접 닫는 함수 (StoryPackManager에서 사용)
+    public void CloseSubEventPanelDirectly()
+    {
         if (subEventSelectPanel != null)
         {
-            subEventSelectPanel.SetActive(isOpen);
+            subEventSelectPanel.SetActive(false);
         }
     }
 
@@ -249,6 +285,15 @@ public class GameManager : MonoBehaviour
             case GameState.CommanderSelection: nextState = GameState.PlayingOpeningCutscene; break;
             case GameState.PlayingOpeningCutscene: nextState = GameState.InStory; break;
             case GameState.InStory:
+                // Analytics: 메인 스토리 이벤트 종료 로그
+                if (DataManager.Instance?.PlayerData != null)
+                {
+                    int playthrough = DataManager.Instance.PlayerData.playthroughCount;
+                    int chapter = CurrentChapter;
+                    GameEventLogger.LogFinishMainStory(playthrough, chapter);
+                    Debug.Log($"[GameManager] Analytics - 메인 스토리 종료: {playthrough}회차 {chapter}장");
+                }
+                
                 // 1장은 스토리가 먼저이므로, 다음은 이벤트 사이클입니다.
                 if (CurrentChapter == 1)
                 {
@@ -293,39 +338,88 @@ public class GameManager : MonoBehaviour
                 }
                 break;
             case GameState.PlayingEndingCutscene:
+                // Analytics: 회차 클리어 로그 (엔딩 직전)
+                if (DataManager.Instance?.PlayerData != null)
+                {
+                    int completedPlaythrough = DataManager.Instance.PlayerData.playthroughCount;
+                    GameEventLogger.LogFinishStory(completedPlaythrough);
+                    Debug.Log($"[GameManager] Analytics - 회차 클리어: {completedPlaythrough}회차");
+                }
+                
+                // 엔딩 분기 규칙 - 기획서 기준 일치화
+                const int NORMAL_ENDING_ID = 1001; // 1회차 일반 엔딩 (EndingString 1001)
+                const int TRUE_ENDING_ID_2ND = 1002; // 2회차 진엔딩 (EndingString 1002)
+                const int TRUE_ENDING_ID_3RD = 1003; // 3회차 진엔딩 (EndingString 1003)
+
                 var playerData = DataManager.Instance.PlayerData;
 
-                // 1. MultiEndingSystem을 통해 최종 엔딩 데이터를 가져옵니다.
+                // MultiEndingSystem을 통해 최종 엔딩 데이터를 가져옵니다.
                 EndingData determinedEnding = MultiEndingSystem.Instance.GetFinalEndingData();
                 FullEndingData determinedFullData = MultiEndingSystem.Instance.GetFullEndingData(determinedEnding);
 
                 int determinedEndingId = -1;
                 if (determinedFullData != null)
                 {
-                    // 2. 해당 엔딩의 '고유 ID'를 가져옵니다.
+                    // 해당 엔딩의 '고유 ID'를 가져옵니다.
                     determinedEndingId = (int)determinedFullData.ID;
                 }
                 else
                 {
                     // MultiEndingSystem이 엔딩을 결정하지 못했을 경우의 안전장치
-                    Debug.LogError("[GameManager] MultiEndingSystem에서 엔딩 데이터를 가져오지 못했습니다. 기본 엔딩 ID(1)를 사용합니다.");
-                    determinedEndingId = 1; // 예: 일반 엔딩 ID
+                    // 기존 상수 기반 ID 사용으로 폴백
+                    Debug.LogWarning("[GameManager] MultiEndingSystem에서 엔딩 데이터를 가져오지 못했습니다. 기존 상수 기반 시스템으로 폴백합니다.");
+                    var endingType = MultiEndingSystem.Instance?.DetermineEndingType() ?? EndingType.General;
+                    var endingRoute = MultiEndingSystem.Instance?.DetermineEndingRoute() ?? EndingRoute.Truce;
+
+                    if (playerData.playthroughCount == 1)
+                    {
+                        determinedEndingId = NORMAL_ENDING_ID;
+                    }
+                    else if (playerData.playthroughCount == 2)
+                    {
+                        // 기획: 2회차 +4점 이상 AND 승리 루트일 때 진엔딩
+                        if (endingType == EndingType.True && endingRoute == EndingRoute.Victory)
+                        {
+                            determinedEndingId = TRUE_ENDING_ID_2ND;
+                        }
+                        else
+                        {
+                            determinedEndingId = NORMAL_ENDING_ID;
+                        }
+                    }
+                    else // 3회차 이상: MultiEndingSystem의 True/Hidden 기준 사용
+                    {
+                        if (endingType == EndingType.True || endingType == EndingType.Hidden)
+                        {
+                            determinedEndingId = TRUE_ENDING_ID_3RD;
+                        }
+                        else
+                        {
+                            determinedEndingId = NORMAL_ENDING_ID;
+                        }
+                    }
                 }
 
-                // 3. 결정된 '고유 ID'를 기록합니다.
+                // 결정된 '고유 ID'를 기록합니다.
                 DataManager.Instance.RecordEnding(determinedEndingId);
                 PlaythroughHistory.Instance.RecordEndingCompletion(determinedEndingId);
 
-
-                // 4. 이제 기록된 lastEndingId와 엔딩의 '타입'을 기반으로 분기 로직을 실행합니다.
+                // 이제 기록된 lastEndingId와 엔딩의 '타입'을 기반으로 분기 로직을 실행합니다.
                 EndingType finalEndingType = determinedEnding?.endingType ?? EndingType.General;
 
-                // 2회차에서 진엔딩을 못 봤다면 2회차를 다시 시작
+                // 회차 진행/리셋 처리 로직 - 두 시스템의 장점을 결합
                 if (playerData.playthroughCount == 2 && finalEndingType != EndingType.True)
                 {
                     Debug.Log($"[분기] 2회차, 진엔딩이 아니므로 2회차를 다시 시작합니다. 달성한 엔딩: {finalEndingType}");
                     // 회차를 증가시키지 않고 현재 챕터만 1로 리셋
                     playerData.currentChapter = 1;
+                    playerData.currentGameState = GameState.MainMenu;
+                    playerData.completedEventIds.Clear();
+                    playerData.eventPlaylistIndex = 0;
+                    playerData.currentPlaylist.Clear();
+                    // 선택 카운트 리셋은 유지
+                    playerData.realEnding2ChoiceCount = 0;
+                    Debug.Log("[분기] 2회차 재시작을 위한 상태 초기화 완료");
                 }
                 // 3회차 이상에서 히든엔딩을 봤다면 게임 완전 초기화
                 else if (playerData.playthroughCount >= 3 && finalEndingType == EndingType.Hidden)
@@ -335,18 +429,23 @@ public class GameManager : MonoBehaviour
                     DataManager.Instance.StartNewGame();
                     ResetAllGameData();
                     nextState = GameState.CommanderSelection;
-                    break; // 아래의 공통 로직을 건너뛰고 바로 상태 변경
+                    break;
                 }
                 else
                 {
                     // 일반적인 다음 회차 진행
                     playerData.playthroughCount++;
                     playerData.currentChapter = 1;
+                    playerData.currentGameState = GameState.MainMenu;
+                    
+                    // Analytics: 다음 회차 진입 로그
+                    GameEventLogger.LogEnterStory(playerData.playthroughCount);
+                    Debug.Log($"[GameManager] Analytics - 다음 회차 진입: {playerData.playthroughCount}회차");
                 }
 
                 hasShownWarTutorialThisPlaythrough = false;
                 EventManager.Instance.ResetEventManagerState();
-                nextState = GameState.CommanderSelection;
+                nextState = GameState.MainMenu;
                 break;
         }
 
@@ -379,6 +478,18 @@ public class GameManager : MonoBehaviour
         optionCanvas.SetActive(newState == GameState.GamePaused);
         gameOverPanel.SetActive(false);
 
+        // 메인화면으로 이동할 때 BGM 처리
+        if (newState == GameState.MainMenu || newState == GameState.Title || newState == GameState.Login)
+        {
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.StopBGM();
+                Debug.Log("[GameManager] 메인화면으로 이동하여 BGM을 중단했습니다.");
+                
+                // 메인메뉴 상태일 때는 BGM을 재생하지 않음 (메인 스토리에서 재생됨)
+            }
+        }
+
         // 이어하기 복원 직후에는 어떤 튜토리얼도 표시하지 않음 (한 번만 동작)
         if (!suppressTutorialOnce)
         {
@@ -399,11 +510,20 @@ public class GameManager : MonoBehaviour
         {
             if (tutorialPanel != null) tutorialPanel.SetActive(false);
             if (tutorialText != null) tutorialText.SetActive(false);
-            if (parameterTutorialPanel != null) parameterTutorialPanel.SetActive(false);
+            // 파라미터 이벤트는 함부로 비활성화하지 않도록 보호
+            // if (parameterTutorialPanel != null) parameterTutorialPanel.SetActive(false);
         }
 
         // 한 프레임 동안만 억제하도록 플래그 해제
         if (suppressTutorialOnce) suppressTutorialOnce = false;
+        
+        // MainMenu 상태일 때 이어하기 버튼 활성화
+        if (newState == GameState.MainMenu && continueButton != null)
+        {
+            bool hasSaveData = DataManager.Instance != null && DataManager.Instance.CheckIfSaveDataExists();
+            continueButton.gameObject.SetActive(hasSaveData);
+            Debug.Log($"[GameManager] MainMenu 상태에서 이어하기 버튼 설정: {hasSaveData}");
+        }
     }
     // 팩 선택 온 클릭 이벤트 (다중 선택 지원)
     public void SelectStoryPack(int packNumber)
@@ -452,6 +572,14 @@ public class GameManager : MonoBehaviour
     public void ChangeState(GameState newState)
     {
           if (newState == currentGameState) return;
+        // 파라미터 이벤트 사이클에서 벗어날 때(전투/컷신/결과 등) BGM 즉시 정지
+        if (currentGameState == GameState.InEventCycle && newState != GameState.InEventCycle)
+        {
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.StopBGM();
+            }
+        }
         UnsubscribeFromCurrentStateEvent();
 
         currentGameState = newState;
@@ -461,16 +589,18 @@ public class GameManager : MonoBehaviour
         OnGameStateChanged?.Invoke(newState);
 
         SetUIForState(newState);
-        if (newState == GameState.MainMenu)
-        {
-            continueButton.gameObject.SetActive(DataManager.Instance.CheckIfSaveDataExists());
-        }
         if (newState == GameState.InBattle)
         {
             Debug.Log(battleTurnManager == null ? "오류: battleTurnManager 참조가 없습니다!" : "1단계 OK: battleTurnManager 참조 정상");
         }
 
         Debug.Log($"[GameManager] 가 바라보는 WarTurnManager ID: {battleTurnManager.GetInstanceID()}");
+        
+        // 안전 가드: battleTurnManager가 null일 수 있으므로 NRE 방지
+        if (battleTurnManager != null)
+        {
+            Debug.Log($"[GameManager] 가 바라보는 WarTurnManager ID: {battleTurnManager.GetInstanceID()}");
+        }
         switch (newState)
         {
             case GameState.Login:
@@ -488,11 +618,15 @@ public class GameManager : MonoBehaviour
                 break;
             case GameState.PlayingOpeningCutscene:
                 CutsceneManager.OnCutsceneFinished += OnStateFinished;
-                cutsceneManager.StartCutscene(chapter1OpeningCutscene);
+                {
+                    var opening = GetOpeningCutsceneForActiveCommander();
+                    cutsceneManager.StartCutscene(opening);
+                }
                 break;
             case GameState.InEventCycle:
                 if (cardController != null) cardController.choiceHandler = uiFlowSimulator;
-                EventManager.OnEventCycleCompleted += OnStateFinished;
+                // 사이클 완료 시 특수 이벤트를 우선 실행한 뒤 컷신으로 진행
+                EventManager.OnEventCycleCompleted += OnEventCycleCompleted_Handle;
 
                 if (uiFlowSimulator != null)
                 {
@@ -506,6 +640,12 @@ public class GameManager : MonoBehaviour
                 mainScenarioManager.BeginScenarioFromStart();
                 break;
             case GameState.PlayingChapterEndCutscene:
+                // 배틀 컷신 시작 전 메인 스토리 BGM 정지
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.StopBGM();
+                    Debug.Log("[GameManager] 배틀 컷신 시작: 메인 스토리 BGM 정지");
+                }
                 CutsceneManager.OnCutsceneFinished += OnStateFinished;
                 int chapterIndex = CurrentChapter - 1;
                 if (chapterMidCutscenes != null && chapterIndex < chapterMidCutscenes.Count && chapterMidCutscenes[chapterIndex] != null)
@@ -514,6 +654,13 @@ public class GameManager : MonoBehaviour
                     OnStateFinished();
                 break;
             case GameState.InBattle:
+                // 배틀 BGM 재생 (배틀 전용 음악 재생)
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.StopBGM();
+                    AudioManager.Instance.PlayBGMByName("BattleMusic");
+                    Debug.Log("[GameManager] 배틀 시작: 배틀 음악 재생");
+                }
                 if (DataManager.Instance?.PlayerData != null &&
                     DataManager.Instance.PlayerData.playthroughCount == 1 &&
                     CurrentChapter == 1 &&
@@ -522,11 +669,21 @@ public class GameManager : MonoBehaviour
                     if (warTutorialPanel != null) warTutorialPanel.SetActive(true);
                 }
                 battleTurnManager.ResetForNewBattle();
-                battleTurnManager.OnBattleEnd += HandleBattleEnd;
+                // 전투 종료 시 결과 화면으로 진입하도록 이벤트 구독 복구
+                if (battleTurnManager != null)
+                {
+                    battleTurnManager.OnBattleEnd += HandleBattleEnd;
+                }
                 Debug.Log("2단계 OK: GameManager가 OnBattleEnd 신호를 구독했습니다.");
                 break;
             // InBattleResult 상태에 대한 로직 추가 (현재는 UI 표시 외에 특별한 동작 없음)
             case GameState.InBattleResult:
+                // 배틀 종료 후 배틀 음악 정지
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.StopBGM();
+                    Debug.Log("[GameManager] 배틀 결과 화면: 배틀 음악 정지");
+                }
                 // 이 상태는 UI 버튼 클릭을 통해 다음 상태로 진행되므로, 여기서는 대기합니다.
                 break;
             case GameState.InChapterResult:
@@ -534,57 +691,53 @@ public class GameManager : MonoBehaviour
                 StartDetailedResultSequence();
                 break;
             case GameState.PlayingEndingCutscene:
-                var selectedEndingTemplate = MultiEndingSystem.Instance?.GetFinalEndingData();
-
-                FullEndingData finalContentData = null;
-                if (selectedEndingTemplate != null)
+                // 멀티 엔딩 시스템을 사용하여 적절한 엔딩 결정
+                var endingData = MultiEndingSystem.Instance?.GetFinalEndingData();
+                
+                // 기존 finalEndingCutscene 대신 동적으로 결정된 엔딩 사용
+                if (endingData?.fullEndingData != null)
                 {
-                    finalContentData = MultiEndingSystem.Instance.GetFullEndingData(selectedEndingTemplate);
-                }
-
-                CutsceneData cutsceneToPlay = null;
-                if (finalContentData != null)
-                {
-                    cutsceneToPlay = MultiEndingSystem.Instance.ConvertToCutsceneData(finalContentData);
-                }
-
-                if (cutsceneToPlay != null)
-                {
-                    Debug.Log($"[GameManager] 멀티 엔딩 재생: {selectedEndingTemplate.endingType} - {selectedEndingTemplate.route} - {selectedEndingTemplate.branch}");
-                    CutsceneManager.OnCutsceneFinished += OnStateFinished;
-                    cutsceneManager.StartCutscene(cutsceneToPlay);
+                    // FullEndingData를 CutsceneData로 변환
+                    var cutsceneData = MultiEndingSystem.Instance.ConvertToCutsceneData(endingData.fullEndingData);
+                    
+                    if (cutsceneData != null)
+                    {
+                        Debug.Log($"[GameManager] 멀티 엔딩 재생: {endingData.endingType} - {endingData.route} - {endingData.branch}");
+                        CutsceneManager.OnCutsceneFinished += OnStateFinished;
+                        cutsceneManager.StartCutscene(cutsceneData);
+                    }
+                    else
+                    {
+                        // 변환 실패 시 폴백
+                        Debug.LogWarning("[GameManager] 엔딩 데이터 변환 실패, 기본 엔딩 사용");
+                        CutsceneManager.OnCutsceneFinished += OnStateFinished;
+                        cutsceneManager.StartCutscene(finalEndingCutscene);
+                    }
                 }
                 else
                 {
-                    Debug.LogWarning("[GameManager] 엔딩 데이터 로드/변환 실패. 기본 엔딩 사용.");
+                    // 폴백: 기존 엔딩 사용
+                    Debug.Log("[GameManager] 엔딩 데이터 없음, 기본 엔딩 사용");
                     CutsceneManager.OnCutsceneFinished += OnStateFinished;
                     cutsceneManager.StartCutscene(finalEndingCutscene);
                 }
-
-                //회상기록
-                string finalOutcome = selectedEndingTemplate != null ?$"{selectedEndingTemplate.endingType} ({selectedEndingTemplate.route})" : "Final End";
-
-                GameSessionManager sessionManager = GetComponent<GameSessionManager>();
-
-                if (sessionManager != null)
-                {
-                    sessionManager.EndSession(finalOutcome);
-                    Debug.Log("[GameManager] GameSessionManager를 통해 회차 기록을 완료했습니다.");
-                }
-                else
-                {
-                    Debug.LogError("[GameManager] GameSessionManager 컴포넌트 참조 오류! 회상 기록이 누락됩니다.");
-                }
-
-
+                
                 // 엔딩 기록 저장
-                if (DataManager.Instance?.PlayerData != null && selectedEndingTemplate != null)
+                if (DataManager.Instance?.PlayerData != null && endingData != null)
                 {
-                    string endingKey = $"{selectedEndingTemplate.endingType}_{selectedEndingTemplate.route}_{selectedEndingTemplate.branch}";
+                    string endingKey = $"{endingData.endingType}_{endingData.route}_{endingData.branch}";
                     if (!DataManager.Instance.PlayerData.completedEndings.Contains(endingKey))
                     {
                         DataManager.Instance.PlayerData.completedEndings.Add(endingKey);
                         DataManager.Instance.SaveData();
+                    }
+                    
+                    // 업적 체크 - AchievementIntegration 직접 호출
+                    var achievementIntegration = FindObjectOfType<AchievementIntegration>();
+                    if (achievementIntegration != null)
+                    {
+                        achievementIntegration.OnLoopCompleted(DataManager.Instance.PlayerData.playthroughCount);
+                        Debug.Log($"[GameManager] 엔딩 완료 업적 체크: {endingData.endingType} - {endingData.route} - {endingData.branch}");
                     }
                 }
                 break;
@@ -638,7 +791,7 @@ public class GameManager : MonoBehaviour
                 CutsceneManager.OnCutsceneFinished -= OnStateFinished;
                 break;
             case GameState.InEventCycle:
-                EventManager.OnEventCycleCompleted -= OnStateFinished;
+                EventManager.OnEventCycleCompleted -= OnEventCycleCompleted_Handle;
                 break;
             case GameState.InStory:
                 if (uiPanelAnimator != null) uiPanelAnimator.ShowDefaultView();
@@ -651,6 +804,27 @@ public class GameManager : MonoBehaviour
                 //  ChapterResultController.OnSequenceComplete -= OnStateFinished;
                 break;
         }
+    }
+
+    // 사이클 완료 시 특수 이벤트(있으면) 우선 실행, 종료 후 컷신으로 진행
+    private void OnEventCycleCompleted_Handle()
+    {
+        if (SpecialEventManager.Instance != null)
+        {
+            bool started = SpecialEventManager.Instance.TryTriggerAfterCycle();
+            if (started)
+            {
+                SpecialEventManager.OnSpecialEventChainEnded += ProceedToChapterCutscene;
+                return;
+            }
+        }
+        ProceedToChapterCutscene();
+    }
+
+    private void ProceedToChapterCutscene()
+    {
+        SpecialEventManager.OnSpecialEventChainEnded -= ProceedToChapterCutscene;
+        OnStateFinished();
     }
 
     //  전투 종료 시 호출되는 함수 변경
@@ -668,11 +842,19 @@ public class GameManager : MonoBehaviour
 
         if (MultiEndingSystem.Instance != null)
         {
+            // 현재 전세 수치 가져오기
+            int warSituation = 50; // 기본값
+            if (GamePlayerStats.Instance != null)
+            {
+                warSituation = GamePlayerStats.Instance.GetStat(ParameterType.전황);
+            }
+            
             MultiEndingSystem.Instance.RecordChapterResult(
                 currentChapter,
-                battleOutcome
+                battleOutcome,
+                warSituation
             );
-            Debug.Log($"[GameManager] 챕터 {currentChapter} 결과와 점수를 MultiEndingSystem에 기록했습니다.");
+            Debug.Log($"[GameManager] 챕터 {currentChapter} 결과와 점수를 MultiEndingSystem에 기록했습니다. (전세: {warSituation})");
         }
 
 
@@ -681,6 +863,15 @@ public class GameManager : MonoBehaviour
             SimpleEventHistoryManager.Instance.RecordChapterOutcome(currentChapter, outcome);
             Debug.Log($"[GameManager] 챕터 {currentChapter}의 전투 결과({outcome})를 기록했습니다.");
         }
+        
+        // Analytics: 전투 이벤트 종료 로그
+        if (DataManager.Instance?.PlayerData != null)
+        {
+            int playthrough = DataManager.Instance.PlayerData.playthroughCount;
+            GameEventLogger.LogFinishBattle(playthrough, currentChapter);
+            Debug.Log($"[GameManager] Analytics - 전투 이벤트 종료: {playthrough}회차 {currentChapter}장");
+        }
+        
         ChangeState(GameState.InBattleResult);
     }
     private string ParseOutcome(string resultLog)
@@ -731,7 +922,7 @@ public class GameManager : MonoBehaviour
         SetUIForState(stateToRestore);
 
         switch (stateToRestore)
-        {
+         {
             case GameState.InEventCycle:
                 EventManager.OnEventCycleCompleted += OnStateFinished;
 
@@ -753,17 +944,53 @@ public class GameManager : MonoBehaviour
                 break;
 
             case GameState.InBattle:
-                battleTurnManager.OnBattleEnd += HandleBattleEnd;
                 // 전투 시작 전 상태 초기화
                 if (battleTurnManager != null)
                 {
                     battleTurnManager.ResetForNewBattle();
                     Debug.Log("[GameManager] 전투 상태 초기화 완료");
                 }
+                // 복원 시에도 전투 종료 이벤트 구독 보장
+                if (battleTurnManager != null)
+                {
+                    battleTurnManager.OnBattleEnd += HandleBattleEnd;
+                }
                 break;
         }
     }
-    public void HideTutorial() { if (tutorialPanel != null && tutorialPanel.activeSelf) { tutorialPanel.SetActive(false); parameterTutorialPanel.SetActive(false); } }
+    public void HideTutorial() { 
+        if (tutorialPanel != null && tutorialPanel.activeSelf) { 
+            tutorialPanel.SetActive(false); 
+            // 파라미터 이벤트는 함부로 비활성화하지 않도록 보호
+            // parameterTutorialPanel.SetActive(false); 
+        } 
+    }
+    
+    /// <summary>
+    /// 파라미터 이벤트 패널을 안전하게 비활성화하는 메서드
+    /// 특별한 상황에서만 호출되어야 함
+    /// </summary>
+    public void SafeHideParameterEventPanel()
+    {
+        if (parameterTutorialPanel != null && parameterTutorialPanel.activeSelf)
+        {
+            Debug.Log("[GameManager] 파라미터 이벤트 패널을 안전하게 비활성화합니다.");
+            parameterTutorialPanel.SetActive(false);
+        }
+    }
+    
+    /// <summary>
+    /// 파라미터 이벤트 패널을 활성화하는 메서드
+    /// 파라미터 이벤트가 필요할 때 사용
+    /// </summary>
+    public void ShowParameterEventPanel()
+    {
+        if (parameterTutorialPanel != null && !parameterTutorialPanel.activeSelf)
+        {
+            Debug.Log("[GameManager] 파라미터 이벤트 패널을 활성화합니다.");
+            parameterTutorialPanel.SetActive(true);
+        }
+    }
     public void HideWarTutorial()
     {
         hasShownWarTutorialThisPlaythrough = true;
@@ -775,16 +1002,43 @@ public class GameManager : MonoBehaviour
 
     public void OnClickNewGameFromScratch()
     {
+        // 서브이벤트팩 선택 검증
+        DataManager.Instance.LoadSettings();
+        var selectedPacks = DataManager.Instance.PlayerSettings?.selectedSubEventPackIDs;
+        
+        Debug.Log($"[GameManager] 새 게임 시작 전 서브이벤트팩 검증 - 선택된 팩: {(selectedPacks != null ? string.Join(", ", selectedPacks) : "null")}, 개수: {selectedPacks?.Count ?? 0}");
+        
+        if (selectedPacks == null || selectedPacks.Count == 0)
+        {
+            Debug.LogError("[GameManager] 서브이벤트팩이 선택되지 않았습니다. 새 게임을 시작할 수 없습니다.");
+            ShowConfirmation("최소 1개의 서브이벤트팩을 선택해야 새 게임을 시작할 수 있습니다.", () => { });
+            return;
+        }
+
         ShowConfirmation("모든 진행 상황과 설정이 삭제됩니다. 정말 새로 시작하시겠습니까?", () =>
         {
-            // 진행도만 삭제하여 Settings(서브이벤트 팩 선택)는 보존
+			// 새 게임 전 현재 해금 상태를 보존
+			var preservedUnlockedTraits = new List<CommanderTrait>();
+			foreach (CommanderTrait trait in System.Enum.GetValues(typeof(CommanderTrait)))
+			{
+				if (UnlockManager.IsUnlocked(trait))
+				{
+					preservedUnlockedTraits.Add(trait);
+				}
+			}
+            // 진행도만 삭제하여 Settings(서브이벤트 팩 선택, 업적 데이터 등)는 보존
             DataManager.Instance.DeleteLocalSaveData();
 
             // 데이터를 모두 지운 후, 새 데이터 객체를 생성하고 게임을 시작합니다.
+            // 주의: 업적 데이터는 SettingsData에 저장되므로 StartNewGame()으로 초기화되지 않습니다.
             DataManager.Instance.StartNewGame();
-            DataManager.Instance.LoadSettings(); // 삭제 후 새로 로드
+            DataManager.Instance.LoadSettings(); // 삭제 후 새로 로드 (업적 포함)
             ResetAllGameData();
-            UnlockManager.ResetAllUnlocks();
+			// 보존된 해금 상태 재적용 (혹시 초기화된 경우 대비)
+			foreach (var trait in preservedUnlockedTraits)
+			{
+				UnlockManager.Unlock(trait);
+			}
             // [추가] 저장 데이터 초기화 직후 이어하기 버튼 즉시 숨김
             if (continueButton != null) continueButton.gameObject.SetActive(false);
             ChangeState(GameState.CommanderSelection);
@@ -797,18 +1051,30 @@ public class GameManager : MonoBehaviour
         ShowConfirmation("모든 진행 상황과 설정이 삭제됩니다. 정말 초기화하시겠습니까?", () =>
         {
             // 1. 모든 로컬 파일과 PlayerPrefs 기록 삭제
-            // 진행도만 삭제하여 Settings 보존
+            // 진행도와 설정 모두 삭제
             DataManager.Instance.DeleteLocalSaveData();
 
             // 2. 메모리에 새로운 기본 데이터 객체를 즉시 생성하고 로드
             // StartNewGame은 새 GameData를 만들고 기본 파일까지 생성해줍니다.
             DataManager.Instance.StartNewGame();
-            // LoadSettings는 파일이 없으면 새 SettingsData를 만들어줍니다.
+            // LoadSettings는 파일이 없으면 새 SettingsData를 만들어주지만,
+            // 디버그 전체 초기화에서는 '설정'도 완전 초기화가 필요하므로 강제로 새로 생성/저장합니다.
             DataManager.Instance.LoadSettings();
+            DataManager.Instance.PlayerSettings = new SettingsData();
+            // 서브이벤트팩은 기본값(1번 팩)으로 유지
+            DataManager.Instance.PlayerSettings.selectedSubEventPackIDs = new List<int> { 1 };
+            // 여기서 저장: 구매 이력(purchasedShopItemIds), 스토리팩 해금(unlockedStoryPackIds), 지휘관 해금 목록 등 초기화값이 파일에 반영됨
+            DataManager.Instance.SaveSettings();
 
-            // 3. EventManager 등 다른 게임 시스템들의 상태 초기화
+			// 3. EventManager 등 다른 게임 시스템들의 상태 초기화
             ResetAllGameData();
-            UnlockManager.ResetAllUnlocks();
+			// [디버깅 전용] 전체 초기화에서는 업적/해금 모두 초기화
+			// 주의: 일반 "새 게임"에서는 업적이 보존됩니다!
+			if (AchievementManager.Instance != null)
+			{
+				AchievementManager.Instance.ResetAllAchievements();
+			}
+			UnlockManager.ResetAllUnlocks();
 
             // 4. 메인 메뉴로 돌아가 UI를 갱신합니다.
             // (예: '이어하기' 버튼이 사라지는 등 초기화된 상태를 시각적으로 보여줌)
@@ -817,13 +1083,22 @@ public class GameManager : MonoBehaviour
             ChangeState(GameState.MainMenu);
             // UI 상태 강제 갱신 (지휘관 잠금 표시/파라미터 토글 초기화 등)
             StartCoroutine(RefreshUINextFrame());
+
+            // [추가] 상점 즉시 재초기화하여 구매 상태가 즉시 반영되도록 함
+            if (ShopManager.Instance != null)
+            {
+                ShopManager.Instance.ReinitializeNow();
+            }
         });
     }
     public void OnClickContinueGame()
     {
+        Debug.Log("[GameManager] OnClickContinueGame 호출됨");
+        
         // 저장 파일 존재 여부 확인. 없으면 버튼 숨기고 동작 중단
         if (DataManager.Instance == null || !DataManager.Instance.CheckIfSaveDataExists())
         {
+            Debug.Log("[GameManager] 저장 파일이 없어서 이어하기 버튼을 숨깁니다.");
             if (continueButton != null) continueButton.gameObject.SetActive(false);
             return;
         }
@@ -869,16 +1144,32 @@ public class GameManager : MonoBehaviour
         }
 
         var stateToRestore = DataManager.Instance.PlayerData.currentGameState;
+        Debug.Log($"[GameManager] 복원할 게임 상태: {stateToRestore}, 현재 회차: {DataManager.Instance.PlayerData.playthroughCount}");
+        
+        // [수정] 2회차 이상에서 CommanderSelection 상태인 경우 자동으로 지휘관 선택
+        if (stateToRestore == GameState.CommanderSelection && 
+            DataManager.Instance.PlayerData.playthroughCount > 1)
+        {
+            Debug.Log("[GameManager] CommanderSelection 상태에서 다음 회차를 시작합니다.");
+            StartNextPlaythroughWithSameCommander();
+            return;
+        }
+
         // 비플레이 상태는 이어하기 대상에서 제외하고 버튼 숨김
         switch (stateToRestore)
         {
             case GameState.Title:
             case GameState.Login:
-            case GameState.MainMenu:
             case GameState.CommanderSelection:
             case GameState.GamePaused:
+                Debug.Log($"[GameManager] 비플레이 상태({stateToRestore})로 인해 이어하기를 건너뜁니다.");
                 if (continueButton != null) continueButton.gameObject.SetActive(false);
                 ChangeState(GameState.MainMenu);
+                return;
+            case GameState.MainMenu:
+                // MainMenu 상태일 때는 다음 회차를 시작
+                Debug.Log($"[GameManager] MainMenu 상태에서 다음 회차를 시작합니다. 현재 회차: {DataManager.Instance.PlayerData.playthroughCount}");
+                StartNextPlaythroughWithSameCommander();
                 return;
         }
 
@@ -947,7 +1238,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void HandleLoginFlow()
     {
-        Debug.Log("[GameManager] 로그인 플로우 시작");
+        Debug.Log("[GameManager] 로그인 플로우 시작 (로딩 완료 후)");
         
         // FirebaseManager의 로그인 상태 변경 이벤트 구독
         FirebaseManager.OnLoginStateChanged += OnLoginStateChanged;
@@ -959,8 +1250,17 @@ public class GameManager : MonoBehaviour
             hasCompletedLogin = true;
             ChangeState(GameState.Title);
         }
-        // FirebaseManager가 개발 모드에서 로그인 선택 UI를 표시하도록 함
-        // (FirebaseManager에서 자동으로 처리됨)
+        else
+        {
+#if UNITY_EDITOR
+            // 에디터 환경에서는 로딩 완료 후 GPGS 로그인 시도 (팝업 표시)
+            Debug.Log("[GameManager] 에디터 환경: GPGS 로그인 시도 -> 실패 -> 팝업 표시");
+            if (FirebaseManager.Instance != null)
+            {
+                FirebaseManager.Instance.GPGSLogin();
+            }
+#endif
+        }
     }
     
     /// <summary>
@@ -1020,16 +1320,26 @@ public class GameManager : MonoBehaviour
         DataManager.Instance.LoadSettings();
         // StoryPackManager가 씬에 존재하면, 매니저를 통해 선택값을 우선 가져옵니다(동일 인스턴스 참조 강제).
         var spm = FindObjectOfType<StoryPackManager>();
-        var selectedPacksForNewGame = spm != null ? 
-            spm.GetSelectedPackIDs() : (DataManager.Instance.PlayerSettings != null ? 
-            DataManager.Instance.PlayerSettings.selectedSubEventPackIDs : null);
+        var selectedPacksForNewGame = spm != null ? spm.GetSelectedPackIDs() : (DataManager.Instance.PlayerSettings != null ? DataManager.Instance.PlayerSettings.selectedSubEventPackIDs : null);
         Debug.Log($"[GameManager] 새게임 직전 선택 팩: {(selectedPacksForNewGame != null ? string.Join(", ", selectedPacksForNewGame) : "null")}, 개수: {selectedPacksForNewGame?.Count ?? -1}");
-        var sessionManager = FindObjectOfType<GameSessionManager>();
-        if (sessionManager != null)
-        {
-            sessionManager.StartSession();
-        }
         await EventManager.Instance.StartNewGame(selectedPacksForNewGame);
+		
+		// 업적: 새게임 시작 직후 회차 업적 체크
+		// 새게임 시작 시 playthroughCount는 1로 설정되므로 1회차 시작 업적이 해금됨
+		if (AchievementManager.Instance != null && DataManager.Instance?.PlayerData != null)
+		{
+			Debug.Log($"[GameManager] 새게임 시작 - 회차 업적 체크: {DataManager.Instance.PlayerData.playthroughCount}회차");
+			AchievementManager.Instance.CheckPlaythroughAchievements(DataManager.Instance.PlayerData.playthroughCount);
+		}
+		
+		// Analytics: 1회차 진입 로그
+		if (DataManager.Instance?.PlayerData != null)
+		{
+			int playthrough = DataManager.Instance.PlayerData.playthroughCount;
+			GameEventLogger.LogEnterStory(playthrough);
+			Debug.Log($"[GameManager] Analytics - 회차 진입: {playthrough}회차");
+		}
+		
         OnStateFinished();
     }
     private void StartDetailedResultSequence() 
@@ -1169,7 +1479,12 @@ public class GameManager : MonoBehaviour
             GameOver("리더십이 0이 되어 병사들이 따르지 않습니다.");
         }
     }
-    public void ResetAllGameData() { EventManager.Instance.ResetEventManagerState(); battleTurnManager.ResetForNewBattle(); mainScenarioManager.ResetScenarioState();
+    public void ResetAllGameData() { EventManager.Instance.ResetEventManagerState(); 
+        if (battleTurnManager != null && battleTurnManager.gameObject.activeInHierarchy) 
+        { 
+            battleTurnManager.ResetForNewBattle(); 
+        }
+        mainScenarioManager.ResetScenarioState();
         // 파라미터 UI 잔상(토글/하이라이트) 제거
         var paramUI = FindObjectOfType<ParameterUIController>();
         if (paramUI != null) { paramUI.ClearAllToggles(); }
@@ -1200,7 +1515,8 @@ public class GameManager : MonoBehaviour
         // 패널 안전하게 닫기
         if (tutorialPanel != null) tutorialPanel.SetActive(false);
         if (tutorialText != null) tutorialText.SetActive(false);
-        if (parameterTutorialPanel != null) parameterTutorialPanel.SetActive(false);
+        // 파라미터 이벤트는 함부로 비활성화하지 않도록 보호
+        // if (parameterTutorialPanel != null) parameterTutorialPanel.SetActive(false);
         if (warTutorialPanel != null) warTutorialPanel.SetActive(false);
     }
     private IEnumerator RefreshUINextFrame()
@@ -1368,5 +1684,108 @@ public class GameManager : MonoBehaviour
         return achievementPanel != null && achievementPanel.activeSelf;
     }
     
+    
     #endregion
+
+    private void StartNextPlaythroughWithSameCommander()
+    {
+        Debug.Log("[GameManager] StartNextPlaythroughWithSameCommander 호출됨");
+        var playerData = DataManager.Instance.PlayerData;
+        
+        // 기존 지휘관 정보 복원
+        if (GamePlayerStats.Instance != null)
+        {
+            // 저장된 지휘관 특성으로 CommanderInfo 찾기
+            var selectedCommander = GetCommanderByTrait(playerData.activeTrait);
+            if (selectedCommander != null)
+            {
+                // 기존 SetActiveCommander 함수 사용
+                GamePlayerStats.Instance.SetActiveCommander(selectedCommander);
+                
+                // 지휘관별 초기 스탯 조정 적용
+                if (selectedCommander.initialStatAdjustments.Count > 0)
+                {
+                    GamePlayerStats.Instance.ApplyChanges(selectedCommander.initialStatAdjustments);
+                }
+            }
+        }
+        
+        // 2회차 이상을 위한 게임 상태 초기화
+        ResetAllGameData();
+        ResetParameterDataToDefaults();
+        EventManager.Instance.ResetEventManagerState();
+        
+        // 챕터와 이벤트 상태 초기화
+        playerData.currentChapter = 1;
+        playerData.completedEventIds.Clear();
+        playerData.eventPlaylistIndex = 0;
+        playerData.currentPlaylist.Clear();
+        
+        // 저장 억제를 해제한 뒤 사이클을 구성하여 SaveLocal이 억제되지 않도록 순서 수정
+        DataManager.Instance.AllowSavesFromNow();
+        EventManager.Instance.StartNewCycle();
+        playerData.currentGameState = GameState.InEventCycle;
+        
+        // 튜토리얼 억제 (2회차 이상이므로)
+        suppressTutorialOnce = true;
+        if (tutorialPanel != null) tutorialPanel.SetActive(false);
+        if (parameterTutorialPanel != null) parameterTutorialPanel.SetActive(false);
+        if (uiFlowSimulator != null) uiFlowSimulator.MarkParameterTutorialShown();
+        
+        // 업적 체크 (회차 업적)
+        if (AchievementManager.Instance != null)
+        {
+            AchievementManager.Instance.CheckPlaythroughAchievements(playerData.playthroughCount);
+        }
+        
+        // 2회차 이상 이어하기의 경우 오프닝 컷씬을 건너뛰고 바로 메인 스토리로 진입
+        if (playerData.playthroughCount >= 2)
+        {
+            // 메인 스토리부터 시작
+            ChangeState(GameState.InStory);
+        }
+        else
+        {
+            // 1회차는 기존대로 오프닝 컷씬을 재생
+            ChangeState(GameState.PlayingOpeningCutscene);
+        }
+    }
+
+
+    
+    public void OpenShop()
+    {
+        shopUI.OpenShop();
+    }
+
+    private CommanderInfo GetCommanderByTrait(CommanderTrait trait)
+    {
+        switch (trait)
+        {
+            case CommanderTrait.Devost:
+                return Commander1Button?.GetComponent<CommanderInfo>();
+            case CommanderTrait.Wille:
+                return Commander2Button?.GetComponent<CommanderInfo>();
+            case CommanderTrait.Risard:
+                return Commander3Button?.GetComponent<CommanderInfo>();
+            default:
+                return Commander1Button?.GetComponent<CommanderInfo>(); // 기본값
+        }
+    }
+    private CutsceneData GetOpeningCutsceneForActiveCommander()
+    {
+        // 활성 지휘관 특성에 따라 오프닝 컷씬 선택. 비어있으면 공통 SO로 폴백
+        var trait = DataManager.Instance?.PlayerData != null ? DataManager.Instance.PlayerData.activeTrait : CommanderTrait.Devost;
+        switch (trait)
+        {
+            case CommanderTrait.Devost:
+                return openingCutscene_Devost != null ? openingCutscene_Devost : chapter1OpeningCutscene;
+            case CommanderTrait.Wille:
+                return openingCutscene_Wille != null ? openingCutscene_Wille : chapter1OpeningCutscene;
+            case CommanderTrait.Risard:
+                return openingCutscene_Risard != null ? openingCutscene_Risard : chapter1OpeningCutscene;
+            default:
+                return chapter1OpeningCutscene;
+        }
+    }
 }

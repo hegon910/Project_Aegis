@@ -38,6 +38,18 @@ public class WarPlayer : MonoBehaviour
     void Awake()
     {
         if (!controller) controller = GetComponent<WarController>();
+		// PlayerPrefs에 저장된 스킬이 없으면 초기 기본(인스펙터) 스킬을 무시하여 무스킬 상태로 시작
+		if (!PlayerPrefs.HasKey("EquippedSkillID"))
+		{
+			equippedSkillID = null;
+			currentSkill = null;
+		}
+        LoadSkillFromID();
+    }
+
+    void OnEnable()
+    {
+        // 활성화 시마다 PlayerPrefs 기반으로 최신 스킬을 재적용
         LoadSkillFromID();
         turnManager = FindObjectOfType<WarTurnManager>();
     }
@@ -123,23 +135,70 @@ public class WarPlayer : MonoBehaviour
 
     public void LoadSkillFromID()
     {
-        if (!string.IsNullOrEmpty(equippedSkillID) && skillDatabase != null)
+		// PlayerPrefs에 값이 있으면 항상 최우선으로 사용하여 씬 직렬화값을 덮어씁니다.
+		if (PlayerPrefs.HasKey("EquippedSkillID"))
+		{
+			string fromPrefs = PlayerPrefs.GetString("EquippedSkillID");
+			Debug.Log($"[스킬 디버그] LoadSkillFromID: PlayerPrefs EquippedSkillID='{fromPrefs}' (serialized='{equippedSkillID ?? "<null>"}')");
+			equippedSkillID = fromPrefs;
+		}
+
+		// 숫자형 스킬 코드가 저장되어 있을 수 있으므로 에셋 ID로 정규화
+		equippedSkillID = NormalizeSkillId(equippedSkillID);
+
+        // skillDatabase가 비어 있으면 동적으로 탐색하여 자동 할당 (씬/리소스 어디든)
+        if (skillDatabase == null)
         {
-            currentSkill = skillDatabase.GetSkillByID(equippedSkillID);
+            var allDbs = Resources.FindObjectsOfTypeAll<SkillDatabase>();
+            if (allDbs != null && allDbs.Length > 0)
+            {
+                skillDatabase = allDbs[0];
+                Debug.Log("[스킬 디버그] LoadSkillFromID: skillDatabase 자동 할당 성공");
+            }
+        }
+
+		if (!string.IsNullOrEmpty(equippedSkillID) && skillDatabase != null)
+        {
+			currentSkill = skillDatabase.GetSkillByID(equippedSkillID);
             if (currentSkill != null)
             {
-                Debug.Log($"스킬 로드 성공: {currentSkill.skillName} (ID: {equippedSkillID})");
+				Debug.Log($"스킬 로드 성공: {currentSkill.skillName} (ID: {equippedSkillID})");
             }
             else
             {
-                Debug.LogError($"스킬 로드 실패! SkillDatabase에 ID '{equippedSkillID}'가 없습니다.");
+				Debug.LogError($"스킬 로드 실패! SkillDatabase에 ID '{equippedSkillID}'가 없습니다.");
             }
         }
         else
         {
-            currentSkill = null;
+			if (skillDatabase == null)
+			{
+				Debug.LogWarning("[스킬 디버그] LoadSkillFromID: skillDatabase가 비어 있습니다.");
+			}
+			currentSkill = null;
         }
     }
+
+	private static readonly System.Collections.Generic.Dictionary<string, string> SkillCodeMap = new System.Collections.Generic.Dictionary<string, string>
+	{
+		{"2000001", "FullCondition"},
+		{"2000002", "ForwardStrike"},
+		{"2000003", "Stimpack"},
+		{"2000004", "AmmoReinforce"},
+		{"2000005", "CounterAttack"},
+		{"2000006", "SupFormation"},
+		{"2000007", "Overdrive"},
+		{"2000008", "NightAttack"},
+		{"2000009", "Sacrifice"},
+		{"2000010", "MoraleBoost"},
+	};
+
+	private string NormalizeSkillId(string id)
+	{
+		if (string.IsNullOrEmpty(id)) return id;
+		if (SkillCodeMap.TryGetValue(id, out var mapped)) return mapped;
+		return id;
+	}
 
     public virtual void UseSkill(WarEnemy enemy, WarTurnManager turnManager)// 턴매니저랑 뭔가 겹치는데 모르겠네
     {

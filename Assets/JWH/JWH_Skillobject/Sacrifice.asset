@@ -15,6 +15,7 @@ MonoBehaviour:
   skillID: Sacrifice
   skillName: "\uD76C\uC0DD\uC591"
   skillRank: 3
+  icon: {fileID: 21300000, guid: 8b7a0d468dbe3f643b40e06ea578fb5c, type: 3}
   description: "\uC801\uAD70\uACFC\uC758 \uAC70\uB9AC\uAC00 3\uCE78 \uC774\uD558\uC77C\uB54C
     \uBC1C\uB3D9 \uAC00\uB2A5. \uC544\uAD70\uC758 \uCCB4\uB825 1\uC744 \uC783\uACE0
     \uC801\uAD70\uC5D0\uAC8C 4\uC758 \uD53C\uD574\uB97C \uC90D\uB2C8\uB2E4."

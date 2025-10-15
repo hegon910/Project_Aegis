@@ -7,9 +7,11 @@ public class CheatManager : MonoBehaviour
     public static CheatManager Instance { get; private set; }
     [Header("치트 활성화")]
     [SerializeField] private bool enableCheats = true;
-    // [Header("설정")]
-    // [Tooltip("이 스크립트는 에디터와 개발 빌드에서만 동작합니다.")]
-    // public bool enableCheats = true;
+    
+    [Header("Multi Ending System 테스터")]
+    [SerializeField] private Canvas multiEndingTestCanvas;
+    [SerializeField] private MultiEndingSystemTester multiEndingTester;
+    private bool isMultiEndingTestActive = false;
 
     private void Awake()
     {
@@ -22,7 +24,34 @@ public class CheatManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+    }
 
+    private void Start()
+    {
+        // Multi Ending System 테스터 초기화
+        InitializeMultiEndingTester();
+    }
+
+    private void InitializeMultiEndingTester()
+    {
+        // MultiEndingSystemTester가 없으면 찾아서 할당
+        if (multiEndingTester == null)
+        {
+            multiEndingTester = FindObjectOfType<MultiEndingSystemTester>();
+        }
+        
+        // 캔버스가 없으면 MultiEndingSystemTester의 부모 캔버스를 찾아서 할당
+        if (multiEndingTestCanvas == null && multiEndingTester != null)
+        {
+            multiEndingTestCanvas = multiEndingTester.GetComponentInParent<Canvas>();
+        }
+        
+        // 초기에는 비활성화
+        if (multiEndingTestCanvas != null)
+        {
+            multiEndingTestCanvas.gameObject.SetActive(false);
+            isMultiEndingTestActive = false;
+        }
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -32,6 +61,12 @@ public class CheatManager : MonoBehaviour
         if (GamePlayerStats.Instance == null)
         {
             return;
+        }
+
+        // --- Multi Ending System 테스터 토글 (0번 키) ---
+        if (Input.GetKeyDown(KeyCode.Alpha0))
+        {
+            ToggleMultiEndingTester();
         }
 
         // --- 개별 파라미터 설정 (숫자 1~4) ---
@@ -66,6 +101,22 @@ public class CheatManager : MonoBehaviour
             GamePlayerStats.Instance.SetStat(ParameterType.리더십, allValue);
         }
 
+        // --- 카르마 설정 (5, 6번 키) ---
+        if (Input.GetKeyDown(KeyCode.Alpha5))
+        {
+            int currentKarma = GamePlayerStats.Instance.GetStat(ParameterType.카르마);
+            int newKarma = Mathf.Max(0, currentKarma - 10);
+            GamePlayerStats.Instance.SetStat(ParameterType.카르마, newKarma);
+            Debug.Log($"[CHEAT] 카르마 10 감소: {currentKarma} → {newKarma}");
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha6))
+        {
+            int currentKarma = GamePlayerStats.Instance.GetStat(ParameterType.카르마);
+            int newKarma = currentKarma + 10;
+            GamePlayerStats.Instance.SetStat(ParameterType.카르마, newKarma);
+            Debug.Log($"[CHEAT] 카르마 10 증가: {currentKarma} → {newKarma}");
+        }
+
         // --- 전세(전황) 설정 (F5, F6, F7) ---
         if (Input.GetKeyDown(KeyCode.F5))
         {
@@ -80,6 +131,18 @@ public class CheatManager : MonoBehaviour
             GamePlayerStats.Instance.SetStat(ParameterType.전황, 90);
         }
 
+        // '+' 키를 누르면 재화 2000개 추가
+        if (Input.GetKeyDown(KeyCode.Plus) || Input.GetKeyDown(KeyCode.KeypadPlus))
+        {
+            if (CurrencyManager.AddCurrency(2000))
+            {
+                Debug.Log("[CHEAT] 재화 2000개 추가 완료!");
+            }
+            else
+            {
+                Debug.LogError("[CHEAT] 재화 추가 실패!");
+            }
+        }
         // --- 엔딩 클리어 치트 (F12) ---
         if (Input.GetKeyDown(KeyCode.F12))
         {
@@ -114,10 +177,43 @@ public class CheatManager : MonoBehaviour
             }
         }
 
-        // ']' 키를 누르면 다음 이벤트로 넘어갑니다.
+        // --- 플레이어 체력 30 설정 (9번 키) ---
+        if (Input.GetKeyDown(KeyCode.Alpha9))
+        {
+            var warPlayer = FindObjectOfType<WarPlayer>();
+            if (warPlayer != null && warPlayer.Ctrl != null)
+            {
+                // MaxHP가 30보다 작으면 30으로 상향하여 이후 리셋에도 유지되도록 함
+                if (warPlayer.Ctrl.MaxHP < 30)
+                {
+                    warPlayer.Ctrl.MaxHP = 30;
+                }
+                warPlayer.Ctrl.CurrentHP = 30;
+
+                var hud = FindObjectOfType<WarHUD>();
+                if (hud != null)
+                {
+                    hud.UpdateAllUI();
+                }
+                Debug.Log("[CHEAT] 플레이어 체력을 30으로 설정했습니다.");
+            }
+            else
+            {
+                Debug.LogWarning("[CHEAT] WarPlayer를 찾을 수 없어 체력을 설정하지 못했습니다.");
+            }
+        }
+
+        // ']' 키를 누르면 다음 이벤트로 넘어갑니다. (전환/페이드 중에는 입력 차단)
         if (Input.GetKeyDown(KeyCode.RightBracket))
         {
             Debug.Log("치트 키: 다음 이벤트로 스킵합니다.");
+            var uiFlow = FindObjectOfType<UIFlowSimulator>();
+            // 전환 중(서브/특수 페이드 또는 Exit 페이드)에는 스킵 입력을 무시하여 흐름을 보호
+            if (uiFlow != null && uiFlow.IsDuringTransition)
+            {
+                Debug.Log("[CHEAT] 전환 중이므로 스킵 입력을 무시합니다.");
+                return;
+            }
 
             // 메인 시나리오가 실행 중인지 먼저 확인
             var mainScenarioManager = FindObjectOfType<MainScenarioManager>();
@@ -134,7 +230,7 @@ public class CheatManager : MonoBehaviour
             // 그렇지 않으면 일반 이벤트(파라미터) 스킵 시도
             else if (EventManager.Instance != null)
             {
-                // 현재 UI 전환 효과 등을 무시하고 즉시 다음 턴을 호출합니다.
+                // 정상 흐름만 존중: 전환 중이 아니므로 다음 턴 호출 허용
                 EventManager.Instance.PlayNextTurn();
             }
         }
@@ -143,6 +239,37 @@ public class CheatManager : MonoBehaviour
             SkipCurrentState();
         }
     }
+
+    /// <summary>
+    /// Multi Ending System 테스터를 토글합니다.
+    /// </summary>
+    private void ToggleMultiEndingTester()
+    {
+        // MultiEndingSystemTester가 없으면 다시 찾아보기
+        if (multiEndingTester == null)
+        {
+            multiEndingTester = FindObjectOfType<MultiEndingSystemTester>();
+        }
+        
+        // 캔버스가 없으면 MultiEndingSystemTester의 부모 캔버스를 찾아서 할당
+        if (multiEndingTestCanvas == null && multiEndingTester != null)
+        {
+            multiEndingTestCanvas = multiEndingTester.GetComponentInParent<Canvas>();
+        }
+        
+        if (multiEndingTestCanvas == null)
+        {
+            Debug.LogWarning("[CHEAT] Multi Ending System 테스터 캔버스를 찾을 수 없습니다.");
+            return;
+        }
+        
+        // 토글
+        isMultiEndingTestActive = !isMultiEndingTestActive;
+        multiEndingTestCanvas.gameObject.SetActive(isMultiEndingTestActive);
+        
+        Debug.Log($"[CHEAT] Multi Ending System 테스터 {(isMultiEndingTestActive ? "활성화" : "비활성화")}");
+    }
+
     public void SkipCurrentState()
     {
         if (GameManager.instance != null)

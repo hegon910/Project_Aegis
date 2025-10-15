@@ -95,7 +95,19 @@ public class PopupController : MonoBehaviour
     public void ShowConfirmDialog(string message, string confirmText = "확인", string cancelText = "취소", 
         Action onConfirm = null, Action onCancel = null)
     {
-        if (confirmDialogPanel == null) return;
+        Debug.Log($"[PopupController] ShowConfirmDialog 호출됨 - message: {message}");
+        
+        if (confirmDialogPanel == null)
+        {
+            Debug.LogError("[PopupController] confirmDialogPanel이 null입니다! 인스펙터에서 할당하세요.");
+            return;
+        }
+
+        if (confirmTitleText == null) Debug.LogError("[PopupController] confirmTitleText가 null입니다!");
+        if (confirmMessageText == null) Debug.LogError("[PopupController] confirmMessageText가 null입니다!");
+        if (confirmButtonText == null) Debug.LogError("[PopupController] confirmButtonText가 null입니다!");
+        if (cancelButtonText == null) Debug.LogError("[PopupController] cancelButtonText가 null입니다!");
+        if (backgroundPanel == null) Debug.LogError("[PopupController] backgroundPanel이 null입니다!");
 
         confirmTitleText.text = "";
         confirmMessageText.text = message;
@@ -107,6 +119,8 @@ public class PopupController : MonoBehaviour
 
         backgroundPanel.SetActive(true);
         confirmDialogPanel.SetActive(true);
+        
+        Debug.Log("[PopupController] 팝업 패널 활성화 완료");
     }
 
     /// <summary>
@@ -114,6 +128,7 @@ public class PopupController : MonoBehaviour
     /// </summary>
     public void ShowGPGSFailedDialog(Action onGuestLogin, Action onRetry)
     {
+        Debug.Log("[PopupController] ShowGPGSFailedDialog 호출됨");
         string message = "GPGS 로그인이 실패 또는 불가하여 게스트 로그인을 시도합니다. 진행하시겠습니까?";
         ShowConfirmDialog(message, "게스트 로그인", "GPGS 재시도", onGuestLogin, onRetry);
     }

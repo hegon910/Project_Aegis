@@ -59,6 +59,12 @@ public class CustomEnemy : WarEnemy
 
     public override WarAction ChooseAction()
     {
+        // controller가 null인 경우 기본 행동을 반환합니다.
+        if (controller == null)
+        {
+            return base.ChooseAction();
+        }
+        
         // 현재 위치(인덱스)가 14이면 무조건 공격을 선택합니다.
         if (controller.CurrentIndex == 14)
         {

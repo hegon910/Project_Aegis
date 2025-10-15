@@ -21,6 +21,9 @@ public class AchievementManager : MonoBehaviour
     private Dictionary<string, AchievementData> achievementDict = new Dictionary<string, AchievementData>();
     private List<string> completedAchievementIds = new List<string>();
     private List<string> claimedRewardIds = new List<string>();
+
+	// 알림 누락 방지를 위한 해금 대기열 (구독자 준비 전 해금된 업적 보관)
+	private readonly Queue<AchievementData> pendingUnlockedQueue = new Queue<AchievementData>();
     
     // 이벤트
     public static event Action<AchievementData> OnAchievementUnlocked;
@@ -34,16 +37,83 @@ public class AchievementManager : MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject);
             InitializeAchievements();
+
+			// 업적 알림 매니저가 씬에 없다면 자동 생성하여 구독/표시 누락을 방지
+			EnsureNotificationManagerExists();
         }
         else
         {
             Destroy(gameObject);
         }
     }
+
+	/// <summary>
+	/// 업적 알림 매니저 자동 보장 (씬에 없으면 생성)
+	/// </summary>
+	private void EnsureNotificationManagerExists()
+	{
+		if (AchievementNotificationManager.Instance == null)
+		{
+			var go = new GameObject("AchievementNotificationManager_AutoSpawn");
+			go.AddComponent<AchievementNotificationManager>();
+			DontDestroyOnLoad(go);
+			Debug.Log("[AchievementManager] AchievementNotificationManager가 없어 자동 생성했습니다.");
+		}
+	}
     
     private void Start()
     {
         LoadAchievementProgress();
+    }
+
+	/// <summary>
+	/// 구독자 등록 시점 이전에 해금된 업적 알림을 회수하여 전달하기 위한 API
+	/// </summary>
+	public List<AchievementData> DequeueAllPendingUnlocked()
+	{
+        var list = new List<AchievementData>(pendingUnlockedQueue);
+		pendingUnlockedQueue.Clear();
+        if (enableDebugLogs)
+        {
+            Debug.Log($"[AchievementManager] 대기열 비우기: {list.Count}개 전달");
+        }
+		return list;
+	}
+
+    /// <summary>
+    /// 모든 업적 상태를 초기 상태로 리셋하고 저장합니다.
+    /// 디버깅용 OnclickResetData에서만 호출되어야 합니다.
+    /// </summary>
+    public void ResetAllAchievements()
+    {
+        // 내부 상태 초기화
+        foreach (var kvp in achievementDict)
+        {
+            var ach = kvp.Value;
+            ach.isUnlocked = false;
+            ach.isCompleted = false;
+            ach.isRewardClaimed = false;
+            ach.unlockedDate = default;
+            ach.completedDate = default;
+        }
+
+        completedAchievementIds.Clear();
+        claimedRewardIds.Clear();
+
+        // 플레이어 설정 데이터도 초기화 (SettingsData 사용)
+        if (DataManager.Instance?.PlayerSettings != null)
+        {
+            DataManager.Instance.PlayerSettings.unlockedAchievements = new List<string>();
+            DataManager.Instance.PlayerSettings.claimedAchievementIds = new List<string>();
+        }
+
+        if (enableDebugLogs)
+        {
+            Debug.Log("[AchievementManager] 모든 업적이 초기화되었습니다. (디버깅용 전체 리셋)");
+        }
+
+        // 저장
+        SaveAchievementProgress();
     }
     
     /// <summary>
@@ -80,29 +150,34 @@ public class AchievementManager : MonoBehaviour
         var endingCount = allAchievements.Count(a => a.type == AchievementType.Ending);
         var playthroughCount = allAchievements.Count(a => a.type == AchievementType.Playthrough);
         var battleCount = allAchievements.Count(a => a.type == AchievementType.Battle);
-        var eventCount = allAchievements.Count(a => a.type == AchievementType.Event);
+        var mainStoryCount = allAchievements.Count(a => a.type == AchievementType.MainStory);
+        var subStoryCount = allAchievements.Count(a => a.type == AchievementType.SubStory);
         
         Debug.Log($"[AchievementManager] 업적 요약:");
         Debug.Log($"  - 엔딩 업적: {endingCount}개 (일반 9개, 진 2개, 히든 1개)");
         Debug.Log($"  - 회차 업적: {playthroughCount}개 (1-3회차 각각 4개씩)");
         Debug.Log($"  - 전투 업적: {battleCount}개 (첫 전투 3가지 결과)");
-        Debug.Log($"  - 이벤트 업적: {eventCount}개 (특정 이벤트 완료)");
+        Debug.Log($"  - 메인 스토리 업적: {mainStoryCount}개 (특정 이벤트 완료)");
+        Debug.Log($"  - 서브 스토리 업적: {subStoryCount}개 (특정 이벤트 완료)");
     }
     
     /// <summary>
-    /// 업적 진행도 로드
+    /// 업적 진행도 로드 (SettingsData에서 로드하도록 변경)
     /// </summary>
     private void LoadAchievementProgress()
     {
-        if (DataManager.Instance?.PlayerData == null) return;
+        if (DataManager.Instance?.PlayerSettings == null) return;
         
-        var playerData = DataManager.Instance.PlayerData;
+        var playerSettings = DataManager.Instance.PlayerSettings;
         
-        // 완료된 업적 로드
+        // [마이그레이션] 기존 GameData에 있던 업적 데이터를 SettingsData로 이동
+        MigrateAchievementsFromGameData();
+        
+        // 완료된 업적 로드 (SettingsData에서)
         completedAchievementIds.Clear();
-        if (playerData.unlockedAchievements != null)
+        if (playerSettings.unlockedAchievements != null)
         {
-            completedAchievementIds.AddRange(playerData.unlockedAchievements);
+            completedAchievementIds.AddRange(playerSettings.unlockedAchievements);
         }
         
         // 업적 상태 업데이트
@@ -117,6 +192,17 @@ public class AchievementManager : MonoBehaviour
                 achievement.completedDate = DateTime.Now;
             }
         }
+
+        // [보강] 수령 상태 로드: SettingsData.claimedAchievementIds를 기준으로 반영
+        if (playerSettings.claimedAchievementIds == null)
+        {
+            playerSettings.claimedAchievementIds = new List<string>();
+        }
+        foreach (var kvp in achievementDict)
+        {
+            var ach = kvp.Value;
+            ach.isRewardClaimed = playerSettings.claimedAchievementIds.Contains(ach.achievementId);
+        }
         
         if (enableDebugLogs)
         {
@@ -125,28 +211,83 @@ public class AchievementManager : MonoBehaviour
     }
     
     /// <summary>
-    /// 업적 진행도 저장
+    /// 기존 GameData에 있던 업적 데이터를 SettingsData로 마이그레이션 (호환성 유지)
     /// </summary>
-    private void SaveAchievementProgress()
+    private void MigrateAchievementsFromGameData()
     {
-        if (DataManager.Instance?.PlayerData == null) return;
+        if (DataManager.Instance?.PlayerData == null || DataManager.Instance?.PlayerSettings == null)
+            return;
         
         var playerData = DataManager.Instance.PlayerData;
-        playerData.unlockedAchievements = new List<string>(completedAchievementIds);
+        var playerSettings = DataManager.Instance.PlayerSettings;
         
-        if (autoSaveOnUpdate)
+        // GameData에 업적 데이터가 있고, SettingsData에는 없는 경우 마이그레이션
+        bool needsMigration = false;
+        
+        if (playerData.unlockedAchievements != null && playerData.unlockedAchievements.Count > 0)
         {
-            DataManager.Instance.SaveData();
+            if (playerSettings.unlockedAchievements == null || playerSettings.unlockedAchievements.Count == 0)
+            {
+                playerSettings.unlockedAchievements = new List<string>(playerData.unlockedAchievements);
+                needsMigration = true;
+                if (enableDebugLogs)
+                {
+                    Debug.Log($"[AchievementManager] GameData에서 {playerData.unlockedAchievements.Count}개의 업적을 SettingsData로 마이그레이션했습니다.");
+                }
+            }
+        }
+        
+        if (playerData.claimedAchievementIds != null && playerData.claimedAchievementIds.Count > 0)
+        {
+            if (playerSettings.claimedAchievementIds == null || playerSettings.claimedAchievementIds.Count == 0)
+            {
+                playerSettings.claimedAchievementIds = new List<string>(playerData.claimedAchievementIds);
+                needsMigration = true;
+                if (enableDebugLogs)
+                {
+                    Debug.Log($"[AchievementManager] GameData에서 {playerData.claimedAchievementIds.Count}개의 수령 정보를 SettingsData로 마이그레이션했습니다.");
+                }
+            }
+        }
+        
+        // 마이그레이션이 일어났다면 SettingsData 저장
+        if (needsMigration)
+        {
+            DataManager.Instance.SaveSettings();
         }
     }
     
     /// <summary>
-    /// 엔딩 완료 시 업적 체크
+    /// 업적 진행도 저장 (SettingsData에 저장하도록 변경)
     /// </summary>
-    public void CheckEndingAchievements(EndingData endingData)
+    private void SaveAchievementProgress()
     {
-        if (endingData == null) return;
+        if (DataManager.Instance?.PlayerSettings == null) return;
         
+        var playerSettings = DataManager.Instance.PlayerSettings;
+        playerSettings.unlockedAchievements = new List<string>(completedAchievementIds);
+
+        // [보강] 수령 상태 저장: SettingsData.claimedAchievementIds에 동기화
+        playerSettings.claimedAchievementIds = achievementDict.Values
+            .Where(a => a.isRewardClaimed)
+            .Select(a => a.achievementId)
+            .ToList();
+        
+        if (autoSaveOnUpdate)
+        {
+            // 업적은 SettingsData에 저장되므로 SaveSettings 호출
+            if (DataManager.Instance != null)
+            {
+                DataManager.Instance.SaveSettings();
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 엔딩 완료 시 업적 체크 (수정된 메서드)
+    /// </summary>
+    public void CheckEndingAchievements(EndingType endingType, EndingRoute endingRoute, int endingBranch, int playthrough)
+    {
         foreach (var achievement in achievementDict.Values)
         {
             if (achievement.isCompleted) continue;
@@ -158,19 +299,36 @@ public class AchievementManager : MonoBehaviour
                 // 엔딩 타입 체크
                 if (achievement.condition.requiredEndingType != EndingType.General)
                 {
-                    isMatch &= endingData.endingType == achievement.condition.requiredEndingType;
+                    isMatch &= endingType == achievement.condition.requiredEndingType;
                 }
                 
                 // 엔딩 루트 체크
                 if (achievement.condition.requiredEndingRoute != EndingRoute.Victory)
                 {
-                    isMatch &= endingData.route == achievement.condition.requiredEndingRoute;
+                    isMatch &= endingRoute == achievement.condition.requiredEndingRoute;
                 }
                 
                 // 엔딩 분기 체크
                 if (achievement.condition.requiredEndingBranch > 0)
                 {
-                    isMatch &= endingData.branch == achievement.condition.requiredEndingBranch;
+                    isMatch &= endingBranch == achievement.condition.requiredEndingBranch;
+                }
+                
+                // 회차 체크 (필요한 경우)
+                if (achievement.condition.requiredPlaythroughCount > 0)
+                {
+                    isMatch &= playthrough == achievement.condition.requiredPlaythroughCount;
+                }
+                
+                // 파라미터 조건 체크 (카르마 등)
+                if (achievement.condition.requiredParameter != ParameterType.None && 
+                    achievement.condition.requiredParameterValue > 0)
+                {
+                    if (DataManager.Instance?.PlayerData != null)
+                    {
+                        int currentValue = GetParameterValue(achievement.condition.requiredParameter);
+                        isMatch &= currentValue >= achievement.condition.requiredParameterValue;
+                    }
                 }
                 
                 if (isMatch)
@@ -178,6 +336,32 @@ public class AchievementManager : MonoBehaviour
                     CompleteAchievement(achievement.achievementId);
                 }
             }
+        }
+    }
+    
+    /// <summary>
+    /// 파라미터 값 가져오기
+    /// </summary>
+    private int GetParameterValue(ParameterType parameterType)
+    {
+        if (DataManager.Instance?.PlayerData == null) return 0;
+        
+        switch (parameterType)
+        {
+            case ParameterType.카르마:
+                return DataManager.Instance.PlayerData.karma;
+            case ParameterType.정치력:
+                return DataManager.Instance.PlayerData.politics;
+            case ParameterType.병력:
+                return DataManager.Instance.PlayerData.militaryPower;
+            case ParameterType.물자:
+                return DataManager.Instance.PlayerData.supplies;
+            case ParameterType.리더십:
+                return DataManager.Instance.PlayerData.leadership;
+            case ParameterType.전황:
+                return DataManager.Instance.PlayerData.warSituation;
+            default:
+                return 0;
         }
     }
     
@@ -212,28 +396,18 @@ public class AchievementManager : MonoBehaviour
             if (achievement.condition.conditionType == ConditionType.BattleResult)
             {
                 bool isMatch = achievement.condition.requiredBattleOutcome == battleOutcome;
-                
-                // 첫 전투 조건 체크
-                if (isFirstBattle && achievement.achievementId.Contains("FirstBattle"))
-                {
-                    if (isMatch)
-                    {
-                        CompleteAchievement(achievement.achievementId);
-                    }
-                }
-                else if (!isFirstBattle && !achievement.achievementId.Contains("FirstBattle"))
-                {
-                    if (isMatch)
-                    {
-                        CompleteAchievement(achievement.achievementId);
-                    }
-                }
+
+				// 문자열 기반의 'FirstBattle' 이름 의존을 제거하고 결과 일치만으로 해금
+				if (isMatch)
+				{
+					CompleteAchievement(achievement.achievementId);
+				}
             }
         }
     }
     
     /// <summary>
-    /// 이벤트 완료 업적 체크
+    /// 이벤트 완료 업적 체크 (메인 스토리, 서브 스토리 포함)
     /// </summary>
     public void CheckEventAchievements(int eventId, bool wasSuccess)
     {
@@ -263,6 +437,22 @@ public class AchievementManager : MonoBehaviour
                 }
             }
         }
+    }
+    
+    /// <summary>
+    /// 메인 스토리 업적 체크
+    /// </summary>
+    public void CheckMainStoryAchievements(int eventId, bool wasSuccess)
+    {
+        CheckEventAchievements(eventId, wasSuccess);
+    }
+    
+    /// <summary>
+    /// 서브 스토리 업적 체크
+    /// </summary>
+    public void CheckSubStoryAchievements(int eventId, bool wasSuccess)
+    {
+        CheckEventAchievements(eventId, wasSuccess);
     }
     
     /// <summary>
@@ -319,6 +509,13 @@ public class AchievementManager : MonoBehaviour
             completedAchievementIds.Add(achievementId);
         }
         
+        // 이벤트 구독자 준비 전 누락 방지를 위해 대기열에 적재
+        pendingUnlockedQueue.Enqueue(achievement);
+        if (enableDebugLogs)
+        {
+            Debug.Log($"[AchievementManager] 해금 대기열 적재: {achievement.achievementId} (대기열={pendingUnlockedQueue.Count})");
+        }
+
         // 이벤트 발생
         OnAchievementUnlocked?.Invoke(achievement);
         OnAchievementCompleted?.Invoke(achievement);
@@ -371,7 +568,7 @@ public class AchievementManager : MonoBehaviour
             Debug.Log($"[AchievementManager] 보상 수령: '{achievement.title}' - {achievement.reward.rewardDescription}");
         }
         
-        // 저장
+        // 저장: 재시작 후 재수령 방지를 위해 즉시 저장
         SaveAchievementProgress();
         
         return true;
@@ -385,8 +582,9 @@ public class AchievementManager : MonoBehaviour
         switch (reward.rewardType)
         {
             case RewardType.Currency:
-                // 화폐 보상 적용
-                Debug.Log($"[AchievementManager] 화폐 보상: {reward.rewardValue}");
+                // 재화 보상 적용
+                CurrencyManager.AddCurrency(reward.rewardValue);
+                Debug.Log($"[AchievementManager] 재화 보상: {reward.rewardValue}개 획득!");
                 break;
             case RewardType.Item:
                 // 아이템 보상 적용
@@ -401,8 +599,9 @@ public class AchievementManager : MonoBehaviour
                 Debug.Log($"[AchievementManager] 해금 보상: {reward.rewardDescription}");
                 break;
             case RewardType.Experience:
-                // 경험치 보상 적용
-                Debug.Log($"[AchievementManager] 경험치 보상: {reward.rewardValue}");
+                // 경험치 보상 적용 (재화로 처리)
+                CurrencyManager.AddCurrency(reward.rewardValue);
+                Debug.Log($"[AchievementManager] 경험치 보상: {reward.rewardValue}개 획득!");
                 break;
         }
     }

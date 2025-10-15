@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
-using static TMPro.Examples.ObjectSpin;
 
 public class WarTurnManager : MonoBehaviour
 {
@@ -19,9 +18,6 @@ public class WarTurnManager : MonoBehaviour
     //[SerializeField] WarEnemy enemy;
     private WarEnemy enemy;
     public WarEnemy CurrentEnemy => enemy;
-
-    public GameObject attackVsAttackPrefab; // 임팩트컷
-    public GameObject attackVsDefendPrefab; // 블루슬래쉬
 
 
     [Header("UI References")]
@@ -57,11 +53,6 @@ public class WarTurnManager : MonoBehaviour
         {
             choiceCard.SetInteractable(true);
         }
-        if (isTestMode && GameManager.instance == null)
-        {
-            Debug.LogWarning("--- TEST MODE ---");
-            ResetForNewBattle();
-        }
     }
 
     public void SpawnVFXOnPlayer(GameObject vfxPrefab)
@@ -77,7 +68,7 @@ public class WarTurnManager : MonoBehaviour
     }
 
 
-    public void ResetForNewBattle()
+    public void ResetForNewBattle(int newMaxTurns = 30)
     {
         int chapterToLoad;
         bool isRealGameMode = !isTestMode && GameManager.instance != null;
@@ -102,7 +93,7 @@ public class WarTurnManager : MonoBehaviour
             ground.SetBackgroundForChapter(CurrentChapter);
         }
 
-        if (chapterToLoad == 1)
+        if (GameManager.instance != null && GameManager.instance.CurrentChapter == 1)
         {
             WarHistory.ResetHistory();
         }
@@ -112,33 +103,28 @@ public class WarTurnManager : MonoBehaviour
             Destroy(enemy.gameObject);
         }
 
-        int chapterIndex = chapterToLoad - 1;
+        int chapterIndex = GameManager.instance.CurrentChapter - 1;
         if (chapterIndex < 0 || chapterIndex >= chapterEnemies.Count || chapterEnemies[chapterIndex].enemyPrefabs.Count == 0)
         {
-            Debug.LogError($"챕터 {chapterToLoad}에 설정된 적이 없습니다! 인스펙터를 확인하세요.");
+            Debug.LogError($"챕터 {chapterIndex + 1}에 설정된 적이 없습니다!");
             return;
         }
-
         List<CustomEnemy> enemyPool = chapterEnemies[chapterIndex].enemyPrefabs;
         CustomEnemy selectedEnemyPrefab = enemyPool[Random.Range(0, enemyPool.Count)];
-
         int desiredLaneLength = selectedEnemyPrefab.battleLaneLength;
         if (ground != null)
         {
             ground.InitializeGrid(desiredLaneLength);
         }
-
         enemy = Instantiate(selectedEnemyPrefab, ground.transform);
-
         this.maxTurns = selectedEnemyPrefab.maxTurns;
-
-        Debug.Log($"챕터 {chapterToLoad} 전투 시작! 등장한 적: {enemy.name.Replace("(Clone)", "")}, 전장 크기: {desiredLaneLength}칸, 최대 턴: {this.maxTurns}턴");
+        Debug.Log($"챕터 {chapterIndex + 1} 전투 시작! 등장한 적: {enemy.name.Replace("(Clone)", "")}, 전장 크기: {desiredLaneLength}칸");
 
         if (warHUD != null)
         {
             enemy.enemyInfoText = warHUD.EnemyInfoTextField;
         }
-
+        maxTurns = newMaxTurns;
         currentTurn = 0;
         battleEnded = false;
         turnRunning = false;
@@ -148,7 +134,7 @@ public class WarTurnManager : MonoBehaviour
         {
             player.ResetState(ground, playerStartIndex);
         }
-        if (enemy != null)
+        if (enemy != null && enemy.Ctrl != null)
         {
             enemy.Ctrl.ResetState(ground, enemyStartIndex);
         }
@@ -161,8 +147,7 @@ public class WarTurnManager : MonoBehaviour
         {
             skillCooldownTimer = 0;
         }
-
-        if (!battleEnded && enemy != null)
+        if (!battleEnded && enemy != null && enemy.Ctrl != null)
         {
             enemy.PrepareAndShowHint();
         }
@@ -230,6 +215,20 @@ public class WarTurnManager : MonoBehaviour
             }
         };
         GamePlayerStats.Instance.ApplyChanges(changes); // 전황 파라미터 변경 적용
+        
+        // 업적 체크 - AchievementIntegration 직접 호출
+        var achievementIntegration = FindObjectOfType<AchievementIntegration>();
+        if (achievementIntegration != null)
+        {
+            GameOutcome battleOutcome = isWin ? GameOutcome.Victory : (resultLog.Contains("무승부") ? GameOutcome.Draw : GameOutcome.Defeat);
+            // 첫 전투 판별: 1회차 1챕터에서 첫 번째 전투인지 확인
+            bool isFirstBattle = DataManager.Instance?.PlayerData?.playthroughCount == 1 && 
+                                DataManager.Instance?.PlayerData?.currentChapter == 1 &&
+                                (DataManager.Instance?.PlayerData?.completedBattleResultIds?.Count ?? 0) == 0;
+            achievementIntegration.OnBattleResult(battleOutcome, isFirstBattle);
+            Debug.Log($"[WarTurnManager] 전투 결과 업적 체크: {battleOutcome}, 첫 전투: {isFirstBattle} (회차: {DataManager.Instance?.PlayerData?.playthroughCount}, 챕터: {DataManager.Instance?.PlayerData?.currentChapter}, 완료된 전투 수: {DataManager.Instance?.PlayerData?.completedBattleResultIds?.Count ?? 0})");
+        }
+        
         Debug.Log(resultLog);
         Debug.Log("전투 종료");
         OnBattleEnd?.Invoke(resultLog);
@@ -328,7 +327,7 @@ public class WarTurnManager : MonoBehaviour
         CheckWinLoseDrawAfterTurn();
         if (!battleEnded && currentTurn >= maxTurns) EndBattle("무승부 - 턴 제한 소진");
 
-        if (!battleEnded && enemy != null)
+        if (!battleEnded && enemy != null && enemy.Ctrl != null)
         {
             enemy.PrepareAndShowHint();
         }
@@ -400,6 +399,7 @@ public class WarTurnManager : MonoBehaviour
         }
         return null;
     }
+
 
     
 

@@ -30,8 +30,9 @@ public class AchievementUIManager : MonoBehaviour
     
     [Header("설정")]
     [SerializeField] private AchievementType defaultType = AchievementType.Ending;
-    [SerializeField] private Color completedCardColor = Color.yellow;
-    [SerializeField] private Color incompleteCardColor = Color.gray;
+    [SerializeField] private Color completedCardColor = new Color(1f, 0.8f, 0f, 1f); // 노란색
+    [SerializeField] private Color incompleteCardColor = new Color(0.5f, 0.5f, 0.5f, 1f); // 회색
+    [SerializeField] private Color lockedCardColor = new Color(0.2f, 0.2f, 0.2f, 1f); // 어두운 회색
     
     // 현재 선택된 타입
     private AchievementType currentType = AchievementType.Ending;

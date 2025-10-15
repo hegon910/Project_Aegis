@@ -19,6 +19,12 @@ public class DynamicCanvasMatcher : MonoBehaviour
         AdjustMatchValue();
         lastScreenWidth = Screen.width;
         lastScreenHeight = Screen.height;
+
+		// SafeArea 변경에도 반응하도록 구독 (있을 경우)
+		if (SafeAreaManager.Instance != null)
+		{
+			SafeAreaManager.Instance.OnSafeAreaChanged += HandleSafeAreaChanged;
+		}
     }
 
     void Update()
@@ -36,6 +42,25 @@ public class DynamicCanvasMatcher : MonoBehaviour
                 uiPanelAnimator.HandleScreenResize();
             }
         }
+    }
+
+	void OnDestroy()
+	{
+		if (SafeAreaManager.Instance != null)
+		{
+			SafeAreaManager.Instance.OnSafeAreaChanged -= HandleSafeAreaChanged;
+		}
+	}
+
+	private void HandleSafeAreaChanged(Vector2 min, Vector2 max)
+	{
+		AdjustMatchValue();
+		if (uiPanelAnimator != null)
+		{
+			uiPanelAnimator.HandleScreenResize();
+		}
+	
+        
     }
 
     private void AdjustMatchValue()

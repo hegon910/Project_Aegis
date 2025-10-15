@@ -16,11 +16,11 @@ MonoBehaviour:
   - stepName: TestOpening
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 4eddf07d6b27d804ea5a0ff7a700e9b5, type: 3}
+      image: {fileID: 21300000, guid: 1c63f0e7a7f726d4dbea8b23ae060c46, type: 3}
       fadeDuration: 1
     enableDialogueEffect: 0
     dialogueData:
-      dialogue: 
+      dialogue: "\u201C\uB2E4\uC74C \uB4E4\uC5B4\uC624\uC2DC\uC8E0.\u201D"
       typewriterSpeed: 0.2
     enableSoundEffect: 0
     soundData:
@@ -35,4 +35,4 @@ MonoBehaviour:
       animationDuration: 1
       holdDuration: 0
     waitTime: 10
-    waitForClick: 1
+    waitForClick: 0

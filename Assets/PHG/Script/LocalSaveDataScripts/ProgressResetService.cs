@@ -6,7 +6,14 @@ public static class ProgressResetService
     {
         if (clearPlaythroughHistory)
         {
-            global::PlaythroughHistory.Instance.ClearHistory();
+            // HCW의 PlaythroughHistory에는 ClearHistory 메서드가 없으므로 직접 PlayerPrefs 삭제
+            if (global::PlaythroughHistory.Instance != null)
+            {
+                PlayerPrefs.DeleteKey("PlaythroughHistory_Events");
+                PlayerPrefs.DeleteKey("PlaythroughHistory_Endings");
+                PlayerPrefs.DeleteKey("PlaythroughHistory_BattleResult");
+                PlayerPrefs.Save();
+            }
         }
 
         var dm = DataManager.Instance;
@@ -18,7 +25,8 @@ public static class ProgressResetService
 
         if (dm.PlayerData == null)
         {
-            dm.StartNewGame();
+            Debug.LogError("[ProgressResetService] DataManager.PlayerData is null");
+            return;
         }
 
         var pd = dm.PlayerData;

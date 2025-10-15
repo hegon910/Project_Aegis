@@ -80,10 +80,21 @@ public class FirebaseManager : MonoBehaviour
 
     private void Start()
     {
+#if UNITY_EDITOR
+        // 에디터에서는 Firebase DLL 문제로 인해 초기화를 건너뛰고 바로 게스트 모드로
+        Debug.LogWarning("[FirebaseManager] 에디터 환경: Firebase 초기화를 건너뛰고 대기합니다.");
+        
+        // 초기화 완료 알림만 보냄 (로그인 팝업은 GameManager 로딩 완료 후 표시)
+        OnFirebaseManagerInitialized?.Invoke();
+        
+        return;
+#endif
+
         FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task =>
         {
             if (task.IsCanceled || task.IsFaulted)
             {
+                Debug.LogError($"[FirebaseManager] Firebase 초기화 실패: {task.Exception}");
                 return;
             }
 
@@ -144,7 +155,8 @@ public class FirebaseManager : MonoBehaviour
     public void GPGSLogin()
     {
 #if UNITY_EDITOR
-        Debug.LogWarning("에디터에서는 gpgs 로그인 불가능");
+        Debug.LogWarning("[FirebaseManager] 에디터에서는 gpgs 로그인 불가능");
+        Debug.Log($"[FirebaseManager] Auth 상태: {(Auth != null ? "초기화됨" : "null")}");
         // 에디터에서는 바로 익명 로그인으로 진행
         ShowGPGSFailedPopup();
 #else
@@ -168,8 +180,11 @@ public class FirebaseManager : MonoBehaviour
     /// </summary>
     private void ShowGPGSFailedPopup()
     {
+        Debug.Log($"[FirebaseManager] ShowGPGSFailedPopup 호출됨 - PopupController.Instance: {(PopupController.Instance != null ? "있음" : "null")}");
+        
         if (PopupController.Instance != null)
         {
+            Debug.Log("[FirebaseManager] 팝업을 통해 게스트 로그인 선택 대기중");
             PopupController.Instance.ShowGPGSFailedDialog(
                 onGuestLogin: () => AnonymousLogin(),
                 onRetry: () => GPGSLogin()
@@ -177,7 +192,7 @@ public class FirebaseManager : MonoBehaviour
         }
         else
         {
-            Debug.LogError("PopupController 인스턴스를 찾을 수 없습니다.");
+            Debug.LogError("[FirebaseManager] PopupController 인스턴스를 찾을 수 없습니다. 바로 게스트 로그인 시도");
             // 폴백: 바로 게스트 로그인 진행
             AnonymousLogin();
         }
@@ -188,19 +203,39 @@ public class FirebaseManager : MonoBehaviour
     /// </summary>
     public void AnonymousLogin()
     {
-        Debug.Log("[FirebaseManager] 익명 로그인 시작");
+        Debug.Log("[FirebaseManager] ===== AnonymousLogin 호출됨 =====");
+        
+#if UNITY_EDITOR
+        // 에디터에서는 Firebase 없이 게스트 모드로 전환
+        Debug.LogWarning("[FirebaseManager] 에디터 환경: Firebase 없이 게스트 로그인 처리");
+        SetLoginType(LoginType.Guest);
+        Debug.Log("[FirebaseManager] 게스트 로그인 완료 (에디터 모드)");
+        return;
+#endif
+        
+        Debug.Log($"[FirebaseManager] Auth 초기화 상태: {(Auth != null ? "OK" : "NULL")}");
+        
+        if (Auth == null)
+        {
+            Debug.LogError("[FirebaseManager] Auth가 초기화되지 않았습니다! Firebase 초기화를 기다리세요.");
+            return;
+        }
+        
+        Debug.Log("[FirebaseManager] 익명 로그인 시작...");
         
         Auth.SignInAnonymouslyAsync().ContinueWithOnMainThread(task =>
         {
+            Debug.Log($"[FirebaseManager] SignInAnonymouslyAsync 완료 - IsCanceled: {task.IsCanceled}, IsFaulted: {task.IsFaulted}");
+            
             if (task.IsCanceled)
             {
-                Debug.LogError("익명 로그인 취소됨");
+                Debug.LogError("[FirebaseManager] 익명 로그인 취소됨");
                 return;
             }
             
             if (task.IsFaulted)
             {
-                Debug.LogError("익명 로그인 실패: " + task.Exception);
+                Debug.LogError($"[FirebaseManager] 익명 로그인 실패: {task.Exception}");
                 return;
             }
 
@@ -208,12 +243,10 @@ public class FirebaseManager : MonoBehaviour
             User = result.User;
             SetLoginType(LoginType.Guest);
             
-            Debug.Log($"익명 로그인 완료: {User.UserId}");
-            Debug.Log($"=== 현재 에디터 익명 계정 정보 ===");
+            Debug.Log($"[FirebaseManager] ===== 익명 로그인 완료 =====");
             Debug.Log($"UID: {User.UserId}");
             Debug.Log($"생성 시간: {User.Metadata.CreationTimestamp}");
             Debug.Log($"마지막 로그인: {User.Metadata.LastSignInTimestamp}");
-            Debug.Log($"=== Firebase Console에서 이 UID를 검색하세요 ===");
             
             // DataManager에 로그인 완료 알림
             if (DataManager.Instance != null)

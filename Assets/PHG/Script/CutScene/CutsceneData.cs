@@ -28,6 +28,14 @@ public struct SoundEffectData
 {
     public AudioClip soundClip;
 }
+
+[System.Serializable]
+public struct BgmEffectData
+{
+    public AudioClip bgmClip;
+    public bool loop;
+    [Range(0f,1f)] public float volume;
+}
 [System.Serializable]
 public struct VideoEffectData
 {
@@ -66,6 +74,10 @@ public class CutsceneStep
     [Header("--- 사운드 효과 ---")]
     public bool enableSoundEffect; // 이 효과를 사용할지 체크박스
     public SoundEffectData soundData;
+
+    [Header("--- 배경음악 ---")]
+    public bool enableBgmEffect;
+    public BgmEffectData bgmData;
 
     [Header("--- 비디오 효과 ---")]
     public bool enableVideoEffect;

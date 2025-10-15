@@ -48,11 +48,15 @@ public class AchievementSystemExample : MonoBehaviour
     {
         if (AchievementManager.Instance != null && MultiEndingSystem.Instance != null)
         {
-            var endingData = MultiEndingSystem.Instance.GetFinalEndingData();
-            AchievementManager.Instance.CheckEndingAchievements(endingData);
+            // MultiEndingSystem에서 엔딩 정보를 직접 가져와서 전달
+            AchievementManager.Instance.CheckEndingAchievements(
+                MultiEndingSystem.Instance.DetermineEndingType(),
+                MultiEndingSystem.Instance.DetermineEndingRoute(),
+                MultiEndingSystem.Instance.DetermineEndingBranch(MultiEndingSystem.Instance.DetermineEndingRoute()),
+                MultiEndingSystem.Instance.GetCurrentLoopStatus().currentPlaythrough
+            );
         }
     }
-    
     /// <summary>
     /// 테스트용 회차 시작 메서드
     /// </summary>

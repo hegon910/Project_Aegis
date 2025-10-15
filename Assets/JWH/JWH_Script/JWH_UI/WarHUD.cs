@@ -113,7 +113,7 @@ public class WarHUD : MonoBehaviour
     {
         WarEnemy currentEnemy = warturnMgr.CurrentEnemy;
 
-        if (currentEnemy != null)
+        if (currentEnemy != null && currentEnemy.Ctrl != null)
         {
             if (enemyNameText != null)
             {

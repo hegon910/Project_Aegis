@@ -1,0 +1,74 @@
+CharacterImg_ID,IMGName,Explanation
+200000001,Pierre_Idle.png,부관 노멀
+200000002,Pierre_Surprise.png,부관 놀람
+200000003,Pierre_Smile.png,부관 웃음
+200000004,Pierre_Angry.png,부관 분노
+200000005,Pierre_Worry.png,부관 고민
+200000006,Schrodinger_Idle.png,슈뢰딩거 노멀
+200000007,Schrodinger_Surprise.png,슈뢰딩거 놀람
+200000008,Schrodinger_Smile.png,슈뢰딩거 웃음
+200000009,Schrodinger_Angry.png,슈뢰딩거 분노
+200000010,Schrodinger_Quest.png,슈뢰딩거 고민
+200000011,Jang_Idle.png,장 노멀
+200000012,Jang_Hate.png,장 경멸
+200000013,Jang_Angry.png,장 분노
+200000014,Jang_Smile.png,장 웃음
+200000015,Jang_Worry.png,장 고민
+200000016,King_Idle.png,왕 노멀
+200000017,King_Bad.png,왕 비열
+200000018,King_Smile.png,왕 웃음
+200000019,King_Angry.png,왕 분노
+200000020,King_Worry.png,왕 고민
+200000021,King_Sad.png,왕 울상
+200000022,King_Surprise.png,왕 놀란
+200000023,LittleGirl.png,소녀
+200000024,Nobility.png,귀족
+200000025,Soldier.png,병사
+200000026,Spy_Idle.png,스파이 노멀
+200000027,Spy_Bubble.png,스파이 거품
+200000028,Spy_pain.png,스파이 고통
+200000029,Priest.png,신부
+200000030,Citizen.png,주민
+200000031,Boy_Idle.png,아이
+200000032,Boy_Cry.png,아이 울음
+200000033,Minister.png,병과전 장관
+200000034,Jang.png,장 크리티앙
+200000035,Schrodinger_Danghok.png,슈뢰딩거 당황
+200000036,Schrodinger_Sorry.png,슈뢰딩거 죄송
+200000037,SpaceMinister.png,우기연 장관
+200000038,WarMinister.png,전사 장관
+200000039,Scientist.png,연구원
+200000040,AyasiiMan.png,수상한 남자
+200000041,Fatman.png,로쉬 백작
+200000042,AngryFatman.png,로쉬백작 화남
+200000043,Strongwoman.png,경비대장
+200000044,AngryStrongwoman.png,경비대장 화남
+200000045,Jake_Idle.png,제이크 노멀
+200000046,Jake_Smile.png,제이크 웃음
+200000047,Jake_Kimo.png,제이크 불쾌
+200000048,Jake_Worry.png,제이크 고민
+200000049,Fuhrer_Idle.png,총통 노멀
+200000050,Fuhrer_Angry.png,총통 분노
+200000051,Fuhrer_Smile.png,총통 웃음
+200000052,Enemy_Idle.png,적장 노멀
+200000053,Enemy_Angry.png,적장 분노
+200000054,Pierre_Tear.png,부관 눈물
+200000055,Marquis_Idle.png,후작 노멀
+200000056,Marquis_Smile.png,후작 웃음
+200000057,Marquis_Surprise.png,후작 놀람
+200000058,Marquis_Worry.png,후작 우려
+200000059,Nightingale_Idle.png,나이팅게일 노멀
+200000060, LeMay_Idle.png,르메이 노멀
+200000061, LeMay_Smile.png,르메이 웃음
+200000062,Nagai_Idle.png,나가이 노멀
+200000063,Nagai_Surprise.png,나가이 놀람
+200000064,Nobel_Idle.png,노벨 노멀
+200000065,Ridgway_Idle.png,리지웨이 노멀
+200000066,Christian_Idle.png,크리스티안 노멀
+200000067,Tesla_Idle.png,테슬라 노멀
+200000068,Tesla_Worry.png,테슬라 고민
+200000069,Hassan_Idle.png,하산 노멀
+200000070,Sonbin_Idle.png,손빈 노멀
+200000071,Sonbin_Smile.png,손빈 웃음
+200000072,Monroe_Idle.png,먼로 노멀
+200000073,Monroe_Surprise.png,먼로 놀람

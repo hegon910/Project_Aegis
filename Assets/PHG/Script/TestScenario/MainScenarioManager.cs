@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections;
 using System.Linq;
 using TMPro;
@@ -20,9 +21,11 @@ public class MainStoryUI
     public TextMeshProUGUI choicePreviewText;
     [Header("메인 스토리 전용 Dimmer")]
     public Image mainStoryDimmerPanel;
+    [Header("배경")]
+    public Image backgroundImage; // BG/Back 기반 배경 스프라이트 적용 대상
 }
 
-public class MainScenarioManager : MonoBehaviour, IChoiceHandler
+public partial class MainScenarioManager : MonoBehaviour, IChoiceHandler
 {
     public static event Action OnScenarioFinished;
     public bool IsScenarioRunning { get; private set; }
@@ -66,18 +69,26 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
     public void BeginScenarioFromStart()
     {
         int currentChapter = GameManager.instance.CurrentChapter;
-        int startStoryNum = GameManager.instance.GetCurrentChapterStartStoryNum();
+        int currentPlaythrough = DataManager.Instance.PlayerData.playthroughCount;
+        int startStoryNum = GetPlaythroughSpecificStoryNum(currentChapter, currentPlaythrough);
 
         if (startStoryNum > 0)
         {
-            // 1. StoryNum으로 첫 번째 데이터 노드를 찾아옵니다.
-            NewMainEventData firstNode = DataManager.Instance.GetMainEventDataByStoryNum(startStoryNum);
+            // 1. 회차별 LoopNum 계산
+            int loopNum = GetPlaythroughSpecificLoopNum(currentPlaythrough);
+            
+            // 2. StoryNum과 LoopNum으로 첫 번째 데이터 노드를 찾아옵니다.
+            NewMainEventData firstNode = DataManager.Instance.GetMainEventDataByStoryNumAndLoop(startStoryNum, loopNum);
 
             // 2. 찾아온 노드가 유효하고, 그 노드의 ID가 있다면
             if (firstNode != null && firstNode.id > 0)
             {
-                Debug.Log($"[MainScenarioManager] {currentChapter}챕터 스토리를 시작합니다. (시작 StoryNum: {startStoryNum}, 시작 ID: {firstNode.id})");
+                Debug.Log($"[MainScenarioManager] {currentChapter}챕터 {currentPlaythrough}회차 스토리를 시작합니다. (시작 StoryNum: {startStoryNum}, 시작 ID: {firstNode.id}, 찾은 LoopNum: {firstNode.LoopNum}, 요청한 LoopNum: {loopNum})");
                 uiAnimator.ShowMainStoryView();
+                
+                // 메인 스토리 시작 시 BGM을 강제로 재생하기 위해 currentBGMId를 리셋
+                currentBGMId = 0;
+                
                 IsScenarioRunning = true;
                 mainStoryUI.panelRoot.SetActive(true);
 
@@ -86,15 +97,39 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
             }
             else
             {
-                Debug.LogWarning($"[MainScenarioManager] StoryNum {startStoryNum}에 해당하는 데이터를 찾았으나, 유효한 ID가 없습니다. 스토리 단계를 건너뜁니다.");
+                Debug.LogWarning($"[MainScenarioManager] StoryNum {startStoryNum}, LoopNum {currentPlaythrough}에 해당하는 데이터를 찾았으나, 유효한 ID가 없습니다. 스토리 단계를 건너뜁니다.");
                 EndScenario();
             }
         }
         else
         {
-            Debug.LogWarning($"[MainScenarioManager] {currentChapter}챕터에 해당하는 시작 StoryNum을 찾을 수 없습니다. 스토리 단계를 건너뜁니다.");
+            Debug.LogWarning($"[MainScenarioManager] {currentChapter}챕터 {currentPlaythrough}회차에 해당하는 시작 StoryNum을 찾을 수 없습니다. 스토리 단계를 건너뜁니다.");
             EndScenario();
         }
+    }
+
+    /// <summary>
+    /// 회차별로 다른 스토리 번호를 반환합니다.
+    /// </summary>
+    private int GetPlaythroughSpecificStoryNum(int chapter, int playthrough)
+    {
+        // 기본 스토리 번호 (1회차용)
+        int baseStoryNum = GameManager.instance.GetCurrentChapterStartStoryNum();
+        
+        // 회차별 StoryNum 계산
+        int playthroughStoryNum = baseStoryNum + (playthrough - 1) * 9; // 1회차=10000001, 2회차=10000010, 3회차=10000019
+        
+        Debug.Log($"[MainScenarioManager] 회차별 스토리 번호 계산: 챕터={chapter}, 회차={playthrough}, 기본={baseStoryNum}, 최종={playthroughStoryNum}");
+        
+        return playthroughStoryNum;
+    }
+    
+    /// <summary>
+    /// 회차별로 다른 LoopNum을 반환합니다.
+    /// </summary>
+    private int GetPlaythroughSpecificLoopNum(int playthrough)
+    {
+        return 100 + playthrough; // 1회차=101, 2회차=102, 3회차=103...
     }
 
     private void EndScenario()
@@ -174,6 +209,14 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
             mainStoryUI.characterImage.color = Color.clear;
         }
 
+        // 배경 적용: BackData 우선, 없으면 BGName 폴백
+        TryApplyBackgroundFromMainEvent(currentNode);
+
+        // 음향 재생 (BGM과 SFX)
+        // [보정] 메인화면 -> 새로하기로 메인 스토리에 진입한 '첫 표시'에서만 강제 재생
+        // 첫 노드에서만 currentBGMId를 0으로 만들어 동일 BGM이라도 재생되도록 함. 이후 노드 전환에서는 원래 로직 유지
+        PlayEventAudio(currentNode);
+
         if (typingCoroutine != null) StopCoroutine(typingCoroutine);
         typingCoroutine = StartCoroutine(TypeText(currentNode.dialogue));
 
@@ -192,52 +235,37 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
         }
     }
 
-    // [수정] 독백/리소스 폴백 포함 초상 결정
+    // 초상 스프라이트 결정: CharacterImg_ID의 IMGName → Resources/Portraits/<IMGName> 우선
     private Sprite ResolvePortraitSprite(NewMainEventData node)
     {
-        // 1) MainCharacterImgData.csv 경로 우선
-        string imgPath = node.characterImgData?.IMGName;
-        if (!string.IsNullOrEmpty(imgPath))
+        string imgName = node.characterImgData?.IMGName;
+        if (!string.IsNullOrEmpty(imgName))
         {
-            var s = Resources.Load<Sprite>(imgPath);
+            // 1) 명시 경로: Resources/Portraits/<IMGName>
+            var s = Resources.Load<Sprite>($"Portraits/{imgName}");
+            if (s != null) return s;
+
+            // 2) 예전 규칙(단수 폴더) 호환
+            s = Resources.Load<Sprite>($"Portrait/{imgName}");
+            if (s != null) return s;
+
+            // 3) CSV가 전체 경로를 담고 있는 경우를 대비하여 원문 시도
+            s = Resources.Load<Sprite>(imgName);
             if (s != null) return s;
         }
-
-        // 2) 독백(화자/이미지 모두 없음) → 공란 처리 (이미지 없음)
-        bool noSpeakerName = string.IsNullOrEmpty(node.characterData?.Chr_Name);
-        bool noImg = string.IsNullOrEmpty(imgPath);
-        if (noSpeakerName && noImg)
-        {
-            return null; // 독백일 때는 이미지 없음
-        }
-
-        // 3) 상태 이미지(angry 등)가 없을 때: CharacterName과 동일한 리소스 이름으로 시도
-        string nameKey = node.characterData?.Chr_Name;
-        if (!string.IsNullOrEmpty(nameKey))
-        {
-            // 규칙: Portraits/<CharacterName>.png
-            var fallback = Resources.Load<Sprite>($"Portraits/{nameKey}");
-            if (fallback != null) return fallback;
-        }
-
-        // 4) 최종 실패: null
         return null;
     }
-
+    
+    // 메인 시나리오 선택 처리
     public void HandleChoice(bool isRightChoice)
     {
-        Debug.Log($"[MainScenarioManager] HandleChoice 호출됨! isRightChoice: {isRightChoice}");
-        if (IsTyping || currentNode == null)
-        {
-            return;
-        }
-
-        if (currentNode.leftChoice == null || currentNode.rightChoice == null)
-        {
-            return;
-        }
+        if (currentNode == null) return;
+        if (currentNode.leftChoice == null && currentNode.rightChoice == null) return;
 
         MainEventChoice selectedChoice = isRightChoice ? currentNode.rightChoice : currentNode.leftChoice;
+        if (selectedChoice == null) return;
+
+
         Debug.Log($"[MainScenarioManager] 선택지 처리 시작. 선택된 다음 노드 ID: {selectedChoice.nextEventID}");
 
         if (selectedChoice.isCountingforRealEnding3)
@@ -260,7 +288,7 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
             }
         }
 
-        //회상 텍스트 저장
+        // 회상 텍스트 저장
         if (selectedChoice.isEndingMemoriar)
         {
             if (DataManager.Instance.endingMemoriarDataDict.TryGetValue(selectedChoice.ID, out var memoriarData))
@@ -308,6 +336,39 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
             yield return new WaitForSeconds(typingSpeed);
         }
         typingCoroutine = null;
+    }
+
+    // 현재 재생 중인 BGM ID를 추적
+    private int currentBGMId = 0;
+    
+    /// <summary>
+    /// 이벤트 데이터에서 음향을 재생합니다.
+    /// </summary>
+    /// <param name="eventData">이벤트 데이터</param>
+    private void PlayEventAudio(NewMainEventData eventData)
+    {
+        if (eventData == null) return;
+
+        // BGM 재생 (같은 BGM이 아닌 경우에만 재생)
+        if (eventData.bgData != null && eventData.bgData.BG_ID != 0)
+        {
+            if (AudioManager.Instance != null && currentBGMId != eventData.bgData.BG_ID)
+            {
+                AudioManager.Instance.PlayBGMByID(eventData.bgData.BG_ID);
+                currentBGMId = eventData.bgData.BG_ID;
+                Debug.Log($"[MainScenarioManager] BGM 재생: {eventData.bgData.BGName} (ID: {eventData.bgData.BG_ID})");
+            }
+        }
+
+        // SFX 재생
+        if (eventData.sfxData != null && eventData.sfxData.SFX_ID != 0)
+        {
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlaySFXByID(eventData.sfxData.SFX_ID);
+                Debug.Log($"[MainScenarioManager] SFX 재생: {eventData.sfxData.SFXName} (ID: {eventData.sfxData.SFX_ID})");
+            }
+        }
     }
 
     // IChoiceHandler 인터페이스의 나머지 함수들
@@ -386,5 +447,65 @@ public class MainScenarioManager : MonoBehaviour, IChoiceHandler
 
         // 다음 노드를 표시 (nextNodeID가 0이면 시나리오 종료)
         DisplayNode(nextNodeID);
+    }
+}
+
+// 배경 스프라이트 적용 유틸리티
+partial class MainScenarioManager
+{
+    private void TryApplyBackgroundFromMainEvent(NewMainEventData node)
+    {
+        if (mainStoryUI == null || mainStoryUI.backgroundImage == null || node == null) return;
+
+        string backName = node.backData?.IMGName;
+        if (!string.IsNullOrEmpty(backName))
+        {
+            var s = ResolveBackgroundSpriteByName(backName);
+            if (s != null)
+            {
+                SetBackgroundSprite(s);
+                return;
+            }
+        }
+
+        string bgName = node.bgData?.BGName;
+        if (!string.IsNullOrEmpty(bgName))
+        {
+            var s = ResolveBackgroundSpriteByName(bgName);
+            if (s != null)
+            {
+                SetBackgroundSprite(s);
+            }
+        }
+    }
+
+    private void SetBackgroundSprite(Sprite sprite)
+    {
+        mainStoryUI.backgroundImage.sprite = sprite;
+    }
+
+    private Sprite ResolveBackgroundSpriteByName(string nameOrPath)
+    {
+        if (string.IsNullOrWhiteSpace(nameOrPath)) return null;
+
+        string cleaned = nameOrPath.Trim();
+        string normalized = cleaned.Replace('\\', '/');
+        int lastSlash = normalized.LastIndexOf('/');
+        string lastSegment = lastSlash >= 0 ? normalized.Substring(lastSlash + 1) : normalized;
+        string baseName = Path.GetFileNameWithoutExtension(lastSegment);
+
+        var s = Resources.Load<Sprite>("Backgrounds/" + baseName);
+        if (s != null) return s;
+
+        s = Resources.Load<Sprite>("Back/" + baseName);
+        if (s != null) return s;
+
+        string rawNoExt = normalized;
+        int dot = rawNoExt.LastIndexOf('.');
+        if (dot > 0) rawNoExt = rawNoExt.Substring(0, dot);
+        s = Resources.Load<Sprite>(rawNoExt);
+        if (s != null) return s;
+
+        return null;
     }
 }
