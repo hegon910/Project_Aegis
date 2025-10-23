@@ -1,0 +1,1070 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Resources (Auto)
+  m_EditorClassIdentifier: 
+  m_GroupName: Resources (Auto)
+  m_Data:
+    m_SerializedData: []
+  m_GUID: 69cb0f9988e5d734fba2201df6040856
+  m_SerializeEntries:
+  - m_GUID: 0217fcc13c1f3974e93535ac9f47626d
+    m_Address: Audio/SFX/Boom
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 058b5e489afc025449392c52a28a1490
+    m_Address: OpeningEventData 0.0.1 - OpeningEventData_Lucas
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 06c78d273f9591848bd14cda2a493a3e
+    m_Address: MainEventData_backup_before_apply
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 077587a2a78e45a40a79ca04a7a3045e
+    m_Address: Audio/BGM/Story10
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 08df870d0b8da9e4086cb13818267b9f
+    m_Address: ParameterEventStringData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0985dc92d5a615142bd036bfe868b1f3
+    m_Address: Audio/SFX/Chulkak
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0a80c32d4cff1e04181b3789cc81c5d3
+    m_Address: Portraits/LittleGirl
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0b97417bc8e3a9144bea940809872190
+    m_Address: EndingDataNameList
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0bdf84264f71bd646a6ee4fe8896a6d8
+    m_Address: Portraits/Commander/Risard
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0c037253b14e91347bce98ef9d89db42
+    m_Address: Audio/SFX/ChiZik
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0fe3a087b2875c74a943d5c6707a37ee
+    m_Address: Backgrounds/Refuge.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 11683a1288d2355479fcea46f7f347a5
+    m_Address: Backgrounds/Mountain
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 13ff31c4336121140bcd3212d85b451c
+    m_Address: Backgrounds/Discussion
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 14986a98e4b2342489384269b27e7982
+    m_Address: Backgrounds/Storage
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 17a26723967a89345bf726c21bd861f8
+    m_Address: Backgrounds/Trench
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 17e9e5b18e5f7f6448adcbe7cb5f4ada
+    m_Address: Portraits/Spy_pain
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 183cc0e18eae3c04082bda6482581e61
+    m_Address: Portraits/Pierre_Smile
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 18c35452ea9d6364789a63a78408c809
+    m_Address: MainBGData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 191998e0039be6e4086a7666a022fca6
+    m_Address: Portraits/Schrodinger_Quest
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1ace8157274d9ff418848fca3b693df7
+    m_Address: Portraits/AyasiiMan
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1b2c1cc7cca70ba4b88025950d668b61
+    m_Address: Portraits/Nightingale_Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1c63f0e7a7f726d4dbea8b23ae060c46
+    m_Address: Backgrounds/ThroneRoom
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1ca67a35817beed49b5ac08273f1ea9b
+    m_Address: Portraits/Enemy_Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1dc2c731368cbf049b9648c94815ebe0
+    m_Address: Backgrounds/Ground
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1e249a4af29f8fd4cb74e60a365c299a
+    m_Address: Audio/SFX/Gun
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1f70cc1574fb14f4cb067cfc1744065b
+    m_Address: Portraits/Boy_Cry
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1fb4bb97b2743b044852d126666cae89
+    m_Address: Portraits/Tesla_Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 22930437de9a438428d000ea1c879f08
+    m_Address: Audio/SFX/Sorum
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2317600a852ab454c9546631f3b3ec7c
+    m_Address: Portraits/King_Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 243a1529d3f093944a63b94f8b69c6ce
+    m_Address: Audio/SFX/Cloth
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 24d9ef45f722005408fa5ba42f9e5594
+    m_Address: Portraits/King_Angry
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 26627bf75cf69cb4d98317a048ade3d1
+    m_Address: "Portraits/\uAD6D\uC655"
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 297a9fc3794fb7647bf272e033eaf921
+    m_Address: Audio/SFX/Dog
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2a473f3a5a9a7de4c93e210016bd5dbb
+    m_Address: Audio/BGM/Story11
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2b143816bdf16fb409c43856066c681f
+    m_Address: Portraits/Sonbin_Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2bd7ab5b6e6d8f04287ecd1fe0c4de32
+    m_Address: Audio/SFX/Electronic
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2bfb3af14d9fd9c4396f6843d540def9
+    m_Address: Portraits/Pierre_Surprise
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2c5401029ff14374ba5df8629d8930c9
+    m_Address: Backgrounds/CommandRoom
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2cd97e4e68b0036499f6c406e33687be
+    m_Address: Audio/BGM/BattleMusic
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2d3eedba8b7189641bb3174c4bc6d31d
+    m_Address: Audio/SFX/FoodStep
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2f5f0ade94ae6034e8f1eacacd926914
+    m_Address: Audio/SFX/FoodStep3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 30e9aed37c6d998438ecb4ef3738a080
+    m_Address: OpeningCutScene
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3233260e643cd3f48bbc00d1ad456c3c
+    m_Address: Audio/SFX/DDU_DDU
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 33d8c9a31f82554488f7d26dbaabcaf4
+    m_Address: Portraits/Marquis_Surprise
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 37b0ad6b98c55094d987b07220a23a7e
+    m_Address: Audio/SFX/door2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 386b581d7362ea04db2401b0954e1be2
+    m_Address: Audio/SFX/Mic
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 397e96db7d8177a4abe0dc8ff299d7e7
+    m_Address: Portraits/Jang_Smile
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3a81a601ab3c40a4aaa0b71f6773409c
+    m_Address: Portraits/Scientist
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3cfcc6f70c3a19c49b11883b924f3b0a
+    m_Address: Audio/SFX/FoodStep2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3db737b317e4e514eb64ab0925deccef
+    m_Address: Portraits/Schrodinger_Angry
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3eb0d4cff3ba4214d9bde6ac7f4e2155
+    m_Address: Portraits/Strongwoman
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 405fe2f149738b74781f4050c911e237
+    m_Address: Portraits/Jake_Smile
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4071df4e21bf9954980f0bf15c2c1049
+    m_Address: Portraits/Jake_Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4132a61d38364ec4c8c3f0fea23422da
+    m_Address: Audio/SFX/door
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4356992b4c6a91f4390d0de833420a9f
+    m_Address: Portraits/Ridgway_Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 44005891ce3d68246bb1d5bf4c2e6633
+    m_Address: ParameterRewardData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 45a6a129d946fcb4eb0e147821694249
+    m_Address: Portraits/Citizen
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 489a1a020af640d458513de87a5008a9
+    m_Address: OpeningEventData 0.0.1 - OpeningEventData_Percy
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 49bbe909a9609aa4883d02b3ef277d8e
+    m_Address: Portraits/Marquis_Worry
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4b0fd712e70e0744996253a28833dbf9
+    m_Address: Portraits/Fuhrer_Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4c784015f0ebbdf47b61c051020b0fc8
+    m_Address: Audio/SFX/Shot
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4cae7c9ef5fe60841a2a508eb6c13a03
+    m_Address: Portraits/Jake_Worry
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 51821effad633db4a8fe9f1da51791e3
+    m_Address: Audio/BGM/Story6
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 51a1f693fa64ed548a08c5224be2a2a6
+    m_Address: OpeningEventData 0.0.1 - OpeningEventData_Bris
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 51e401e61a5e66944b59c0b76e2909c8
+    m_Address: Audio/SFX/paper
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 51ed41dacfd0ffe4ebd80868c4e01e74
+    m_Address: "Portraits/\uBBFC\uAC04\uC778"
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5336ecadc57f02a4683999e42c6a07e9
+    m_Address: Portraits/Monroe_Surprise
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 57b94aba3cb28ae4080d5b71eddd21fb
+    m_Address: Portraits/Christian_Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 59f27d53211d7c447bf890b0b0c8e144
+    m_Address: Portraits/LeMay_Smile
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5a620cd946fb3fe42bddb6ea91928138
+    m_Address: Portraits/Hassan_Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5ac0a373da179fc41811a4b4ea1413c2
+    m_Address: SpecialEventData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5eba57a3982b7d146961392b6e66229e
+    m_Address: "Portraits/\uB3D9\uB9F9\uAD70 \uC7A5\uAD50"
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5ed0fd233b4054a4c9cec58b94330ccd
+    m_Address: Backgrounds/Corridor
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 61da0679f66328d42a4867c0a1bf38da
+    m_Address: Audio/SFX/Dalgurak
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6366d1ef7f201654e82a549293538306
+    m_Address: Audio/BGM/Story13
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6396bca7deb8c8a4997cac8f4188b9ca
+    m_Address: Portraits/Nobel_Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6498cb7603b48af4eab0e97817fd4ebd
+    m_Address: Backgrounds/Warehouse
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 64ce4b7982bda61459fef2ac38c4f8d7
+    m_Address: Backgrounds/BanquetHall
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6674315a15a896e44ad6c64d4452f5ec
+    m_Address: "Portraits/\uBCD1\uC0AC"
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 671b0c3ff2a50ed43afdd1cbe221eb87
+    m_Address: Portraits/Neumann_Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 69b4f7db1368d144a9675f2a1bd04fb7
+    m_Address: Audio/SFX/UngUng
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6bdcda30a85ff2f4fbe56e96a06b5ff1
+    m_Address: Portraits/Minister
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6c930d664c8382e4dbb4856847ad5ba8
+    m_Address: Portraits/Jang_Worry
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6d003f4889c23c34f873160f0650ca7a
+    m_Address: Portraits/King_Surprise
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6d5ae65232dd99e4f90c113bede1c9e8
+    m_Address: Portraits/Jang
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6db17791407ad5e429cf08c79bfe1ffb
+    m_Address: Audio/BGM/CommandCenter
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7156b0b4dd57c7144b29183e47c1f419
+    m_Address: Portraits/Spy_Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 72e773d997baf1e42a4c3f549c201cb5
+    m_Address: Portraits/Commander/Wille
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7784486bd7689a84f9c5a15533a994cd
+    m_Address: Audio/BGM/Story3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7c7f55ce65b57104485cdbe795787ec3
+    m_Address: Portraits/Pierre_Tear
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7d2b9763b85f7184fb9e36543e59c190
+    m_Address: Portraits/Tesla_Worry
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7d6a0c09e3a234646ab6a35f3f232bff
+    m_Address: Audio/BGM/Story4
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7da60004a32226642b427179b30eb116
+    m_Address: Audio/SFX/Down
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7e8970f4488b8fc488391114ffa35641
+    m_Address: Portraits/Schrodinger_Surprise
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7eafb752a30eaa2429bbe56ad4a5e6e1
+    m_Address: Portraits/Jake_Kimo
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 804dc6dde1bb687448ab138acc37093b
+    m_Address: SubEventAnswerID
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 81f047592cd6a164489169d11393e336
+    m_Address: Audio/BGM/Story7
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 83330bfa016bc164db5f0027b0654300
+    m_Address: Audio/SFX/Giggle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8350bf5577cae034ba3820e756ef94cb
+    m_Address: Portraits/King_Worry
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 83f0bf7b0810a7940b5acef7d3d3929e
+    m_Address: EndingMemoriar
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 860d6dc28a0ba19429de131e8bc2744a
+    m_Address: Portraits/Soldier
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 86b97113379ad38419c985ffc44bcefa
+    m_Address: Audio/SFX/Boom2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 878b44e4ae6324c48801e0290f1ec2ad
+    m_Address: MainEventData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8900870c4d874ac44abef2441f3bbb6c
+    m_Address: "Portraits/\uAD6D\uD68C\uC758\uC6D0"
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8acf847d20cdf5e4897b044ebd9426a1
+    m_Address: Portraits/Nobility
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8acfdce34c12f534f8dbf56bcc6be6b8
+    m_Address: Portraits/AngryFatman
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8c4cb8421d3ed774fb50954dfbb01125
+    m_Address: Backgrounds/OfficeAide
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8cb7a5f8ded79e14d92ed3d1de394cf1
+    m_Address: Audio/SFX/GGang
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8dd900a62391b57479bfa80ac51d12dc
+    m_Address: Portraits/Schrodinger_Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8de80330d0c85ec4bb59d2662342527c
+    m_Address: TrueEndingData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8ea4607cb5a7bfe4798948e4b6741f10
+    m_Address: Portraits/Nagai_Surprise
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 90c2294fdf9744148a06c9d4eb2fff75
+    m_Address: Audio/SFX/Alarm
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 93e18b2e24cba3645a5c4264b235bf32
+    m_Address: "Portraits/\uC885\uAD70 \uAE30\uC790"
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 94213579d346d2347a306dd3d6fc9bf8
+    m_Address: "Portraits/\uC288\uB8B0\uB529\uAC70"
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 98c3f8d29d04ac44787630c796784737
+    m_Address: Portraits/King_Smile
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 993d99e4f36483f429d3c3519d2c5b94
+    m_Address: BackData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 99802aee1db98ca42b1761d24eba7ab4
+    m_Address: Portraits/Fuhrer_Smile
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 99fb4371a101dae44995a3a7547a6aae
+    m_Address: Audio/SFX/Repulsor
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9a6ffa0168917124f94cb589d6ddbf30
+    m_Address: Portraits/Nagai_Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9b384801bd2feea4d8a5fa0665a1c504
+    m_Address: Backgrounds/Room
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9bea3ac96eebe4a45a355f30956b9425
+    m_Address: Backgrounds/CorridorSoldier
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9df9c281165e9374eb22c36e4724db17
+    m_Address: Portraits/Monroe_Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9fda648d73ee84940832c17c9a484236
+    m_Address: OpeningEvent_SFXData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9fe8b6f504ceb8d4b8a3f6186fc4cefa
+    m_Address: Portraits/Spy_Bubble
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a04d42c24ac580d46a7e6af5036f6f4f
+    m_Address: Portraits/Marquis_Smile
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a2f9a601622f73e47aa2009ef7257d80
+    m_Address: Backgrounds/Space
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a3d9ef4c306a79d4490c50a4a0cafe6d
+    m_Address: Audio/SFX/Kuang
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a400d1371d2b8d54ea4ded45bb9a993b
+    m_Address: Portraits/Henry_Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a44aea321f57ee248a31e20da8fa8e19
+    m_Address: Backgrounds/Lodging
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a4928a101f977d142883a634c383bf3b
+    m_Address: Portraits/Fuhrer_Angry
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a72ccaedd1425a945bdb3e4af1b7f6e0
+    m_Address: "20251009_1856_\uC5B4\uB450\uC6B4 \uAC00\uC8FD \uC11C\uB958 \uD3F4\uB354_simple_compose_01k7469w08fw2tee3ybt3hjf0s"
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a77de2ac8f5ad3b40a7e426a31b9b26a
+    m_Address: Backgrounds/Ruins
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a80954546e2a56f4698b4c9fdc372928
+    m_Address: Portraits/King_Bad
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a83ddb49c1b69824c9b69e7299282604
+    m_Address: Portraits/King_Sad
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a8ad92bbe2ab3e548b32ee21ff9ee29b
+    m_Address: MainSFXData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ac14fd943246e734c8f9771dc087bb7d
+    m_Address: Portraits/Jang_Hate
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ac8f2c03335868340be25538ce3168b6
+    m_Address: Audio/SFX/Monkey
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ad85d3f109e8c234282b30e2205424d5
+    m_Address: Audio/SFX/Whistle2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: af200b831fd5b6e40abc9c34760fa312
+    m_Address: Audio/SFX/UngUng2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: afdf1323bcd05dd469a3e572ce189acf
+    m_Address: Backgrounds/BattleCommand
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b27a68dd380973748b7faf35f3987738
+    m_Address: Portraits/Pierre_Angry
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b350ca5cfc37dcf4a944f168665a1732
+    m_Address: BattleResultTextData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b429e99e2808b354c963387523c25bc8
+    m_Address: Backgrounds/Infirmary
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b501ba04bf9641f468cb409fd79de114
+    m_Address: Portraits/Schrodinger_Sorry
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b6a0cfaae4b168840a9dd93360b58bbf
+    m_Address: EndingEventData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b77be165544586f4580b8a131fabdfe0
+    m_Address: "Portraits/\uAD6D\uD68C\uC758\uC6D0 \uBE44\uC11C"
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b84d780df20f8a24badc9945cf2e73f0
+    m_Address: Audio/SFX/PPI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b92734df127ce9b4cbcbf12492ccd36d
+    m_Address: Portraits/Commander/Devost
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bd42c8a98cf95d74aa428712ff59fff7
+    m_Address: Portraits/Enemy_Angry
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bda90085f54566843b1dedc59b05e759
+    m_Address: Audio/BGM/Story9
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bdbfcbc9bb8564f40b78fff1fc5df55f
+    m_Address: Portraits/Jang_Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bfc727fc8214bfe40865519db3c76f1a
+    m_Address: ParameterRewardDataList
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c0050b832b6cf1e46ac262280195e133
+    m_Address: Audio/SFX/Whistle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c05720a352ef57b44a348b70761cbb81
+    m_Address: Backgrounds/MeetingRoom
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c237254e6252d8948a0c20db800f2584
+    m_Address: Portraits/Schrodinger_Smile
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c3811d8232d0e2341823529172912363
+    m_Address: Audio/BGM/Story12
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c41483fce1bfb69488ad37d5e71ce1e7
+    m_Address: Audio/BGM/Story2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c7abfbd12c331c64183f27152c592dcc
+    m_Address: Audio/BGM/Story5
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c83c3b71ee8b14a4a8e5b2c39934eee5
+    m_Address: SpecialEventAnswerID
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c86d36cee72c9434ebfc97039df56d7d
+    m_Address: "Portraits/\uACE0\uC704 \uAD00\uB8CC"
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c8eab31b9df6af140aee4768ecda6e9a
+    m_Address: Portraits/SpaceMinister
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c9432d78586854448a00d181c851b91e
+    m_Address: Audio/SFX/Puck
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ca8e3d498478ed74e87358f4abfa1d28
+    m_Address: Audio/SFX/Snap
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ca8ede24a8e6839429e459ad6804491a
+    m_Address: Audio/SFX/Desk
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cb67060d774f989449a6475944e26c97
+    m_Address: Backgrounds/CTC
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cce8a9ea8019218498f55a63cb5e5447
+    m_Address: SpecialEventBackData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cd5386304c6e7c043a3d4651261215ea
+    m_Address: Audio/BGM/Story1
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cf0f173f9c279554482419f178cdb858
+    m_Address: Portraits/Marquis_Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d14ad64cbad1be74ca2eebf379b9889f
+    m_Address: Backgrounds/Demonstration
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d1bb521ec68e0974e9913d0f3b63543d
+    m_Address: SpecialEventCharacterData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d1e332551b0120544bd23454c6ca3427
+    m_Address: ICon
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d64b72be6601d2a40ac35de9b4d67b89
+    m_Address: SubEventData1
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d7341028d894e4b43b0885a3b0eb9079
+    m_Address: Backgrounds/Office
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d8d87fffa3928594a8b0d981542298d0
+    m_Address: Audio/BGM/Story8
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: da22675024287ff43bdc021ff6517a41
+    m_Address: Portraits/Jang_Angry
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: de782acfc38ca714b9054240e98b4625
+    m_Address: MainCharacterData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: dff1ac42f27f2374a818bcd6d19def77
+    m_Address: MainAnswerID
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e0cd9e07a28950141a11ba66ad30e71f
+    m_Address: Portraits/Priest
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e28bb0815693c23459c57b220e66853d
+    m_Address: SpecialEventBGData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e3ca5e6a23b0115428d0152e94d294c1
+    m_Address: ParameterEventStringDataList
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e3f7517c3f97723498a168fc70cd3c83
+    m_Address: Portraits/AngryStrongwoman
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e48f161eea4b2fa4aa58b1cd50af56de
+    m_Address: OpeningEventData 0.0.1 - BGData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e6a2638cd9fe1804d8367ea4ee86cee1
+    m_Address: Backgrounds/Seminar
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e9f701bedff48d146a5ea4a81523bbfe
+    m_Address: Portraits/LeMay_Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eb66baf382cc02542a44cc8a82933b09
+    m_Address: Portraits/Sonbin_Smile
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ec7253e031c0b234b8bd687f3b8ab5dd
+    m_Address: Portraits/Pierre_Worry
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eed55bdd18e32ef458a4bfaa606e3926
+    m_Address: Backgrounds/Camp
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: efe9842419010064793fff3f943ec0b3
+    m_Address: Portraits/Pierre_Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f0607c65fe3eef14f9f0408c1708116a
+    m_Address: Audio/SFX/Cloth2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f07be053fb5360c4cb0d928fb6344ef2
+    m_Address: Backgrounds/TrainingArea
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f1644561aaa66d541a13df306145684e
+    m_Address: OpeningEventData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f2b9f5ec5ea1b834baf212d701a2e6f2
+    m_Address: Audio/SFX/War
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f2ea4a74f5e46d948a6802648f0dbbe9
+    m_Address: "Portraits/\uD589\uC815 \uBCF4\uAE09\uAD00"
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f369bac48f70a964c893b66f7bb433ee
+    m_Address: ParameterEventDataList
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f380b479c796ac84889cfb011ecb6e89
+    m_Address: Portraits/Schrodinger_Danghok
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f5d59fcf0054ad343b195190918cf508
+    m_Address: EndingEventCutScene
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f68c1cd5572988f40b6939d326b421a0
+    m_Address: MainCharacterImgData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f6ed8aa7bb4571f488466a932edfbbca
+    m_Address: SpecialEventSFXData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f6f165dbb36cbce48a02e568e3935cb9
+    m_Address: Portraits/Fatman
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f9eea6c92683d0c4d8071ae41b0af55a
+    m_Address: Backgrounds/BattleField
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fadb8d1ea8cf2e346b018cfd887d7746
+    m_Address: Backgrounds/Field
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fb432cf074953d2408343acd8fbfbfba
+    m_Address: Audio/SFX/Tank
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fbf71fab6306d8047a0afc285937c35c
+    m_Address: Portraits/Boy_Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fd0cb0aec63ebf94ab8024aa0b244204
+    m_Address: Portraits/WarMinister
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fe03acd4ebbed6a44a586839bed5bba1
+    m_Address: DOTweenSettings
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fe260d376d8eeb94d925f359ae20f563
+    m_Address: Audio/SFX/DDing
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fe26ea9f04ae2b043b532cb3a36bfb25
+    m_Address: ParameterEventData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ff97bdea5c2f0684b8c4dd6b179ce97f
+    m_Address: "Portraits/\uBD80\uAD00"
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ffc026aa234aa64488cd9ad330b4c042
+    m_Address: Backgrounds/Prison
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: a1fd409ce46e8444294ede494cbbc31f, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 71801629e92ab974a930352d8c827ef0, type: 2}
+    - {fileID: 11400000, guid: 56f8fcc86302aa24e921904a6747916f, type: 2}

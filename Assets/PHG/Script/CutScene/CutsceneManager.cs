@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using TMPro;
 using System;
 using UnityEngine.Video;
+using ProjectAegis.Addressables;
 
 public class CutsceneManager : MonoBehaviour
 {
@@ -252,7 +253,10 @@ public class CutsceneManager : MonoBehaviour
     // --- 각 효과를 처리하는 코루틴들 (이하 변경 없음) ---
     private IEnumerator ImageEffectCoroutine(ImageEffectData data)
     {
-        backgroundImage.sprite = data.image;
+        var sprite = !string.IsNullOrEmpty(data.imageAddress)
+            ? AddressableLoader.LoadSync<Sprite>(data.imageAddress) ?? data.image
+            : data.image;
+        backgroundImage.sprite = sprite;
         backgroundImage.gameObject.SetActive(true);
 
         if (data.fadeDuration > 0)
@@ -295,21 +299,27 @@ public class CutsceneManager : MonoBehaviour
 
     private IEnumerator SoundEffectCoroutine(SoundEffectData data)
     {
-        if (data.soundClip != null && sfxAudioSource != null)
+        var clip = !string.IsNullOrEmpty(data.soundAddress)
+            ? AddressableLoader.LoadSync<AudioClip>(data.soundAddress) ?? data.soundClip
+            : data.soundClip;
+        if (clip != null && sfxAudioSource != null)
         {
-            sfxAudioSource.PlayOneShot(data.soundClip);
+            sfxAudioSource.PlayOneShot(clip);
         }
         yield break;
     }
 
     private IEnumerator BgmEffectCoroutine(BgmEffectData data)
     {
-        if (bgmAudioSource == null || data.bgmClip == null)
+        var clip = !string.IsNullOrEmpty(data.bgmAddress)
+            ? AddressableLoader.LoadSync<AudioClip>(data.bgmAddress) ?? data.bgmClip
+            : data.bgmClip;
+        if (bgmAudioSource == null || clip == null)
         {
             yield break;
         }
         // 같은 클립이면 재시작/루프하지 않고 그대로 유지 (이미 재생 중이든, 끝났든 다시 건드리지 않음)
-        if (bgmAudioSource.clip == data.bgmClip)
+        if (bgmAudioSource.clip == clip)
         {
             // 볼륨만 반영 (재생 상태는 건드리지 않음)
             bgmAudioSource.volume = Mathf.Clamp01(data.volume <= 0 ? 1f : data.volume);
@@ -319,7 +329,7 @@ public class CutsceneManager : MonoBehaviour
 
         // 다른 클립이 요청되면 교체하여 한 번만 재생 (루프 꺼짐)
         bgmAudioSource.Stop();
-        bgmAudioSource.clip = data.bgmClip;
+        bgmAudioSource.clip = clip;
         bgmAudioSource.loop = false; // 요청: 반복 재생하지 않음
         bgmAudioSource.volume = Mathf.Clamp01(data.volume <= 0 ? 1f : data.volume);
         bgmAudioSource.Play();

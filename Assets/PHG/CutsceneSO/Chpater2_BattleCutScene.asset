@@ -16,7 +16,8 @@ MonoBehaviour:
   - stepName: Chapter2_BattleCutscene
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 4eddf07d6b27d804ea5a0ff7a700e9b5, type: 3}
+      image: {fileID: 0}
+      imageAddress: "20250909_1121_\uB808\uD2B8\uB85C \uD4E8\uCC98 \uC804\uC7C1\uD130_simple_compose_01k4p4byb2fp5apvtzs91aqj13"
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -27,6 +28,13 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
+    enableBgmEffect: 0
+    bgmData:
+      bgmClip: {fileID: 0}
+      bgmAddress: 
+      loop: 0
+      volume: 0
     enableVideoEffect: 0
     videoData:
       videoClip: {fileID: 0}

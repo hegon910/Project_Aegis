@@ -16,7 +16,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11001 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: d7341028d894e4b43b0885a3b0eb9079, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Office
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -27,9 +28,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -46,7 +49,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11002 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 8c4cb8421d3ed774fb50954dfbb01125, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/OfficeAide
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -54,10 +58,12 @@ MonoBehaviour:
       typewriterSpeed: 0.03
     enableSoundEffect: 1
     soundData:
-      soundClip: {fileID: 8300000, guid: 2d3eedba8b7189641bb3174c4bc6d31d, type: 3}
+      soundClip: {fileID: 0}
+      soundAddress: Audio/SFX/FoodStep
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -74,7 +80,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11003 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: d7341028d894e4b43b0885a3b0eb9079, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Office
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -83,9 +90,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -102,7 +111,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11004 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 8c4cb8421d3ed774fb50954dfbb01125, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/OfficeAide
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -113,9 +123,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -132,7 +144,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11005 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: d7341028d894e4b43b0885a3b0eb9079, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Office
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -143,9 +156,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -162,7 +177,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11006 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 8c4cb8421d3ed774fb50954dfbb01125, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/OfficeAide
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -173,9 +189,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -192,7 +210,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11007 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: d7341028d894e4b43b0885a3b0eb9079, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Office
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -203,9 +222,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -222,7 +243,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11008 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 8c4cb8421d3ed774fb50954dfbb01125, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/OfficeAide
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -234,9 +256,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -253,7 +277,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11009 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: d7341028d894e4b43b0885a3b0eb9079, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Office
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -264,9 +289,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -283,7 +310,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11010 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: d7341028d894e4b43b0885a3b0eb9079, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Office
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -292,9 +320,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -311,7 +341,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11011 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 8c4cb8421d3ed774fb50954dfbb01125, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/OfficeAide
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -321,9 +352,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -340,7 +373,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11012 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 8c4cb8421d3ed774fb50954dfbb01125, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/OfficeAide
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -352,9 +386,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -371,7 +407,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11013 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 8c4cb8421d3ed774fb50954dfbb01125, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/OfficeAide
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -383,9 +420,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -402,7 +441,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11014 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 8c4cb8421d3ed774fb50954dfbb01125, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/OfficeAide
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -412,9 +452,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -431,7 +473,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11015 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: d7341028d894e4b43b0885a3b0eb9079, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Office
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -441,9 +484,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -461,6 +506,7 @@ MonoBehaviour:
     enableImageEffect: 0
     imageData:
       image: {fileID: 0}
+      imageAddress: 
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -469,9 +515,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -488,7 +536,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11017 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 5ed0fd233b4054a4c9cec58b94330ccd, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Corridor
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -498,9 +547,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -517,7 +568,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11018 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 5ed0fd233b4054a4c9cec58b94330ccd, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Corridor
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -527,9 +579,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -546,7 +600,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11019 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 5ed0fd233b4054a4c9cec58b94330ccd, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Corridor
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -556,9 +611,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -575,7 +632,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11020 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 5ed0fd233b4054a4c9cec58b94330ccd, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Corridor
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -585,9 +643,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -604,7 +664,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11021 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 5ed0fd233b4054a4c9cec58b94330ccd, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Corridor
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -614,9 +675,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -633,7 +696,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11022 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 9bea3ac96eebe4a45a355f30956b9425, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/CorridorSoldier
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -641,10 +705,12 @@ MonoBehaviour:
       typewriterSpeed: 0.03
     enableSoundEffect: 1
     soundData:
-      soundClip: {fileID: 8300000, guid: 4132a61d38364ec4c8c3f0fea23422da, type: 3}
+      soundClip: {fileID: 0}
+      soundAddress: Audio/SFX/door
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -661,7 +727,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11023 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 5ed0fd233b4054a4c9cec58b94330ccd, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Corridor
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -670,9 +737,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -689,7 +758,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11024 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 5ed0fd233b4054a4c9cec58b94330ccd, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Corridor
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -699,9 +769,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -718,7 +790,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11025 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 1c63f0e7a7f726d4dbea8b23ae060c46, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/ThroneRoom
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -728,9 +801,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -747,7 +822,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11026 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 9b384801bd2feea4d8a5fa0665a1c504, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Room
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -757,9 +833,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -776,7 +854,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11027 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 1c63f0e7a7f726d4dbea8b23ae060c46, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/ThroneRoom
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -787,9 +866,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -806,7 +887,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11028 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 1c63f0e7a7f726d4dbea8b23ae060c46, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/ThroneRoom
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -815,9 +897,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -834,7 +918,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11029 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 1c63f0e7a7f726d4dbea8b23ae060c46, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/ThroneRoom
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -844,9 +929,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -863,7 +950,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11030 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 9b384801bd2feea4d8a5fa0665a1c504, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Room
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -874,9 +962,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -893,7 +983,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11031 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 9b384801bd2feea4d8a5fa0665a1c504, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Room
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -904,9 +995,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -923,7 +1016,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11032 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 1c63f0e7a7f726d4dbea8b23ae060c46, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/ThroneRoom
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -934,9 +1028,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -953,7 +1049,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11033 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 9b384801bd2feea4d8a5fa0665a1c504, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Room
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -964,9 +1061,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -983,7 +1082,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11034 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 9b384801bd2feea4d8a5fa0665a1c504, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Room
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -994,9 +1094,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1013,7 +1115,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11035 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 9b384801bd2feea4d8a5fa0665a1c504, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Room
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1025,9 +1128,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1044,7 +1149,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11036 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 1c63f0e7a7f726d4dbea8b23ae060c46, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/ThroneRoom
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1056,9 +1162,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1075,7 +1183,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11037 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 1c63f0e7a7f726d4dbea8b23ae060c46, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/ThroneRoom
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1086,9 +1195,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1105,7 +1216,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11038 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 1c63f0e7a7f726d4dbea8b23ae060c46, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/ThroneRoom
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1115,9 +1227,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1134,7 +1248,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11039 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 1c63f0e7a7f726d4dbea8b23ae060c46, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/ThroneRoom
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1147,9 +1262,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1166,7 +1283,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11040 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 9b384801bd2feea4d8a5fa0665a1c504, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Room
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1179,9 +1297,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1198,7 +1318,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11041 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 1c63f0e7a7f726d4dbea8b23ae060c46, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/ThroneRoom
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1208,9 +1329,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1227,7 +1350,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11042 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 1c63f0e7a7f726d4dbea8b23ae060c46, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/ThroneRoom
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1238,9 +1362,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1257,7 +1383,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11043 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 9b384801bd2feea4d8a5fa0665a1c504, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Room
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1265,10 +1392,12 @@ MonoBehaviour:
       typewriterSpeed: 0.03
     enableSoundEffect: 1
     soundData:
-      soundClip: {fileID: 8300000, guid: 0c037253b14e91347bce98ef9d89db42, type: 3}
+      soundClip: {fileID: 0}
+      soundAddress: Audio/SFX/ChiZik
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1285,7 +1414,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11044 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 1c63f0e7a7f726d4dbea8b23ae060c46, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/ThroneRoom
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1295,9 +1425,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1314,7 +1446,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11045 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 9b384801bd2feea4d8a5fa0665a1c504, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Room
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1324,9 +1457,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1343,7 +1478,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11046 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 9b384801bd2feea4d8a5fa0665a1c504, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Room
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1352,9 +1488,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1371,7 +1509,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11047 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 1c63f0e7a7f726d4dbea8b23ae060c46, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/ThroneRoom
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1382,9 +1521,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1401,7 +1542,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11048 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 9b384801bd2feea4d8a5fa0665a1c504, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Room
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1411,9 +1553,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1430,7 +1574,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11049 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 9b384801bd2feea4d8a5fa0665a1c504, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Room
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1440,9 +1585,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1459,7 +1606,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11050 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 9b384801bd2feea4d8a5fa0665a1c504, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Room
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1471,9 +1619,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1490,7 +1640,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11051 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 1c63f0e7a7f726d4dbea8b23ae060c46, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/ThroneRoom
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1499,9 +1650,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1518,7 +1671,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11052 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 1c63f0e7a7f726d4dbea8b23ae060c46, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/ThroneRoom
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1528,9 +1682,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1547,7 +1703,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11053 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 1c63f0e7a7f726d4dbea8b23ae060c46, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/ThroneRoom
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1558,9 +1715,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1577,7 +1736,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11054 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 9b384801bd2feea4d8a5fa0665a1c504, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Room
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1588,9 +1748,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1607,7 +1769,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11055 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 1c63f0e7a7f726d4dbea8b23ae060c46, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/ThroneRoom
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1616,9 +1779,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1635,7 +1800,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11056 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 9b384801bd2feea4d8a5fa0665a1c504, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Room
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1645,10 +1811,12 @@ MonoBehaviour:
       typewriterSpeed: 0.03
     enableSoundEffect: 1
     soundData:
-      soundClip: {fileID: 8300000, guid: 4132a61d38364ec4c8c3f0fea23422da, type: 3}
+      soundClip: {fileID: 0}
+      soundAddress: Audio/SFX/door
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1665,7 +1833,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11057 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 5ed0fd233b4054a4c9cec58b94330ccd, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Corridor
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1674,9 +1843,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1693,7 +1864,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11058 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 9b384801bd2feea4d8a5fa0665a1c504, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Room
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1703,9 +1875,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1722,7 +1896,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11059 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 5ed0fd233b4054a4c9cec58b94330ccd, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Corridor
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1732,9 +1907,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1751,7 +1928,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11060 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 9b384801bd2feea4d8a5fa0665a1c504, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Room
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1760,9 +1938,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1779,7 +1959,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11061 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 9b384801bd2feea4d8a5fa0665a1c504, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Room
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1789,9 +1970,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1808,7 +1991,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11062 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 5ed0fd233b4054a4c9cec58b94330ccd, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Corridor
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1817,9 +2001,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1836,7 +2022,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11063 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 9b384801bd2feea4d8a5fa0665a1c504, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Room
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1846,9 +2033,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1865,7 +2054,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11064 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 5ed0fd233b4054a4c9cec58b94330ccd, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Corridor
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1875,9 +2065,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1894,7 +2086,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11065 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 9b384801bd2feea4d8a5fa0665a1c504, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Room
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1904,9 +2097,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1923,7 +2118,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11066 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 5ed0fd233b4054a4c9cec58b94330ccd, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Corridor
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1932,9 +2128,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1951,7 +2149,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11067 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 9b384801bd2feea4d8a5fa0665a1c504, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Room
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1961,9 +2160,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0
@@ -1980,7 +2181,8 @@ MonoBehaviour:
   - stepName: StoryNum:1000002 | ID:11068 | BGM:Story1
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 5ed0fd233b4054a4c9cec58b94330ccd, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/Corridor
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -1989,9 +2191,11 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
     enableBgmEffect: 1
     bgmData:
-      bgmClip: {fileID: 8300000, guid: cd5386304c6e7c043a3d4651261215ea, type: 3}
+      bgmClip: {fileID: 0}
+      bgmAddress: Audio/BGM/Story1
       loop: 1
       volume: 1
     enableVideoEffect: 0

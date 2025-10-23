@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
 using static DataManager;
+using ProjectAegis.Addressables;
 
 public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
 {
@@ -565,19 +566,19 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         string lastSegment = lastSlash >= 0 ? normalized.Substring(lastSlash + 1) : normalized;
         string baseName = Path.GetFileNameWithoutExtension(lastSegment);
 
-        // 1) 현재 배치 경로: Portraits/
-        var s = Resources.Load<Sprite>("Portraits/" + baseName);
+        // 1) 현재 배치 경로: Portraits/ (Addressables 우선)
+        var s = AddressableLoader.LoadSync<Sprite>("Portraits/" + baseName) ?? Resources.Load<Sprite>("Portraits/" + baseName);
         if (s != null) return s;
 
         // 2) 구 규칙 호환: Portrait/
-        s = Resources.Load<Sprite>("Portrait/" + baseName);
+        s = AddressableLoader.LoadSync<Sprite>("Portrait/" + baseName) ?? Resources.Load<Sprite>("Portrait/" + baseName);
         if (s != null) return s;
 
         // 3) 원문 경로 무확장 시도
         string rawNoExt = normalized;
         int dot = rawNoExt.LastIndexOf('.');
         if (dot > 0) rawNoExt = rawNoExt.Substring(0, dot);
-        s = Resources.Load<Sprite>(rawNoExt);
+        s = AddressableLoader.LoadSync<Sprite>(rawNoExt) ?? Resources.Load<Sprite>(rawNoExt);
         if (s != null) return s;
 
         Debug.LogWarning($"[UIFlowSimulator] 파라미터 초상 로드 실패: '{imgName}' (시도: Portraits/{baseName}, Portrait/{baseName}, {rawNoExt})");
@@ -608,19 +609,19 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             if (dot > 0) baseName = baseName.Substring(0, dot);
 
             // 1) 신규 규칙: Portraits/
-            var s = Resources.Load<Sprite>($"Portraits/{baseName}");
+            var s = AddressableLoader.LoadSync<Sprite>($"Portraits/{baseName}") ?? Resources.Load<Sprite>($"Portraits/{baseName}");
             if (s != null) return s;
 
             // 2) 구 규칙 호환: Portrait/
-            s = Resources.Load<Sprite>($"Portrait/{baseName}");
+            s = AddressableLoader.LoadSync<Sprite>($"Portrait/{baseName}") ?? Resources.Load<Sprite>($"Portrait/{baseName}");
             if (s != null) return s;
 
             // 3) 원문 경로 무확장 시도
-            s = Resources.Load<Sprite>(baseName);
+            s = AddressableLoader.LoadSync<Sprite>(baseName) ?? Resources.Load<Sprite>(baseName);
             if (s != null) return s;
 
             // 4) 마지막 폴백: 원문 전체 (확장자 포함)
-            s = Resources.Load<Sprite>(normalized);
+            s = AddressableLoader.LoadSync<Sprite>(normalized) ?? Resources.Load<Sprite>(normalized);
             if (s != null) return s;
         }
         return null;
@@ -773,18 +774,18 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
         string baseName = Path.GetFileNameWithoutExtension(lastSegment);
 
         // 시도 1) Backgrounds/
-        var s = Resources.Load<Sprite>("Backgrounds/" + baseName);
+        var s = AddressableLoader.LoadSync<Sprite>("Backgrounds/" + baseName) ?? Resources.Load<Sprite>("Backgrounds/" + baseName);
         if (s != null) return s;
 
         // 시도 2) Back/
-        s = Resources.Load<Sprite>("Back/" + baseName);
+        s = AddressableLoader.LoadSync<Sprite>("Back/" + baseName) ?? Resources.Load<Sprite>("Back/" + baseName);
         if (s != null) return s;
 
         // 시도 3) 원문 경로
         string rawNoExt = normalized;
         int dot = rawNoExt.LastIndexOf('.');
         if (dot > 0) rawNoExt = rawNoExt.Substring(0, dot);
-        s = Resources.Load<Sprite>(rawNoExt);
+        s = AddressableLoader.LoadSync<Sprite>(rawNoExt) ?? Resources.Load<Sprite>(rawNoExt);
         if (s != null) return s;
 
         return null;
@@ -887,7 +888,7 @@ public class UIFlowSimulator : MonoBehaviour, IChoiceHandler
             // 항상 기존 BGM을 즉시 중지하고 CommandCenter로 전환
             AudioManager.Instance.StopBGM();
             
-            AudioClip commandCenterClip = Resources.Load<AudioClip>("Audio/BGM/CommandCenter");
+            AudioClip commandCenterClip = AddressableLoader.LoadSync<AudioClip>("Audio/BGM/CommandCenter") ?? Resources.Load<AudioClip>("Audio/BGM/CommandCenter");
             if (commandCenterClip != null)
             {
                 AudioManager.Instance.PlayBGM(commandCenterClip);

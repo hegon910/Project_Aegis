@@ -16,7 +16,9 @@ MonoBehaviour:
   - stepName: Chapter6_Ending
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 0d4dc462bc4faf245a6e5cde054f762e, type: 3}
+      image: {fileID: 0}
+      imageAddress: "20250911_1427_\uB808\uD2B8\uB85C \uD4E8\uCC98\uB9AC\uC998 \uB300\uCCB4
+        \uC5ED\uC0AC_simple_compose_01k4vktm3mfhks3sbxtxyj0q8d"
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -27,6 +29,13 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
+    enableBgmEffect: 0
+    bgmData:
+      bgmClip: {fileID: 0}
+      bgmAddress: 
+      loop: 0
+      volume: 0
     enableVideoEffect: 0
     videoData:
       videoClip: {fileID: 0}
@@ -41,7 +50,9 @@ MonoBehaviour:
   - stepName: Chapter6_Ending
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 0d4dc462bc4faf245a6e5cde054f762e, type: 3}
+      image: {fileID: 0}
+      imageAddress: "20250911_1427_\uB808\uD2B8\uB85C \uD4E8\uCC98\uB9AC\uC998 \uB300\uCCB4
+        \uC5ED\uC0AC_simple_compose_01k4vktm3mfhks3sbxtxyj0q8d"
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -52,6 +63,13 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
+    enableBgmEffect: 0
+    bgmData:
+      bgmClip: {fileID: 0}
+      bgmAddress: 
+      loop: 0
+      volume: 0
     enableVideoEffect: 0
     videoData:
       videoClip: {fileID: 0}
@@ -66,7 +84,9 @@ MonoBehaviour:
   - stepName: Chapter6_Ending
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 0d4dc462bc4faf245a6e5cde054f762e, type: 3}
+      image: {fileID: 0}
+      imageAddress: "20250911_1427_\uB808\uD2B8\uB85C \uD4E8\uCC98\uB9AC\uC998 \uB300\uCCB4
+        \uC5ED\uC0AC_simple_compose_01k4vktm3mfhks3sbxtxyj0q8d"
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -76,6 +96,13 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
+    enableBgmEffect: 0
+    bgmData:
+      bgmClip: {fileID: 0}
+      bgmAddress: 
+      loop: 0
+      volume: 0
     enableVideoEffect: 0
     videoData:
       videoClip: {fileID: 0}
@@ -90,7 +117,9 @@ MonoBehaviour:
   - stepName: Chapter6_Ending
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 0d4dc462bc4faf245a6e5cde054f762e, type: 3}
+      image: {fileID: 0}
+      imageAddress: "20250911_1427_\uB808\uD2B8\uB85C \uD4E8\uCC98\uB9AC\uC998 \uB300\uCCB4
+        \uC5ED\uC0AC_simple_compose_01k4vktm3mfhks3sbxtxyj0q8d"
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -101,6 +130,13 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
+    enableBgmEffect: 0
+    bgmData:
+      bgmClip: {fileID: 0}
+      bgmAddress: 
+      loop: 0
+      volume: 0
     enableVideoEffect: 0
     videoData:
       videoClip: {fileID: 0}
@@ -115,7 +151,9 @@ MonoBehaviour:
   - stepName: Chapter6_Ending
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 0d4dc462bc4faf245a6e5cde054f762e, type: 3}
+      image: {fileID: 0}
+      imageAddress: "20250911_1427_\uB808\uD2B8\uB85C \uD4E8\uCC98\uB9AC\uC998 \uB300\uCCB4
+        \uC5ED\uC0AC_simple_compose_01k4vktm3mfhks3sbxtxyj0q8d"
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -125,6 +163,13 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
+    enableBgmEffect: 0
+    bgmData:
+      bgmClip: {fileID: 0}
+      bgmAddress: 
+      loop: 0
+      volume: 0
     enableVideoEffect: 0
     videoData:
       videoClip: {fileID: 0}
@@ -139,7 +184,9 @@ MonoBehaviour:
   - stepName: Chapter6_Ending
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 0d4dc462bc4faf245a6e5cde054f762e, type: 3}
+      image: {fileID: 0}
+      imageAddress: "20250911_1427_\uB808\uD2B8\uB85C \uD4E8\uCC98\uB9AC\uC998 \uB300\uCCB4
+        \uC5ED\uC0AC_simple_compose_01k4vktm3mfhks3sbxtxyj0q8d"
       fadeDuration: 0
     enableDialogueEffect: 1
     dialogueData:
@@ -148,6 +195,13 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
+    enableBgmEffect: 0
+    bgmData:
+      bgmClip: {fileID: 0}
+      bgmAddress: 
+      loop: 0
+      volume: 0
     enableVideoEffect: 0
     videoData:
       videoClip: {fileID: 0}

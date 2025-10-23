@@ -16,7 +16,8 @@ MonoBehaviour:
   - stepName: TestOpening
     enableImageEffect: 1
     imageData:
-      image: {fileID: 21300000, guid: 1c63f0e7a7f726d4dbea8b23ae060c46, type: 3}
+      image: {fileID: 0}
+      imageAddress: Backgrounds/ThroneRoom
       fadeDuration: 1
     enableDialogueEffect: 0
     dialogueData:
@@ -25,6 +26,13 @@ MonoBehaviour:
     enableSoundEffect: 0
     soundData:
       soundClip: {fileID: 0}
+      soundAddress: 
+    enableBgmEffect: 0
+    bgmData:
+      bgmClip: {fileID: 0}
+      bgmAddress: 
+      loop: 0
+      volume: 0
     enableVideoEffect: 0
     videoData:
       videoClip: {fileID: 0}

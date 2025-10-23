@@ -10,6 +10,7 @@ using UnityEngine.Video;
 public struct ImageEffectData
 {
     public Sprite image;
+    public string imageAddress; // Addressables 주소가 있으면 이를 우선 사용
     [Tooltip("0이면 즉시 표시, 0보다 크면 해당 시간 동안 페이드인")]
     public float fadeDuration;
 }
@@ -27,12 +28,14 @@ public struct DialogueEffectData
 public struct SoundEffectData
 {
     public AudioClip soundClip;
+    public string soundAddress; // Addressables 주소가 있으면 이를 우선 사용
 }
 
 [System.Serializable]
 public struct BgmEffectData
 {
     public AudioClip bgmClip;
+    public string bgmAddress; // Addressables 주소가 있으면 이를 우선 사용
     public bool loop;
     [Range(0f,1f)] public float volume;
 }

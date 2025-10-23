@@ -205,11 +205,14 @@ public static class OpeningEventDataApplier
 			var row = rows[i];
 
 			// Background Image
-			Sprite bgSprite = null;
+            Sprite bgSprite = null;
+            string bgSpriteAddress = null;
 			if (imageMap.TryGetValue(row.OpeningCutScene, out var imgName) && !string.IsNullOrEmpty(imgName))
 			{
 				var imgKey = Path.GetFileNameWithoutExtension(imgName);
-				bgSprite = TryLoadBackground(imgKey, availableBackgrounds);
+                // 주소 규칙: Backgrounds/<IMGName>
+                bgSpriteAddress = $"Backgrounds/{imgKey}";
+                bgSprite = TryLoadBackground(imgKey, availableBackgrounds);
 				if (bgSprite == null)
 				{
 					Debug.LogWarning($"[OpeningEventDataApplier] BG 스프라이트 로드 실패 (rowID:{row.ID}) key:{imgKey}");
@@ -221,11 +224,14 @@ public static class OpeningEventDataApplier
 			}
 
 			// SFX (효과음)
-			AudioClip sfxClip = null;
+            AudioClip sfxClip = null;
+            string sfxAddress = null;
 			if (row.SFX_ID != 0 && sfxMap.TryGetValue(row.SFX_ID, out var sfxName) && !string.IsNullOrEmpty(sfxName))
 			{
 				var sfxKey = Path.GetFileNameWithoutExtension(sfxName);
-				sfxClip = TryLoadSfx(sfxKey, availableSfx);
+                // 주소 규칙: Audio/SFX/<SFXName>
+                sfxAddress = $"Audio/SFX/{sfxKey}";
+                sfxClip = TryLoadSfx(sfxKey, availableSfx);
 				if (sfxClip == null)
 				{
 					Debug.LogWarning($"[OpeningEventDataApplier] SFX 로드 실패 (rowID:{row.ID}) key:{sfxKey}");
@@ -243,10 +249,13 @@ public static class OpeningEventDataApplier
 			}
 
 			// BGM: BG_ID를 BGM 파일명으로 사용 (Main과 동일 경로 규칙)
-			AudioClip bgmClip = null;
-			if (!string.IsNullOrEmpty(bgName))
-			{
-				bgmClip = Resources.Load<AudioClip>("Audio/BGM/" + bgName);
+            AudioClip bgmClip = null;
+            string bgmAddress = null;
+            if (!string.IsNullOrEmpty(bgName))
+            {
+                // 주소 규칙: Audio/BGM/<BGName>
+                bgmAddress = $"Audio/BGM/{bgName}";
+                bgmClip = ProjectAegis.Addressables.AddressableLoader.LoadSync<AudioClip>(bgmAddress) ?? Resources.Load<AudioClip>("Audio/BGM/" + bgName);
 				if (bgmClip == null)
 				{
 					// 확장자 추정 경로 시도
@@ -265,16 +274,17 @@ public static class OpeningEventDataApplier
                     dialogue = row.Text_kr ?? string.Empty,
                     typewriterSpeed = 0.03f
                 },
-				enableImageEffect = bgSprite != null,
-				imageData = new ImageEffectData
-				{
-					image = bgSprite,
-					fadeDuration = 0f
-				},
-				enableSoundEffect = sfxClip != null,
-				soundData = new SoundEffectData { soundClip = sfxClip },
-				enableBgmEffect = bgmClip != null,
-				bgmData = new BgmEffectData { bgmClip = bgmClip, loop = true, volume = 1f },
+                enableImageEffect = bgSprite != null || !string.IsNullOrEmpty(bgSpriteAddress),
+                imageData = new ImageEffectData
+                {
+                    image = bgSprite,
+                    imageAddress = bgSpriteAddress,
+                    fadeDuration = 0f
+                },
+                enableSoundEffect = sfxClip != null || !string.IsNullOrEmpty(sfxAddress),
+                soundData = new SoundEffectData { soundClip = sfxClip, soundAddress = sfxAddress },
+                enableBgmEffect = bgmClip != null || !string.IsNullOrEmpty(bgmAddress),
+                bgmData = new BgmEffectData { bgmClip = bgmClip, bgmAddress = bgmAddress, loop = true, volume = 1f },
 				enableVideoEffect = false,
 				enableDayTextEffect = false,
 				waitTime = 0f,
@@ -333,7 +343,11 @@ public static class OpeningEventDataApplier
 		// 2) 인덱스에서 정확도 높은 폴백
 		if (index.TryGetValue(baseName, out var exact)) return exact;
 		// 3) prefix/contains 폴백 (예: ThroneRoomKing -> ThroneRoom)
-		var candidate = index.Keys.FirstOrDefault(k => baseName.StartsWith(k, StringComparison.OrdinalIgnoreCase) || k.StartsWith(baseName, StringComparison.OrdinalIgnoreCase) || baseName.Contains(k, StringComparison.OrdinalIgnoreCase) || k.Contains(baseName, StringComparison.OrdinalIgnoreCase));
+		var candidate = index.Keys.FirstOrDefault(k =>
+			baseName.StartsWith(k, StringComparison.OrdinalIgnoreCase)
+			|| k.StartsWith(baseName, StringComparison.OrdinalIgnoreCase)
+			|| baseName.IndexOf(k, StringComparison.OrdinalIgnoreCase) >= 0
+			|| k.IndexOf(baseName, StringComparison.OrdinalIgnoreCase) >= 0);
 		if (candidate != null) return index[candidate];
 		// 4) 에셋 데이터베이스에서 광역 검색 (Sprite)
 		var guidCandidates = AssetDatabase.FindAssets($"t:Sprite {baseName}");

@@ -75,7 +75,7 @@ public class AudioDataManager : MonoBehaviour
                     
                     // Resources/Audio/BGM/ 폴더에서 오디오 클립 로드
                     string audioPath = $"Audio/BGM/{bgData.BGName}";
-                    bgData.audioClip = Resources.Load<AudioClip>(audioPath);
+                    bgData.audioClip = ProjectAegis.Addressables.AddressableLoader.LoadSync<AudioClip>(audioPath) ?? Resources.Load<AudioClip>(audioPath);
                     
                     if (bgData.audioClip == null)
                     {
@@ -116,7 +116,7 @@ public class AudioDataManager : MonoBehaviour
                     
                     // Resources/Audio/SFX/ 폴더에서 오디오 클립 로드
                     string audioPath = $"Audio/SFX/{sfxData.SFXName}";
-                    sfxData.audioClip = Resources.Load<AudioClip>(audioPath);
+                    sfxData.audioClip = ProjectAegis.Addressables.AddressableLoader.LoadSync<AudioClip>(audioPath) ?? Resources.Load<AudioClip>(audioPath);
                     
                     if (sfxData.audioClip == null)
                     {

@@ -11,7 +11,9 @@ using JetBrains.Annotations;
 using Firebase.Database;
 using Firebase.Auth;
 using Firebase.Extensions;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 
 public class DataManager : MonoBehaviour
 {

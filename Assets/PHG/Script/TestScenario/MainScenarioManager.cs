@@ -5,6 +5,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using ProjectAegis.Addressables;
 
 [System.Serializable]
 public class MainStoryUI
@@ -241,16 +242,16 @@ public partial class MainScenarioManager : MonoBehaviour, IChoiceHandler
         string imgName = node.characterImgData?.IMGName;
         if (!string.IsNullOrEmpty(imgName))
         {
-            // 1) 명시 경로: Resources/Portraits/<IMGName>
-            var s = Resources.Load<Sprite>($"Portraits/{imgName}");
+        // 1) 명시 경로: Portraits/<IMGName> (Addressables 우선)
+        var s = ProjectAegis.Addressables.AddressableLoader.LoadSync<Sprite>($"Portraits/{imgName}") ?? Resources.Load<Sprite>($"Portraits/{imgName}");
             if (s != null) return s;
 
-            // 2) 예전 규칙(단수 폴더) 호환
-            s = Resources.Load<Sprite>($"Portrait/{imgName}");
+        // 2) 예전 규칙(단수 폴더) 호환
+        s = ProjectAegis.Addressables.AddressableLoader.LoadSync<Sprite>($"Portrait/{imgName}") ?? Resources.Load<Sprite>($"Portrait/{imgName}");
             if (s != null) return s;
 
-            // 3) CSV가 전체 경로를 담고 있는 경우를 대비하여 원문 시도
-            s = Resources.Load<Sprite>(imgName);
+        // 3) CSV가 전체 경로를 담고 있는 경우를 대비하여 원문 시도
+        s = ProjectAegis.Addressables.AddressableLoader.LoadSync<Sprite>(imgName) ?? Resources.Load<Sprite>(imgName);
             if (s != null) return s;
         }
         return null;
@@ -494,16 +495,16 @@ partial class MainScenarioManager
         string lastSegment = lastSlash >= 0 ? normalized.Substring(lastSlash + 1) : normalized;
         string baseName = Path.GetFileNameWithoutExtension(lastSegment);
 
-        var s = Resources.Load<Sprite>("Backgrounds/" + baseName);
+        var s = ProjectAegis.Addressables.AddressableLoader.LoadSync<Sprite>("Backgrounds/" + baseName) ?? Resources.Load<Sprite>("Backgrounds/" + baseName);
         if (s != null) return s;
 
-        s = Resources.Load<Sprite>("Back/" + baseName);
+        s = ProjectAegis.Addressables.AddressableLoader.LoadSync<Sprite>("Back/" + baseName) ?? Resources.Load<Sprite>("Back/" + baseName);
         if (s != null) return s;
 
         string rawNoExt = normalized;
         int dot = rawNoExt.LastIndexOf('.');
         if (dot > 0) rawNoExt = rawNoExt.Substring(0, dot);
-        s = Resources.Load<Sprite>(rawNoExt);
+        s = ProjectAegis.Addressables.AddressableLoader.LoadSync<Sprite>(rawNoExt) ?? Resources.Load<Sprite>(rawNoExt);
         if (s != null) return s;
 
         return null;
